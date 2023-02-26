@@ -1,0 +1,16 @@
+TODO list
+---------
+
+- Ajouter des marqueurs d'évènement sur une carte
+https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-sur-votre-site
+
+
+Créer un rôle author-agdpevent
+
+A la création d'un nouveau site, création 1er fournisseur (pour modèle), on ne voit pas le Content editor.
+Email de commande :
+Ajouter le nom du fournisseur dans le mail, url de la page du post
+
+Git
+
+Publish plugin

@@ -1,0 +1,78 @@
+/**
+ * ED20200326
+ * Feuille de styles pour CoopEShop mode Admin
+ */
+
+.agdp-metabox-row > label {
+	min-width: 12em;
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 8px;
+}
+.agdp-metabox-row > input, 
+.agdp-metabox-row > textarea {
+	width: 25em;
+	display: inline-block;
+}
+.agdp-metabox-row.side-box > input, 
+.agdp-metabox-row.side-box > textarea {
+	width: 12em;
+}
+.agdp-metabox-row > input[type="number"] {
+	width: 5em;	
+}
+.agdp-metabox-row > input[type="date"] {
+	width: 10em;	
+}
+.agdp-metabox-row > input[placeholder="hh:mm"] {
+	width: 5em;	
+}
+.agdp-metabox-row.is_not_admin.admin_only {
+	display: none;
+}
+
+.agdp-metabox-row.agdp-metabox-subfields {
+	display: inline;
+	margin-left: 1em;
+}
+
+.agdp-metabox-row.description > label {
+	margin-top: 2px;
+}
+
+.agdp-metabox-row #ev-codesecret {
+	border: none;
+	width: 10em;
+	color: #333333;  
+	background-color: transparent;
+	margin-top: 6px;
+}
+
+/* as other inputs */
+input[type="gps"] {
+	padding: 0 8px;
+	line-height: 2;
+	min-height: 30px;
+    box-shadow: 0 0 0 transparent;
+    border-radius: 4px;
+    border: 1px solid #7e8993;
+}
+
+img.coo-favicon {
+	width: 16px;
+	height: 16px;
+	margin-right: 4px;
+}
+
+.import-report {
+	background-color: #f7f7f7;
+	border-color: #9fa4a6;
+	border-style: solid;
+	padding: 1em;
+}
+.import-report > span {
+	font-weight: bold;
+}
+.import-report li {
+	margin-top: 1em;
+}

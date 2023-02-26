@@ -1,3 +1,5 @@
+.htaccess
+
 admin/docs/*
 
 # ignore log files and databases

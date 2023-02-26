@@ -1,0 +1,220 @@
+/**
+ * ED20200326
+ * Feuille de styles pour Agenda partagé
+ */
+ 
+a:active, a:focus {
+	outline: none;
+}
+
+p.alerte, div.alerte {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
+	border-radius: 2px;
+}
+p.info, div.info {
+	border-style: solid;
+	border-color:green;
+	padding: 5px;
+	border-radius: 2px;
+}
+
+/* ED200318 "Fièrement propulsé par Word Press" */
+.site-info > a
+, .masquer
+{ display: none; }
+
+.agdp-error-light {
+  font-size: smaller;
+  color: gray;
+  padding: 5px;
+  text-align: center;
+}
+body.colors-dark .agdp-error-light {
+  color: rgb(208, 208, 208);
+}
+
+/* Masque la navigation
+ * Géré par code /hook on_navigation_markup_template_cb
+article.type-agdpevent ~ nav.post-navigation {
+	display: none;
+}*/
+
+.entry-content .agdp-agdpevent-dates {
+	font-weight : bold;
+}
+
+.entry-content .agdp-agdpevent {
+	white-space: pre-line;
+	margin-bottom: 1.5em;
+}
+.entry-content .agdp-agdpevent .nowrap, .entry-content .agdp-agdpevent ul {
+	white-space: normal;
+}
+/* Stripe payments plugin */
+.entry-content .agdp-agdpevent .asp_product_item {
+	white-space: normal;
+}
+
+.entry-content .agdp-agdpevent-message-contact {
+	white-space: normal;
+}
+
+.entry-content .agdp-agdpevent-description, .entry-content .agdp-agdpevent-details {
+	background-color: #f7f7f7;
+	border-color: #9fa4a6;
+	border-style: solid;
+	border-width: thin;
+	color: #333;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	padding: 1em;	
+}
+body.colors-dark .entry-content .agdp-agdpevent-description, .entry-content .agdp-agdpevent-details {
+	background-color: #272727;
+	color: rgb(238, 238, 238);
+}
+
+.entry-content .agdp-agdpevent-details .entry-date {
+	font-size: small;
+	font-style: italic;
+	white-space: normal;
+	text-align: right;
+}
+
+/*toggle shortcode*/
+.toggle-trigger {
+	margin: 0px !important;
+	font-size: 18px;
+	padding: 10px;
+	padding-left: 30px;
+	background-color: #F5F5F5;
+	background-image: url('../images/toggle-plus.png');
+	background-position: 10px center;
+	background-repeat: no-repeat;
+}
+body.colors-dark .toggle-trigger {
+	background-color: #252525;
+}
+
+.toggle-trigger a {
+	color: #333;
+	text-decoration: none;
+	display: block;
+}
+body.colors-dark .toggle-trigger a {
+	color: #CCC;
+}
+
+.toggle-trigger a:hover {
+	color: #0489B7;
+	text-decoration: none;
+}
+body.colors-dark .toggle-trigger a:hover {
+	color: #FA7628;
+}
+.toggle-trigger .wpcf7-spinner {
+	float: right;
+}
+
+.toggle-trigger.active{
+	background-image: url('../images/toggle-minus.png') !important;
+	background-position: 10px center;
+	background-repeat: no-repeat;
+}
+
+.toggle-container {
+	/* display: none; TODO hide on load before jQuery */
+	overflow: hidden;
+	padding: 20px 10px;
+}
+
+label.textarea-rows-2 textarea {
+	max-height: 5em;
+}
+label.textarea-rows-3 textarea {
+	max-height: 6em;
+}
+label.textarea-rows-4 textarea {
+	max-height: 7em;
+}
+label.textarea-rows-5 textarea {
+	max-height: 8em;
+}
+
+.adgpevent-forbidden {
+	padding-left: 2em;
+}
+.adgpevent-forbidden ul > li {
+	margin-left: 1em;
+}
+
+.agdp-title-link {
+	float:right;
+	position: relative;
+	top: -1em;
+}
+.agdp-title-link a {
+	box-shadow: none !important;
+	text-decoration: none;
+	outline: none;
+}
+
+.adgpevent-forbidden form {
+	display: inline-flex;
+}
+
+.agdpevent-edit-toolbar {
+	text-align: right;
+}
+.agdpevent-edit-toolbar > .agdpevent-tool > * {
+	float: right;
+	margin-left: 1em;
+}
+.agdpevent-edit-toolbar > .agdpevent-tool .dashicons-before {
+	margin-right: 3px;
+}
+.agdpevent-edit-toolbar > .agdpevent-tool .close-box,
+.ajax_action-response .close-box {
+	float: right;
+}
+.ajax_action-response {
+	cursor: pointer;
+}
+.ajax_action_info {
+	text-align: center;
+}
+
+div.ajax_action-response {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
+}
+
+.wpcf7-form-control[name^="ev-date-"] {
+	width: 11em;
+}
+.wpcf7-form-control[name^="ev-heure-"] {
+	width: 5em;
+}
+.wpcf7-form table {
+	margin-bottom: 0px;
+}
+.wpcf7-form table tr {
+	border: none;
+}
+.wpcf7-form table td {
+	padding-bottom: 0px;
+}
+.wpcf7-form table td:first-child {
+	width: 1px;
+}
+
+.wpcf7-form table td:nth-child(2) {
+	padding-left: 1em;
+}
+.wpcf7-form span.required {
+	color: red;
+}

@@ -1,0 +1,291 @@
+<?php
+
+/**
+ * AgendaPartage -> Evenement
+ * Custom post type for WordPress.
+ * Custom user role for WordPress.
+ * 
+ * Définition du Post Type 'agdpevent'
+ * Définition de la taxonomie 'type_agdpevent'
+ * Définition du rôle utilisateur 'agdpevent'
+ * A l'affichage d'un évènement, le Content est remplacé par celui de l'évènement Modèle
+ * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor', see AgendaPartage_Admin_Evenement::init_PostType_Supports
+ *
+ * Voir aussi AgendaPartage_Admin_Evenement
+ */
+class AgendaPartage_Evenement_Post_type {
+	
+	/**
+	 * Evenement post type.
+	 */
+	public static function register_post_type() {
+
+		$labels = array(
+			'name'                  => _x( 'Évènements', 'Post Type General Name', AGDP_TAG ),
+			'singular_name'         => _x( 'Évènement', 'Post Type Singular Name', AGDP_TAG ),
+			'menu_name'             => __( 'Évènements', AGDP_TAG ),
+			'name_admin_bar'        => __( 'Évènement', AGDP_TAG ),
+			'archives'              => __( 'Évènements', AGDP_TAG ),
+			'attributes'            => __( 'Attributs', AGDP_TAG ),
+			'parent_item_colon'     => __( 'Évènement parent:', AGDP_TAG ),
+			'all_items'             => __( 'Tous les évènements', AGDP_TAG ),
+			'add_new_item'          => __( 'Ajouter un évènement', AGDP_TAG ),
+			'add_new'               => __( 'Ajouter', AGDP_TAG ),
+			'new_item'              => __( 'Nouvel évènement', AGDP_TAG ),
+			'edit_item'             => __( 'Modifier', AGDP_TAG ),
+			'update_item'           => __( 'Mettre à jour', AGDP_TAG ),
+			'view_item'             => __( 'Afficher', AGDP_TAG ),
+			'view_items'            => __( 'Voir les évènements', AGDP_TAG ),
+			'search_items'          => __( 'Rechercher des évènements', AGDP_TAG ),
+			'items_list'            => __( 'Liste d\'évènements', AGDP_TAG ),
+			'items_list_navigation' => __( 'Navigation dans la liste d\'évènements', AGDP_TAG ),
+			'filter_items_list'     => __( 'Filtrer la liste des évènements', AGDP_TAG ),
+		);
+		$capabilities = self::post_type_capabilities();
+		$args = array(
+			'label'                 => __( 'Évènement', AGDP_TAG ),
+			'description'           => __( 'Évènement de l\'agenda partagé', AGDP_TAG ),
+			'labels'                => $labels,
+			'supports'              => array( 'title', 'thumbnail', 'revisions' ),//, 'author', 'editor' see AgendaPartage_Admin_Evenement::init_PostType_Supports
+			'taxonomies'            => array( 'type_agdpevent' ),
+			'hierarchical'          => false,
+			'public'                => true,
+			'show_ui'               => true,
+			'show_in_menu'          => true,
+			'menu_position'         => 25,
+			'show_in_admin_bar'     => true,
+			'show_in_nav_menus'     => true,
+			'can_export'            => true,
+			'has_archive'           => true,
+			'delete_with_user'		=> true,
+			'exclude_from_search'   => false,
+			'publicly_queryable'    => true,
+			//'capabilities'			=> $capabilities,
+			'capability_type'       => 'post'
+		);
+		register_post_type( AgendaPartage_Evenement::post_type, $args );
+	}
+
+	/**
+	 * Register Custom Taxonomy
+	 */
+	public static function register_taxonomy_type_agdpevent() {
+
+		$labels = array(
+			'name'                       => _x( 'Catégorie d\'évènement', 'Taxonomy General Name', AGDP_TAG ),
+			'singular_name'              => _x( 'Catégorie d\'évènement', 'Taxonomy Singular Name', AGDP_TAG ),
+			'menu_name'                  => __( 'Catégories d\'évènement', AGDP_TAG ),
+			'all_items'                  => __( 'Toutes les catégories d\'évènement', AGDP_TAG ),
+			'parent_item'                => __( 'Catégorie parente', AGDP_TAG ),
+			'parent_item_colon'          => __( 'Catégorie parente:', AGDP_TAG ),
+			'new_item_name'              => __( 'Nouvelle catégorie d\'évènement', AGDP_TAG ),
+			'add_new_item'               => __( 'Ajouter une nouvelle catégorie', AGDP_TAG ),
+			'edit_item'                  => __( 'Modifier', AGDP_TAG ),
+			'update_item'                => __( 'Mettre à jour', AGDP_TAG ),
+			'view_item'                  => __( 'Afficher', AGDP_TAG ),
+			'separate_items_with_commas' => __( 'Séparer les éléments par une virgule', AGDP_TAG ),
+			'add_or_remove_items'        => __( 'Ajouter ou supprimer des éléments', AGDP_TAG ),
+			'choose_from_most_used'      => __( 'Choisir le plus utilisé', AGDP_TAG ),
+			'popular_items'              => __( 'Catégories populaires', AGDP_TAG ),
+			'search_items'               => __( 'Rechercher', AGDP_TAG ),
+			'not_found'                  => __( 'Introuvable', AGDP_TAG ),
+			'no_terms'                   => __( 'Aucune catégorie', AGDP_TAG ),
+			'items_list'                 => __( 'Liste des catégories', AGDP_TAG ),
+			'items_list_navigation'      => __( 'Navigation parmi les catégories', AGDP_TAG ),
+		);
+		$args = array(
+			'labels'                     => $labels,
+			'hierarchical'               => true,
+			'public'                     => true,
+			'show_ui'                    => true,
+			'show_admin_column'          => true,
+			'show_in_nav_menus'          => true,
+			'show_tagcloud'              => true,
+		);
+		register_taxonomy( AgendaPartage_Evenement::taxonomy_type_agdpevent, array( AgendaPartage_Evenement::post_type ), $args );
+
+	}
+	
+	/**
+	 * Register Custom Taxonomy
+	 */
+	public static function register_taxonomy_city() {
+
+		$labels = array(
+			'name'                       => _x( 'Commune', 'Taxonomy General Name', AGDP_TAG ),
+			'singular_name'              => _x( 'Commune', 'Taxonomy Singular Name', AGDP_TAG ),
+			'menu_name'                  => __( 'Communes', AGDP_TAG ),
+			'all_items'                  => __( 'Toutes les communes', AGDP_TAG ),
+			'parent_item'                => __( 'Secteur parent', AGDP_TAG ),
+			'parent_item_colon'          => __( 'Secteur parent:', AGDP_TAG ),
+			'new_item_name'              => __( 'Nouvelle commune', AGDP_TAG ),
+			'add_new_item'               => __( 'Ajouter une commune', AGDP_TAG ),
+			'edit_item'                  => __( 'Modifier', AGDP_TAG ),
+			'update_item'                => __( 'Mettre à jour', AGDP_TAG ),
+			'view_item'                  => __( 'Afficher', AGDP_TAG ),
+			'separate_items_with_commas' => __( 'Séparer les éléments par une virgule', AGDP_TAG ),
+			'add_or_remove_items'        => __( 'Ajouter ou supprimer des éléments', AGDP_TAG ),
+			'choose_from_most_used'      => __( 'Choisir la plus utilisée', AGDP_TAG ),
+			'popular_items'              => __( 'Communes les plus utilisées', AGDP_TAG ),
+			'search_items'               => __( 'Rechercher', AGDP_TAG ),
+			'not_found'                  => __( 'Introuvable', AGDP_TAG ),
+			'no_terms'                   => __( 'Aucune commune', AGDP_TAG ),
+			'items_list'                 => __( 'Liste des communes', AGDP_TAG ),
+			'items_list_navigation'      => __( 'Navigation parmi les communes', AGDP_TAG ),
+		);
+		$args = array(
+			'labels'                     => $labels,
+			'hierarchical'               => true,
+			'public'                     => true,
+			'show_ui'                    => true,
+			'show_admin_column'          => true,
+			'show_in_nav_menus'          => true,
+			'show_tagcloud'              => true,
+		);
+		register_taxonomy( AgendaPartage_Evenement::taxonomy_city, array( AgendaPartage_Evenement::post_type ), $args );
+
+	}
+	
+	/**
+	 * Register Custom Taxonomy
+	 */
+	public static function register_taxonomy_publication() {
+
+		$labels = array(
+			'name'                       => _x( 'Publication', 'Taxonomy General Name', AGDP_TAG ),
+			'singular_name'              => _x( 'Publication', 'Taxonomy Singular Name', AGDP_TAG ),
+			'menu_name'                  => __( 'Publications', AGDP_TAG ),
+			'all_items'                  => __( 'Toutes les publications', AGDP_TAG ),
+			'parent_item'                => __( 'Publication parente', AGDP_TAG ),
+			'parent_item_colon'          => __( 'Publication parente:', AGDP_TAG ),
+			'new_item_name'              => __( 'Nouvelle publication', AGDP_TAG ),
+			'add_new_item'               => __( 'Ajouter une publication', AGDP_TAG ),
+			'edit_item'                  => __( 'Modifier', AGDP_TAG ),
+			'update_item'                => __( 'Mettre à jour', AGDP_TAG ),
+			'view_item'                  => __( 'Afficher', AGDP_TAG ),
+			'separate_items_with_commas' => __( 'Séparer les éléments par une virgule', AGDP_TAG ),
+			'add_or_remove_items'        => __( 'Ajouter ou supprimer des éléments', AGDP_TAG ),
+			'choose_from_most_used'      => __( 'Choisir la plus utilisée', AGDP_TAG ),
+			'popular_items'              => __( 'Publications les plus communes', AGDP_TAG ),
+			'search_items'               => __( 'Rechercher', AGDP_TAG ),
+			'not_found'                  => __( 'Introuvable', AGDP_TAG ),
+			'no_terms'                   => __( 'Aucune publication', AGDP_TAG ),
+			'items_list'                 => __( 'Liste des publications', AGDP_TAG ),
+			'items_list_navigation'      => __( 'Navigation parmi les publications', AGDP_TAG ),
+		);
+		$args = array(
+			'labels'                     => $labels,
+			'hierarchical'               => true,
+			'public'                     => true,
+			'show_ui'                    => true,
+			'show_admin_column'          => true,
+			'show_in_nav_menus'          => true,
+			'show_tagcloud'              => true,
+		);
+		register_taxonomy( AgendaPartage_Evenement::taxonomy_publication, array( AgendaPartage_Evenement::post_type ), $args );
+
+	}
+	
+	private static function post_type_capabilities(){
+		return array(
+			'create_agdpevents' => 'create_posts',
+			'edit_agdpevents' => 'edit_posts',
+			'edit_others_agdpevents' => 'edit_others_posts',
+			'publish_agdpevents' => 'publish_posts',
+		);
+	}
+
+	/**
+	 *
+	 */
+	public static function register_user_role(){
+		return;
+		
+		$capabilities = array(
+			'read' => true,
+			'edit_posts' => true,
+			'edit_agdpevents' => true,
+			'wpcf7_read_contact_forms' => false,
+
+			'publish_agdpevents' => true,
+			'delete_posts' => true,
+			'delete_published_posts' => true,
+			'edit_published_posts' => true,
+			'publish_posts' => true,
+			'upload_files ' => true,
+			'create_posts' => false,
+			'create_agdpevents' => false,
+		);
+		add_role( 'agdpevent', __('Évènement', AGDP_TAG ),  $capabilities);
+	}
+
+	/**
+	 * Retourne tous les termes
+	 */
+	public static function get_all_types_agdpevent($array_keys_field = 'term_id'){
+		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_type_agdpevent, $array_keys_field);
+	}
+	public static function get_all_cities($array_keys_field = 'term_id'){
+		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_city, $array_keys_field);
+	}
+	public static function get_all_publications($array_keys_field = 'term_id'){
+		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_publication, $array_keys_field);
+	}
+
+	/**
+	 * Retourne tous les termes
+	 */
+	public static function get_all_terms($taxonomy, $array_keys_field = 'term_id'){
+		$terms = get_terms( array('hide_empty' => false, 'taxonomy' => $taxonomy) );
+		if($array_keys_field){
+			$_terms = [];
+			foreach($terms as $term)
+				$_terms[$term->$array_keys_field . ''] = $term;
+			$terms = $_terms;
+		}
+			
+		return $terms;
+	}
+	
+	public static function get_taxonomies ( $except = false ){
+		$taxonomies = [];
+		
+		$tax_name = 'type_agdpevent';
+		if( ! $except || strpos($except, $tax_name ) === false)
+			$taxonomies[$tax_name] = array(
+				'name' => $tax_name,
+				'input' => 'ev-categories',
+				'filter' => 'categories',
+				'label' => 'Catégorie',
+				'plural' => 'Catégories',
+				'all_label' => '(toutes)',
+				'none_label' => '(sans catégorie)'
+			);
+		
+		$tax_name = 'city';
+		if( ! $except || strpos($except, $tax_name ) === false)
+			$taxonomies[$tax_name] = array(
+				'name' => $tax_name,
+				'input' => 'ev-cities',
+				'filter' => 'cities',
+				'label' => 'Commune',
+				'plural' => 'Commune',
+				'all_label' => '(toutes)',
+				'none_label' => '(sans commune)'
+			);
+		
+		$tax_name = 'publication';
+		if( ! $except || strpos($except, $tax_name ) === false)
+			$taxonomies[$tax_name] = array(
+				'name' => $tax_name,
+				'input' => 'ev-publications',
+				'filter' => 'publications',
+				'label' => 'Publication',
+				'plural' => 'Publications',
+				'all_label' => '(toutes)',
+				'none_label' => '(sans publication)'
+			);
+		
+		return $taxonomies;
+	}
+}
