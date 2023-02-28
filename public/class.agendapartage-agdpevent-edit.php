@@ -532,7 +532,7 @@ class AgendaPartage_Evenement_Edit {
 					case 'utilisateur':
 						if(is_user_logged_in()){
 							global $current_user;
-							get_currentuserinfo();
+							wp_get_current_user();
 							$email = $current_user->user_email;
 							if( is_email($email)){
 								$user_name = $current_user->display_name;

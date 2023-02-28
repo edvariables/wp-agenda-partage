@@ -990,7 +990,7 @@ class AgendaPartage_Evenement {
 				return true;
 			}
 			
-			get_currentuserinfo();
+			wp_get_current_user();
 			$user_email = $current_user->user_email;
 			if( ! is_email($user_email)){
 				$user_email = false;

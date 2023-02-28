@@ -185,8 +185,19 @@ class AgendaPartage_Admin_Evenement {
 	 */
 	public static function add_dashboard_widgets() {
 	    global $wp_meta_boxes;
+		$current_user = wp_get_current_user();
 		//TODO : trier par les derniers ajoutés
-		$agdpevents = AgendaPartage_Evenements::get_posts(5, array( 'author' => get_current_user_id() ));
+		//TODO : author OR email
+		$agdpevents = AgendaPartage_Evenements::get_posts(5
+			, array( 
+				// 'author' => $current_user->ID,
+				// 'relation' => 'OR',
+				'meta_query' => [
+					'key' => 'ev-email',
+					'value' => $current_user->user_email,
+					'compare' => '='
+				]
+			));
 	    if( count($agdpevents) ) {
 			add_meta_box( 'dashboard_my_agdpevents',
 				__('Mes évènements', AGDP_TAG),
@@ -248,12 +259,16 @@ class AgendaPartage_Admin_Evenement {
 	 */
 	public static function dashboard_my_agdpevents_cb($post , $widget) {
 		$agdpevents = $widget['args']['agdpevents'];
+		$edit_url = current_user_can('manage_options');
 		?><ul><?php
 		foreach($agdpevents as $agdpevent){
-			//;
 			echo '<li>';
 			?><header class="entry-header"><?php 
-				edit_post_link( AgendaPartage_Evenement::get_agdpevent_title($agdpevent), '<h3 class="entry-title">', '</h3>', $agdpevent );
+				if($edit_url)
+					$url = get_edit_post_link($agdpevent);
+				else
+					$url = AgendaPartage_Evenement::get_post_permalink($agdpevent);
+				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Evenement::get_agdpevent_title($agdpevent) );
 				the_terms( $agdpevent->ID, 'type_agdpevent', 
 					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
 				$the_date = get_the_date('', $agdpevent);
@@ -261,7 +276,7 @@ class AgendaPartage_Admin_Evenement {
 				$html = sprintf('<span>ajouté le %s</span>', $the_date) ;
 				if($the_date != $the_modified_date)
 					$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;		
-				edit_post_link( $html, '<cite>', '</cite><hr>', $agdpevent );			
+				echo sprintf( '<cite>%s</cite><hr>', $html);		
 			?></header><?php
 			/*?><div class="entry-summary">
 				<?php echo get_the_excerpt($agdpevent); //TODO empty !!!!? ?>

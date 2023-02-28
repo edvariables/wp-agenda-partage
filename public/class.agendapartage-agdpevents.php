@@ -34,20 +34,20 @@ class AgendaPartage_Evenements {
 					'key' => 'ev-date-debut',
 					'value' => wp_date('Y-m-d'),
 					'compare' => '>=',
-					'type' => 'DATE',
+					'type' => 'DATE'
 				],
 				'ev-date-fin' => [
 					'relation' => 'AND',
 					[
 						'key' => 'ev-date-fin',
 						'value' => '',
-						'compare' => '!=',
+						'compare' => '!='
 					],
 					[
 						'key' => 'ev-date-fin',
 						'value' => wp_date('Y-m-d'),
 						'compare' => '>=',
-						'type' => 'DATE',
+						'type' => 'DATE'
 					]
 				]
 			],
@@ -87,6 +87,19 @@ class AgendaPartage_Evenements {
 					$query = array('posts_per_page' => $query);
 				else
 					$query = array();
+			}
+			if(isset($query['meta_query'])){
+				if(isset($all['meta_query'])){
+					$all['meta_query'] = array(
+						(string)uniqid()=> $all['meta_query']
+						, (string)uniqid()=> $query['meta_query']
+						, 'relation' => 'AND'
+					);
+				}
+				else
+					$all['meta_query'] = $query['meta_query'];
+				
+				unset($query['meta_query']);
 			}
 			$all = array_merge($all, $query);
 		}
@@ -138,8 +151,12 @@ class AgendaPartage_Evenements {
 	 * Recherche de évènements
 	 */
 	public static function get_posts(...$queries){
+
 		$query = self::get_posts_query(...$queries);
-		// var_dump($query, $queries);
+
+		error_log('get_posts $queries ' . var_export($queries, true));
+		error_log('get_posts $query ' . var_export($query, true));
+
         $the_query = new WP_Query( $query );
 		
 		error_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
