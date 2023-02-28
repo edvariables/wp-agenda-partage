@@ -906,7 +906,7 @@ class AgendaPartage_Evenement {
 		if(is_numeric($post))
 			$post = get_post($post);
 		$post_status = $post->post_status;
-		$leave_name = ($url_args[0] === true);
+		$leave_name = (count($url_args) && $url_args[0] === true);
 		if( ! $leave_name
 		&& $post->post_status == 'publish' ){
 			$url = get_post_permalink( $post->ID);
@@ -1035,7 +1035,7 @@ class AgendaPartage_Evenement {
 			
 		$form = WPCF7_ContactForm::get_current();
 		
-		switch($form->id){
+		switch($form->id()){
 			case AgendaPartage::get_option('newsletter_events_register_form_id') :
 			case AgendaPartage::get_option('admin_message_contact_form_id') :
 			case AgendaPartage::get_option('agdpevent_message_contact_post_id') :

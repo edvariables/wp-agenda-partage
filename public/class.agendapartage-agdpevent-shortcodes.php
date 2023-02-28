@@ -97,7 +97,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				return sprintf('<a href="mailto:%s">%s</a>', antispambot(sanitize_email($email)), $post->post_title);//TODO anti-spam
 
 			case 'dump':
-				return sprintf('<pre>%s</pre>', var_export($post, true));
+				return sprintf('<pre>%s</pre>', 'shortcodes dump : ' . var_export($post, true));
 
 			case 'title':
 				$info = 'post_title';
@@ -330,10 +330,10 @@ class AgendaPartage_Evenement_Shortcodes {
 			case 'agdpevent-publications':
 				$tax_name = AgendaPartage_Evenement::taxonomy_publication;
 			case 'agdpevent-cities':
-				if(!$tax_name)
+				if(!isset($tax_name) || !$tax_name)
 					$tax_name = AgendaPartage_Evenement::taxonomy_city;
 			case 'agdpevent-categories':
-				if(!$tax_name)
+				if(!isset($tax_name) || !$tax_name)
 					$tax_name = AgendaPartage_Evenement::taxonomy_type_agdpevent;
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
 				$terms = AgendaPartage_Evenement::get_event_terms( $tax_name, $post_id, 'names');

@@ -19,13 +19,20 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	}
 	
 	public static function init_hooks() {
-
-		add_filter( 'wp_insert_post_data', array(__CLASS__, 'wp_insert_post_data_cb'), 10, 2 );
 		
+		if(basename($_SERVER['PHP_SELF']) === 'post.php'
+		&& isset($_POST['post_type'])
+			&& $_POST['post_type'] == AgendaPartage_Evenement::post_type 
+		&& isset($_POST['post_status'])
+			&& ! in_array($_POST['post_status'], [ 'trash', 'trashed' ]) ){
+			add_filter( 'wp_insert_post_data', array(__CLASS__, 'wp_insert_post_data_cb'), 10, 2 );
+		}
 		
+		if( in_array( basename($_SERVER['PHP_SELF']), [ 'revision.php', 'admin-ajax.php' ])) {
+			add_filter( 'wp_get_revision_ui_diff', array(__CLASS__, 'on_wp_get_revision_ui_diff_cb'), 10, 3 );		
+		}
 
-		//Sauvegarde de brouillon ou de modification rapide
-		if(basename($_SERVER['PHP_SELF']) != 'admin-ajax.php'
+		if(basename($_SERVER['PHP_SELF']) === 'post.php'
 		&& array_key_exists('post_type', $_POST)
 		&& $_POST['post_type'] == AgendaPartage_Evenement::post_type)
 			add_action( 'save_post_agdpevent', array(__CLASS__, 'save_post_agdpevent_cb'), 10, 3 );
@@ -39,18 +46,16 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function wp_insert_post_data_cb ($data, $postarr ){
-		
-		//Sauvegarde de brouillon ou de modification rapide
-		if(basename($_SERVER['PHP_SELF']) == 'admin-ajax.php'
-		|| $data['post_type'] != AgendaPartage_Evenement::post_type 
-		|| in_array($data['post_status'], [ 'trash', 'trashed' ]) ){
+		if($data['post_type'] != AgendaPartage_Evenement::post_type)
 			return $data;
-		}
-
+		
 		if( array_key_exists('ev-create-user', $postarr) && $postarr['ev-create-user'] ){
 			$data = self::create_user_on_save($data, $postarr);
 		}
-
+		
+		//On sauve les révisions de meta_values
+		AgendaPartage_Evenement_Edit::save_post_revision($postarr['post_ID'], $postarr, true);
+		
 		return $data;
 	}
 	/**
@@ -272,7 +277,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 
 		$fields[] =
 			array('name' => 'ev-message-contact',
-				'label' => __('Les visiteurs peuvent envoyer un email (si fourni).', AGDP_TAG),
+				'label' => __('Les visiteurs peuvent envoyer un e-mail.', AGDP_TAG),
 				'type' => 'bool',
 				'default' => 'checked'
 			)
@@ -352,7 +357,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		?><label for="post_author_override"><?php _e( 'Utilisateur' ); ?></label><?php
 		wp_dropdown_users(
 			array(
-				'who'              => 'authors',
+				'capability'       => 'authors',
 				'name'             => 'post_author_override',
 				'selected'         => empty( $post->ID ) ? $user_ID : $post->post_author,
 				'include_selected' => true,
@@ -406,4 +411,40 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		return false;
 	}
 
+	/**
+	 * Dans la visualisation des différences entre révisions, ajoute les meta_value
+	 */
+	public static function on_wp_get_revision_ui_diff_cb($return, $compare_from, $compare_to ){
+		$metas_from = is_object($compare_from) ? get_post_meta($compare_from->ID, '', true) : [];
+		$metas_to = get_post_meta($compare_to->ID, '', true);
+		$meta_names = array_keys(array_merge($metas_from, $metas_to));
+		
+		$row_index = 0;
+		foreach($meta_names as $meta_name){
+			$from_exists = isset($metas_from[$meta_name]) && count($metas_from[$meta_name]) ;
+			$from_value = $from_exists ? implode(', ', $metas_from[$meta_name]) : null;
+			$to_exists = isset($metas_to[$meta_name]) && count($metas_to[$meta_name]);
+			$post_value = $to_exists ? implode(', ', $metas_to[$meta_name]) : null;
+			$return[] = array (
+				'id' => $meta_name,
+				'name' => $meta_name,
+				'diff' => sprintf( "<table class='diff is-split-view'>
+<tbody>
+<tr><td class='%s'><span aria-hidden='true' class='dashicons dashicons-%s'></span><span class='screen-reader-text'>Avant </span><del>%s</del>
+</td><td class='%s'><span aria-hidden='true' class='dashicons dashicons-%s'></span><span class='screen-reader-text'>Après </span><ins>%s</ins>
+</td></tr>
+</tbody>
+</table>"
+				, $from_exists ? 'diff-deletedline' : 'hide-children'
+				, $from_exists && $post_value !== null ? 'minus' : 'arrow-left'
+				, $from_value === null ? '' : htmlentities(var_export($from_value, true))
+				, $to_exists ? 'diff-addedline' : ''
+				, $to_exists && $from_exists ? 'plus' : 'yes'
+				, $post_value === null ? '(idem)' : htmlentities(var_export($post_value, true))
+			));
+			$row_index++;
+		}
+		return $return;
+	}
+	
 }

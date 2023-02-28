@@ -64,7 +64,25 @@ class AgendaPartage_Evenement_Post_type {
 			'capability_type'       => 'post'
 		);
 		register_post_type( AgendaPartage_Evenement::post_type, $args );
+		
+		if(WP_POST_REVISIONS >= 0)
+			add_filter( 'wp_revisions_to_keep', array(__CLASS__, 'wp_revisions_to_keep'), 10, 2);
+		// add_filter( '_wp_post_revision_fields', array(__CLASS__, '_wp_post_revision_fields'), 10, 2);
 	}
+	public static function wp_revisions_to_keep( int $num, WP_Post $post ) {
+		if($post->post_type === AgendaPartage_Evenement::post_type)
+			return -1;
+		return $num;
+	}
+	
+	// public static function _wp_post_revision_fields( $fields, $post ) {
+		// if($post['post_type'] === AgendaPartage_Evenement::post_type){
+			// error_log('_wp_post_revision_fields $fields[\'meta_input\'] = \'Paramètres\'');
+			// $fields['meta_input'] = 'Paramètres';
+		// }
+		// return $fields;
+	// }
+	
 
 	/**
 	 * Register Custom Taxonomy

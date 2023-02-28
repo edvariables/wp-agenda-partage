@@ -12,13 +12,13 @@
  * Tags: 
  * License: GPLv3
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
- * Version: 1.0.11
+ * Version: 1.0.12
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AGDP_VERSION', '1.0.11' );
-define( 'AGDP_MINIMUM_WP_VERSION', '4.0' );
+define( 'AGDP_VERSION', '1.0.12' );
+define( 'AGDP_MINIMUM_WP_VERSION', '5.0' );
 
 define( 'AGDP_PLUGIN', __FILE__ );
 define( 'AGDP_PLUGIN_BASENAME', plugin_basename( AGDP_PLUGIN ) );

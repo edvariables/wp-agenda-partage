@@ -267,7 +267,7 @@ class AgendaPartage_Evenements {
 			}
 		}
 		if($return_sql)
-			return $sql;
+			return isset($sql) ? $sql : '';
 		return $query;
 	}
 	
@@ -437,7 +437,7 @@ class AgendaPartage_Evenements {
 			$html = sprintf('<p class="alerte no-events">%s</p>%s', __('Erreur lors de la recherche d\'évènements.', AGDP_TAG), var_export($events, true));
 		}
 		elseif($events){
-			
+			$html = '';
 			if(count($events) === 0){
 				$html .= sprintf('<p class="alerte no-events">%s</p>', __('Aucun évènement trouvé', AGDP_TAG));
 			}

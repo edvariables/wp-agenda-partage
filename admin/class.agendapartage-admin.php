@@ -313,11 +313,13 @@ class AgendaPartage_Admin {
 	**/
 	
 	public static function wpcf7_admin_notices($tag, $action, $contact_form){
+		if( ! is_object($contact_form))
+			return;
 		foreach(['agdpevent_edit_form_id'
 				, 'admin_message_contact_form_id'
 				, 'agdpevent_message_contact_post_id'
 				, 'newsletter_events_register_form_id'] as $option){
-			if($contact_form->id == AgendaPartage::get_option($option)){
+			if($contact_form->id() == AgendaPartage::get_option($option)){
 				$label = AgendaPartage::get_option_label($option);
 				break;
 			}

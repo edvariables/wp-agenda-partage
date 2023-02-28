@@ -76,3 +76,7 @@ img.coo-favicon {
 .import-report li {
 	margin-top: 1em;
 }
+
+#wpbody-content .revisions .hide-children > * {
+	display: none;
+}

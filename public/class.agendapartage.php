@@ -308,12 +308,13 @@ class AgendaPartage {
 	* Utilisé pour les champs AGDP_SECRETCODE
 	*/
 	public static function get_secret_code ($length = 6, $alphanum = true){
+		$numeric = !$alphanum || str_starts_with( $alphanum, 'num');
 		if ($length < 1)
 			$length = 1;
 		elseif ($numeric && $length > 9)
 			$length = 9;
 		
-		if(!$alphanum || str_starts_with( $alphanum, 'num'))
+		if($numeric)
 			$chars = '12345689';
 		elseif(str_starts_with( $alphanum, 'text')
 			|| ($alphanum == 'alpha'))

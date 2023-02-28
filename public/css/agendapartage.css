@@ -207,6 +207,7 @@ div.ajax_action-response {
 }
 .wpcf7-form table td {
 	padding-bottom: 0px;
+	vertical-align: top;
 }
 .wpcf7-form table td:first-child {
 	width: 1px;

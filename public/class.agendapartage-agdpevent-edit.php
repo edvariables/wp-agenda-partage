@@ -16,6 +16,14 @@ class AgendaPartage_Evenement_Edit {
 
 
 	private static $initiated = false;
+	private static $changes_for_revision = null;
+	public static $revision_fields = [ 
+				'ev-date-debut',
+				'ev-organisateur', 
+				'ev-email',
+				'ev-localisation',
+				'ev-description'
+				];
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -209,7 +217,16 @@ class AgendaPartage_Evenement_Edit {
 			}
 		}
 		else{
+			$agdpevent_exists = false;
 			$post_id = 0;
+			
+			if($user = wp_get_current_user()){
+				// var_dump($user);
+				$meta_name = 'ev-organisateur';
+				$attrs[$meta_name] = $user->user_nicename;
+				$meta_name = 'ev-email';
+				$attrs[$meta_name] = $user->user_email;
+			}
 		}
 		//Les catégories, communes et publications sont traitées dans wpcf7_form_init_tags_cb
 		
@@ -306,6 +323,7 @@ class AgendaPartage_Evenement_Edit {
 			$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name);
 			$checkboxes = '';
 			$selected = '';
+			$free_text = false;
 			$index = 0;
 			foreach($all_terms as $term){
 				$checkboxes .= sprintf(' "%s|%d"', $term->name, $term->term_id);
@@ -477,7 +495,7 @@ class AgendaPartage_Evenement_Edit {
 	 */
 	private static function wp_mail_emails_fields($args){
 		//TODO all
-		
+		$post = self::get_agdpevent_post();
 		$to_emails = parse_emails($args['to']);
 		$headers_emails = parse_emails($args['headers']);
 		$emails = array();
@@ -585,7 +603,8 @@ class AgendaPartage_Evenement_Edit {
 		$args['headers'] = preg_replace('/@?([\w.]*)("?\<commande@agendapartage.net\>)/', '_$1@agendapartage.net$2', $args['headers']);
 
 
-		if($password_message = self::new_password_via_email($post->post_author)){
+		if($post
+		&& $password_message = self::new_password_via_email($post->post_author)){
 			$args['message'] .= "\r\n<br>" . $password_message;
 		}
 		return $args;
@@ -621,6 +640,8 @@ class AgendaPartage_Evenement_Edit {
 		if ( isset( $_REQUEST['redirect_to'] ) ) {
 			$url = $_REQUEST['redirect_to'];
 		}
+		else
+			$url = false;
 		if( ! $url) {
 			$url = get_home_url( AgendaPartage_User::get_current_or_default_blog_id($user), sprintf("wp-admin/"), 'admin' );
 		}
@@ -786,8 +807,9 @@ class AgendaPartage_Evenement_Edit {
 		else {
 			$data[$meta_name] = AgendaPartage::get_session_id();
 		}
-
-		if($user = wp_get_current_user()
+		
+		// $user = wp_get_current_user()
+		if( ($user = wp_get_current_user())
 		&& $user->ID){
 		    $post_author = $user->ID;
 		}
@@ -852,6 +874,8 @@ class AgendaPartage_Evenement_Edit {
 			}
 			else{
 				
+				self::save_post_revision($post, $postarr);
+				
 				$postarr['ID'] = $post->ID;
 				$post_id = wp_update_post( $postarr, true );
 				
@@ -915,6 +939,117 @@ class AgendaPartage_Evenement_Edit {
 		
 		return $post_id;
 	}
+	
+	/***********
+	 * REVISIONS
+	 * Mémorise les besoins de création d'une révision d'un post si certains champs sont modifiés
+	 */
+	public static function save_post_revision($post, $new_data){
+		if(is_numeric($post)){
+			$post_id = $post;
+			$post = get_post($post_id);
+		}
+		elseif($post)
+			$post_id = $post->ID;
+		if(!$post)
+			return false;
+		
+		
+		$post_revisions = wp_get_post_revisions($post_id);
+					
+		$changes = [];
+		$old_values = get_post_meta($post_id, '', true);
+		foreach(self::$revision_fields as $field){
+			$old_value = isset($old_values[ $field ]) ? $old_values[ $field ] : null;
+			if(is_array($old_value))
+				$old_value = implode(', ', $old_value);
+			$new_value = isset($new_data['meta_input']) 
+				? (isset($new_data['meta_input'][$field]) ? $new_data['meta_input'][$field] : null)
+				: (isset($new_data[$field]) ? $new_data[$field] : null);
+			
+			if(count($post_revisions) === 0
+			|| $old_value != $new_value){
+				$changes[$field] = $new_value;
+			}
+		}
+		
+		self::$changes_for_revision = $changes;
+		
+		// error_log('self::$changes_for_revision : ' . var_export(self::$changes_for_revision, true));
+		
+		if( count($changes) ){
+			
+			add_filter( 'wp_save_post_revision_check_for_changes', array(__CLASS__, 'wp_save_post_revision_check_for_changes'), 10, 3);
+			add_filter('_wp_put_post_revision', array(__CLASS__, 'on_wp_put_post_revision_cb'), 10, 1);
+			
+			
+		}
+		return false;
+	}
+	/**
+	 * Force la création d'une révision depuis l'appel de save_post_revision()
+	 */
+	public static function wp_save_post_revision_check_for_changes( bool $check_for_changes, WP_Post $latest_revision, WP_Post $post ){
+		
+		if($post->post_type != AgendaPartage_Evenement::post_type){
+			
+			// error_log('wp_save_post_revision_check_for_changes : $post->post_type = ' . var_export($post->post_type, true));
+		
+			return $check_for_changes;
+		}
+		
+		// error_log('wp_save_post_revision_check_for_changes : ' . var_export(self::$changes_for_revision, true));
+		
+		if($check_for_changes
+		&& self::$changes_for_revision
+		&& count(self::$changes_for_revision))
+			return false;
+		return $check_for_changes;
+	}
+	
+	/**
+	 * Complète les informations d'une révision
+	 */
+	public static function on_wp_put_post_revision_cb( int $revision_id ){
+		
+		// error_log('on_wp_put_post_revision_cb (' . $revision_id . ') : ' . var_export(self::$changes_for_revision, true));
+		
+		if(! self::$changes_for_revision
+		|| count(self::$changes_for_revision) === 0)
+			return;
+			
+		$revision = get_post($revision_id);
+		$post_id = $revision->post_parent;
+		$post = get_post($post_id);
+		if($post->post_type != AgendaPartage_Evenement::post_type)
+			return;
+		
+		// $post_revisions = wp_get_post_revisions($post_id);
+		
+		// if(count($post_revisions) === 1){
+			// foreach($post_revisions as $a_revision){
+				// $first_revision = $a_revision;
+				// break;
+			// }
+			// error_log('first_revision : ' . var_export($first_revision->ID, true));
+		// }
+		$changes = self::$changes_for_revision;
+		
+		// error_log('on_wp_put_post_revision_cb (' . $revision_id . ') changes : ' . var_export($changes, true));
+		foreach($changes as $field => $value){
+			if( ! in_array( $field, self::$revision_fields ))
+				continue;
+			if(is_array($value))
+				$value = implode(', ', $value);
+			error_log('update_metadata('.$revision_id.') : ' . $field . ' = ' . var_export($value, true));
+			update_metadata( 'post', $revision_id, $field, $value );
+		}
+		self::$changes_for_revision = null;
+		return;
+	}
+	/*
+	 * /REVISIONS
+	 ************/
   
 	/**
 	* Validation des champs des formulaires WPCF7
@@ -929,7 +1064,7 @@ class AgendaPartage_Evenement_Edit {
 					break;
 				}
 				if(! preg_match("/^([0-1]?[0-9]|2[0-3])([hH:]([0-5][0-9])?)?$/", $heure, $matches)){
-					$result->invalidate( $tag, "Heure incorrecte, elle doit être de la forme hh:mm." . var_export($result, true) );
+					$result->invalidate( $tag, "Heure incorrecte, elle doit être de la forme hh:mm." );
 					break;
 				}
 				if($matches){
@@ -971,6 +1106,14 @@ class AgendaPartage_Evenement_Edit {
 					if($invalide_date)
 						$result->invalidate( $tag, sprintf("Date incorrecte (%s), elle doit être supérieure ou égale à aujourd'hui (%s).", date("d/m/Y", $date), date("d/m/Y") ) );
 					break;
+				}
+				else {
+					$to_late = strtotime(date("Y-m-d") . ' + 2 year');
+					$invalide_date = $date > $to_late;
+					if($invalide_date) {
+						$result->invalidate( $tag, sprintf("Date incorrecte (%s), elle ne peut être aussi éloignée d'aujourd'hui (%s maxi).", date("d/m/Y", $date), date("d/m/Y", $to_late) ) );
+						break;
+					}
 				}
 				if($tag->name == 'ev-date-fin'){
 					$date_debut = isset( $_POST['ev-date-debut'] ) ? trim( $_POST['ev-date-debut'] ) : '';
