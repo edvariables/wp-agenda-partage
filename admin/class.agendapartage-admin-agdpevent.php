@@ -186,8 +186,8 @@ class AgendaPartage_Admin_Evenement {
 	public static function add_dashboard_widgets() {
 	    global $wp_meta_boxes;
 		//TODO : trier par les derniers ajoutés
-	    $agdpevents = AgendaPartage_Evenements::get_posts(5, array( 'author' => get_current_user_id() ));
-		if( count($agdpevents) ) {
+		$agdpevents = AgendaPartage_Evenements::get_posts(5, array( 'author' => get_current_user_id() ));
+	    if( count($agdpevents) ) {
 			add_meta_box( 'dashboard_my_agdpevents',
 				__('Mes évènements', AGDP_TAG),
 				array(__CLASS__, 'dashboard_my_agdpevents_cb'),

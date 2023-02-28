@@ -23,6 +23,7 @@ class AgendaPartage_Evenements {
 	}
 	
 	public static function init_default_posts_query() {
+		
 		self::$default_posts_query = array(
 			'post_type' => AgendaPartage_Evenement::post_type,
 			'post_status' => 'publish',
@@ -35,17 +36,20 @@ class AgendaPartage_Evenements {
 					'compare' => '>=',
 					'type' => 'DATE',
 				],
-				'ev-date-debut' => [
-					'key' => 'ev-date-fin',
-					'value' => wp_date('Y-m-d'),
-					'compare' => '>=',
-					'type' => 'DATE',
-				],
-				// 'ev-heure-debut' => [
-					// 'key' => 'ev-heure-debut',
-					// 'compare' => 'EXISTS', # we don't actually want any restriction around time
-					// 'type' => 'TIME',
-				// ],
+				'ev-date-fin' => [
+					'relation' => 'AND',
+					[
+						'key' => 'ev-date-fin',
+						'value' => '',
+						'compare' => '!=',
+					],
+					[
+						'key' => 'ev-date-fin',
+						'value' => wp_date('Y-m-d'),
+						'compare' => '>=',
+						'type' => 'DATE',
+					]
+				]
 			],
 			'orderby' => [
 				'ev-date-debut' => 'ASC',
@@ -137,7 +141,8 @@ class AgendaPartage_Evenements {
 		$query = self::get_posts_query(...$queries);
 		// var_dump($query, $queries);
         $the_query = new WP_Query( $query );
-		// echo ('<pre>'.$the_query->request.'</pre>');
+		
+		error_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
         return $the_query->posts; 
     }
 

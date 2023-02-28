@@ -419,3 +419,5 @@ class AgendaPartage_Admin_Menu {
 		remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
 	}
 }
+
+?>
