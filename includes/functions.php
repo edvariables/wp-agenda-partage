@@ -36,3 +36,16 @@ function parse_emails ($text){
 function debug_callback(){
 	var_dump(func_get_args());
 }
+
+function debug_log_clear(){
+	$log_file = WP_CONTENT_DIR . '/debug.log';
+	if(file_exists($log_file))
+		file_put_contents($log_file, '');
+}
+function debug_log(...$messages){
+	$log_file = WP_CONTENT_DIR . '/debug.log';
+	
+	file_put_contents($log_file, '[' . wp_date("Y-m-d H:i:s") . '] ', FILE_APPEND);
+	foreach($messages as $msg)
+		file_put_contents($log_file, var_export($msg, true).PHP_EOL, FILE_APPEND);
+}
