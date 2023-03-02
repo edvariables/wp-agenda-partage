@@ -3,11 +3,57 @@ class AgendaPartage_Admin_User {
 
 	public static function init() {
 		//Add custom user contact Methods
-		add_filter( 'user_contactmethods', array( __CLASS__, 'custom_user_contact_methods' ));
+		add_filter( 'user_contactmethods', array( __CLASS__, 'custom_user_contact_methods' ), 10, 2);
+		
+		if( basename($_SERVER['PHP_SELF']) === 'profile.php' 
+		|| basename($_SERVER['PHP_SELF']) === 'user-edit.php') {
+			add_action( 'show_user_profile', array(__CLASS__, 'on_custom_user_profil'), 10, 1 );
+			add_action( 'edit_user_profile', array(__CLASS__, 'on_custom_user_profil'), 10, 1 );
+			add_action( 'insert_custom_user_meta', array(__CLASS__, 'on_insert_custom_user_meta'), 10, 4);
+		
+		}
+		
+	}
+	
+	/**
+	 * Mise à jour des paramètres spécifiques de l'utilisateur
+	 */
+	public static function on_insert_custom_user_meta($custom_meta, $user, $update, $userdata){
+		$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key();
+		if( array_key_exists($meta_key, $_POST))
+			$custom_meta[$meta_key] = $_POST[$meta_key];
+		return $custom_meta;
+	}
+	
+	/**
+	 * A l'affichage de l'édition d'un utilisateur, ajoute des champs spécifiques
+	 */
+	public static function on_custom_user_profil( $profile_user ) {
+		$user_subscription = AgendaPartage_Newsletter::get_subscription($profile_user->user_email);
+		$subscribe_periods = AgendaPartage_Newsletter::subscribe_periods();		
+		
+		$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key();
+		
+		?><br><h2>Abonnement à la lettre-info de l'Agenda partagé</h2>
+
+		<table class="form-table" role="presentation">
+			<tr id="agdp-newsletter">
+				<th><label>Lettre-info</label></th>
+				<td><ul>
+					<?php 
+						foreach( $subscribe_periods as $subscribe_code => $label){
+							$selected = $user_subscription == $subscribe_code ? 'checked' : '';
+							echo sprintf('<li><label><input type="radio" name="%s" value="%s" %s>%s</label></li>'
+								, $meta_key, $subscribe_code, $selected, $label);
+						}
+					?></ul>
+				</td>
+			</tr>
+		</table><?php
 	}
 
 	// Register User Contact Methods
-	public static function custom_user_contact_methods( $user_contact_method ) {
+	public static function custom_user_contact_methods( $user_contact_method, $user ) {
 
 /*		$user_contact_method['email3'] = __( 'Autre email', AGDP_TAG );
 

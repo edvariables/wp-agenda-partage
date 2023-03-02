@@ -13,6 +13,9 @@ class AgendaPartage_Post_Types {
 		if(!class_exists('AgendaPartage_Evenement'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-post_type.php' );
+		if(!class_exists('AgendaPartage_Newsletter'))
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter.php' );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter-post_type.php' );
 	}
 
 	/**
@@ -26,6 +29,8 @@ class AgendaPartage_Post_Types {
 		AgendaPartage_Evenement_Post_Type::register_taxonomy_type_agdpevent();
 		AgendaPartage_Evenement_Post_Type::register_taxonomy_city();
 		AgendaPartage_Evenement_Post_Type::register_taxonomy_publication();
+		
+		AgendaPartage_Newsletter_Post_Type::register_post_type();
 	
 	    // clear the permalinks after the post type has been registered
 	    flush_rewrite_rules();

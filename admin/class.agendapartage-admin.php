@@ -24,10 +24,16 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Evenement', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-newsletter.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Newsletter', 'init' ) );
+
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-post-type.php' );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Evenement', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-newsletter.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Newsletter', 'init' ) );
 	}
 
 	public static function init_hooks() {
@@ -318,6 +324,7 @@ class AgendaPartage_Admin {
 		foreach(['agdpevent_edit_form_id'
 				, 'admin_message_contact_form_id'
 				, 'agdpevent_message_contact_post_id'
+				, 'contact_form_id'
 				, 'newsletter_events_register_form_id'] as $option){
 			if($contact_form->id() == AgendaPartage::get_option($option)){
 				$label = AgendaPartage::get_option_label($option);

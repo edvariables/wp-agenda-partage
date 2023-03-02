@@ -45,10 +45,6 @@ class AgendaPartage_Evenement_Edit {
 		//Maintient de la connexion de l'utilisateur pendant l'envoi du mail
 		// add_filter( 'wpcf7_verify_nonce', array(__CLASS__, 'wpcf7_verify_nonce_cb' ));	
 		add_filter( 'wpcf7_verify_nonce', '__return_true' );
-
-		
-		//Contrôle des champs postés
-		// add_filter( 'wpcf7_posted_data', array(__CLASS__, 'wpcf7_posted_data'), 10, 1);
 		
 		//Validation des valeurs
 		add_filter( 'wpcf7_validate_text', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
@@ -162,7 +158,7 @@ class AgendaPartage_Evenement_Edit {
 	}
  
  	/**
- 	 * Retourne le Content du post
+ 	 * Initialise les champs du formulaire
  	 */
 	public static function get_agdpevent_edit_content( ) {
 		global $post;
@@ -303,7 +299,7 @@ class AgendaPartage_Evenement_Edit {
 	/**
 	 * Interception du formulaire avant que les shortcodes ne soient analysés.
 	 * Affectation des valeurs par défaut.
-	 * Affectation des listes de catégories
+	 * Affectation des listes de taxonomies
 	 */
  	public static function wpcf7_form_init_tags_cb( $form_class ) { 
 		$form = WPCF7_ContactForm::get_current();
@@ -604,7 +600,7 @@ class AgendaPartage_Evenement_Edit {
 
 
 		if($post
-		&& $password_message = self::new_password_via_email($post->post_author)){
+		&& $password_message = self::new_password_link($post->post_author)){
 			$args['message'] .= "\r\n<br>" . $password_message;
 		}
 		return $args;
@@ -614,20 +610,15 @@ class AgendaPartage_Evenement_Edit {
 	 * Dans un email au contact d'évènement, ajoute une invitation à saisir un nouveaui mot de passe.
 	 * Returns a string to add to email for user to reset his password.
 	 */
-	private static function new_password_via_email($user_id){
+	private static function new_password_link($user_id){
 		if(! array_key_exists( "new-password", $_POST)
 		|| is_super_admin($user_id)
 		|| $user_id == AgendaPartage_User::get_blog_admin_id()
 		)
 			return;
 		$user = new WP_USER($user_id);
-		$password_key = get_password_reset_key($user);
-		if( ! $password_key)
-			return;
 		$redirect_to = get_home_url( get_current_blog_id(), sprintf("wp-login.php?login=%s", rawurlencode( $user->user_login )), 'login' );
-		$url = sprintf("wp-login.php?action=rp&key=%s&login=%s&redirect_to=%s", $password_key, rawurlencode( $user->user_login ), esc_url($redirect_to));
-		$url = network_site_url( $url );
-		$message .= sprintf(__( 'Pour définir votre mot de passe, <a href="%s">vous devez cliquer ici</a>.', AGDP_TAG) , $url ) . "\r\n";
+		$message = AgendaPartage_User::new_password_link($user, $redirect_to);
 		return $message;
 	}
 
@@ -701,7 +692,7 @@ class AgendaPartage_Evenement_Edit {
 	 * Create a new agdpevent or update an existing one
 	 * Called before email is sent
 	 */
-	public static function update_agdpevent_from_form($contact_form, &$abort, $submission){
+	public static function submit_agdpevent_form($contact_form, &$abort, $submission){
 		$error_message = false;
 		
 		if( ! array_key_exists('agdpevent_duplicated_from', $_POST)){
@@ -1041,7 +1032,7 @@ class AgendaPartage_Evenement_Edit {
 				continue;
 			if(is_array($value))
 				$value = implode(', ', $value);
-			error_log('update_metadata('.$revision_id.') : ' . $field . ' = ' . var_export($value, true));
+			// error_log('update_metadata('.$revision_id.') : ' . $field . ' = ' . var_export($value, true));
 			update_metadata( 'post', $revision_id, $field, $value );
 		}
 		self::$changes_for_revision = null;

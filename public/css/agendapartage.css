@@ -193,10 +193,10 @@ div.ajax_action-response {
 	padding: 5px;
 }
 
-.wpcf7-form-control[name^="ev-date-"] {
+input.wpcf7-form-control[name^="ev-date-"] {
 	width: 11em;
 }
-.wpcf7-form-control[name^="ev-heure-"] {
+input.wpcf7-form-control[name^="ev-heure-"] {
 	width: 5em;
 }
 .wpcf7-form table {
@@ -218,4 +218,21 @@ div.ajax_action-response {
 }
 .wpcf7-form span.required {
 	color: red;
+}
+.wpcf7-form .next-radio-br + .wpcf7-form-control-wrap .wpcf7-list-item{
+	display: block;
+}
+.wpcf7-form label[for="nl-user-name"]{
+	margin-left: 1em;
+}
+input.wpcf7-form-control[name="nl-user-name"] {
+    display: inline;
+    width: auto;
+    margin-left: 1em;
+}
+.wpcf7-list-item input[name="nl-period"] + span.wpcf7-list-item-label {
+	font-weight: normal;
+}
+.wpcf7-list-item input[name="nl-period"]:checked + span.wpcf7-list-item-label {
+	font-weight: bold;
 }

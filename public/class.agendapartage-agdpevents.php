@@ -154,12 +154,12 @@ class AgendaPartage_Evenements {
 
 		$query = self::get_posts_query(...$queries);
 
-		error_log('get_posts $queries ' . var_export($queries, true));
-		error_log('get_posts $query ' . var_export($query, true));
+		// debug_log('get_posts $queries ', $queries);
+		// debug_log('get_posts $query ', $query);
 
         $the_query = new WP_Query( $query );
 		
-		error_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
+		debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
         return $the_query->posts; 
     }
 
@@ -298,9 +298,41 @@ class AgendaPartage_Evenements {
 	*
 	* Optimal sous la forme https://.../agenda-local/?eventid=1207#eventid1207
 	*/
-	public static function get_list_html($query = false){
+	public static function get_list_html($query = false, $content = '', $options = false){
+		if(!isset($options) || !is_array($options))
+			$options = array();
+		
+		$options = array_merge(
+			array(
+				'ajax' => true,
+				'start_ajax_at_month_index' => 2,
+				'max_events' => 30,
+				'months' => -1,
+				'mode' => 'list' //list|email|text|calendar|TODO...
+			), $options);
+		if( $options['mode'] == 'email' ){
+			$options['ajax'] = false;
+		}
+		
+		$option_ajax = (bool)$options['ajax'];
 		
 		$months = self::get_posts_months($query);
+		
+		if($options['months'] > 0 && count($months) > $options['months'])
+			$months = array_slice($months, 0, $options['months'], true);
+		
+		//Si le premier mois est déjà gros, on diffère le chargement du suivant par ajax
+		$events_count = 0;
+		$months_count = 0;
+		foreach($months as $month => $month_events_count) {
+			$events_count += $month_events_count;
+			$months_count++;
+			if($events_count >= $options['max_events']){
+				if($options['start_ajax_at_month_index'] > $months_count)
+					$options['start_ajax_at_month_index'] = $months_count;
+				break;
+			}
+		}
 		
 		$requested_id = array_key_exists(AGDP_ARG_EVENTID, $_GET) ? $_GET[AGDP_ARG_EVENTID] : false;
 		$requested_month = false;
@@ -310,30 +342,30 @@ class AgendaPartage_Evenements {
 				$requested_month = substr($date_debut, 0, 7);
 		}
 		
-		$html = '<div class="agdp-agdpevents agdp-agdpevents-list">';
-		$html .= self::get_list_header($query, $requested_month);
+		$html = sprintf('<div class="agdp-agdpevents agdp-agdpevents-%s">', $options['mode']);
+		if( $options['mode'] != 'email')
+			$html .= self::get_list_header($query, $requested_month);
 			
 		$not_empty_month_index = 0;
 		$events_count = 0;
-		$start_ajax_at_month_index = 2;
 		
 		$html .= '<ul>';
-				
 		foreach($months as $month => $month_events_count) {
-			if($not_empty_month_index >= $start_ajax_at_month_index
+			if( $option_ajax
+			&& ($not_empty_month_index >= $options['start_ajax_at_month_index'])
 			&& $month_events_count > 0
-			&& $month !== $requested_month) 
+			&& $month !== $requested_month) {
 				$ajax = sprintf('ajax="once" data="%s"',
 					esc_attr( json_encode ( array(
 						'action' => AGDP_TAG.'_show_more',
 						'data' => [ 'month' => $month ]
 					)))
 				);
-			else
+			} else
 				$ajax = false;
 			$html .= sprintf(
 				'<li><div class="month-title toggle-trigger %s %s" %s>%s <span class="nb-items">(%d)</span></div>
-				<ul id="month-%s" class="agdevents-month toggle-container">'
+				<ul id="month-%s" class="agdpevents-month toggle-container">'
 				, $month_events_count === 0 ? 'no-items' : ''
 				, !$ajax && $month_events_count ? 'active' : ''
 				, $ajax ? $ajax : ''
@@ -342,7 +374,7 @@ class AgendaPartage_Evenements {
 				, $month
 			);
 			if(!$ajax && $month_events_count){
-				$html .= self::get_month_events_list_html( $month, $requested_id );
+				$html .= self::get_month_events_list_html( $month, $requested_id, $options );
 			}
 		
 			$html .= '</ul></li>';
@@ -353,7 +385,93 @@ class AgendaPartage_Evenements {
 		}
 		
 		$html .= '</ul>';
-		$html .= '</div>';
+		$html .= '</div>' . $content;
+		return $html;
+	}
+	
+	/**
+	* Rendu Html des évènements destinés au corps d'un email (newsletter)
+	*
+	*/
+	public static function get_list_for_email($query = false, $content = '', $options = false){
+		if(!isset($options) || !is_array($options))
+			$options = array();
+		
+		$options = array_merge(
+			array(
+				'ajax' => false,
+				'months' => date('d') < 10 ? 1 : 2,
+				'mode' => 'email' 
+			), $options);
+		
+		$css = '<style>'
+			. '
+.entry-content {
+	font-family: arial;
+}
+.agdp-agdpevents-email * {
+	background-color: #FFFFFF;
+	color: #000000 !important;
+}
+body.colors-dark .agdp-agdpevents-email * {
+	background-color: #FFFFFF;
+	color: #000000 !important;
+}
+.toggle-trigger {
+	margin: 0px;
+	font-size: larger;
+	padding-left: 10px;
+	background-color: #F5F5F5;
+} 
+.toggle-trigger a {
+	color: #333;
+	text-decoration: none;
+	display: block;
+}
+.toggle-container {
+	overflow: hidden;
+	padding-left: 10px;
+}
+.toggle-container pre {
+	background-color: #F5F5F5;
+	color: #333;
+}
+.agdp-agdpevents-email .month-title {
+	margin-top: 1em;
+	font-size: larger;
+	font-weight: bold;
+	text-decoration: underline;
+	text-transform: uppercase;
+} 
+.agdp-agdpevents-email .agdpevent .dates {
+	font-size: larger;
+	font-weight: bold;
+} 
+.agdp-agdpevents-email ul {
+	list-style: none;
+} 
+.agdp-agdpevents-email li {
+	padding-top: 1em;
+} 
+'
+			. '</style>';
+		$html = $css . self::get_list_html($query, $content, $options );
+		foreach([
+			'agdp-agdpevents'=> 'aevs'
+			, 'agdpevents'=> 'evs'
+			, 'agdpevent-'=> 'ev-'
+			, 'agdpevent '=> 'ev '
+			, 'toggle-trigger' => 'tgt'
+			, 'toggle-container' => 'tgc'
+			] as $search=>$replace)
+			$html = str_replace($search, $replace, $html);
+		foreach([
+			'/\sagdpevent="\{[^\}]*\}"/' => '',
+			'/\sid="\w*"/' => '',
+			// '/(\s)\s+/' => '$1'
+			] as $search=>$replace)
+			$html = preg_replace($search, $replace, $html);
+		
 		return $html;
 	}
 	
@@ -362,7 +480,7 @@ class AgendaPartage_Evenements {
 	*
 	* Optimal sous la forme https://.../agenda-local/?eventid=1207#eventid1207
 	*/
-	public static function get_list_header($query = false, $requested_month = false){
+	public static function get_list_header($query = false, $requested_month = false, $options = false){
 		//TODO header('Location:index.php#main');
 		
 		$filters_summary = '';
@@ -451,7 +569,7 @@ class AgendaPartage_Evenements {
 	/**
 	* Rendu Html des évènements d'un mois sous forme de liste
 	*/
-	public static function get_month_events_list_html($month, $requested_id = false){
+	public static function get_month_events_list_html($month, $requested_id = false, $options = false){
 		
 		$events = self::get_month_posts($month);
 		
@@ -465,9 +583,10 @@ class AgendaPartage_Evenements {
 			}
 			else {
 				foreach($events as $event){
-					$html .= '<li>' . self::get_item_list_html($event, $requested_id) . '</li>';
+					$html .= '<li>' . self::get_item_list_html($event, $requested_id, $options) . '</li>';
 				}
 				
+				//Ce n'est plus nécessaire, les mois sont chargés complètement
 				//TODO post_per_page
 				if(count($events) == self::$default_posts_per_page){
 					$html .= sprintf('<li class="show-more"><h3 class="agdpevent toggle-trigger" ajax="show-more">%s</h3></li>'
@@ -482,15 +601,20 @@ class AgendaPartage_Evenements {
 		return $html;
 	}
 	
-	public static function get_item_list_html($event, $requested_id){
+	public static function get_item_list_html($event, $requested_id, $options){
+		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
+			
 		$date_debut = get_post_meta($event->ID, 'ev-date-debut', true);
 					
 		$url = AgendaPartage_Evenement::get_post_permalink( $event );
-		$html = sprintf(
-				'<div class="show-post"><a href="%s">%s</a></div>'
-			, $url
-			, AgendaPartage::html_icon('media-default')
-		);
+		$html = '';
+		
+		if( ! $email_mode )
+			$html .= sprintf(
+					'<div class="show-post"><a href="%s">%s</a></div>'
+				, $url
+				, AgendaPartage::html_icon('media-default')
+			);
 			
 		$html .= sprintf('<div id="%s%d" class="agdpevent toggle-trigger %s" agdpevent="%s">'
 			, AGDP_ARG_EVENTID, $event->ID
@@ -544,15 +668,16 @@ class AgendaPartage_Evenements {
 				
 			$html .= '<table><tbody><tr>';
 			
-			$html .= '<td class="trigger-collapser"><a href="#replier">'
-				.AgendaPartage::html_icon('arrow-up-alt2')
-				.'</a></td>';
+			if( ! $email_mode )
+				$html .= '<td class="trigger-collapser"><a href="#replier">'
+					.AgendaPartage::html_icon('arrow-up-alt2')
+					.'</a></td>';
 
 			$url = AgendaPartage_Evenement::get_post_permalink($event);
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page l\'évènement'
-					.AgendaPartage::html_icon('media-default')
+					. ($email_mode  ? '' : AgendaPartage::html_icon('media-default'))
 				.'</a></td>'
 				, $url);
 				

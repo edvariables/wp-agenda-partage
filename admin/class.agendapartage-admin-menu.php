@@ -60,6 +60,21 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
+			$field_id = 'newsletter_subscribe_page_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Page d\'inscription à la lettre-info', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => 'page'
+				]
+			);
+
+			// 
 			$field_id = 'newsletter_events_register_form_id';
 			add_settings_field(
 				$field_id, 
@@ -75,10 +90,25 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
+			$field_id = 'newsletter_post_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Lettre-info à diffuser', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => AgendaPartage_Newsletter::post_type
+				]
+			);
+
+			// 
 			$field_id = 'contact_page_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Page de contact vers l\'administrateur de ce site web.', AGDP_TAG ),
+				__( 'Page "Ecrivez-nous".', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
 				'agendapartage_section_general',
@@ -86,6 +116,21 @@ class AgendaPartage_Admin_Menu {
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
 					'post_type' => 'page'
+				]
+			);
+
+			// 
+			$field_id = 'contact_form_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Formulaire "Ecrivez-nous"', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
 
@@ -101,7 +146,7 @@ class AgendaPartage_Admin_Menu {
 			$field_id = 'agenda_page_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Page contenant l\'agenda', AGDP_TAG ),
+				__( 'Page de l\'agenda', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
 				'agendapartage_section_agdpevents',

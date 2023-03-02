@@ -46,6 +46,9 @@ class AgendaPartage {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenements', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Newsletter', 'init' ) );
+
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement_Shortcodes', 'init' ) );
 		
@@ -60,12 +63,8 @@ class AgendaPartage {
 			// add_filter( 'wpcf7_load_js', '__return_false' );
 			// add_filter( 'wpcf7_load_css', '__return_false' );
 		}
-			
-		//Test
-		//add_action( 'get_template_part', array( 'AgendaPartage', 'callback_function' ));
-		//add_filter( 'the_content', array( 'AgendaPartage', 'callback_function' ));
 		
-		//wpcf7_mail_sent formulaire inscription
+		//wpcf7_before_send_mail : mise à jour des données avant envoi (ou annulation) de mail
 		add_filter( 'wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
 		if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
 			add_filter( 'wpcf7_mail_failed', array(__CLASS__, 'wpcf7_mail_sent'), 10,1);
@@ -87,7 +86,9 @@ class AgendaPartage {
 	
 	// define the wpcf7_skip_mail callback 
 	public static function wpcf7_skip_mail( $skip_mail, $contact_form ){ 
-	   return self::$skip_mail || $skip_mail;
+		if($contact_form->id() == self::get_option('newsletter_events_register_form_id'))
+			return true;
+		return $skip_mail || self::$skip_mail;
 	} 
 	
 	// 
@@ -159,16 +160,12 @@ class AgendaPartage {
 
 		switch($form_id){
 			case self::get_option('agdpevent_edit_form_id') :
-				AgendaPartage_Evenement_Edit::update_agdpevent_from_form($contact_form, $abort, $submission);
+				AgendaPartage_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
+				break;
+			case self::get_option('newsletter_events_register_form_id') :
+				AgendaPartage_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
 				break;
 				
-			// case self::get_option('admin_message_contact_form_id') :
-			// case self::get_option('agdpevent_message_contact_post_id') :
-				// AgendaPartage_Evenement::before_send_message_contact_cb($contact_form, $abort, $submission);
-				// break;
-		
-			case self::get_option('newsletter_events_register_form_id') :
-				break;
 		}		
 
 		return;
@@ -177,12 +174,6 @@ class AgendaPartage {
 	public static function load_plugin_textdomain() {
 
 	    load_plugin_textdomain( AGDP_PLUGIN_NAME, FALSE, AGDP_PLUGIN_DIR . '/languages/' );
-	}
- 
-	public static function callback_function( $content ){
-		/*var_dump( func_get_args() );*/
- 
-    	return $content;
 	}
 
 	public static function load_modules() {
@@ -274,11 +265,17 @@ class AgendaPartage {
 			case 'admin_message_contact_form_id':
 				return __( 'Message de la part de l\'administrateur', AGDP_TAG );
 			case 'newsletter_events_register_form_id':
-				return __( 'Formulaire de contact aux administrateurs', AGDP_TAG );
+				return __( 'Formulaire de lettre-info', AGDP_TAG );
+			case 'newsletter_post_id':
+				return __( 'Lettre-info', AGDP_TAG );
+			case 'newsletter_subscribe_page_id':
+				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
 			case 'agdpevent_edit_form_id':
 				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
 			case 'contact_page_id':
-				return __( 'Page de contact vers l\'administrateur de ce site web', AGDP_TAG );
+				return __( 'Page "Ecrivez-nous"', AGDP_TAG );
+			case 'contact_form_id':
+				return __( 'Formulaire "Ecrivez-nous"', AGDP_TAG );
 			case 'agdpevent_message_contact_post_id':
 				return __( 'Message aux organisateurs dans les pages des évènements', AGDP_TAG );
 			case 'agdpevent_import_ics':
@@ -462,7 +459,7 @@ class AgendaPartage {
 				
 				default:
 					var_dump($class_name);//show calls stack
-					die(sprintf('Classe inconnue : "%s"', $class_name));
+					die(sprintf('include_and_init("%s") : Classe inconnue', $class_name));
 			}
 			require_once( $file );
 			if(method_exists($class_name, 'init'))
@@ -476,6 +473,8 @@ class AgendaPartage {
 	private static function register_user_roles(){
 		self::include_and_init('AgendaPartage_Evenement_Post_type');
 		AgendaPartage_Evenement_Post_type::register_user_role();
+		self::include_and_init('AgendaPartage_Newsletter_Post_type');
+		AgendaPartage_Newsletter_Post_type::register_user_role();
 	}
 
 	/**

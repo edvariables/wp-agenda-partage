@@ -115,7 +115,9 @@ class AgendaPartage_Evenement_Shortcodes {
 	*/
 	public static function shortcodes_callback($atts, $content = '', $shortcode = null){
 
-		if(is_admin() && !wp_doing_ajax())
+		if(is_admin() 
+		&& ! wp_doing_ajax()
+		&& ! AgendaPartage_Newsletter::is_sending_email())
 			return;
 		
 		if( ! is_array($atts)){
@@ -507,6 +509,10 @@ class AgendaPartage_Evenement_Shortcodes {
 				
 				return AgendaPartage_Evenements::get_list_html( null, $content );
 				
+			case 'agdpevents-email':
+				
+				$html = AgendaPartage_Evenements::get_list_for_email( null, $content );
+				return $html;
 
 			default:
 				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';

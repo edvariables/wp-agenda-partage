@@ -49,7 +49,7 @@ class AgendaPartage_Evenement {
 		add_action( 'wp_ajax_'.AGDP_TAG.'_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
 		
-		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'wpcf7_form_init_tags_cb'), 10, 1 ); 
+		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 	}
 	
 	/**
@@ -321,9 +321,9 @@ class AgendaPartage_Evenement {
 	 * Dans le cas où WP considère le post comme inaccessible car en statut 'pending' ou 'draft'
 	 * alors que le créateur peut le modifier.
  	 */
-	/* public static function on_agdpevent_404( $agdevent ) {
+	/* public static function on_agdpevent_404( $agdpevent ) {
 		global $post;
-		$post = $agdevent;
+		$post = $agdpevent;
 		//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
 		global $wp_query;
 		$wp_query->in_the_loop = true;
@@ -990,7 +990,6 @@ class AgendaPartage_Evenement {
 				return true;
 			}
 			
-			wp_get_current_user();
 			$user_email = $current_user->user_email;
 			if( ! is_email($user_email)){
 				$user_email = false;
@@ -1029,17 +1028,17 @@ class AgendaPartage_Evenement {
 	/**
 	 * Interception du formulaire avant que les shortcodes ne soient analysés.
 	 * Affectation des valeurs par défaut.
-	 * Affectation des listes de catégories
 	 */
- 	public static function wpcf7_form_init_tags_cb( $form_class ) { 
+ 	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
 			
 		$form = WPCF7_ContactForm::get_current();
 		
 		switch($form->id()){
-			case AgendaPartage::get_option('newsletter_events_register_form_id') :
+			case AgendaPartage::get_option('contact_form_id') :
 			case AgendaPartage::get_option('admin_message_contact_form_id') :
 			case AgendaPartage::get_option('agdpevent_message_contact_post_id') :
-				self::wpcf7_contact_form_init_tags_cb( $form );
+				self::wpcf7_contact_form_init_tags( $form );
+				$form_class .= ' preventdefault-reset';
 				break;
 			default:
 				break;
@@ -1047,7 +1046,7 @@ class AgendaPartage_Evenement {
 		return $form_class;
 	}
 	
- 	private static function wpcf7_contact_form_init_tags_cb( $form ) { 
+ 	private static function wpcf7_contact_form_init_tags( $form ) { 
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$requested_id = isset($_REQUEST[AGDP_ARG_EVENTID]) ? $_REQUEST[AGDP_ARG_EVENTID] : false;
 		$agdpevent = AgendaPartage_Evenement_Edit::get_agdpevent_post($requested_id);

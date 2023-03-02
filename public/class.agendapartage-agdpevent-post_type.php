@@ -52,12 +52,13 @@ class AgendaPartage_Evenement_Post_type {
 			'public'                => true,
 			'show_ui'               => true,
 			'show_in_menu'          => true,
+			'menu_icon'				=> 'dashicons-calendar-alt',
 			'menu_position'         => 25,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
 			'can_export'            => true,
 			'has_archive'           => true,
-			'delete_with_user'		=> true,
+			'delete_with_user'		=> false,
 			'exclude_from_search'   => false,
 			'publicly_queryable'    => true,
 			//'capabilities'			=> $capabilities,
@@ -234,7 +235,7 @@ class AgendaPartage_Evenement_Post_type {
 			'create_posts' => false,
 			'create_agdpevents' => false,
 		);
-		add_role( 'agdpevent', __('Évènement', AGDP_TAG ),  $capabilities);
+		add_role( AgendaPartage_Evenement::post_type, __('Évènement', AGDP_TAG ),  $capabilities);
 	}
 
 	/**

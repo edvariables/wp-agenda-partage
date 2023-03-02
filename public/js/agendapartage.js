@@ -88,6 +88,11 @@ jQuery( function( $ ) {
 				return false;
 			}
 		});
+		
+		//
+		$( 'body' ).on('reset', 'form.wpcf7-form.preventdefault-reset', function(e) {
+			e.preventDefault();
+		});
 
 		/**
 		 * Scroll jusqu'au #hash de la forme #eventid%d (correction de la hauteur du menu)
@@ -141,21 +146,21 @@ jQuery( function( $ ) {
 			var $list = $showMore.parents('.agdp-agdpevents-list');
 			var $lastPost = $list.find('.agdpevent[agdpevent]:last');
 			if($lastPost.length > 0){
-				var agdevent = JSON.parse( $lastPost.attr('agdpevent') );
+				var agdpevent = JSON.parse( $lastPost.attr('agdpevent') );
 				jQuery.ajax({
 					url : agendapartage_ajax.ajax_url,
 					type : 'post',
 					data : {
 						action : AGDP_TAG + '_show_more',
 						security : agendapartage_ajax.check_nonce,               
-						'last-post' : agdevent
+						'last-post' : agdpevent
 					},
 					success : function( response ) {
 						var $newList = $(response);
 						//TODO merge mois incomplet
-						var $firstMonth = $newList.find('.agdevents-month:first');
+						var $firstMonth = $newList.find('.agdpevents-month:first');
 						var monthId = $firstMonth.attr('id');
-						$existingMonth = $list.children().find('.agdevents-month[id="'+monthId+'"]:first');
+						$existingMonth = $list.children().find('.agdpevents-month[id="'+monthId+'"]:first');
 						if($existingMonth.length){
 							var $parent = $firstMonth.parent('li:first');
 							$firstMonth.children().appendTo($existingMonth);

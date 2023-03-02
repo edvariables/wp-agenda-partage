@@ -37,15 +37,30 @@ function debug_callback(){
 	var_dump(func_get_args());
 }
 
-function debug_log_clear(){
-	$log_file = WP_CONTENT_DIR . '/debug.log';
+/**
+ * debug_log
+ * works with WP_DEBUG
+ **/
+function debug_log_file(){
+	return WP_CONTENT_DIR . '/debug.log';
+}
+function debug_log_clear(...$messages){
+	if( ! WP_DEBUG )
+		return;
+	$log_file = debug_log_file();
 	if(file_exists($log_file))
 		file_put_contents($log_file, '');
+	if(count($messages))
+		debug_log(...$messages);
 }
 function debug_log(...$messages){
-	$log_file = WP_CONTENT_DIR . '/debug.log';
-	
-	file_put_contents($log_file, '[' . wp_date("Y-m-d H:i:s") . '] ', FILE_APPEND);
+	if( ! WP_DEBUG )
+		return;
+	$data = '[' . wp_date("Y-m-d H:i:s") . '] ';
 	foreach($messages as $msg)
-		file_put_contents($log_file, var_export($msg, true).PHP_EOL, FILE_APPEND);
+		if(is_string($msg))
+			$data .= $msg.PHP_EOL;
+		else
+			$data .= var_export($msg, true).PHP_EOL;
+	file_put_contents(debug_log_file(), $data, FILE_APPEND);
 }

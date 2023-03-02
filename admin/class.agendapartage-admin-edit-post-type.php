@@ -12,7 +12,8 @@ class AgendaPartage_Admin_Edit_Post_Type {
 	 * HTML render in metaboxes
 	 */
 	public static function metabox_html($fields, $post, $metabox, $parent_field = null){
-		
+		if( ! is_array($fields) )
+			return;
 		foreach ($fields as $field) {
 			$name = $field['name'];
 			if($parent_field !== null)
