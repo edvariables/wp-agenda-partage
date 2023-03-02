@@ -45,13 +45,36 @@ class AgendaPartage_Admin_Menu {
 		);
 
 			// 
+			$field_id = AGDP_MAILLOG_ENABLE;
+			add_settings_field(
+				$field_id, 
+				__( 'Surveillance des traces mail', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'label' => __( 'Activer', AGDP_TAG ),
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
+
+		add_settings_section(
+			'agendapartage_section_pages',
+			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
+			array(__CLASS__, 'settings_sections_cb'),
+			AGDP_TAG
+		);
+
+			// 
 			$field_id = 'admin_message_contact_form_id';
 			add_settings_field(
 				$field_id, 
 				__( 'Message de la part de l\'administrateur', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_pages',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
@@ -66,7 +89,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Page d\'inscription à la lettre-info', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_pages',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
@@ -81,7 +104,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Formulaire d\'inscription à la lettre-info', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_pages',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
@@ -96,7 +119,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Lettre-info à diffuser', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_pages',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
@@ -111,7 +134,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Page "Ecrivez-nous".', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_pages',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
@@ -126,7 +149,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Formulaire "Ecrivez-nous"', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_pages',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
@@ -250,6 +273,9 @@ class AgendaPartage_Admin_Menu {
 			case 'agendapartage_section_general' : 
 				$message = __('Paramètres réservés aux administrateurs, c\'est à dire à ceux qui savent ce qu\'ils font...', AGDP_TAG);
 				break;
+			case 'agendapartage_section_pages' : 
+				$message = __('Paramètres réservés aux administrateurs, c\'est à dire à ceux qui savent ce qu\'ils font...', AGDP_TAG);
+				break;
 			case 'agendapartage_section_agdpevents' : 
 				$message = __('Paramètres concernant les évènements et leurs pages.', AGDP_TAG);
 				break;
@@ -303,6 +329,38 @@ class AgendaPartage_Admin_Menu {
 		$option_value = AgendaPartage::get_option($option_id);
 		echo AgendaPartage_Admin::get_import_report(true);
 
+	}
+
+	/**
+	 * Option parmi la liste des posts du site
+	 * Attention, les auteurs de ces pages doivent être administrateurs
+	 * $args['post_type'] doit être fourni
+	 */
+	public static function agendapartage_input_cb( $args ) {
+		$option_id = $args['label_for'];
+		$input_type = $args['input_type'];
+		$value = AgendaPartage::get_option($option_id);
+		
+		if($input_type === 'checkbox'){
+			echo sprintf('<label><input id="%s" name="%s[%s]" type="%s" class="%s" %s> %s</label>'
+				, esc_attr( $option_id )
+				, AGDP_TAG, esc_attr( $option_id )
+				, $input_type
+				, esc_attr( $args['class'] )
+				, $value ? 'checked' : ''
+				, $args['label']
+			);
+		} else {
+			echo sprintf('<input id="%s" name="%s[%s]" type="%s" class="%s" placeholder="%s" value="%s">'
+				, esc_attr( $option_id )
+				, AGDP_TAG, esc_attr( $option_id )
+				, $input_type
+				, $args['class']
+				, isset( $args['placeholder'] ) ? esc_attr( $args['placeholder'] ) : ''
+				, esc_attr( $value )
+				
+			);
+		}
 	}
 
 	/**

@@ -49,6 +49,11 @@ class AgendaPartage {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Newsletter', 'init' ) );
 
+		if(self::maillog_enable()){
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
+			add_action( 'agendapartage-init', array( 'AgendaPartage_Maillog', 'init' ) );
+		}
+		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement_Shortcodes', 'init' ) );
 		
@@ -66,9 +71,9 @@ class AgendaPartage {
 		
 		//wpcf7_before_send_mail : mise à jour des données avant envoi (ou annulation) de mail
 		add_filter( 'wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
-		if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
-			add_filter( 'wpcf7_mail_failed', array(__CLASS__, 'wpcf7_mail_sent'), 10,1);
-		}
+		// if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
+			// add_filter( 'wpcf7_mail_failed', array(__CLASS__, 'wpcf7_mail_sent'), 10,1);
+		// }
 
 		//Contact Form 7 hooks
 		add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_check_headers_cb'), 10,1);
@@ -511,5 +516,12 @@ class AgendaPartage {
 	 */
 	 public static function html_icon($icon, $class = '', $inner = '', $tag = 'span'){
 		 return sprintf('<%s class="dashicons-before dashicons-%s %s">%s</%s>', $tag, $icon, $class, $inner, $tag);
+	 }
+	 
+	 /**
+	 * Maillog actif
+	 */
+	 public static function maillog_enable(){
+		 return AgendaPartage::get_option(AGDP_MAILLOG_ENABLE);
 	 }
 }

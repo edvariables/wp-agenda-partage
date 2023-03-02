@@ -7,8 +7,6 @@
  * 
  * Définition du Post Type 'agdpnl'
  * Définition du rôle utilisateur 'agdpnl'
- * A l'affichage d'un Lettre-info, le Content est remplacé par celui de l'Lettre-info Modèle
- * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor', see AgendaPartage_Admin_Newsletter::init_PostType_Supports
  *
  * Voir aussi AgendaPartage_Admin_Newsletter
  */
