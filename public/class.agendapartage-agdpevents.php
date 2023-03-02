@@ -159,7 +159,7 @@ class AgendaPartage_Evenements {
 
         $the_query = new WP_Query( $query );
 		
-		debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
+		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
         return $the_query->posts; 
     }
 
@@ -210,7 +210,10 @@ class AgendaPartage_Evenements {
 		}
 		return $months;
     }
-	
+
+	/**
+	 * Complète les filtres de requêtes
+	 */
 	public static function add_filters_query($query = false, $return_sql = false){
 		if(isset($_REQUEST['action'])
 		&& $_REQUEST['action'] == 'filters'){
@@ -628,7 +631,7 @@ body.colors-dark .agdp-agdpevents-email * {
 		$localisation = htmlentities(get_post_meta($event->ID, 'ev-localisation', true));
 		if($cities){
 			$cities = htmlentities(implode(', ', $cities));
-			if($localisation != $cities)
+			if(self::cities_in_localisation( $cities, $localisation ) === false)
 				$localisation .= sprintf('<div class="agdpevent-cities" title="%s"><i>%s</i></div>', 'Communes', $cities);
 		}
 		$dates = AgendaPartage_Evenement::get_event_dates_text($event->ID);
@@ -688,6 +691,15 @@ body.colors-dark .agdp-agdpevents-email * {
 		$html .= '</div>';
 		
 		return $html;
+	}
+	
+	/**
+	 * Vérifie si la commune est déjà ennoncé dans la localisation
+	 */
+	public static function cities_in_localisation( $cities, $localisation ){
+		$cities = preg_replace('/\s|-/', '', $cities);
+		$localisation = preg_replace('/\s|-/', '', $localisation);
+		return stripos( $localisation, $cities );
 	}
 
 	/**
