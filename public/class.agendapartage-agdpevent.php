@@ -849,10 +849,10 @@ class AgendaPartage_Evenement {
 		$heure_fin    = get_post_meta( $post_id, 'ev-heure-fin', true );
 		return mb_strtolower( trim(
 			  ($date_fin && $date_fin != $date_debut ? 'du ' : '')
-			. ($date_debut ? mysql2date( 'D. j M Y', $date_debut ) : '')
+			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( 'D. j M Y', $date_debut )) : '')
 			. (/* !$date_jour_entier && */ $heure_debut 
 				? ($heure_fin ? ' de ' : ' à ') . $heure_debut : '')
-			. ($date_fin && $date_fin != $date_debut ? ' au ' . mysql2date( 'D. j M Y', $date_fin ) : '')
+			. ($date_fin && $date_fin != $date_debut ? ' au ' . str_ireplace(' mar ', ' mars ', mysql2date( 'D. j M Y', $date_fin )) : '')
 			. (/* !$date_jour_entier && */ $heure_fin 
 				? ($heure_debut ? ' à ' : ' jusqu\'à ')  . $heure_fin
 				: '')

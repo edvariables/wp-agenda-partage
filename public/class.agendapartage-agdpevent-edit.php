@@ -1143,9 +1143,12 @@ class AgendaPartage_Evenement_Edit {
 					break;
 				}
 				if($matches){
-					$value = sprintf('%s:%s',
-						(strlen($matches[1]) == 1 ? '0' : '').$matches[1],
-						count($matches) >= 3 && $matches[3] ? $matches[3] : '00'
+					$value = sprintf('%sh%s',
+						// (strlen($matches[1]) == 1 ? '0' : '').$matches[1],
+						strlen($matches[1]) == 2 && $matches[1][0] === '0'  ? $matches[1][1] : $matches[1],
+						count($matches) >= 3 && $matches[3] 
+							? ($matches[3] == '0' || $matches[3]  == '00' ? '' : $matches[3])
+							: ''//'00'
 					);
 				}
 				break;
