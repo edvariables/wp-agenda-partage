@@ -216,7 +216,8 @@ class AgendaPartage_Evenement_Edit {
 			$agdpevent_exists = false;
 			$post_id = 0;
 			
-			if($user = wp_get_current_user()){
+			if(($user = wp_get_current_user())
+			&& $user->ID !== 0){
 				// var_dump($user);
 				$meta_name = 'ev-organisateur';
 				$attrs[$meta_name] = $user->user_nicename;

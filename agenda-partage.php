@@ -12,7 +12,7 @@
  * Tags: 
  * License: GPLv3
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
- * Version: 1.0.12
+ * Version: 1.0.13
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;

@@ -601,7 +601,7 @@ class AgendaPartage_Evenement {
 		
 		$site = get_bloginfo( 'name' );
 		
-		$subject = sprintf('[%s] %s', $site, $subject ? $subject : $post->post_title);
+		$subject = sprintf('[%s][Validation] %s', $site, $subject ? $subject : $post->post_title);
 		
 		$headers = array();
 		$attachments = array();
