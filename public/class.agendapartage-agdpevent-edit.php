@@ -327,6 +327,8 @@ class AgendaPartage_Evenement_Edit {
 				if($post_terms && array_key_exists($term->term_id . '', $post_terms)){
 					$selected .= sprintf('%d_', $index+1);
 				}
+				elseif( ! $post && $term->default_checked)
+					$selected .= sprintf('%d_', $index+1);
 				$index++;
 			}
 			$input_name = $taxonomy['input'];
@@ -335,6 +337,10 @@ class AgendaPartage_Evenement_Edit {
 				case AgendaPartage_Evenement::taxonomy_city :
 					// $checkboxes .= '"(autre)|0"';
 					// $free_text = 'free_text';
+					break;
+				case AgendaPartage_Evenement::taxonomy_publication :
+					
+					// debug_log($all_terms);
 					break;
 			}
 			$html = preg_replace('/\[(checkbox '.$input_name.')[^\]]*[\]]/'
