@@ -27,6 +27,11 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-newsletter.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Newsletter', 'init' ) );
 
+		if(AgendaPartage::maillog_enable()){
+			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-maillog.php' );
+			add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Maillog', 'init' ) );
+		}
+		
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-post-type.php' );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-agdpevent.php' );
@@ -37,6 +42,11 @@ class AgendaPartage_Admin {
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-newsletter.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Newsletter', 'init' ) );
+
+		if(AgendaPartage::maillog_enable()){
+			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-maillog.php' );
+			add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Maillog', 'init' ) );
+		}
 	}
 
 	public static function init_hooks() {
@@ -339,3 +349,4 @@ class AgendaPartage_Admin {
 		}
 	}
 }
+?>

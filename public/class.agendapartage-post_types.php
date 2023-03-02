@@ -16,6 +16,11 @@ class AgendaPartage_Post_Types {
 		if(!class_exists('AgendaPartage_Newsletter'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter-post_type.php' );
+		if(AgendaPartage::maillog_enable()){
+			if(!class_exists('AgendaPartage_Maillog'))
+				require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog-post_type.php' );
+		}
 	}
 
 	/**
@@ -31,7 +36,11 @@ class AgendaPartage_Post_Types {
 		AgendaPartage_Evenement_Post_Type::register_taxonomy_publication();
 		
 		AgendaPartage_Newsletter_Post_Type::register_post_type();
-	
+		
+		if(AgendaPartage::maillog_enable()){
+			AgendaPartage_Maillog_Post_Type::register_post_type();
+		}
+		
 	    // clear the permalinks after the post type has been registered
 	    flush_rewrite_rules();
 
@@ -51,6 +60,10 @@ class AgendaPartage_Post_Types {
 				unregister_post_type($tax_name);
 		}
 
+		unregister_post_type(AgendaPartage_Evenement::post_type);
+		unregister_post_type(AgendaPartage_Newsletter::post_type);
+		unregister_post_type(AgendaPartage_Maillog::post_type);
+				
 		// clear the permalinks to remove our post type's rules from the database
     	flush_rewrite_rules();
 
