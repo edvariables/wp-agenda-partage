@@ -375,14 +375,12 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	}
 	
 	public static function on_wp_terms_checklist_args($args, int $post_id){
-			debug_log('on_wp_terms_checklist_args', $args, $post_id);
 		if($args['taxonomy'] == 'publication'){
 			$meta_name = 'default_checked';
 			$args['selected_cats'] = [];
 			foreach($args['popular_cats'] as $term_id)
 				if( get_term_meta($term_id, $meta_name, true) )
 					$args['selected_cats'][] = $term_id;
-			debug_log('on_wp_terms_checklist_args', $args, $post_id);
 		}
 		return $args;
 	}
