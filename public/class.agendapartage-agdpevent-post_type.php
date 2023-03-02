@@ -248,7 +248,7 @@ class AgendaPartage_Evenement_Post_type {
 		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_city, $array_keys_field);
 	}
 	public static function get_all_publications($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_publication, $array_keys_field);
+		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_publication, $array_keys_field );
 	}
 
 	/**
@@ -262,10 +262,23 @@ class AgendaPartage_Evenement_Post_type {
 				$_terms[$term->$array_keys_field . ''] = $term;
 			$terms = $_terms;
 		}
-			
+		
+		$meta_names = [];
+		switch($taxonomy){
+			case 'publication' :
+				$meta_names[] = 'default_checked';
+				break;
+		}
+		foreach($meta_names as $meta_name){
+			foreach($terms as $term)
+				$term->$meta_name = get_term_meta($term->term_id, $meta_name, true);
+		}
 		return $terms;
 	}
 	
+	/**
+	 * Taxonomies
+	 */
 	public static function get_taxonomies ( $except = false ){
 		$taxonomies = [];
 		

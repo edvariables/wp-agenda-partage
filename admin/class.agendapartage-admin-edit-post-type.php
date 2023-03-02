@@ -20,6 +20,10 @@ class AgendaPartage_Admin_Edit_Post_Type {
 				$name = sprintf($name, $parent_field['name']);
 			if($name == 'post_content')
 				$meta_value = $post->post_content;
+			elseif( ! $post )
+				$meta_value = '';
+			elseif(is_a($post, 'WP_Term'))
+				$meta_value = get_term_meta($post->term_id, $name, true);
 			else
 				$meta_value = get_post_meta($post->ID, $name, true);
 			$id = ! array_key_exists ( 'id', $field ) || ! $field['id'] ? $name : $field['id'];

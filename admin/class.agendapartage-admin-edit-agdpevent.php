@@ -34,9 +34,16 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 
 		if(basename($_SERVER['PHP_SELF']) === 'post.php'
 		&& array_key_exists('post_type', $_POST)
-		&& $_POST['post_type'] == AgendaPartage_Evenement::post_type)
+		&& $_POST['post_type'] == AgendaPartage_Evenement::post_type){
 			add_action( 'save_post_agdpevent', array(__CLASS__, 'save_post_agdpevent_cb'), 10, 3 );
+		}
 
+		/** initialisation des publications par défaut pour les nouveaux évènements */
+		if(basename($_SERVER['PHP_SELF']) === 'post-new.php'
+		&& array_key_exists('post_type', $_GET)
+		&& $_GET['post_type'] == AgendaPartage_Evenement::post_type){
+			add_filter( 'wp_terms_checklist_args', array( __CLASS__, "on_wp_terms_checklist_args" ), 10, 2 ); 
+		}
 		add_action( 'add_meta_boxes_' . AgendaPartage_Evenement::post_type, array( __CLASS__, 'register_agdpevent_metaboxes' ), 10, 1 ); //edit
 	}
 	/****************/
@@ -364,6 +371,19 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				'show'             => 'display_name_with_login',
 			)
 		);
+	}
+	
+	public static function on_wp_terms_checklist_args($args, int $post_id){
+			debug_log('on_wp_terms_checklist_args', $args, $post_id);
+		if($args['taxonomy'] == 'publication'){
+			$meta_name = 'default_checked';
+			$args['selected_cats'] = [];
+			foreach($args['popular_cats'] as $term_id)
+				if( get_term_meta($term_id, $meta_name, true) )
+					$args['selected_cats'][] = $term_id;
+			debug_log('on_wp_terms_checklist_args', $args, $post_id);
+		}
+		return $args;
 	}
 
 	/**
