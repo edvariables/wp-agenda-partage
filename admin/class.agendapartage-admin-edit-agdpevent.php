@@ -32,6 +32,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			add_filter( 'wp_get_revision_ui_diff', array(__CLASS__, 'on_wp_get_revision_ui_diff_cb'), 10, 3 );		
 		}
 
+		/** save des meta values et + **/
 		if(basename($_SERVER['PHP_SELF']) === 'post.php'
 		&& array_key_exists('post_type', $_POST)
 		&& $_POST['post_type'] == AgendaPartage_Evenement::post_type){
