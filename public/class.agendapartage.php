@@ -143,11 +143,17 @@ class AgendaPartage {
 	* Définition du Headers.From = admin_email
 	*/		
 	public static function wp_mail_check_headers_cb($args) {
-
-		if( ! $args['headers']){
-			$args['headers'] = sprintf('From: %s', get_bloginfo('admin_email'));
+		if( ! $args['headers'])
+			$args['headers'] = [];
+		if(is_array($args['headers'])){
+			$from_found = false;
+			foreach($args['headers'] as $index=>$header)
+				if($from_found = str_starts_with($header, 'From:'))
+					break;
+			if( ! $from_found)
+				$args['headers'][] = sprintf('From: %s<%s>', get_bloginfo('name'), get_bloginfo('admin_email'));
 		}
-	    return $args;
+		return $args;
 	}
 	
 	/**
@@ -267,7 +273,7 @@ class AgendaPartage {
 			case 'newsletter_events_register_form_id':
 				return __( 'Formulaire de lettre-info', AGDP_TAG );
 			case 'newsletter_post_id':
-				return __( 'Lettre-info', AGDP_TAG );
+				return __( 'Lettre-info à diffuser', AGDP_TAG );
 			case 'newsletter_subscribe_page_id':
 				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
 			case 'agdpevent_edit_form_id':
