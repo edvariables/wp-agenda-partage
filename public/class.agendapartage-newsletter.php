@@ -337,10 +337,10 @@ class AgendaPartage_Newsletter {
 		/** create user */
 		$user_is_new = false;
 		$create_user = isset($inputs['nl-create-user'])
-		&& $inputs['nl-create-user']
-		&& ( ! is_array($inputs['nl-create-user'])
-			|| (count($inputs['nl-create-user'])
-				&& $inputs['nl-create-user'][0]));
+			&& $inputs['nl-create-user']
+			&& ( ! is_array($inputs['nl-create-user'])
+				|| (count($inputs['nl-create-user'])
+					&& $inputs['nl-create-user'][0]));
 		if( $create_user ){
 			if( ! email_exists( $email ) ) {
 				$user_is_new = true;
@@ -387,7 +387,16 @@ class AgendaPartage_Newsletter {
 			elseif( $create_user )
 				$messages['mail_sent_ok'] .= sprintf("\r\nUn compte existe déjà avec cette adresse %s. Vous pouvez vous connecter.\r\nDemandez un nouveau mot de passe si vous l'avez oublié.", $email);
 		}
-			
+		
+		$send_newsletter_now = isset($inputs['nl-send_newsletter-now']);
+		
+		if($send_newsletter_now){
+			if(self::send_email($newsletter, 'now', $email))
+				$messages['mail_sent_ok'] .= sprintf("\r\nLa lettre-info a été envoyée.", $email);
+			else
+				$messages['mail_sent_ok'] .= sprintf("\r\nDésolé, la lettre-info n'a pas pu être envoyée.", $email);
+		}
+		
 		$contact_form->set_properties(array('messages' => $messages));
 		
 		
@@ -403,11 +412,22 @@ class AgendaPartage_Newsletter {
 		self::$sending_email = true;
 		
 		$subject = get_the_title(false, false, $newsletter);
+		if( ! $subject){
+			$subject = $newsletter->post_title;
+			if( ! $subject){
+				debug_log($newsletter);
+				return false;
+			}
+		}
 		$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
 		$message = get_the_content(false, false, $newsletter);
 		$message = '<div style=\'white-space: pre\'>' . do_shortcode( $message ) . '</div>';
 		
-		$to = implode('; ', $emails);
+		if(is_array($emails))
+			$to = implode('; ', $emails);
+		else
+			if( ! ($to = sanitize_email($emails)) )
+				return false;
 		
 		$headers = array();
 		$attachments = array();
@@ -422,14 +442,16 @@ class AgendaPartage_Newsletter {
 			// AgendaPartage_Admin::add_admin_notice($message, 'info');
 		// }
 		// else
-			if($success = wp_mail( $to
+		if($success = wp_mail( $to
 			, '=?UTF-8?B?' . base64_encode($subject). '?='
 			, $message
 			, $headers, $attachments )){
-			AgendaPartage_Admin::add_admin_notice(sprintf("La lettre-info a été envoyé à %d destinataire(s).", count($emails)), 'info');
+			if(class_exists('AgendaPartage_Admin', false))
+				AgendaPartage_Admin::add_admin_notice(sprintf("La lettre-info a été envoyé à %d destinataire(s).", count($emails)), 'info');
 		}
 		else{
-			AgendaPartage_Admin::add_admin_notice(sprintf("L\'e-mail n\'a pas pu être envoyé"), 'error');
+			if(class_exists('AgendaPartage_Admin', false))
+				AgendaPartage_Admin::add_admin_notice(sprintf("L\'e-mail n\'a pas pu être envoyé"), 'error');
 		}
 		
 		self::$sending_email = false;
