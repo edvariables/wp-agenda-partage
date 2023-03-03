@@ -557,8 +557,9 @@ class AgendaPartage_Evenement {
 	 */
 	public static function do_remove($post_id) {
 		if(self::user_can_change_agdpevent($post_id)){
-			$post = wp_delete_post($post_id);
-			return is_a($post, 'WP_Post');
+			// $post = wp_delete_post($post_id);
+			$post = self::change_post_status($post_id, 'trash');
+			return ! is_a($post, 'WP_Error');
 		}
 		// echo self::user_can_change_agdpevent($post_id, false, true);
 		return false;
