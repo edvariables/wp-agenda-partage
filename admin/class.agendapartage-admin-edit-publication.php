@@ -9,10 +9,9 @@
  *
  */
 class AgendaPartage_Admin_Edit_Publication extends AgendaPartage_Admin_Edit_Post_Type {
-	static $the_post_is_new = false;
 
 	public static function init() {
-		self::$the_post_is_new = basename($_SERVER['PHP_SELF']) == 'post-new.php';
+		parent::init();
 
 		self::init_hooks();
 	}
@@ -30,6 +29,8 @@ class AgendaPartage_Admin_Edit_Publication extends AgendaPartage_Admin_Edit_Post
 		add_action( AgendaPartage_Evenement::taxonomy_publication . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
 	}
 	/****************/
+	
+	public static function get_metabox_all_fields(){}//for abstract
 
 	/**
 	 * Callback lors de l'enregistrement d'un évènement.

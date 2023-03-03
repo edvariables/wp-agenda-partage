@@ -180,75 +180,56 @@ class AgendaPartage_Admin_Maillog {
 	 * Init
 	 */
 	public static function add_dashboard_widgets() {
-	    global $wp_meta_boxes;
-		$current_user = wp_get_current_user();
-		//TODO : trier par les derniers ajoutés
-		//TODO : author OR email
-		/* $agdpmaillogs = AgendaPartage_Maillogs::get_posts(5
-			, array( 
-				// 'author' => $current_user->ID,
-				// 'relation' => 'OR',
-				'meta_query' => [
-					'key' => 'ev-email',
-					'value' => $current_user->user_email,
-					'compare' => '='
-				]
-			));
-	    if( count($agdpmaillogs) ) {
-			add_meta_box( 'dashboard_my_agdpmaillogs',
-				__('Mes traces mail', AGDP_TAG),
-				array(__CLASS__, 'dashboard_my_agdpmaillogs_cb'),
-				'dashboard',
-				'normal',
-				'high',
-				array('agdpmaillogs' => $agdpmaillogs) );
-		}
-
-	    if( WP_DEBUG || is_multisite()){
-			$blogs = AgendaPartage_Admin_Multisite::get_other_blogs_of_user();
-			if( $blogs && count($blogs) ) {
-				add_meta_box( 'dashboard_my_blogs',
-					__('Mes autres sites AgendaPartage', AGDP_TAG),
-					array(__CLASS__, 'dashboard_my_blogs_cb'),
-					'dashboard',
-					'normal',
-					'high',
-					array('blogs' => $blogs) );
-			}
-		}
+		if(! current_user_can('manage_options')
+		&& ! current_user_can('agdpmaillog'))
+			return;
 		
-		if(current_user_can('manage_options')
-		|| current_user_can('agdpmaillog')){
-		    $agdpmaillogs = AgendaPartage_Maillogs::get_posts(10);
-			if( count($agdpmaillogs) ) {
-				add_meta_box( 'dashboard_all_agdpmaillogs',
-					__('Les traces mail', AGDP_TAG),
-					array(__CLASS__, 'dashboard_all_agdpmaillogs_cb'),
-					'dashboard',
-					'side',
-					'high',
-					array('agdpmaillogs' => $agdpmaillogs) );
-			}
-		} */
+	    global $wp_meta_boxes;
+		add_meta_box( 'dashboard_agdpmaillogs',
+			__('Traces mail', AGDP_TAG),
+			array(__CLASS__, 'on_dashboard_agdpmaillogs'),
+			'dashboard',
+			'normal',
+			'high');
 	}
 
 	/**
 	 * Callback
 	 */
-	/* public static function dashboard_my_blogs_cb($post , $widget) {
-		$blogs = $widget['args']['blogs'];
-		?><ul><?php
-		foreach($blogs as $blog){
-			//;
-			echo '<li>';
-			?><header class="entry-header"><?php 
-				echo sprintf('<h3 class="entry-title"><a href="%s/wp-admin"><img src="%s" class="coo-favicon"/>%s</a></h3>', $blog->siteurl, $blog->siteurl . '/favicon.ico', $blog->blogname);
-			?></header><?php
-			echo '</li>';
+	public static function on_dashboard_agdpmaillogs($post , $widget) {
+		?><ul class="dashboard-agdpmaillogs"><?php
+		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
 			
+			?><li>
+			<header class="entry-header"><?php 
+				echo sprintf('<h3 class="entry-title">%s</h3>', $time_name);
+			?></header>
+			<table><tr><?php
+			
+			foreach(['publish' => 'Succès', 'draft' => 'En erreur', 'pending' => 'En cours !'] as $post_status => $status_name){
+				$agdpmaillogs = new WP_Query( array( 
+					'post_type' => AgendaPartage_Maillog::post_type,
+					'fields' => 'ids',
+					'post_status' => $post_status,
+					'post_date' => array(
+						'value' => strtotime(date('Y-m-d') . ' ' . $timelaps),
+						'compare' => '>='
+					),
+				));
+				if( ! is_a($agdpmaillogs, 'WP_Query'))
+					continue;
+				//;
+				echo '<td>';
+				echo sprintf('<h3 class="entry-title">%s</h3>%d email(s)', $status_name, $agdpmaillogs->found_posts);
+				?></header><?php
+				echo '</td>';
+				
+			}
+		
+			?></tr></table></li><?php
 		}
 		?></ul><?php
-	} */
+	}
 
 	/**
 	 * Callback

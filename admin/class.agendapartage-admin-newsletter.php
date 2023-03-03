@@ -188,136 +188,62 @@ class AgendaPartage_Admin_Newsletter {
 	public static function add_dashboard_widgets() {
 	    global $wp_meta_boxes;
 		$current_user = wp_get_current_user();
-		//TODO : trier par les derniers ajoutés
-		//TODO : author OR email
-		/* $agdpnls = AgendaPartage_Newsletters::get_posts(5
-			, array( 
-				// 'author' => $current_user->ID,
-				// 'relation' => 'OR',
-				'meta_query' => [
-					'key' => 'ev-email',
-					'value' => $current_user->user_email,
-					'compare' => '='
-				]
-			));
-	    if( count($agdpnls) ) {
-			add_meta_box( 'dashboard_my_agdpnls',
-				__('Mes évènements', AGDP_TAG),
-				array(__CLASS__, 'dashboard_my_agdpnls_cb'),
-				'dashboard',
-				'normal',
-				'high',
-				array('agdpnls' => $agdpnls) );
-		}
-
-	    if( WP_DEBUG || is_multisite()){
-			$blogs = AgendaPartage_Admin_Multisite::get_other_blogs_of_user();
-			if( $blogs && count($blogs) ) {
-				add_meta_box( 'dashboard_my_blogs',
-					__('Mes autres sites AgendaPartage', AGDP_TAG),
-					array(__CLASS__, 'dashboard_my_blogs_cb'),
-					'dashboard',
-					'normal',
-					'high',
-					array('blogs' => $blogs) );
-			}
-		}
 		
 		if(current_user_can('manage_options')
-		|| current_user_can('agdpnl')){
-		    $agdpnls = AgendaPartage_Newsletters::get_posts(10);
-			if( count($agdpnls) ) {
-				add_meta_box( 'dashboard_all_agdpnls',
-					__('Les évènements', AGDP_TAG),
-					array(__CLASS__, 'dashboard_all_agdpnls_cb'),
-					'dashboard',
-					'side',
-					'high',
-					array('agdpnls' => $agdpnls) );
-			}
-		} */
+		|| current_user_can('AgendaPartage_Newsletter::post_type')){
+			add_meta_box( 'dashboard_crontab',
+				__('Programmation de la lettre-info', AGDP_TAG),
+				array(__CLASS__, 'on_dashboard_crontab'),
+				'dashboard',
+				'side',
+				'high',
+				null
+				);
+		}
 	}
 
 	/**
 	 * Callback
 	 */
-	/* public static function dashboard_my_blogs_cb($post , $widget) {
-		$blogs = $widget['args']['blogs'];
+	public static function on_dashboard_crontab($post , $widget) {
+		$newsletter = AgendaPartage_Newsletter::get_newsletter();
+		$periods = AgendaPartage_Newsletter::subscribe_periods();
+		
+		/** En attente d'envoi **/	
+		foreach(['aujourd\'hui' => 0, 'demain' => strtotime(date('Y-m-d') . ' + 1 day')]
+			as $date_name => $date){
+			$subscribers = AgendaPartage_Newsletter::get_today_subscribers($newsletter, $date);
+			debug_log($subscribers);
+			if($subscribers){
+				echo sprintf('<div><h3 class="%s">%d abonné.e(s) en attente d\'envoi <u>%s</u></h3></div>'
+					, $date === 0 ? 'alert' : 'info'
+					, count($subscribers)
+					, $date_name
+				);
+			}
+		}
+		
 		?><ul><?php
-		foreach($blogs as $blog){
+		/* $crons = _get_cron_array();
+		foreach($crons as $cron_time => $cron_data){
 			//;
 			echo '<li>';
 			?><header class="entry-header"><?php 
-				echo sprintf('<h3 class="entry-title"><a href="%s/wp-admin"><img src="%s" class="coo-favicon"/>%s</a></h3>', $blog->siteurl, $blog->siteurl . '/favicon.ico', $blog->blogname);
+				echo sprintf('<h3 class="entry-title">%s</h3><pre>%s</pre>', date('d/m/Y H:i:s', $cron_time), var_export($cron_data, true));
 			?></header><?php
 			echo '</li>';
 			
 		}
-		?></ul><?php
-	} */
-
-	/**
-	 * Callback
-	 */
-	/* public static function dashboard_my_agdpnls_cb($post , $widget) {
-		$agdpnls = $widget['args']['agdpnls'];
-		$edit_url = current_user_can('manage_options');
-		?><ul><?php
-		foreach($agdpnls as $agdpnl){
+		$crons = wp_get_schedules();
+		foreach($crons as $cron_name => $cron_data){
+			//;
 			echo '<li>';
 			?><header class="entry-header"><?php 
-				if($edit_url)
-					$url = get_edit_post_link($agdpnl);
-				else
-					$url = AgendaPartage_Newsletter::get_post_permalink($agdpnl);
-				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Newsletter::get_agdpnl_title($agdpnl) );
-				the_terms( $agdpnl->ID, 'type_agdpnl', 
-					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
-				$the_date = get_the_date('', $agdpnl);
-				$the_modified_date = get_the_modified_date('', $agdpnl);
-				$html = sprintf('<span>ajouté le %s</span>', $the_date) ;
-				if($the_date != $the_modified_date)
-					$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;		
-				echo sprintf( '<cite>%s</cite><hr>', $html);		
+				echo sprintf('<h3 class="entry-title">%s</h3><pre>%s</pre>', $cron_name, var_export($cron_data, true));
 			?></header><?php
-			?><div class="entry-summary">
-				<?php echo get_the_excerpt($agdpnl); //TODO empty !!!!? ?>
-			</div><?php 
 			echo '</li>';
 			
-		}
+		} */
 		?></ul><?php
-	} */
-
-	/**
-	 * Callback
-	 */
-	/* public static function dashboard_all_agdpnls_cb($post , $widget) {
-		$agdpnls = $widget['args']['agdpnls'];
-		$today_date = date(get_option( 'date_format' ));
-		$max_rows = 4;
-		$post_statuses = get_post_statuses();
-		?><ul><?php
-		foreach($agdpnls as $agdpnl){
-			echo '<li>';
-			edit_post_link( AgendaPartage_Newsletter::get_agdpnl_title($agdpnl), '<h3 class="entry-title">', '</h3>', $agdpnl );
-			$the_date = get_the_date('', $agdpnl);
-			$the_modified_date = get_the_modified_date('', $agdpnl);
-			$html = '';
-			if($agdpnl->post_status != 'publish')
-				$html .= sprintf('<b>%s</b> - ', $post_statuses[$agdpnl->post_status]) ;
-			$html .= sprintf('<span>ajouté le %s</span>', $the_date) ;
-			if($the_date != $the_modified_date)
-				$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;		
-			edit_post_link( $html, '<cite>', '</cite><hr>', $agdpnl );			
-			echo '</li>';
-
-			if( --$max_rows <= 0 && $the_modified_date != $today_date )
-				break;
-		}
-		echo sprintf('<li><a href="%s">%s...</a></li>', get_home_url( null, 'wp-admin/edit.php?post_type=' . AgendaPartage_Newsletter::post_type), __('Tous les évènements', AGDP_TAG));
-		?>
-		</ul><?php
-	} */
-
+	} 
 }

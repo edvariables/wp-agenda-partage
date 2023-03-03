@@ -62,9 +62,45 @@ class AgendaPartage_Newsletter {
 		return sprintf('%s_mailing_%s', self::post_type, $newsletter->ID);
 	}
 	
+	/**
+	 * Returns true if post_status == 'publish' && meta['mailing-enable'] == true
+	 */
+	 public static function is_active($newsletter){
+		$newsletter = self::get_newsletter($newsletter);
+		if( $newsletter->post_status !== 'publish')
+			return false;
+		return get_post_meta($newsletter->ID, 'mailing-enable', true) == 1;
+	}
+	
+	/**
+	 * Returns true if post_status == 'publish' && meta['mailing-enable'] == true
+	 */
+	 public static function get_active_newsletters(){
+		return get_posts([
+			'post_type' => AgendaPartage_Newsletter::post_type
+			, 'post_status' => 'publish'
+			, 'meta_key' => 'mailing-enable'
+			, 'meta_value' => '1'
+			, 'meta_compare' => '='
+			]);
+	}
+	
+	/**
+	 * Retourne la prochaine date d'envoi pour une période donnée
+	 */
 	public static function get_next_date($period, $newsletter = false){
 		$newsletter = self::get_newsletter($newsletter);
-		$today = strtotime(date('Y-m-d H:i:s'));
+		
+		$today = strtotime(date('Y-m-d'));
+
+		$meta_name = sprintf('next_date_%s', $period);
+		$value = get_post_meta($newsletter->ID, $meta_name, true);
+		if($value){
+			$value = strtotime($value);
+			if($value >= $today)
+				return $value;
+		}
+		
 		switch($period){
 			case 'M':
 				//TODO et le 28 ?
@@ -463,5 +499,67 @@ class AgendaPartage_Newsletter {
 	  */
 	 public static function is_sending_email(){
 		 return self::$sending_email;
+	 }
+	 
+	 
+	 /**
+	  * Retourne les emails des abonnés pour un envoi ce jour et à qui l'envoi n'a pas encore été fait.
+	  */
+	 public static function get_today_subscribers($newsletter, $today = 0){
+		if( ! $today )
+			$today = strtotime(date('Y-m-d'));
+		$newsletter = self::get_newsletter($newsletter);
+		$periods = [];
+		$periods_in = '';
+		foreach(AgendaPartage_Newsletter::subscribe_periods() as $period => $period_name){
+			if( self::get_next_date($period, $newsletter) > $today )
+				continue;
+			$periods[$period] = [
+				'ID' => $period,
+				'name' => $period_name,
+			];
+			$periods_in .= ($periods_in ? ', ' : '') . "'".$period."'";
+		}
+		if(count($periods) === 0)
+			return false;
+		
+		$newsletter_id = $newsletter->ID;
+		$subscription_meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter);
+		$mailing_meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($newsletter);
+		
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		
+		/** Liste d'abonnés **/
+		//$meta_name = sprintf('next_date_%s', $period);
+		$meta_next_date = 'next_date_';
+		$today_mysql = date('Y-m-d', $today);
+		$sql = "SELECT subscription.meta_value AS period, user.ID, user.user_email, user.user_nicename"
+			. "\n FROM {$blog_prefix}users user"
+			// . "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			// . "\n ON user.ID = usermetacap.user_id"
+			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
+			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
+			. "\n INNER JOIN {$blog_prefix}usermeta subscription"
+				. "\n ON user.ID = subscription.user_id"
+				. "\n AND subscription.meta_key = '{$subscription_meta_key}'"
+				. "\n AND subscription.meta_value IN ({$periods_in})"
+			. "\n INNER JOIN {$blog_prefix}postmeta next_date"
+				. "\n ON next_date.post_id = {$newsletter_id}"
+				. "\n AND next_date.meta_key = CONCAT( '{$meta_next_date}', subscription.meta_value)"
+				. "\n AND next_date.meta_value = '{$today_mysql}'"
+			. "\n LEFT JOIN {$blog_prefix}usermeta mailing"
+				. "\n ON user.ID = mailing.user_id"
+				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"
+				. "\n AND mailing.meta_value = '{$today_mysql}'"
+			. "\n WHERE mailing.meta_key IS NULL"
+			. "\n ORDER BY user.user_email";
+
+
+		$dbresults = $wpdb->get_results($sql);
+		// foreach($dbresults as $dbresult)
+			// if(isset($periods[$dbresult->period]))
+				// $periods[$dbresult->period]['subscribers'][] = $dbresult;
+		 return count($dbresults) ? $dbresults : false;
 	 }
 }

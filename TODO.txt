@@ -5,12 +5,35 @@ TODO list
 https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-sur-votre-site
 
 
-Créer un rôle author-agdpevent
+* Créer un rôle author-agdpevent
 
-A la création d'un nouveau site, création 1er fournisseur (pour modèle), on ne voit pas le Content editor.
-Email de commande :
-Ajouter le nom du fournisseur dans le mail, url de la page du post
+* Admin liste évènements
+- Tri liste par date
+- En rouge les pending
 
-Git
+* Titre (et content ?) des évents avec &amp;
 
-Publish plugin
+* Taxonomy Type event Color
+
+* $(recaptcha).init après ajax sur androïd
+
+* Event 
+- avec image
+	- load on toggle
+- avec phone
+- récurrent
+	- via cron
+	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
+
+* Newsletter
+- send engine cron
+- Heure d'envoi
+- Jours d'envoi
+- shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
+
+* Publish wp plugin
+
+* Admin dashboard
+- new events only
+- newsletter subscribers
+

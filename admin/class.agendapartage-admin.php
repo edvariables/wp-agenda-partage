@@ -290,11 +290,39 @@ class AgendaPartage_Admin {
 		return $successCounter;
 	}
 
+	//import
+	public static function set_import_report($logs){
+		self::add_admin_notice(implode("\r\n", $logs), 'success', true);
+	}
+	public static function get_import_report($clear = false){
+		self::show_admin_notices();
+	}
+	/*
+	**/
+	
+	public static function wpcf7_admin_notices($tag, $action, $contact_form){
+		if( ! is_object($contact_form))
+			return;
+		foreach(['agdpevent_edit_form_id'
+				, 'admin_message_contact_form_id'
+				, 'agdpevent_message_contact_post_id'
+				, 'contact_form_id'
+				, 'newsletter_events_register_form_id'] as $option){
+			if($contact_form->id() == AgendaPartage::get_option($option)){
+				$label = AgendaPartage::get_option_label($option);
+				break;
+			}
+		}
+		if(isset($label) && $label){
+			?><br><div class="notice notice-info dashicons-before dashicons-warning">&nbsp;Ce formulaire est utilisé par l'Agenda partagé pour son paramètre "<?=$label?>".</div><?php
+		}
+	}
+	
 	/**
 	* Logs
 	*/
 	//file
-	public static function get_log_file($log_name){
+	/* public static function get_log_file($log_name){
 		return sys_get_temp_dir() . '/' . AGDP_TAG . '-'.$log_name.'.log';
 	}
 	//save
@@ -317,36 +345,8 @@ class AgendaPartage_Admin {
 		if($clear)
 			self::set_import_report(null);
 		return $logs;
-	}
+	} */
 	
-	//import
-	public static function set_import_report($logs){
-		self::add_admin_notice(implode("\r\n", $logs), 'success', true);
-		//return self::save_log($logs, 'import');
-	}
-	public static function get_import_report($clear = false){
-		self::show_admin_notices();
-		//return self::get_log('import', $clear);
-	}
-	/*
-	**/
-	
-	public static function wpcf7_admin_notices($tag, $action, $contact_form){
-		if( ! is_object($contact_form))
-			return;
-		foreach(['agdpevent_edit_form_id'
-				, 'admin_message_contact_form_id'
-				, 'agdpevent_message_contact_post_id'
-				, 'contact_form_id'
-				, 'newsletter_events_register_form_id'] as $option){
-			if($contact_form->id() == AgendaPartage::get_option($option)){
-				$label = AgendaPartage::get_option_label($option);
-				break;
-			}
-		}
-		if(isset($label) && $label){
-			?><br><div class="notice notice-info dashicons-before dashicons-warning">&nbsp;Ce formulaire est utilisé par l'Agenda partagé pour son paramètre "<?=$label?>".</div><?php
-		}
-	}
+
 }
 ?>

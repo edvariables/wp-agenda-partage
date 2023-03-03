@@ -30,9 +30,7 @@ class AgendaPartage_Maillog {
 	public static function init_hooks() {
 		add_filter( 'the_title', array(__CLASS__, 'the_agdpmaillog_title'), 10, 2 );
 		
-		if(current_user_can('manage_options')) {
-			add_filter( 'the_content', array(__CLASS__, 'the_agdpmaillog_content'), 10, 1 );
-		}
+		add_filter( 'the_content', array(__CLASS__, 'the_agdpmaillog_content'), 10, 1 );
 		
 		if(AgendaPartage::maillog_enable()){
 			add_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail'), 20, 1 );
@@ -153,6 +151,9 @@ class AgendaPartage_Maillog {
 	 * Hook
 	 */
  	public static function the_agdpmaillog_content( $content ) {
+		if(current_user_can('manage_options')) {
+			return '<p class="error">Vous devez être connecté pour visualiser ces informations.</p>';
+		}
  		global $post;
  		if( ! $post
  		|| $post->post_type != self::post_type){

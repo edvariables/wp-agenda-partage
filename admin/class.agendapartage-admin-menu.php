@@ -2,6 +2,7 @@
 
 /**
  * Chargé lors du hook admin_menu qui est avant le admin_init
+ * Edition des options du plugin
  */
 class AgendaPartage_Admin_Menu {
 
@@ -48,13 +49,15 @@ class AgendaPartage_Admin_Menu {
 			$field_id = AGDP_MAILLOG_ENABLE;
 			add_settings_field(
 				$field_id, 
-				__( 'Surveillance des traces mail', AGDP_TAG ),
+				__( 'Traçage des mails', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_input_cb'),
 				AGDP_TAG,
 				'agendapartage_section_general',
 				[
 					'label_for' => $field_id,
 					'label' => __( 'Activer', AGDP_TAG ),
+					'learn-more' => [__( 'A n\'utiliser que pour la poursuite d\'envois abusifs ou de robots.', AGDP_TAG )
+									, __( 'Pensez à purger les Traces mail et à vider la corbeille.', AGDP_TAG )],
 					'class' => 'agendapartage_row',
 					'input_type' => 'checkbox'
 				]
@@ -360,6 +363,14 @@ class AgendaPartage_Admin_Menu {
 				, esc_attr( $value )
 				
 			);
+		}
+		if(isset($args['learn-more'])){
+			echo '<br><br>';
+			if( ! is_array($args['learn-more']))
+				$args['learn-more'] = [$args['learn-more']];
+			foreach($args['learn-more'] as $learn_more){
+				?><div class="dashicons-before dashicons-welcome-learn-more"><?=$learn_more?></div><?php
+			}
 		}
 	}
 

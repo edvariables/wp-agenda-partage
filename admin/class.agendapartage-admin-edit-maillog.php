@@ -10,9 +10,9 @@
  * Voir aussi AgendaPartage_Maillog, AgendaPartage_Admin_Maillog
  */
 class AgendaPartage_Admin_Edit_Maillog extends AgendaPartage_Admin_Edit_Post_Type {
-	static $the_post_is_new = false;
 
 	public static function init() {
+		parent::init();
 
 		self::init_hooks();
 	}
@@ -52,6 +52,10 @@ class AgendaPartage_Admin_Edit_Maillog extends AgendaPartage_Admin_Edit_Post_Typ
 			default:
 				break;
 		}
+	}
+	
+	public static function get_metabox_all_fields(){
+		return get_metabox_details_fields();
 	}
 
 	public static function get_metabox_details_fields(){
@@ -93,7 +97,6 @@ class AgendaPartage_Admin_Edit_Maillog extends AgendaPartage_Admin_Edit_Post_Typ
 			// return;
 		// }
 	}
-	
 	
 }
 ?>

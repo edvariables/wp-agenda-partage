@@ -62,8 +62,11 @@ class AgendaPartage_Post_Types {
 
 		unregister_post_type(AgendaPartage_Evenement::post_type);
 		unregister_post_type(AgendaPartage_Newsletter::post_type);
-		unregister_post_type(AgendaPartage_Maillog::post_type);
-				
+		
+		if(AgendaPartage::maillog_enable()){
+			unregister_post_type(AgendaPartage_Maillog::post_type);
+		}
+		
 		// clear the permalinks to remove our post type's rules from the database
     	flush_rewrite_rules();
 
