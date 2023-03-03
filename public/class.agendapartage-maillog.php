@@ -58,6 +58,9 @@ class AgendaPartage_Maillog {
 			$meta_input['from'] = $meta_input['headers']['From'];
 		elseif(isset($meta_input['headers']['from']))
 			$meta_input['from'] = $meta_input['headers']['from'];
+			
+		$mail_data['subject'] = base64_decode_if_needed($mail_data['subject']);
+		debug_log('wp_mail subject post : ', $mail_data['subject']);
 		$postarr = [
 			'post_type' => self::post_type,
 			'post_title' => $mail_data['subject'],
@@ -67,6 +70,10 @@ class AgendaPartage_Maillog {
 		];
 		
 		$maillog = wp_insert_post($postarr, true);
+		if(is_a($maillog, 'WP_Error')){
+			debug_log('wp_mail Error $maillog', $maillog);
+			return;
+		}
 		array_push(self::$sending_mail, $maillog);
 		
 		debug_log('wp_mail maillog', $maillog);
@@ -106,7 +113,11 @@ class AgendaPartage_Maillog {
 		
 		$maillog = array_pop( self::$sending_mail );
 		if($maillog === null){
-			error_log('wp_mail_failed $maillog === null');
+			debug_log('wp_mail_failed $maillog === null');
+			return;
+		}
+		elseif(is_a($maillog, 'WP_Error')){
+			debug_log('wp_mail_failed $maillog', $maillog);
 			return;
 		}
 		

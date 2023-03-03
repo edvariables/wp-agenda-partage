@@ -33,6 +33,24 @@ function parse_emails ($text){
 	return $emails;
 }
 
+function base64_decode_if_needed($data){
+	//'=?UTF-8?B?' . base64_encode($subject). '?='
+	if(str_starts_with($data, '=?UTF-8?B?')){
+		$regexp = '/^' . preg_quote('=?UTF-8?B?') . '([\s\S]*)' . preg_quote('?=') . '$/';
+	
+		return base64_decode( preg_replace( $regexp, '$1', $data) );
+	}
+	return $data;
+}
+function is_base64_encoded($data){
+	return str_starts_with($data, '=?UTF-8?');
+	// if (preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $data)) {
+		// return TRUE;
+	// } else {
+		// return FALSE;
+	// }
+}
+
 function debug_callback(){
 	var_dump(func_get_args());
 }
