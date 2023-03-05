@@ -10,10 +10,9 @@
  * Voir aussi AgendaPartage_Evenement, AgendaPartage_Admin_Evenement
  */
 class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_Type {
-	static $the_post_is_new = false;
 
 	public static function init() {
-		self::$the_post_is_new = basename($_SERVER['PHP_SELF']) == 'post-new.php';
+		parent::init();
 
 		self::init_hooks();
 	}
@@ -247,6 +246,10 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				'label' => __('Organisateur', AGDP_TAG),
 				'fields' => array($field_show)
 			),
+			array('name' => 'ev-phone',
+				'label' => __('Téléphone', AGDP_TAG),
+				'type' => 'text'
+			),
 			array('name' => 'ev-email',
 				'label' => __('Email', AGDP_TAG),
 				'type' => 'email',
@@ -383,51 +386,6 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 					$args['selected_cats'][] = $term_id;
 		}
 		return $args;
-	}
-
-	/**
-	 * Save metaboxes' input values
-	 * Field can contain sub fields
-	 */
-	public static function save_metaboxes($post_ID, $post, $parent_field = null){
-		if($parent_field === null){
-			$fields = self::get_metabox_all_fields();
-		}
-		else
-			$fields = $parent_field['fields'];
-		foreach ($fields as $field) {
-			if(!isset($field['type']) || $field['type'] != 'label'){
-				$name = $field['name'];
-				if($parent_field !== null)
-					$name = sprintf($name, $parent_field['name']);//TODO check
-				// remember : a checkbox unchecked does not return any value
-				if( array_key_exists($name, $_POST)){
-					$val = $_POST[$name];
-				}
-				else {
-					if(self::$the_post_is_new
-					&& isset($field['default']) && $field['default'])
-						$val = $field['default'];
-					elseif( (isset($field['input']) && ($field['input'] === 'checkbox' || $field['input'] === 'bool'))
-						 || (isset($field['type'])  && ($field['type']  === 'checkbox' || $field['type']  === 'bool')) ) {
-						$val = '0';
-					}
-					else
-						$val = null;
-				}
-				if($name == 'ev-description')
-					update_post_content($post_ID, $name, $val);
-				else
-					update_post_meta($post_ID, $name, $val);
-			}
-
-			//sub fields
-			if(isset($field['fields']) && is_array($field['fields'])){
-				self::save_metaboxes($post_ID, $post, $field);
-			}
-		}
-		
-		return false;
 	}
 
 	/**

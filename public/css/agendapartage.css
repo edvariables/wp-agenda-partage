@@ -127,8 +127,12 @@ body.colors-dark .toggle-trigger a:hover {
 
 .toggle-container {
 	/* display: none; TODO hide on load before jQuery */
+	display: none;
 	overflow: hidden;
 	padding: 20px 10px;
+}
+.toggle-trigger.active + .toggle-container {
+	display: block;
 }
 
 label.textarea-rows-2 textarea {

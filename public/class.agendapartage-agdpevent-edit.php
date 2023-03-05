@@ -142,7 +142,7 @@ class AgendaPartage_Evenement_Edit {
  	/**
  	 * Retourne le titre de la page
  	 */
-	public static function get_agdpevent_title( ) {
+	public static function get_post_title( ) {
  		if( $post = self::get_agdpevent_post()){
 			$post_id = $post->ID;
 			if($post_id){
@@ -206,6 +206,7 @@ class AgendaPartage_Evenement_Edit {
 					'ev-heure-fin',
 					'ev-localisation',
 					'ev-siteweb',
+					'ev-phone',
 					'ev-organisateur',
 					'ev-message-contact']
 					as $meta_name){
@@ -241,7 +242,7 @@ class AgendaPartage_Evenement_Edit {
 		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
 		$input = sprintf('<input type="hidden" class="agdpevent_edit_form_data" data="%s"/>', $attrs);
 		if($duplicate_from_id){
-			$title = AgendaPartage_Evenement::get_agdpevent_title($post, true);
+			$title = AgendaPartage_Evenement::get_post_title($post, true);
 			$url = AgendaPartage_Evenement::get_post_permalink( $post_id, AGDP_SECRETCODE);
 			$html = sprintf('<p class="info"> Duplication de l\'évènement <a href="%s">%s</a></p>'
 					, $url, $title)
@@ -733,6 +734,7 @@ class AgendaPartage_Evenement_Edit {
 				'ev-heure-fin' => 1,
 				'ev-organisateur' => 1,
 				'ev-email' => 1,
+				'ev-phone' => 1,
 				'ev-siteweb' => 1,
 				'ev-localisation' => 1,
 				) as $post_field => $input_field){

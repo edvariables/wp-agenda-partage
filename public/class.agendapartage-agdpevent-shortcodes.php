@@ -415,6 +415,11 @@ class AgendaPartage_Evenement_Shortcodes {
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= make_clickable(esc_html($val)) . '</br>';
+
+				$meta_name = 'ev-phone';
+					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, false);
+					if($val)
+						$html .= antispambot($val) . '</br>';
 				
 				if(! $html )
 					return '';

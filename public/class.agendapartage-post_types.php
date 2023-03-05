@@ -36,6 +36,7 @@ class AgendaPartage_Post_Types {
 		AgendaPartage_Evenement_Post_Type::register_taxonomy_publication();
 		
 		AgendaPartage_Newsletter_Post_Type::register_post_type();
+		AgendaPartage_Newsletter_Post_Type::register_taxonomy_period();
 		
 		if(AgendaPartage::maillog_enable()){
 			AgendaPartage_Maillog_Post_Type::register_post_type();
@@ -62,11 +63,18 @@ class AgendaPartage_Post_Types {
 
 		unregister_post_type(AgendaPartage_Evenement::post_type);
 		unregister_post_type(AgendaPartage_Newsletter::post_type);
-		unregister_post_type(AgendaPartage_Maillog::post_type);
-				
+		
+		if(AgendaPartage::maillog_enable()){
+			unregister_post_type(AgendaPartage_Maillog::post_type);
+		}
+		
 		// clear the permalinks to remove our post type's rules from the database
     	flush_rewrite_rules();
 
 		do_action( 'agendapartage_after_unregister_post_types' );
+	}
+	
+	public static function plugin_activation(){
+		AgendaPartage_Newsletter_Post_Type::plugin_activation();
 	}
 }

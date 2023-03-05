@@ -30,9 +30,7 @@ class AgendaPartage_Maillog {
 	public static function init_hooks() {
 		add_filter( 'the_title', array(__CLASS__, 'the_agdpmaillog_title'), 10, 2 );
 		
-		if(current_user_can('manage_options')) {
-			add_filter( 'the_content', array(__CLASS__, 'the_agdpmaillog_content'), 10, 1 );
-		}
+		add_filter( 'the_content', array(__CLASS__, 'the_agdpmaillog_content'), 10, 1 );
 		
 		if(AgendaPartage::maillog_enable()){
 			add_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail'), 20, 1 );
@@ -45,22 +43,35 @@ class AgendaPartage_Maillog {
 	 * on_wp_mail
 	 */
 	public static function on_wp_mail( array $mail_data ){
-		debug_log('wp_mail', $mail_data);
+		
+		// debug_log('maillog wp_mail', $mail_data);
 		
 		$meta_input = [
 			'to' => $mail_data['to'],
 			'headers' => $mail_data['headers'],
-			'mail_data' => var_export($mail_data, true)
+			'mail_data' => var_export($mail_data, true),
+			'_REQUEST' => var_export($_REQUEST, true),
+			'_SERVER' => var_export($_SERVER, true)
 		];
+		
+		foreach($meta_input['headers'] as $header){
+			$matches = [];
+			if(preg_match_all('/^(from|bcc|cc|reply\-to)\:(.*)$/', strtolower($header), $matches)){
+				$meta_input[$matches[1][0]] = trim($matches[2][0]);
+			}
+		}
+		
 		if(is_array($meta_input['to']))
 			$meta_input['to'] = implode(', ', $meta_input['to']);
-		if(isset($meta_input['headers']['From']))
-			$meta_input['from'] = $meta_input['headers']['From'];
-		elseif(isset($meta_input['headers']['from']))
-			$meta_input['from'] = $meta_input['headers']['from'];
+		// if(isset($meta_input['headers']['bcc']))
+			// $meta_input['bcc'] = implode(', ', $meta_input['headers']['bcc']);
+		// if(isset($meta_input['headers']['From']))
+			// $meta_input['from'] = $meta_input['headers']['From'];
+		// elseif(isset($meta_input['headers']['from']))
+			// $meta_input['from'] = $meta_input['headers']['from'];
 			
 		$mail_data['subject'] = base64_decode_if_needed($mail_data['subject']);
-		debug_log('wp_mail subject post : ', $mail_data['subject']);
+		// debug_log('wp_mail subject post : ', $mail_data['subject']);
 		$postarr = [
 			'post_type' => self::post_type,
 			'post_title' => $mail_data['subject'],
@@ -76,7 +87,7 @@ class AgendaPartage_Maillog {
 		}
 		array_push(self::$sending_mail, $maillog);
 		
-		debug_log('wp_mail maillog', $maillog);
+		// debug_log('wp_mail maillog', $maillog);
 		
 	}
 	 
@@ -85,7 +96,7 @@ class AgendaPartage_Maillog {
 	 * on_wp_mail_succeeded
 	 */
 	public static function on_wp_mail_succeeded( array $mail_data ){
-		debug_log('on_wp_mail_succeeded', $mail_data);
+		// debug_log('on_wp_mail_succeeded', $mail_data);
 		
 		$maillog = array_pop( self::$sending_mail );
 		if($maillog === null){
@@ -98,7 +109,7 @@ class AgendaPartage_Maillog {
 		];
 		$result = wp_update_post($postarr, true);
 		
-		debug_log('on_wp_mail_succeeded wp_update_post ', $result);
+		// debug_log('on_wp_mail_succeeded wp_update_post ', $result);
 		
 	}
 	 
@@ -107,17 +118,17 @@ class AgendaPartage_Maillog {
 	 * wp_mail_failed
 	 */
 	public static function wp_mail_failed( WP_Error $error ){
-		debug_log('wp_mail_failed', $error);
+		// debug_log('wp_mail_failed', $error);
 		
 		$mail_data = $error->error_data['wp_mail_failed'];
 		
 		$maillog = array_pop( self::$sending_mail );
 		if($maillog === null){
-			debug_log('wp_mail_failed $maillog === null');
+			// debug_log('wp_mail_failed $maillog === null');
 			return;
 		}
 		elseif(is_a($maillog, 'WP_Error')){
-			debug_log('wp_mail_failed $maillog', $maillog);
+			// debug_log('wp_mail_failed $maillog', $maillog);
 			return;
 		}
 		
@@ -133,7 +144,7 @@ class AgendaPartage_Maillog {
 		];
 		$result = wp_update_post($postarr, true);
 		
-		debug_log('wp_mail_failed', $result);
+		// debug_log('wp_mail_failed', $result);
 	}
 	
 	/***************
@@ -158,9 +169,9 @@ class AgendaPartage_Maillog {
  		|| $post->post_type != self::post_type){
  			return $content;
 		}
-			
-		if(isset($_GET['action']) && $_GET['action'] == 'activation'){
-			$post = self::do_post_activation($post);
+		
+		if( ! current_user_can('manage_options')) {
+			return '<p class="error">Vous devez être connecté pour visualiser ces informations.</p>';
 		}
 		
 	    return self::get_agdpmaillog_content( $post );
@@ -176,10 +187,12 @@ class AgendaPartage_Maillog {
 		}
 		
 		$post_title = isset( $agdpmaillog->post_title ) ? $agdpmaillog->post_title : '';
-		$separator = $no_html ? ', ' : '<br>';
+		$bcc = get_post_meta($agdpmaillog->ID, 'bcc', true);
 		$html = $post_title
-			. $separator . get_post_meta($agdpmaillog->ID, 'from', true)
-			. ' >> ' . get_post_meta($agdpmaillog->ID, 'to', true);
+			. ' - ' . get_post_meta($agdpmaillog->ID, 'from', true)
+			. ' >> ' . ($bcc ? $bcc : get_post_meta($agdpmaillog->ID, 'to', true));
+		if($error = get_post_meta($agdpmaillog->ID, 'error', true))
+			$html = '[Erreur] ' . $html;
 		return $html;
 	}
 	
@@ -192,7 +205,7 @@ class AgendaPartage_Maillog {
 			$agdpmaillog = $post;
 		}
 		
-		$html = sprintf('<pre>%s</pre>', $agdpmaillog->post_content);
+		$html = sprintf('<pre style="max-height: 20em;">%s</pre>', $agdpmaillog->post_content);
 		
 		return $html;
 	}

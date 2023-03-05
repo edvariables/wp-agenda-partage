@@ -107,7 +107,7 @@ jQuery( function( $ ) {
 			if( $dom.length === 0)
 				return;
 			var offset = $dom.offset().top;
-			$('html,body').animate({scrollTop: offset - window.innerHeight/4}, 300);
+			$('html,body').animate({scrollTop: offset - window.innerHeight/4}, 200);
 			$dom.addClass('agdp-scrolled-to');
 			return false;
 			 
@@ -186,6 +186,54 @@ jQuery( function( $ ) {
 			event.preventDefault();  
 			return false;
 		}); */
+
+		/**
+		 * Abonnement à la lettre-info : la saisie d'une adresse email met à jour les options d'abonnement)
+		 *
+		 */
+		$('form.wpcf7-form input[name="nl-email"]').on('change', function(event){
+			var $actionElnt = $(this);
+			var email = $actionElnt.val();
+			if( ! email )
+				return;
+			var $form = $actionElnt.parents('form:first');
+			var post_id = $actionElnt.parents('article[id]:first').attr('id');
+			if( ! post_id || ! post_id.startsWith('post-'))
+				return;
+			post_id = post_id.substr('post-'.length);
+			jQuery.ajax({
+				url : agendapartage_ajax.ajax_url,
+				type : 'post',
+				data : {
+					'action' : 'agdpnl_get_subscription',
+					'post_id' : post_id,
+					'nl-email' : email,
+					'security' : agendapartage_ajax.check_nonce
+				},
+				success : function( response ) {
+					if(response){
+						if((typeof response === 'string' || response instanceof String))
+						&& response ){
+							response = response.replace(/^(.*)\|(.*)$/, '$2');
+							var $radio = $form.find('input[name="nl-period"][value="' + response + '"]');
+							$radio.prop("checked", true);
+						}
+					}
+					$spinner.remove();
+				},
+				fail : function( response ){
+					$spinner.remove();
+					if(response) {
+						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+							.click(function(){$msg.remove()});
+						$actionElnt.after($msg);
+					}
+				}
+			});
+			var $spinner = $actionElnt.next('.wpcf7-spinner');
+			if($spinner.length == 0)
+				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
+		}); 
 	
 		/**
 		 * Ajax action
@@ -263,6 +311,8 @@ jQuery( function( $ ) {
 		$( 'body' ).on('toggle-init', function() {
 			$( ".toggle-trigger:not(.active)" )
 				.next( ".toggle-container" ).hide();
+			$( ".toggle-trigger.active" )
+				.next( ".toggle-container" ).show();
 		}).trigger('toggle-init');
 		$( 'body' ).on('click', ".toggle-trigger", function(event) {
 			var $toggler = $(this);
@@ -308,7 +358,7 @@ jQuery( function( $ ) {
 											})
 								;
 								$toggler
-									.toggleClass( "active" ).next().slideToggle( "normal" );
+									.toggleClass( "active" ).next(".toggle-container").slideDown( "normal" );
 							}
 						}
 					},
@@ -325,11 +375,14 @@ jQuery( function( $ ) {
 						$spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>')
 								.appendTo($toggler.children(':first'));
 			}
-			else {
-				$toggler.toggleClass( "active" ).next().slideToggle( "normal" );
-				//Si la touche Control est enfoncé, redéplie
-				if(isActive && event.ctrlKey)
+			else if(isActive) {
+				$toggler.removeClass( "active" ).next(".toggle-container").slideUp( "normal" );
+				//Si la touche Control est enfoncé, redéplie (et recharge ajax si besoin est)
+				 if( event.ctrlKey )
 					$toggler.click( );
+			}
+			else {
+				$toggler.addClass( "active" ).next(".toggle-container").slideDown( "normal" );
 			}
 			return false;
 		} );

@@ -10,9 +10,9 @@
  * Voir aussi AgendaPartage_Newsletter, AgendaPartage_Admin_Newsletter
  */
 class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_Type {
-	static $the_post_is_new = false;
 
 	public static function init() {
+		parent::init();
 
 		self::init_hooks();
 	}
@@ -35,6 +35,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 	public static function register_newsletter_metaboxes($post){
 				
 		add_meta_box('agdp_newsletter-test', __('Test d\'envoi', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
+		add_meta_box('agdp_newsletter-mailing', __('Envoi automatique', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-subscribers', __('Abonnements', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
 	}
 
@@ -47,11 +48,15 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		switch ($metabox['id']) {
 			
 			case 'agdp_newsletter-subscribers':
-				parent::metabox_html( self::get_metabox_subscribers_fields(), $post, $metabox );
+				self::get_metabox_subscribers();
 				break;
 			
 			case 'agdp_newsletter-test':
-				parent::metabox_html( self::get_metabox_test_fields(), $post, $metabox );
+				self::get_metabox_test();
+				break;
+			
+			case 'agdp_newsletter-mailing':
+				parent::metabox_html( self::get_metabox_mailing_fields(), $post, $metabox );
 				break;
 			
 			default:
@@ -59,24 +64,161 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		}
 	}
 
-	public static function get_metabox_test_fields(){
+	public static function get_metabox_all_fields(){
+		return array_merge(
+			self::get_metabox_mailing_fields(),
+			self::get_metabox_subscribers_fields(),
+		);
+	}	
+
+	public static function get_metabox_test(){
 		global $current_user;
 		$newsletter = get_post();
 		$newsletter_id = $newsletter->ID;
-		$periods = AgendaPartage_Newsletter::subscribe_periods();
+		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
 		$email = $current_user->user_email;
 		echo sprintf('<label><input type="checkbox" name="send-nl-test">Envoyer la lettre-info pour test</label>');
-		echo sprintf('<br><label>Destinataire(s) :</label><input type="email" name="send-nl-test-email" value="%s">', $email);
+		echo sprintf('<br><br><label>Destinataire(s) : </label><input type="email" name="send-nl-test-email" value="%s">', $email);
 		
-		return [];
+	}
+	
+	public static function get_metabox_mailing_fields(){
+		$newsletters = AgendaPartage_Newsletter::get_active_newsletters();
+		$newsletter = get_post();
+		$newsletter_is_active = AgendaPartage_Newsletter::is_active($newsletter);
+		if( (count($newsletters) > 1 && $newsletter_is_active)
+		|| (count($newsletters) >= 1 && ! $newsletter_is_active) ){
+			$many_active = 'Une autre lettre-info est active pour l\'envoi automatique.';
+			foreach($newsletters as $post)
+				if($newsletter->ID != $post->ID)
+					$many_active .= sprintf(' <a href="%s">%s</a>', get_post_permalink( $post->ID),  $post->post_title);
+		}
+		else
+			$many_active = false;
+		if($newsletter->post_status != 'publish')
+			$many_active .= ($many_active ? '<br>' : '') . 'Cet lettre-info n\'est pas enregistrée comme étant "Publiée", elle ne peut donc pas être automatisée.';
+		
+		$cron_exec = get_post_meta($newsletter->ID, 'cron_exec', true);
+		if($cron_exec){
+			delete_post_meta($newsletter->ID, 'cron_exec', 1);
+			$cron_exec_comment = 'Exécution réelle du cron effectuée';
+		}
+		else{
+			$cron_exec_comment = AgendaPartage_Newsletter::get_cron_time_str();
+		}
+		$simulate = ! $cron_exec; //Keep true !
+		AgendaPartage_Newsletter::cron_exec( $simulate );
+		if( $cron_state = AgendaPartage_Newsletter::get_cron_state() ){
+			$cron_comment = substr($cron_state, 2);
+			$cron_state = str_starts_with( $cron_state, '1|') 
+							? 'Actif' 
+							: (str_starts_with( $cron_state, '0|')
+								? 'A l\'arrêt'
+								: $cron_state);
+		}
+		else
+			$cron_comment = '';
+		
+		$fields = [
+			[ 
+				'name' => 'mailing-enable',
+				'label' => __('Activer l\'envoi automatique', AGDP_TAG),
+				'input' => 'checkbox',
+				'warning' => $many_active
+			],
+			// [	'name' => 'sep',
+				// 'input' => 'label'
+			// ],
+			[ 
+				'name' => 'cron_state',
+				'label' => __('Etat de l\'automate', AGDP_TAG) . ' : ' 
+					. $cron_state 
+					. ($cron_comment ? ' >> ' . $cron_comment : ''),
+				'input' => 'label'
+			],
+			[ 
+				'name' => 'cron_exec',
+				'label' => __('Exécution maintenant d\'une boucle de traitement', AGDP_TAG) ,
+				'input' => 'checkbox',
+				'value' => 'unchecked', //keep unchecked
+				'readonly' => ! WP_DEBUG,
+				'learn-more' => $cron_exec_comment
+			],
+			[	'name' => 'sep',
+				'input' => 'label'
+			],
+			[	'name' => 'mailing-month-day',
+				'label' => __('Jour du mois', AGDP_TAG),
+				'unit' => 'entre 1 et 28, pour l\'abonnement "Tous les mois"',
+				'type' => 'number'
+			],
+			[	'name' => 'mailing-2W1-day',
+				'label' => __('Jour de 1ère quinzaine', AGDP_TAG),
+				'unit' => 'entre 1 et 14, pour l\'abonnement "Tous les quinze jours"',
+				'type' => 'number'
+			],
+			[	'name' => 'mailing-2W2-day',
+				'label' => __('Jour de 2ème quinzaine', AGDP_TAG),
+				'unit' => 'entre 15 et 28, pour l\'abonnement "Tous les quinze jours"',
+				'type' => 'number'
+			],
+			[	'name' => 'mailing-week-day',
+				'label' => __('Jour de la semaine', AGDP_TAG),
+				'unit' => 'pour l\'abonnement "Toutes les semaines"',
+				'input' => 'select',
+				'values' => [1=>'lundi', 2=>'mardi', 3=>'mercredi', 4=>'jeudi', 5=>'vendredi', 6=>'samedi', 0=>'dimanche']
+			],
+			[	'name' => 'mailing-hour',
+				'label' => __('Heure d\'envoi', AGDP_TAG),
+				'input' => 'time'
+			],
+			[	'name' => 'mailing-num-users-per-mail',
+				'label' => __('Destinataires par e-mail', AGDP_TAG),
+				'unit' => __('adresse(s) par e-mail', AGDP_TAG),
+				'learn-more' => [sprintf(__('Si vous choississez plus d\'une adresse de destinataire par e-mail, elles seront en copie cachée et le destinataire principal sera %s.', AGDP_TAG),
+									AgendaPartage_Newsletter::get_bcc_mail_sender()),
+								__('Les destinataires multiples ne permettent pas de personnaliser le message envoyé.', AGDP_TAG)],
+				'type' => 'number'
+			],
+			[	'name' => 'mailing-num-emails-per-loop',
+				'label' => __('Par boucle de traitement', AGDP_TAG),
+				'unit' => __('e-mail(s) envoyé(s)', AGDP_TAG),
+				'learn-more' => __('Le nombre de destinataires traités par boucle est la multiplication du nombre de destinataires par le nombre d\'e-mails.', AGDP_TAG),
+				'type' => 'number'
+			],
+			[	'name' => 'mailing-loops-interval',
+				'label' => __('Interval de temps', AGDP_TAG),
+				'unit' => __('minutes entre deux boucles', AGDP_TAG),
+				'learn-more' => __('Le délai ne doit pas être trop petit. Le risque est d\'être considéré comme spammeur par l\'hébergeur du site.', AGDP_TAG),
+				'type' => 'number'
+			]
+		];
+		return $fields;
+				
 	}
 	
 	public static function get_metabox_subscribers_fields(){
 		$newsletter = get_post();
+		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
+		$fields = [];
+		foreach($periods as $period => $period_name){
+			$meta_name = sprintf('next_date_%s', $period);
+			$fields[] = array('name' => $meta_name,
+							'label' => __($period_name, AGDP_TAG),
+							'input' => 'date'
+			);
+		}
+		return $fields;
+				
+	}
+	
+	public static function get_metabox_subscribers(){
+		$newsletter = get_post();
 		$newsletter_id = $newsletter->ID;
-		$periods = AgendaPartage_Newsletter::subscribe_periods();
-		$subscription_meta_key = AgendaPartage_Newsletter::get_subscription_meta_key();
-		$mailing_meta_key = AgendaPartage_Newsletter::get_mailing_meta_key();
+		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
+		$subscription_meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter);
+		$mailing_meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($newsletter);
+		$today = strtotime(wp_date('Y-m-d'));
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
@@ -84,12 +226,38 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		
 		foreach($periods as $period => $period_name){
 			$periods[$period] = array(
-					'name' => $periods[$period]
+					'name' => $period_name
 					, 'subscribers_count' => 0
 					, 'subscribers' => []
 					, 'mailing' => []
 				);
 		}
+		/** En attente d'envoi **/
+		$has_subscribers = false;
+		foreach(['aujourd\'hui' => 0, 'demain' => strtotime(wp_date('Y-m-d') . ' + 1 day')]
+			as $date_name => $date){
+			$subscribers = AgendaPartage_Newsletter::get_today_subscribers($newsletter, $date);
+			if($subscribers){
+				$has_subscribers = true;
+				echo sprintf('<div><h3 class="%s">%d abonné.e(s) en attente d\'envoi <u>%s</u></h3>'
+					, $date === 0 ? 'alert' : 'info'
+					, count($subscribers)
+					, $date_name
+				);
+				foreach(array_slice($subscribers, 0, 20) as $user /* => $data */){
+					if( isset($periods[$user->period]) )
+						$period_name = $periods[$user->period]['name'];
+					else
+						$period_name =  AgendaPartage::html_icon('warning', '', $user->period . ' ?!');
+					echo sprintf("<a href='/wp-admin/user-edit.php?user_id=%d' title=\"%s\">%s</a> (%s), "
+								, $user->ID, $user->user_nicename, $user->user_email, $period_name);
+						
+				}
+				echo '</div>';
+			}
+		}
+		if($has_subscribers)
+			echo '<hr>';
 		
 		/** Nombre d'abonnés **/
 		$sql = "SELECT usermeta.meta_value AS period, COUNT(usermeta.umeta_id) AS count"
@@ -128,22 +296,24 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			. "\n INNER JOIN {$blog_prefix}usermeta usermeta"
 			. "\n ON user.ID = usermeta.user_id"
 			. "\n WHERE usermeta.meta_key = '{$subscription_meta_key}'"
-			. "\n ORDER BY user.user_email";
+			. "\n ORDER BY user.user_email"
+			. "\n LIMIT 50";
 		$dbresults = $wpdb->get_results($sql);
 		foreach($dbresults as $dbresult)
 			if(isset($periods[$dbresult->period]))
 				$periods[$dbresult->period]['subscribers'][] = $dbresult;
 		
 		/** Historique **/
-		$sql = "SELECT SUBSTR(postmeta.meta_key, LENGTH('{$mailing_meta_key}_')) AS period"
-			. ", postmeta.meta_value AS mailing_date"
+		//TODO cf get_today_subscribers
+		$sql = "SELECT SUBSTR(nl_meta.meta_key, LENGTH('{$mailing_meta_key}_')) AS period"
+			. ", nl_meta.meta_value AS mailing_date"
 			. ", COUNT(usermeta.umeta_id) AS count"
-			. "\n FROM {$blog_prefix}postmeta postmeta"
+			. "\n FROM {$blog_prefix}postmeta nl_meta"
 			. "\n LEFT JOIN {$blog_prefix}usermeta usermeta"
-			. "\n ON usermeta.meta_key = CONCAT(postmeta.meta_key, '_', postmeta.meta_value)"
-			. "\n WHERE postmeta.post_id = {$newsletter_id}"
-			. "\n AND postmeta.meta_key LIKE '{$mailing_meta_key}_%'"
-			. "\n GROUP BY SUBSTR(postmeta.meta_key, LENGTH('{$mailing_meta_key}_')), postmeta.meta_value"
+			. "\n ON usermeta.meta_key = CONCAT(nl_meta.meta_key, '_', nl_meta.meta_value)"
+			. "\n WHERE nl_meta.post_id = {$newsletter_id}"
+			. "\n AND nl_meta.meta_key LIKE '{$mailing_meta_key}_%'"
+			. "\n GROUP BY SUBSTR(nl_meta.meta_key, LENGTH('{$mailing_meta_key}_')), nl_meta.meta_value"
 			. "\n ORDER BY mailing_date DESC";
 		$dbresults = $wpdb->get_results($sql);
 		foreach($dbresults as $dbresult)
@@ -151,27 +321,28 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				$periods[$dbresult->period]['mailing'][] = ['date' => $dbresult->mailing_date, 'count' => $dbresult->count];
 			
 		echo sprintf("<ul>");
-		// var_dump($periods);
+		 // var_dump($periods);
 		foreach($periods as $period => $data){
-			echo sprintf("<li><h3>%s : %d %s</h3>"
+			echo sprintf("<li><h3><u>%s</u> : %d %s</h3>"
 				, $data['name']
 				, $data['subscribers_count']
-				, $period == 0 ? ' non-abonné.e(s)' : ' abonné.e(s)'
+				, $period === 'none' ? ' non-abonné.e(s)' : ' abonné.e(s)'
 				);
 			
-			if($period !== 0){
+			if($period !== 'none'){
+				$meta_name = sprintf('next_date_%s', $period);
 				echo '<ul>';
 				if(count($data['mailing']) == 0){
-					$next_date = AgendaPartage_Newsletter::get_next_date($period);
-					echo sprintf('<li>Prochain envoi : <input type="date" name="%s_%s" value="%s"/></li>'
-							, $mailing_meta_key, $period, date('Y-m-d', $next_date));
+					$next_date = AgendaPartage_Newsletter::get_next_date($period, $newsletter);
+					echo sprintf('<li>Prochain envoi : <input type="date" name="%s" value="%s"/></li>'
+							, $meta_name, wp_date('Y-m-d', $next_date));
 				} else {
-					$now = strtotime(date('Y-m-d H:i:s'));
+					$now = strtotime(wp_date('Y-m-d H:i:s'));
 					foreach($data['mailing'] as $mailing){
 						$mailing_date = strtotime($mailing->mailing_date);
 						if($mailing_date > $now)
-							echo sprintf('<li><input type="date" name="%s_%s" value="%s"/> : %d inscrit(s)</li>'
-								, $mailing_meta_key, $period, date('Y-m-d', strtotime($mailing->mailing_date)), $mailing->count);
+							echo sprintf('<li><input type="date" name="%s" value="%s"/> : %d inscrit(s)</li>'
+								, $meta_name, wp_date('Y-m-d', strtotime($mailing->mailing_date)), $mailing->count);
 						else
 							echo sprintf("<li>%s : %d envoi(s)</li>", $mailing->mailing_date, $mailing->count);
 					}
@@ -179,8 +350,13 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				echo '</ul>';
 				echo '<div><code>';
 				if(count($data['subscribers'])){
+					$index = 0;
 					foreach($data['subscribers'] as $user)
 						echo sprintf("<a href='/wp-admin/user-edit.php?user_id=%d' title=\"%s\">%s</a>, ", $user->ID, $user->user_nicename, $user->user_email);
+						if($index++ > 20){
+							echo ', et plus...';
+							break;
+						}
 				} else {
 					echo '(aucun)';
 				}
@@ -189,8 +365,6 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			echo '</li>';
 		}
 		echo '</ul>';
-		
-		return [];
 	}
 	
 	/**
@@ -201,7 +375,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		if( $newsletter->post_status == 'trashed' ){
 			return;
 		}
-		// self::save_metaboxes($newsletter_id, $newsletter, $is_update);
+		self::save_metaboxes($newsletter_id, $newsletter);
 		self::send_test_email($newsletter_id, $newsletter, $is_update);
 	}
 	

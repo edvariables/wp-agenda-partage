@@ -6,8 +6,15 @@
  * 
  * Classe d'implémentation pour l'édition d'un post quel que soit son type 
  */
-class AgendaPartage_Admin_Edit_Post_Type {
+abstract class AgendaPartage_Admin_Edit_Post_Type {
 
+	static $the_post_is_new = false;
+
+	public static function init() {
+		self::$the_post_is_new = basename($_SERVER['PHP_SELF']) == 'post-new.php';
+	}
+	
+	
 	/**
 	 * HTML render in metaboxes
 	 */
@@ -37,6 +44,13 @@ class AgendaPartage_Admin_Edit_Post_Type {
 			$class = ! array_key_exists ( 'class', $field ) || ! $field['class'] ? '' : $field['class'];
 			$container_class = ! array_key_exists ( 'container_class', $field ) || ! $field['container_class'] ? '' : $field['container_class'];
 			$readonly = ! array_key_exists ( 'readonly', $field ) || ! $field['readonly'] ? false : $field['readonly'];
+			$unit = ! array_key_exists ( 'unit', $field ) || ! $field['unit'] ? false : $field['unit'];
+			$learn_more = ! array_key_exists ( 'learn-more', $field ) || ! $field['learn-more'] ? false : $field['learn-more'];
+			if( $learn_more && ! is_array($learn_more))
+				$learn_more = [$learn_more];
+			$warning = ! array_key_exists ( 'warning', $field ) || ! $field['warning'] ? false : $field['warning'];
+			if( $warning && ! is_array($warning))
+				$warning = [$warning];
 			
 			$container_class .= ' agdp-metabox-row';
 			$container_class .= ' is' . ( current_user_can('manage_options') ? '' : '_not') . '_admin';
@@ -89,7 +103,8 @@ class AgendaPartage_Admin_Edit_Post_Type {
 						. ($readonly ? ' readonly ' : '')
 						.'">'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-						. htmlentities($val).'</textarea>';
+						. htmlentities($val).'</textarea>'
+						. ($unit ? ' ' . $unit : '');;
 					break;
 				
 				////////////////
@@ -117,19 +132,21 @@ class AgendaPartage_Admin_Edit_Post_Type {
 							echo '<option ' . selected( $val, $item_key ) . ' value="' . $item_key . '">'. htmlentities($item_label) . '</option>';
 						}
 					}
-					echo '</select>';
+					echo '</select>'
+						. ($unit ? ' ' . $unit : '');
 					break;
 				
 				////////////////
 				case 'checkbox':
 					echo '<label>';
 					echo '<input id="'.$id.'" type="checkbox" name="'.$name.'" '
-						. ($val ? ' checked="checked"' : '')
+						. ($val && $val !== 'unchecked' ? ' checked="checked"' : '')
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
-						. ($readonly ? ' readonly ' : '')
+						. ($readonly ? '  onclick="return false" ' : '')
 						. ' value="1" />';
-					echo htmlentities($label) . '</label>';
+					echo htmlentities($label) . '</label>'
+						. ($unit ? ' ' . $unit : '');
 					break;
 				
 				////////////////
@@ -141,7 +158,8 @@ class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($readonly ? ' readonly ' : '')
-						. ' />';
+						. ' />'
+						. ($unit ? ' ' . $unit : '');
 					break;
 				
 				////////////////
@@ -171,7 +189,8 @@ class AgendaPartage_Admin_Edit_Post_Type {
 						. ' placeholder="hh:mm"'
 						. ' maxlength="5" size="5"'
 						. ($readonly ? ' readonly ' : '')
-						. '/>';
+						. '/>'
+						. ($unit ? ' ' . $unit : '');
 					break;
 				
 				////////////////
@@ -185,9 +204,27 @@ class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '')
 						. ($readonly ? ' readonly ' : '')
-						. '/>';
+						. '/>'
+						. ($unit ? ' ' . $unit : '');
 					break;
 			}
+		
+			if($learn_more)
+				foreach($learn_more as $comment){
+					echo '<br>';
+					if($input != 'checkbox')
+						echo '<label></label>';
+					?><span class="dashicons-before dashicons-welcome-learn-more"><?=$comment?></span><?php
+				}
+		
+			if($warning)
+				foreach($warning as $comment){
+					echo '<br>';
+					if($input != 'checkbox')
+						echo '<label></label>';
+					?><span class="dashicons-before dashicons-warning"><?=$comment?></span><?php
+				}
+		
 
 			//sub fields
 			if( array_key_exists('fields', $field) && is_array($field['fields'])){
@@ -197,6 +234,54 @@ class AgendaPartage_Admin_Edit_Post_Type {
 			
 			?></div><?php
 		}
+	}
+	
+	/**
+	* Should be overrided
+	**/
+	abstract public static function get_metabox_all_fields();
+	
+	/**
+	 * Save metaboxes' input values
+	 * Field can contain sub fields
+	 */
+	public static function save_metaboxes($post_ID, $post, $parent_field = null){
+		if($parent_field === null){
+			$fields = static::get_metabox_all_fields();
+		}
+		else
+			$fields = $parent_field['fields'];
+		foreach ($fields as $field) {
+			if(!isset($field['type']) || $field['type'] != 'label'){
+				$name = $field['name'];
+				if($parent_field !== null)
+					$name = sprintf($name, $parent_field['name']);//TODO check
+				// remember : a checkbox unchecked does not return any value
+				if( array_key_exists($name, $_POST)){
+					$val = $_POST[$name];
+				}
+				else {
+					// TODO "remember : a checkbox unchecked does not return any value" so is 'default' = true correct ?
+					if(self::$the_post_is_new
+					&& isset($field['default']) && $field['default'])
+						$val = $field['default'];
+					elseif( (isset($field['input']) && ($field['input'] === 'checkbox' || $field['input'] === 'bool'))
+						 || (isset($field['type'])  && ($field['type']  === 'checkbox' || $field['type']  === 'bool')) ) {
+						$val = '0';
+					}
+					else
+						$val = null;
+				}
+				update_post_meta($post_ID, $name, $val);
+			}
+
+			//sub fields
+			if(isset($field['fields']) && is_array($field['fields'])){
+				self::save_metaboxes($post_ID, $post, $field);
+			}
+		}
+		
+		return false;
 	}
 
 
