@@ -26,7 +26,7 @@ class AgendaPartage {
 
 	public static function init_includes() {
 			
-		//TODO seulemet à l'activation / desactivation, non ? pourtant sans ça, le menu Évènements n'est plus visible
+		//TODO seulemet à l'activation / desactivation, non ? pourtant sans ça, le menu du plugin n'est plus visible
 		self::register_post_types();
 
 		if(!function_exists('antispam_shortcode_cb'))
@@ -400,6 +400,7 @@ class AgendaPartage {
 		}
 		self::register_user_roles();
 		self::register_post_types();
+		AgendaPartage_Post_Types::plugin_activation();
 	}
 
 	/**
@@ -466,6 +467,10 @@ class AgendaPartage {
 
 				case 'AgendaPartage_Evenement_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-post_type.php';
+					break;
+
+				case 'AgendaPartage_Newsletter_Post_type':
+		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter-post_type.php';
 					break;
 				
 				default:

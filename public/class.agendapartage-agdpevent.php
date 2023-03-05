@@ -36,8 +36,8 @@ class AgendaPartage_Evenement {
 	 */
 	public static function init_hooks() {
 		self::init_hooks_for_search();
-		add_filter( 'the_title', array(__CLASS__, 'the_agdpevent_title'), 10, 2 );
-		add_filter( 'the_content', array(__CLASS__, 'the_agdpevent_content'), 10, 1 );
+		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
+		add_filter( 'the_content', array(__CLASS__, 'the_content'), 10, 1 );
 		add_filter( 'navigation_markup_template', array(__CLASS__, 'on_navigation_markup_template_cb'), 10, 2 );
 		
 		add_filter( 'pre_handle_404', array(__CLASS__, 'on_pre_handle_404_cb'), 10, 2 );
@@ -149,20 +149,20 @@ class AgendaPartage_Evenement {
 	/***************
 	 * the_title()
 	 */
- 	public static function the_agdpevent_title( $title, $post_id ) {
+ 	public static function the_title( $title, $post_id ) {
  		global $post;
  		if( ! $post
  		|| $post->ID != $post_id
  		|| $post->post_type != self::post_type){
  			return $title;
 		}
-	    return self::get_agdpevent_title( $post );
+	    return self::get_post_title( $post );
 	}
 
 	/**
 	 * Hook
 	 */
- 	public static function the_agdpevent_content( $content ) {
+ 	public static function the_content( $content ) {
  		global $post;
  		if( ! $post
  		|| $post->post_type != self::post_type){
@@ -173,7 +173,7 @@ class AgendaPartage_Evenement {
 			$post = self::do_post_activation($post);
 		}
 		
-	    return self::get_agdpevent_content( $post );
+	    return self::get_post_content( $post );
 	}
 	
 	/**
@@ -203,7 +203,7 @@ class AgendaPartage_Evenement {
  	/**
  	 * Retourne le titre de la page
  	 */
-	public static function get_agdpevent_title( $agdpevent = null, $no_html = false) {
+	public static function get_post_title( $agdpevent = null, $no_html = false) {
  		if( ! isset($agdpevent) || ! is_object($agdpevent)){
 			global $post;
 			$agdpevent = $post;
@@ -238,7 +238,7 @@ class AgendaPartage_Evenement {
  	/**
  	 * Retourne le Content de la page de l'évènement
  	 */
-	public static function get_agdpevent_content( $agdpevent = null ) {
+	public static function get_post_content( $agdpevent = null ) {
 		global $post;
  		if( ! isset($agdpevent) || ! is_a($agdpevent, 'WP_Post')){
 			$agdpevent = $post;
@@ -250,8 +250,9 @@ class AgendaPartage_Evenement {
 		[agdpevent-cities label="à "]
 		[agdpevent-publications label="Publication (sous réserve) : "]
 		[agdpevent-description]
-<div>[agdpevent info="organisateur" label="Organisateur : "]</div>
-[agdpevent info="siteweb"]';
+		[agdpevent info="organisateur" label="Organisateur : "]
+		[agdpevent info="phone" label="Téléphone : "]
+		[agdpevent info="siteweb"]';
 
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
@@ -693,6 +694,8 @@ class AgendaPartage_Evenement {
 		$html .= sprintf('<tr><td>%s : </td><td><pre>%s</pre></td></tr>', 'Description', htmlentities($post->post_content));
 		$meta_name = 'ev-organisateur';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Organisateur', htmlentities(get_post_meta($post_id, $meta_name, true)));
+		$meta_name = 'ev-phone';
+		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Téléphone', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'ev-siteweb';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Site web', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'ev-email';

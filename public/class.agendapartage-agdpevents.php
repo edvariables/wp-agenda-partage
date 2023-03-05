@@ -662,6 +662,11 @@ body.colors-dark .agdp-agdpevents-email * {
 			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
 		}
 		
+		$value = get_post_meta($event->ID, 'ev-phone', true);
+		if($value){
+			$html .= sprintf('<div class="ev-phone">Téléphone : %s</div>',  antispambot($value) );
+		}
+		
 		$value = get_post_meta($event->ID, 'ev-siteweb', true);
 		if($value){
 			$html .= sprintf('<div class="ev-siteweb">%s</div>',  make_clickable( esc_html($value) ) );

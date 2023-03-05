@@ -246,6 +246,10 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				'label' => __('Organisateur', AGDP_TAG),
 				'fields' => array($field_show)
 			),
+			array('name' => 'ev-phone',
+				'label' => __('Téléphone', AGDP_TAG),
+				'type' => 'text'
+			),
 			array('name' => 'ev-email',
 				'label' => __('Email', AGDP_TAG),
 				'type' => 'email',

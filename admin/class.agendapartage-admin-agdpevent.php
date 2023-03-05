@@ -51,7 +51,7 @@ class AgendaPartage_Admin_Evenement {
 	public static function manage_custom_columns( $column, $post_id ) {
 		switch ( $column ) {
 			case 'titre' :
-				//Evite la confusion avec AgendaPartage_Evenement::the_agdpevent_title
+				//Evite la confusion avec AgendaPartage_Evenement::the_title
 				$post = get_post( $post_id );
 				echo $post->post_title;
 				
@@ -81,11 +81,13 @@ class AgendaPartage_Admin_Evenement {
 				if(strlen($description)>20)
 						$description = trim(substr($description, 0, 20)) . '...';
 				$siteweb    = get_post_meta( $post_id, 'ev-siteweb', true );
+				$phone    = get_post_meta( $post_id, 'ev-phone', true );
 				echo trim(
 					  ($localisation ? $localisation . ' - ' : '')
 					// . ($organisateur ? $organisateur . ' - ' : '')
 					. ($description ? $description . ' - ' : '')
-					. ($siteweb ? make_clickable( esc_html($siteweb) ) : '')
+					. ($siteweb ? make_clickable( esc_html($siteweb) ) . ' - ' : '')
+					. ($phone ? antispambot($phone) : '')
 				);
 				break;
 			default:
@@ -268,7 +270,7 @@ class AgendaPartage_Admin_Evenement {
 					$url = get_edit_post_link($agdpevent);
 				else
 					$url = AgendaPartage_Evenement::get_post_permalink($agdpevent);
-				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Evenement::get_agdpevent_title($agdpevent) );
+				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Evenement::get_post_title($agdpevent) );
 				the_terms( $agdpevent->ID, 'type_agdpevent', 
 					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
 				$the_date = get_the_date('', $agdpevent);
@@ -298,7 +300,7 @@ class AgendaPartage_Admin_Evenement {
 		?><ul><?php
 		foreach($agdpevents as $agdpevent){
 			echo '<li>';
-			edit_post_link( AgendaPartage_Evenement::get_agdpevent_title($agdpevent), '<h3 class="entry-title">', '</h3>', $agdpevent );
+			edit_post_link( AgendaPartage_Evenement::get_post_title($agdpevent), '<h3 class="entry-title">', '</h3>', $agdpevent );
 			$the_date = get_the_date('', $agdpevent);
 			$the_modified_date = get_the_modified_date('', $agdpevent);
 			$html = '';

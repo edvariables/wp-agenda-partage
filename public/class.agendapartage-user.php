@@ -192,9 +192,9 @@ class AgendaPartage_User {
 		$message .= '<br>';
 		$url = get_permalink(AgendaPartage::get_option('newsletter_subscribe_page_id'));
 		$url = add_query_arg('email', $email, $url);
-		$subscribe_period_name = AgendaPartage_Newsletter::subscribe_period_name(AgendaPartage_Newsletter::get_subscription($email), true);
-		if($subscribe_period_name)
-			$message .= sprintf('<br>Votre inscription actuelle à la lettre-info est "%s".', $subscribe_period_name);
+		$subscription_period_name = AgendaPartage_Newsletter::subscription_period_name(AgendaPartage_Newsletter::get_subscription($email), true);
+		if($subscription_period_name)
+			$message .= sprintf('<br>Votre inscription actuelle à la lettre-info est "%s".', $subscription_period_name);
 		$message .= sprintf('<br>Vous pouvez modifier votre inscription à la lettre-info en <a href="%s">cliquant ici</a>.', $url);
 
 		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';

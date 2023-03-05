@@ -207,13 +207,13 @@ class AgendaPartage_Admin_Newsletter {
 	 */
 	public static function on_dashboard_crontab($post , $widget) {
 		$newsletter = AgendaPartage_Newsletter::get_newsletter();
-		$periods = AgendaPartage_Newsletter::subscribe_periods();
+		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
 		
 		/** En attente d'envoi **/	
-		foreach(['aujourd\'hui' => 0, 'demain' => strtotime(date('Y-m-d') . ' + 1 day')]
+		foreach(['aujourd\'hui' => 0, 'demain' => strtotime(wp_date('Y-m-d') . ' + 1 day')]
 			as $date_name => $date){
 			$subscribers = AgendaPartage_Newsletter::get_today_subscribers($newsletter, $date);
-			debug_log($subscribers);
+			// debug_log($subscribers);
 			if($subscribers){
 				echo sprintf('<div><h3 class="%s">%d abonné.e(s) en attente d\'envoi <u>%s</u></h3></div>'
 					, $date === 0 ? 'alert' : 'info'
@@ -229,7 +229,7 @@ class AgendaPartage_Admin_Newsletter {
 			//;
 			echo '<li>';
 			?><header class="entry-header"><?php 
-				echo sprintf('<h3 class="entry-title">%s</h3><pre>%s</pre>', date('d/m/Y H:i:s', $cron_time), var_export($cron_data, true));
+				echo sprintf('<h3 class="entry-title">%s</h3><pre>%s</pre>', wp_date('d/m/Y H:i:s', $cron_time), var_export($cron_data, true));
 			?></header><?php
 			echo '</li>';
 			
@@ -247,3 +247,4 @@ class AgendaPartage_Admin_Newsletter {
 		?></ul><?php
 	} 
 }
+?>

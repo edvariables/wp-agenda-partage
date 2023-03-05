@@ -80,21 +80,21 @@ class AgendaPartage_Maillog_Post_type {
 	public static function register_user_role(){
 		return;
 		
-		$capabilities = array(
-			'read' => true,
-			'edit_posts' => true,
-			'edit_agdpmaillogs' => true,
-			'wpcf7_read_contact_forms' => false,
+		// $capabilities = array(
+			// 'read' => true,
+			// 'edit_posts' => true,
+			// 'edit_agdpmaillogs' => true,
+			// 'wpcf7_read_contact_forms' => false,
 
-			'publish_agdpmaillogs' => true,
-			'delete_posts' => true,
-			'delete_published_posts' => true,
-			'edit_published_posts' => true,
-			'publish_posts' => true,
-			'upload_files ' => true,
-			'create_posts' => false,
-			'create_agdpmaillogs' => false,
-		);
-		add_role( AgendaPartage_Maillog::post_type, __('Trace mail', AGDP_TAG ),  $capabilities);
+			// 'publish_agdpmaillogs' => true,
+			// 'delete_posts' => true,
+			// 'delete_published_posts' => true,
+			// 'edit_published_posts' => true,
+			// 'publish_posts' => true,
+			// 'upload_files ' => true,
+			// 'create_posts' => false,
+			// 'create_agdpmaillogs' => false,
+		// );
+		// add_role( AgendaPartage_Maillog::post_type, __('Trace mail', AGDP_TAG ),  $capabilities);
 	}
 }

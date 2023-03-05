@@ -140,10 +140,10 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'checkbox':
 					echo '<label>';
 					echo '<input id="'.$id.'" type="checkbox" name="'.$name.'" '
-						. ($val ? ' checked="checked"' : '')
+						. ($val && $val !== 'unchecked' ? ' checked="checked"' : '')
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
-						. ($readonly ? ' readonly ' : '')
+						. ($readonly ? '  onclick="return false" ' : '')
 						. ' value="1" />';
 					echo htmlentities($label) . '</label>'
 						. ($unit ? ' ' . $unit : '');

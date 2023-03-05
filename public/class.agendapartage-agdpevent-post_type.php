@@ -220,22 +220,22 @@ class AgendaPartage_Evenement_Post_type {
 	public static function register_user_role(){
 		return;
 		
-		$capabilities = array(
-			'read' => true,
-			'edit_posts' => true,
-			'edit_agdpevents' => true,
-			'wpcf7_read_contact_forms' => false,
+		// $capabilities = array(
+			// 'read' => true,
+			// 'edit_posts' => true,
+			// 'edit_agdpevents' => true,
+			// 'wpcf7_read_contact_forms' => false,
 
-			'publish_agdpevents' => true,
-			'delete_posts' => true,
-			'delete_published_posts' => true,
-			'edit_published_posts' => true,
-			'publish_posts' => true,
-			'upload_files ' => true,
-			'create_posts' => false,
-			'create_agdpevents' => false,
-		);
-		add_role( AgendaPartage_Evenement::post_type, __('Évènement', AGDP_TAG ),  $capabilities);
+			// 'publish_agdpevents' => true,
+			// 'delete_posts' => true,
+			// 'delete_published_posts' => true,
+			// 'edit_published_posts' => true,
+			// 'publish_posts' => true,
+			// 'upload_files ' => true,
+			// 'create_posts' => false,
+			// 'create_agdpevents' => false,
+		// );
+		// add_role( AgendaPartage_Evenement::post_type, __('Évènement', AGDP_TAG ),  $capabilities);
 	}
 
 	/**

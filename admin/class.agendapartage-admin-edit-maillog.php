@@ -57,13 +57,23 @@ class AgendaPartage_Admin_Edit_Maillog extends AgendaPartage_Admin_Edit_Post_Typ
 	public static function get_metabox_all_fields(){
 		return get_metabox_details_fields();
 	}
-
+	
+	/**
+	 *
+	 */
 	public static function get_metabox_details_fields(){
 		$post = get_post();
 		$meta_input = get_post_meta($post->ID, '', true);
 		
 		?><table id="agdp-agdpmaillog" class="form-table" role="presentation">
 		<?php
+		
+		if(isset($meta_input['error'])){
+			?><tr><th><h3 class="error">Erreur</h3></th>
+				<td><pre><code><?=implode("\r\n", $meta_input['error'])?></code></pre></td>
+			</tr><?php
+		}
+		
 		foreach($meta_input as $meta_name => $meta_value){
 			$meta_value = implode("\r\n", $meta_value);
 			?><tr><th><label><?=$meta_name?></label></th>
