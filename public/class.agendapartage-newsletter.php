@@ -40,6 +40,7 @@ class AgendaPartage_Newsletter {
 	public static function init_hooks() {
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
+		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		
 		register_activation_hook( __CLASS__, 'init_cron');
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
@@ -466,8 +467,8 @@ class AgendaPartage_Newsletter {
 	public static function on_wp_ajax_agdpnl_get_subscription(){
 		$ajax_response = '0';
 		if(array_key_exists("post_id", $_POST)
-		&& array_key_exists("nl-email", $_POST)){
-			$subscription = self::get_subscription($_POST['nl-email'], $_POST['post_id']);
+		&& array_key_exists("email", $_POST)){
+			$subscription = self::get_subscription($_POST['email'], $_POST['post_id']);
 			if($subscription === false)
 				$ajax_response = '';
 			else
