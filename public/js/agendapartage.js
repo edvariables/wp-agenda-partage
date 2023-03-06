@@ -207,7 +207,7 @@ jQuery( function( $ ) {
 				data : {
 					'action' : 'agdpnl_get_subscription',
 					'post_id' : post_id,
-					'nl-email' : email,
+					'email' : email,
 					'security' : agendapartage_ajax.check_nonce
 				},
 				success : function( response ) {
