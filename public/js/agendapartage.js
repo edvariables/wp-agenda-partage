@@ -212,7 +212,7 @@ jQuery( function( $ ) {
 				},
 				success : function( response ) {
 					if(response){
-						if((typeof response === 'string' || response instanceof String))
+						if((typeof response === 'string' || response instanceof String)
 						&& response ){
 							response = response.replace(/^(.*)\|(.*)$/, '$2');
 							var $radio = $form.find('input[name="nl-period"][value="' + response + '"]');
