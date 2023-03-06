@@ -53,6 +53,9 @@ class AgendaPartage {
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
 			add_action( 'agendapartage-init', array( 'AgendaPartage_Maillog', 'init' ) );
 		}
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-wpcf7.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_WPCF7', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement_Shortcodes', 'init' ) );
@@ -64,61 +67,8 @@ class AgendaPartage {
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_styles'));
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
 		add_action( 'plugins_loaded', array(__CLASS__, 'load_plugin_textdomain') );
-		if( self::may_skip_recaptcha() ){
-			// add_filter( 'wpcf7_load_js', '__return_false' );
-			// add_filter( 'wpcf7_load_css', '__return_false' );
-		}
-		
-		//wpcf7_before_send_mail : mise à jour des données avant envoi (ou annulation) de mail
-		add_filter( 'wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
-		// if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
-			// add_filter( 'wpcf7_mail_failed', array(__CLASS__, 'wpcf7_mail_sent'), 10,1);
-		// }
-
-		//Contact Form 7 hooks
-		add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_check_headers_cb'), 10,1);
-
-		//Contrôle de l'envoi effectif des mails	
-		add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail'), 10, 2);
-			
-		// Interception des emails en localhost
-		if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
-			// add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_localhost'), 100, 1);
-		}
 
 		add_action( 'validate_password_reset', array(__CLASS__, 'validate_password_reset'), 100, 2 );
-	}
-	
-	// define the wpcf7_skip_mail callback 
-	public static function wpcf7_skip_mail( $skip_mail, $contact_form ){ 
-		if($contact_form->id() == self::get_option('newsletter_events_register_form_id'))
-			return true;
-		return $skip_mail || self::$skip_mail;
-	} 
-	
-	// 
-	public static function may_skip_recaptcha( ){ 
-	   return current_user_can('manage_options');
-	} 
-	
-	/**
-	* Hook de wp_mail
-	* Interception des emails en localhost
-	* TODO Vérifier avec plug-in Smtp
-	*/		
-	public static function wp_mail_localhost($args){
-		echo "<h1>Interception des emails en localhost.</h1>";
-
-		print_r(sprintf("%s : %s<br>\n", 'To', $args["to"]));
-		print_r(sprintf("%s : %s<br>\n", 'Subject', $args["subject"]));
-		print_r(sprintf("%s : <code>%s</code><br>\n", 'Message', preg_replace('/html\>/', 'code>', $args["message"] )));
-		print_r(sprintf("%s : %s<br>\n", 'Headers', $args['headers']));
-		//Cancels email without noisy error and clear log
-		$args["to"] = '';
-		$args["subject"] = '(localhost)';
-		$args["message"] = '';
-		$args['headers'] = '';
-	    return $args;
 	}
 
 	/*
@@ -141,45 +91,6 @@ class AgendaPartage {
 			login_footer();*/
 			exit;
 		}
-	}
-
-	/**
-	* Hook de wp_mail
-	* Définition du Headers.From = admin_email
-	*/		
-	public static function wp_mail_check_headers_cb($args) {
-		if( ! $args['headers'])
-			$args['headers'] = [];
-		if(is_array($args['headers'])){
-			$from_found = false;
-			foreach($args['headers'] as $index=>$header)
-				if($from_found = str_starts_with($header, 'From:'))
-					break;
-			if( ! $from_found)
-				$args['headers'][] = sprintf('From: %s<%s>', get_bloginfo('name'), get_bloginfo('admin_email'));
-		}
-		return $args;
-	}
-	
-	/**
-	 * Intercepte les emails de formulaires wpcf7.
-	 * Appel une classe spécifique suivant l'id du formulaire que l'utilisateur vient de valider
-	 */
-	public static function wpcf7_before_send_mail ($contact_form, &$abort, $submission){
-
-		$form_id = $contact_form->id();
-
-		switch($form_id){
-			case self::get_option('agdpevent_edit_form_id') :
-				AgendaPartage_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
-				break;
-			case self::get_option('newsletter_events_register_form_id') :
-				AgendaPartage_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
-				break;
-				
-		}		
-
-		return;
 	}
 
 	public static function load_plugin_textdomain() {
@@ -230,22 +141,7 @@ class AgendaPartage {
 		wp_localize_script( AGDP_TAG, 'agendapartage_ajax', array( 
 			'ajax_url' => admin_url('admin-ajax.php')
 			, 'check_nonce' => wp_create_nonce('agdp-nonce')) );
-			
 		
-		if(self::is_plugin_active('wpcf7-recaptcha/wpcf7-recaptcha.php')){
-			if( self::may_skip_recaptcha() ){
-				// wp_dequeue_script( 'google-recaptcha' );   
-				// wp_dequeue_script('wpcf7-recaptcha');
-				// wp_dequeue_style('wpcf7-recaptcha');
-				// add_filter( 'wpcf7_load_js', '__return_false' );
-				// add_filter( 'wpcf7_load_css', '__return_false' );
-				// remove_action( 'wp_enqueue_scripts', 'wpcf7_recaptcha_enqueue_scripts', 20 );
-			}
-			else {
-				wp_register_script( 'wpcf7-recaptcha-controls-ajaxable.js', plugins_url( 'agenda-partage/includes/js/wpcf7-recaptcha-controls-ajaxable.js' ), array(), AGDP_VERSION , true );
-				wp_enqueue_script( 'wpcf7-recaptcha-controls-ajaxable.js' );
-			}
-		}
 	}
 
 
@@ -421,7 +317,7 @@ class AgendaPartage {
 	 *
 	 * @return bool
 	 */
-	private static function is_plugin_active( $main_file_path ) {
+	public static function is_plugin_active( $main_file_path ) {
 		return in_array( $main_file_path, self::get_active_plugins() );
 	}
 
@@ -519,14 +415,14 @@ class AgendaPartage {
 	/**
 	 * HTML tools
 	 */
-	 public static function html_icon($icon, $class = '', $inner = '', $tag = 'span'){
+	public static function html_icon($icon, $class = '', $inner = '', $tag = 'span'){
 		 return sprintf('<%s class="dashicons-before dashicons-%s %s">%s</%s>', $tag, $icon, $class, $inner, $tag);
 	 }
 	 
 	 /**
 	 * Maillog actif
 	 */
-	 public static function maillog_enable(){
-		 return AgendaPartage::get_option(AGDP_MAILLOG_ENABLE);
+	public static function maillog_enable(){
+		 return self::get_option(AGDP_MAILLOG_ENABLE);
 	 }
 }

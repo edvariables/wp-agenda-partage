@@ -50,14 +50,18 @@ class AgendaPartage_Maillog {
 			'to' => $mail_data['to'],
 			'headers' => $mail_data['headers'],
 			'mail_data' => var_export($mail_data, true),
-			'_REQUEST' => var_export($_REQUEST, true),
 			'_SERVER' => var_export($_SERVER, true)
 		];
+		if( isset($_REQUEST) )
+			$meta_input['_REQUEST'] = var_export($_REQUEST, true);
 		
+		if( ! is_array($meta_input['headers']) ){
+			$meta_input['headers'] = explode("\n", $meta_input['headers']);
+		}
 		foreach($meta_input['headers'] as $header){
 			$matches = [];
 			if(preg_match_all('/^(from|bcc|cc|reply\-to)\:(.*)$/', strtolower($header), $matches)){
-				$meta_input[$matches[1][0]] = trim($matches[2][0]);
+				$meta_input[$matches[1][0]] = trim($matches[2][0], " \r\n;");
 			}
 		}
 		
