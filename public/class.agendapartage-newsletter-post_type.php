@@ -162,5 +162,6 @@ class AgendaPartage_Newsletter_Post_type {
 				)
 			);
 		
+		register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron');
 	}
 }
