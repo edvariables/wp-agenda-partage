@@ -52,6 +52,7 @@ class AgendaPartage_Admin {
 	public static function init_hooks() {
 
 	    add_action( 'admin_enqueue_scripts', array(__CLASS__, 'register_plugin_styles') );
+		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
 
         add_action( 'admin_notices', array(__CLASS__,'show_admin_notices') );
 		
@@ -61,7 +62,8 @@ class AgendaPartage_Admin {
 		if(class_exists('WPCF7_ContactForm')){
 			add_action( 'wpcf7_admin_notices', array( __CLASS__, 'wpcf7_admin_notices' ), 10, 3 ); //edit
 		}
-
+		
+		add_action( 'wp_ajax_'.AGDP_TAG.'_admin_action', array(__CLASS__, 'on_wp_ajax_admin_action_cb') );
 	}
 
 	/**
@@ -70,6 +72,21 @@ class AgendaPartage_Admin {
 	public static function register_plugin_styles() {
 	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/admin/css/agendapartage-admin.css' ), array(), AGDP_VERSION , 'all'  );
 	    wp_enqueue_style( AGDP_TAG);
+	}
+
+	/**
+	 * Registers js files.
+	 */
+	public static function register_plugin_js() {
+		wp_enqueue_script("jquery");
+		
+	    wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array(), AGDP_VERSION , 'all' );
+		wp_localize_script( AGDP_TAG . '-tools', 'agendapartage_ajax', array( 
+			'ajax_url' => admin_url('admin-ajax.php')
+			, 'check_nonce' => wp_create_nonce('agdp-admin-nonce')
+			, 'is_admin' => true )
+		);
+	    wp_enqueue_script( AGDP_TAG . '-tools' );
 	}
 
 	/**
@@ -347,6 +364,54 @@ class AgendaPartage_Admin {
 		return $logs;
 	} */
 	
-
+	/**
+	*/
+	public static function check_nonce(){
+		if( ! isset($_POST['_nonce']))
+			return false;
+		return wp_verify_nonce( $_POST['_nonce'], 'agdp-admin-nonce' );
+	}
+	
+	/**
+	 * Action required from Ajax query
+	 * 
+	 */
+	public static function on_wp_ajax_admin_action_cb() {
+		if( ! self::check_nonce())
+			wp_die();
+			
+		$ajax_response = '0';
+		if(!array_key_exists("method", $_POST)){
+			wp_die();
+		}
+		$action = $_POST['method'];
+		if(array_key_exists("post_id", $_POST)){
+			// try{
+				// cherche une fonction du nom "agdpevent_action_{method}"
+				// $function = array(__CLASS__, sprintf('agdpevent_action_%s', $action));
+				// $ajax_response = call_user_func( $function, $_POST['post_id']);
+			// }
+			// catch( Exception $e ){
+				// $ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
+			// }
+		}
+		elseif(array_key_exists("user_id", $_POST)){
+			try{
+				//cherche une fonction du nom "user_action_{method}"
+				$function = array('AgendaPartage_Admin_User', sprintf('user_action_%s', $action));
+				$ajax_response = call_user_func( $function, $_POST['user_id']);
+			}
+			catch( Exception $e ){
+				$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
+			}
+		}
+		echo $ajax_response;
+		
+		// Make your array as json
+		//wp_send_json($ajax_response);
+	 
+		// Don't forget to stop execution afterward.
+		wp_die();
+	}
 }
 ?>

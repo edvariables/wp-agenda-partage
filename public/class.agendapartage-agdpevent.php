@@ -43,11 +43,8 @@ class AgendaPartage_Evenement {
 		add_filter( 'pre_handle_404', array(__CLASS__, 'on_pre_handle_404_cb'), 10, 2 );
 		add_filter( 'redirect_canonical', array(__CLASS__, 'on_redirect_canonical_cb'), 10, 2);
 		
-		// add_action( 'wp_ajax_'.AGDP_TAG.'_send_email', array(__CLASS__, 'on_wp_ajax_agdpevent_send_email_cb') );
-		// add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_send_email', array(__CLASS__, 'on_wp_ajax_agdpevent_send_email_cb') );
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
+		add_action( 'wp_ajax_agdpevent_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
+		add_action( 'wp_ajax_nopriv_agdpevent_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
 		
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 	}
@@ -372,9 +369,9 @@ class AgendaPartage_Evenement {
 	/**
 	 * Retourne un lien html pour une action générique
 	 */
-	public static function get_agdpevent_action_link($post, $action, $icon = false, $caption = null, $title = false, $confirmation = null, $data = null){
+	public static function get_agdpevent_action_link($post, $method, $icon = false, $caption = null, $title = false, $confirmation = null, $data = null){
 		$need_can_user_change = true;
-		switch($action){
+		switch($method){
 			case 'remove':
 				if($caption === null)
 					$caption = __('Supprimer', AGDP_TAG);
@@ -424,7 +421,7 @@ class AgendaPartage_Evenement {
 				break;
 			default:
 				if(!$caption)
-					$caption = __($action, AGDP_TAG);
+					$caption = __($method, AGDP_TAG);
 				
 				break;
 		}
@@ -432,20 +429,18 @@ class AgendaPartage_Evenement {
 			$title = $caption;
 		
 		if($icon === true)
-			$icon = $action;
+			$icon = $method;
 		$html = '';
 		if($need_can_user_change && ! self::user_can_change_agdpevent($post)){
 			$html .= '<p class="alerte">Cet évènement ne peut pas être modifié par vos soins.</p>';
 		}
 		else {
-			//Envoyer le mail contenant le code secret à l'organisateur
-			$url = self::get_post_permalink($post, AGDP_SECRETCODE);
 			
 			$post_id = is_object($post) ? $post->ID : $post;
 			$query = [
 				'post_id' => $post_id,
-				'action' => AGDP_TAG . '_action',
-				'method' => $action
+				'action' => self::post_type . '_action',
+				'method' => $method
 			];
 			if($data)
 				$query['data'] = $data;
@@ -462,7 +457,7 @@ class AgendaPartage_Evenement {
 				$icon = AgendaPartage::html_icon($icon);
 			$html .= sprintf('<span><a href="#" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
 				, $title ? $title : ''
-				, $action
+				, $method
 				, esc_attr( json_encode($query) )
 				, $icon ? $icon . ' ' : ''
 				, $caption);
@@ -475,15 +470,21 @@ class AgendaPartage_Evenement {
 	 * 
 	 */
 	public static function on_wp_ajax_agdpevent_action_cb() {
+		
+		debug_log('on_wp_ajax_agdpevent_action_cb');	
+		
+		if( ! AgendaPartage::check_nonce())
+			wp_die();
+		
 		$ajax_response = '0';
 		if(!array_key_exists("method", $_POST)){
 			wp_die();
 		}
-		$action = $_POST['method'];
+		$method = $_POST['method'];
 		if(array_key_exists("post_id", $_POST)){
 			try{
 				//cherche une fonction du nom "agdpevent_action_{method}"
-				$function = array(__CLASS__, sprintf('agdpevent_action_%s', $action));
+				$function = array(__CLASS__, sprintf('agdpevent_action_%s', $method));
 				$ajax_response = call_user_func( $function, $_POST['post_id']);
 			}
 			catch( Exception $e ){
@@ -572,6 +573,8 @@ class AgendaPartage_Evenement {
 	public static function change_post_status($post_id, $post_status) {
 		if($post_status == 'publish')
 			$ignore = 'sessionid';
+		else
+			$ignore = false;
 		if(self::user_can_change_agdpevent($post_id, $ignore)){
 			$postarr = ['ID' => $post_id, 'post_status' => $post_status];
 			$post = wp_update_post($postarr, true);

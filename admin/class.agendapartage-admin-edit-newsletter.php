@@ -303,23 +303,6 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		foreach($dbresults as $dbresult)
 			if(isset($periods[$dbresult->period]))
 				$periods[$dbresult->period]['subscribers'][] = $dbresult;
-		
-		/** Historique **/
-		//TODO cf get_today_subscribers
-		$sql = "SELECT SUBSTR(nl_meta.meta_key, LENGTH('{$mailing_meta_key}_')) AS period"
-			. ", nl_meta.meta_value AS mailing_date"
-			. ", COUNT(usermeta.umeta_id) AS count"
-			. "\n FROM {$blog_prefix}postmeta nl_meta"
-			. "\n LEFT JOIN {$blog_prefix}usermeta usermeta"
-			. "\n ON usermeta.meta_key = CONCAT(nl_meta.meta_key, '_', nl_meta.meta_value)"
-			. "\n WHERE nl_meta.post_id = {$newsletter_id}"
-			. "\n AND nl_meta.meta_key LIKE '{$mailing_meta_key}_%'"
-			. "\n GROUP BY SUBSTR(nl_meta.meta_key, LENGTH('{$mailing_meta_key}_')), nl_meta.meta_value"
-			. "\n ORDER BY mailing_date DESC";
-		$dbresults = $wpdb->get_results($sql);
-		foreach($dbresults as $dbresult)
-			if(isset($periods[$dbresult->period]))
-				$periods[$dbresult->period]['mailing'][] = ['date' => $dbresult->mailing_date, 'count' => $dbresult->count];
 			
 		echo sprintf("<ul>");
 		 // var_dump($periods);
@@ -364,6 +347,44 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				echo '</code></div>';
 			}
 			echo '</li>';
+		}
+				
+		/** Historique **/
+		$meta_next_date = 'next_date_';
+		$two_months_before_mysql = wp_date('Y-m-d', strtotime(wp_date('Y-m-01', $today) . ' - 2 month'));
+		$sql = "SELECT mailing.meta_value AS mailing_date, COUNT(user.ID) AS count"
+			. "\n FROM {$blog_prefix}users user"
+			// . "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			// . "\n ON user.ID = usermetacap.user_id"
+			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
+			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
+			. "\n INNER JOIN {$blog_prefix}usermeta mailing"
+				. "\n ON user.ID = mailing.user_id"
+				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"
+				. "\n AND mailing.meta_value >= '{$two_months_before_mysql}'"
+			. "\n GROUP BY mailing.meta_value"
+			. "\n ORDER BY mailing.meta_value DESC";
+		$dbresults = $wpdb->get_results($sql);
+		$mailings = [];
+		$users = 0;
+		foreach($dbresults as $dbresult){
+			$mailings[] = ['date' => $dbresult->mailing_date, 'count' => $dbresult->count];
+			$users += $dbresult->count;
+		}
+		if( count($mailings) ){
+			echo sprintf("<li><h3><u>Envois depuis le %s</u> : %s %s</h3>"
+				, wp_date('d/m/Y', strtotime($two_months_before_mysql))
+				, $users
+				, $users ? ' destinataire(s)' : '');
+				
+			echo '<ul>';
+			foreach($mailings as $data)
+				echo sprintf("<li>Lettre-info du %s : %d %s</h3>"
+					, wp_date('d/m/Y', strtotime($data['date']))
+					, $data['count']
+					, $data['count'] ? ' destinataire(s)' : ''
+					);
+			echo '</ul>';
 		}
 		echo '</ul>';
 	}

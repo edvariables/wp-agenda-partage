@@ -39,6 +39,7 @@ class AgendaPartage_Newsletter {
 	 */
 	public static function init_hooks() {
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
+		
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		
@@ -131,7 +132,20 @@ class AgendaPartage_Newsletter {
 	}
 	
 	/**
-	 * Returns true if post_status == 'publish' && meta['mailing-enable'] == true
+	 * Returns array of ID=>post_title
+	 */
+	 public static function get_newsletters_names(){
+		$newsletters = [];
+		foreach( get_posts([
+			'post_type' => AgendaPartage_Newsletter::post_type
+			, 'fields' => 'post_title'
+			]) as $post)
+			$newsletters[ $post->ID ] = $post->post_title;
+		return $newsletters;
+	}
+	
+	/**
+	 * Returns posts where post_status == 'publish' && meta['mailing-enable'] == true
 	 */
 	 public static function get_active_newsletters(){
 		return get_posts([
@@ -460,9 +474,14 @@ class AgendaPartage_Newsletter {
 	
 	 
 	/**
-	 * Répond à une requête ajax sur l'abonnement d'une adresse email
+	 * Répond à une requête ajax sur l'abonnement d'une adresse email.
+	 * cf public/js/agendapartage.js
 	 */
 	public static function on_wp_ajax_agdpnl_get_subscription(){
+		
+		if( ! AgendaPartage::check_nonce())
+			wp_die();
+		
 		$ajax_response = '0';
 		if(array_key_exists("post_id", $_POST)
 		&& array_key_exists("email", $_POST)){
@@ -473,10 +492,8 @@ class AgendaPartage_Newsletter {
 				$ajax_response = sprintf('%s|%s', $subscription, self::subscription_period_name($subscription));
 		}
 		
-		// Make your array as json
 		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
+		
 		wp_die();
 	}
 	
@@ -513,11 +530,14 @@ class AgendaPartage_Newsletter {
 		
 		$meta_key_like = sprintf('%s_mailing_', self::post_type);
 		$history = [];
+		$newsletters = self::get_newsletters_names();
 		foreach($user_metas as $meta_key => $meta_value)
 			if(str_starts_with($meta_key, $meta_key_like)){
-				$history[ substr($meta_key, strlen($meta_key_like))] = is_array($meta_value) ? implode(', ', $meta_value) : $meta_value;
+				$newsletter_id = substr($meta_key, strlen($meta_key_like));
+				$history[ sprintf('%d|%s', $newsletter_id, $newsletters[$newsletter_id]) ] 
+					= is_array($meta_value) ? implode(', ', $meta_value) : $meta_value;
 			}
-		return array_reverse($history, true);
+		return array_reverse($history, true);//TODO sort
 	}
 	
 	/***********************************************************/

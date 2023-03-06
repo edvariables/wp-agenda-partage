@@ -54,10 +54,20 @@ class AgendaPartage_Admin_User {
 				<th><label>Derniers envois</label></th>
 				<td><ul>
 					<?php 
-						foreach( $user_history as $newsletter_id => $mailing){
-							echo sprintf('<li><label>%s</label><code>%s</code></li>'
-								, $newsletter_id
-								, $mailing);
+						foreach( $user_history as $key => $mailing_date){
+							$newsletter = [];
+							preg_match_all('/^([^\|]+)\|(.+)$/', $key, $newsletter);
+							$newsletter_id = $newsletter[1][0];
+							$newsletter_name = $newsletter[2][0];
+							$ajax_data = [
+								'ID' => $profile_user->ID,
+								'nl_id' => $newsletter_id
+							];
+							echo sprintf('<li><label>%s le %s</label>  %s</li>'
+								, $newsletter_name
+								, wp_date('d/m/Y', strtotime($mailing_date))
+								, AgendaPartage::get_ajax_action_link($profile_user, 'remove_mailing', 'trash', ' ', 'Cliquez ici pour supprimer cet historique', false, $ajax_data)
+							); //TODO h:i:s
 						}
 					?></ul>
 				</td>
@@ -82,6 +92,17 @@ class AgendaPartage_Admin_User {
 */
 		return $user_contact_method;
 
+	}
+	
+	/**
+	 * Exécution ajax
+	 */
+	public static function user_action_remove_mailing($data){
+		$meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($_POST['nl_id']);
+		debug_log(__CLASS__ .' user_action_remove_mailing', $data, $_POST, $meta_key);
+		if(delete_user_meta($_POST['user_id'], $meta_key))
+			return "js:jQuery(this).parents('li:first').remove();";
+		return "Echec de suppression de l'information.";
 	}
 
 }
