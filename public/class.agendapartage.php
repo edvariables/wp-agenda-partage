@@ -136,8 +136,11 @@ class AgendaPartage {
 		wp_enqueue_script("jquery");
 		
 	    wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array(), AGDP_VERSION , 'all' );
+		wp_enqueue_script( AGDP_TAG );
+		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array(), AGDP_VERSION , 'all' );
+		wp_enqueue_script( AGDP_TAG . '-tools' );
 		
-	    wp_enqueue_script( AGDP_TAG );
+	    
 		wp_localize_script( AGDP_TAG, 'agendapartage_ajax', array( 
 			'ajax_url' => admin_url('admin-ajax.php')
 			, 'check_nonce' => wp_create_nonce('agdp-nonce')) );
@@ -433,4 +436,71 @@ class AgendaPartage {
 	public static function debug_log_enable(){
 		 return WP_DEBUG || self::get_option(AGDP_DEBUGLOG_ENABLE);
 	 }
+	 
+	 
+	
+	/**
+	 * Retourne un lien html pour une action générique
+	 */
+	public static function get_ajax_action_link($post, $method, $icon = false, $caption = null, $title = false, $confirmation = null, $data = null){
+		
+		if(is_array($method)){
+			$class = $method[0];
+			$method = $method[1];
+		}
+		else 
+			$class = is_admin() ? 'admin' : '';
+		
+		if(!$caption)
+			$caption = __($method, AGDP_TAG);
+				
+		if(!$title)
+			$title = $caption;
+		
+		if($icon === true)
+			$icon = $method;
+		$html = '';
+		$url = get_post_permalink($post);
+		
+		$query = [
+			'action' => sprintf('%s%s_action'
+				, AGDP_TAG
+				, ($class ? '_' : '') . $class
+			),
+			'method' => $method
+		];
+		if( is_a($post, 'WP_User')){
+			$post_id = $post->ID;
+			$query['user_id'] = $post_id;
+		} else {
+			$post_id = is_object($post) ? $post->ID : $post;
+			$query['post_id'] = $post_id;
+		}
+		if($data)
+			$query['data'] = $data;
+			
+		if($confirmation){
+			$query['confirm'] = $confirmation;
+		}
+		if($icon)
+			$icon = self::html_icon($icon);
+		$html .= sprintf('<span><a href="#" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
+			, $title ? $title : ''
+			, $method
+			, esc_attr( json_encode($query) )
+			, $icon ? $icon . ' ' : ''
+			, $caption);
+		
+		return $html;
+	}
+	
+	
+	
+	/**
+	*/
+	public static function check_nonce(){
+		if( ! isset($_POST['_nonce']))
+			return false;
+		return wp_verify_nonce( $_POST['_nonce'], 'agdp-nonce' );
+	}
 }
