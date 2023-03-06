@@ -49,7 +49,8 @@ class AgendaPartage_Admin_User {
 						}
 					?></ul>
 				</td>
-			</tr>
+			</tr><?php
+			if( count($user_history) ){?>
 			<tr id="agdp-newsletter-history">
 				<th><label>Derniers envois</label></th>
 				<td><ul>
@@ -71,7 +72,8 @@ class AgendaPartage_Admin_User {
 						}
 					?></ul>
 				</td>
-			</tr>
+			</tr><?php
+			}?>
 		</table><?php
 	}
 
@@ -98,8 +100,7 @@ class AgendaPartage_Admin_User {
 	 * Exécution ajax
 	 */
 	public static function user_action_remove_mailing($data){
-		$meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($_POST['nl_id']);
-		debug_log(__CLASS__ .' user_action_remove_mailing', $data, $_POST, $meta_key);
+		$meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($_POST['data']['nl_id']);
 		if(delete_user_meta($_POST['user_id'], $meta_key))
 			return "js:jQuery(this).parents('li:first').remove();";
 		return "Echec de suppression de l'information.";

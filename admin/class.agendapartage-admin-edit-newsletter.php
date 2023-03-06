@@ -399,11 +399,26 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		}
 		self::save_metaboxes($newsletter_id, $newsletter);
 		self::send_test_email($newsletter_id, $newsletter, $is_update);
+		self::set_next_cron_time($newsletter);
 	}
 	
 	/**
-	 * Callback lors de l'enregistrement du post.
-	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
+	 * Met à jour le cron pour dans un délai de [mailing_loops_interval] minutes, au plus.
+	 */
+	public static function set_next_cron_time ($newsletter){
+		if( ! AgendaPartage_Newsletter::is_active($newsletter) )
+			return false;
+		$mailing_loops_interval = get_post_meta($newsletter->ID, 'mailing-loops-interval', true);
+		$next_time = $cron_time = strtotime( date('Y-m-d H:i:s') . ' + ' . ($mailing_loops_interval * 60) . ' second');
+		$cron_time = AgendaPartage_Newsletter::get_cron_time();
+		if($cron_time === 0
+		|| $cron_time > $next_time)
+			AgendaPartage_Newsletter::init_cron($next_time);
+		return $cron_time;
+	}
+	
+	/**
+	 * Envoie un mail de test si demandé dans le $_POST.
 	 */
 	public static function send_test_email ($newsletter_id, $newsletter, $is_update){
 		
