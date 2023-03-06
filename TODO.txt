@@ -30,6 +30,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
 - shortcode [agdp-stats] pour mailing admin
 - Désabonnement : suppression du user si jamais connecté
+- cron loop 5 minutes
+- (cron inactif) en prod !!!
 
 * Publish wp plugin
 
