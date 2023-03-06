@@ -63,7 +63,7 @@ function debug_log_file(){
 	return WP_CONTENT_DIR . '/debug.log';
 }
 function debug_log_clear(...$messages){
-	if( ! WP_DEBUG )
+	if( ! AgendaPartage::debug_log_enable() )
 		return;
 	$log_file = debug_log_file();
 	if(file_exists($log_file))
@@ -72,7 +72,7 @@ function debug_log_clear(...$messages){
 		debug_log(...$messages);
 }
 function debug_log(...$messages){
-	if( ! WP_DEBUG )
+	if( ! AgendaPartage::debug_log_enable() )
 		return;
 	$data = '[' . wp_date("Y-m-d H:i:s") . '] ';
 	foreach($messages as $msg)
