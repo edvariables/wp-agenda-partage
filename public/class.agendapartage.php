@@ -292,7 +292,7 @@ class AgendaPartage {
 			// die( sprintf('<div class="error notice"><p>%s</p></div>', $message) );
 		
 		} elseif ( ! empty( $_SERVER['SCRIPT_NAME'] ) && false !== strpos( $_SERVER['SCRIPT_NAME'], '/wp-admin/plugins.php' ) ) {
-			add_option( 'Activated_AgendaPartage', true );
+			add_option( 'Activated_AgendaPartage', true ); //sic
 		}
 		self::register_user_roles();
 		self::register_post_types();
@@ -356,6 +356,7 @@ class AgendaPartage {
 	 */
 	private static function include_and_init($class_name){
 		if(! class_exists($class_name)){
+			// debug_log($_SERVER['REQUEST_URI'], 'include_and_init('.$class_name.')');
 			switch($class_name){
 				case 'AgendaPartage_Post_Types':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-post_types.php';

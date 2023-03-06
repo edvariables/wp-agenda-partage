@@ -44,7 +44,7 @@ class AgendaPartage_Newsletter {
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
-		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
+		// self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
 	}
 	/*
 	 **/
@@ -1037,3 +1037,4 @@ class AgendaPartage_Newsletter {
 		return $error;
 	}
 }
+?>

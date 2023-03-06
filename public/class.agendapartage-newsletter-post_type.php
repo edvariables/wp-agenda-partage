@@ -154,7 +154,7 @@ class AgendaPartage_Newsletter_Post_type {
 			if( array_key_exists( $existing->slug, $terms) )
 				$existings[$existing->slug] = $existing->name;
 		}
-		debug_log(__CLASS__ . ' plugin_activation', array_diff($terms, $existings));
+		// debug_log(__CLASS__ . ' plugin_activation', array_diff($terms, $existings));
 		foreach( array_diff($terms, $existings) as $new_slug => $new_name)
 			wp_insert_term($new_name, AgendaPartage_Newsletter::taxonomy_period
 				, array(
@@ -162,6 +162,7 @@ class AgendaPartage_Newsletter_Post_type {
 				)
 			);
 		
-		register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron');
+		// debug_log($_SERVER['REQUEST_URI'], __CLASS__ . ' AgendaPartage_Newsletter::init_cron()');
+		AgendaPartage_Newsletter::init_cron();
 	}
 }

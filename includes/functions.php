@@ -71,6 +71,16 @@ function debug_log_clear(...$messages){
 	if(count($messages))
 		debug_log(...$messages);
 }
+function debug_log_callstack(...$messages){
+	$backtrace = debug_backtrace();
+	// $backtrace = array_slice($backtrace, 1);
+	$backtrace[0] = $_SERVER['REQUEST_URI'];
+	for($i=0;$i<count($backtrace);$i++)
+		if(isset($backtrace[$i]['object']))
+			$backtrace[$i]['object'] = get_class($backtrace[$i]['object']);
+	array_push($messages, '[callstack]', ...$backtrace);
+	debug_log(...$messages);
+}
 function debug_log(...$messages){
 	if( ! AgendaPartage::debug_log_enable() )
 		return;

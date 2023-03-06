@@ -189,7 +189,8 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			[	'name' => 'mailing-loops-interval',
 				'label' => __('Interval de temps', AGDP_TAG),
 				'unit' => __('minutes entre deux boucles', AGDP_TAG),
-				'learn-more' => __('Le délai ne doit pas être trop petit. Le risque est d\'être considéré comme spammeur par l\'hébergeur du site.', AGDP_TAG),
+				'learn-more' => [__('Le délai ne doit pas être trop petit. Le risque est d\'être considéré comme spammeur par l\'hébergeur du site.', AGDP_TAG)
+							, __('Tous les mails doivent être traités avant minuit sinon les destinataires restant ne seront pas traités.', AGDP_TAG)],
 				'type' => 'number'
 			]
 		];
