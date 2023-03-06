@@ -425,4 +425,11 @@ class AgendaPartage {
 	public static function maillog_enable(){
 		 return self::get_option(AGDP_MAILLOG_ENABLE);
 	 }
+	 
+	 /**
+	 * debug_log actif
+	 */
+	public static function debug_log_enable(){
+		 return WP_DEBUG || self::get_option(AGDP_DEBUGLOG_ENABLE);
+	 }
 }

@@ -63,6 +63,23 @@ class AgendaPartage_Admin_Menu {
 				]
 			);
 
+			// 
+			$field_id = AGDP_DEBUGLOG_ENABLE;
+			add_settings_field(
+				$field_id, 
+				__( 'Traçage des alertes', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'label' => __( 'Activer', AGDP_TAG ),
+					'learn-more' => [sprintf(__( 'Des traces sont disponibles dans le fichier %s.', AGDP_TAG ), debug_log_file())],
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
+
 		add_settings_section(
 			'agendapartage_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
