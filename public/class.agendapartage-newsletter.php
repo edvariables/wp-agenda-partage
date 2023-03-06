@@ -42,11 +42,10 @@ class AgendaPartage_Newsletter {
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		
-		register_activation_hook( __CLASS__, 'init_cron');
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
-		if( WP_DEBUG )
-			self::init_cron();
+		// if( WP_DEBUG )
+			// self::init_cron();
 	}
 	/*
 	 **/

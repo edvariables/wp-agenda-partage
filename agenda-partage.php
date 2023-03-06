@@ -4,7 +4,7 @@
  */
 /*
  * Plugin Name: Agenda Partagé
- * Plugin URI: https://github.com/edvariables/AgendaPartage.WordPress
+ * Plugin URI: https://github.com/edvariables/wp-agenda-partage
  * Description: Agenda partagé.
  Only in french language...
  * Author: Emmanuel Durand
