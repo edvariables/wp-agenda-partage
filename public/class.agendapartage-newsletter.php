@@ -332,7 +332,7 @@ class AgendaPartage_Newsletter {
 		}
 		
 		/** reCaptcha */
-		if( AgendaPartage::may_skip_recaptcha() ){
+		if( AgendaPartage_WPCF7::may_skip_recaptcha() ){
 			//TODO
 			// $html = preg_replace('/\[recaptcha[^\]]*[\]]/'
 								// , ''
