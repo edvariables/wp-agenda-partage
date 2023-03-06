@@ -44,8 +44,7 @@ class AgendaPartage_Newsletter {
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
-		// if( WP_DEBUG )
-			// self::init_cron();
+		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
 	}
 	/*
 	 **/
@@ -664,7 +663,8 @@ class AgendaPartage_Newsletter {
 	public static function init_cron(){
 		$cron_time = wp_next_scheduled( self::cron_hook );
 		if( $cron_time === false ){
-			wp_schedule_event( time(), 'hourly', self::cron_hook );
+			$cron_time = wp_schedule_event( time(), 'hourly', self::cron_hook );
+			debug_log('init_cron wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
 		}
 		return self::get_cron_state(); 
