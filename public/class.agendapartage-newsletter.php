@@ -45,7 +45,7 @@ class AgendaPartage_Newsletter {
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
-		// self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
+		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
 	}
 	/*
 	 **/
@@ -105,7 +105,7 @@ class AgendaPartage_Newsletter {
 		$periods = self::subscription_periods();
 		if( isset($periods[$period]) )
 			return $periods[$period];
-		if($empty_if_none)
+		if($false_if_none)
 			return false;
 		foreach( $periods as $period => $label)
 			return $label;
@@ -659,6 +659,9 @@ class AgendaPartage_Newsletter {
 		}
 		return self::$cron_state;
 	}
+	public static function get_cron_time(){
+		return wp_next_scheduled( self::cron_hook );
+	}
 	public static function get_cron_time_str($cron_time = false){
 		if( ! $cron_time )
 			$cron_time = wp_next_scheduled( self::cron_hook );
@@ -679,13 +682,27 @@ class AgendaPartage_Newsletter {
 	
 	/**
 	 * Active le cron
+	 * $next_time in seconds or timestamp
 	 */
-	public static function init_cron(){
+	public static function init_cron($next_time = false){
 		$cron_time = wp_next_scheduled( self::cron_hook );
+		if($next_time){
+			if( $cron_time !== false )
+				wp_unschedule_event( $cron_time, self::cron_hook );
+			if( $next_time < 1024 )
+				$cron_time = strtotime( date('Y-m-d H:i:s') . ' + ' . $next_time . ' second');
+			else
+				$cron_time = $next_time;
+			$result = wp_schedule_single_event( $cron_time, self::cron_hook, [], true );
+			// debug_log('[agdpnl-init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
+		}
 		if( $cron_time === false ){
 			$cron_time = wp_schedule_event( time(), 'hourly', self::cron_hook );
-			debug_log('init_cron wp_schedule_event', $cron_time);
+			// debug_log('[agdpnl-init_cron] wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
+		}
+		else {
+			// debug_log('[agdpnl-init_cron] next in ' . date('H:i:s', $cron_time - time()));
 		}
 		return self::get_cron_state(); 
 	}
@@ -762,11 +779,13 @@ class AgendaPartage_Newsletter {
 		}
 
 		$time_start = time();
-		$mails_counter = 0;
+		$all_mails_counter = 0;
+		$have_more_mails = false;
 		$subscribers_done = [];
 		foreach($newsletters_data as $newsletter_id => $newsletter_data){
 			$newsletter = $newsletter_data['newsletter'];
 			$subscribers = $newsletter_data['subscribers'];
+			$mails_counter = 0;
 			$mails_counter_max = get_post_meta($newsletter_id, 'mailing-num-emails-per-loop', true);
 			$users_per_mail = get_post_meta($newsletter_id, 'mailing-num-users-per-mail', true);
 			$mailing_meta_name = self::get_mailing_meta_key($newsletter);
@@ -798,8 +817,6 @@ class AgendaPartage_Newsletter {
 					$subscribers_done[] = $subscriber->ID;
 				}
 			}
-			if($mails_counter >= $mails_counter_max)
-				break;
 			
 			if($mails_counter === 0){
 				self::$cron_state .= sprintf(' | Prochaine date passe de %s', self::get_next_date(false, $newsletter));
@@ -812,10 +829,18 @@ class AgendaPartage_Newsletter {
 					self::set_next_date(false, $newsletter, $next_date);
 				}
 			}
+			else {
+				$all_mails_counter += $mails_counter;
+				if($all_mails_counter >= $mails_counter_max){
+					$have_more_mails = true;
+					$mailing_loops_interval = get_post_meta($newsletter_id, 'mailing-loops-interval', true);
+					break;
+				}
+			}
 		}
 
 		self::$cron_state .= sprintf(' | Au final, %d mail(s) envoyé(s) à %d destinataire(s) en %s sec. Identifiants : #%s.%s'
-			, $mails_counter
+			, $all_mails_counter
 			, count($subscribers_done)
 			, time() - $time_start
 			, implode(', #', $subscribers_done )
@@ -826,10 +851,15 @@ class AgendaPartage_Newsletter {
 			remove_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail'), 10 );
 			remove_filter( 'wp_mail_succeeded', array(__CLASS__, 'on_wp_mail_succeeded'), 10 );
 			remove_filter( 'wp_mail_failed', array(__CLASS__, 'on_wp_mail_failed'), 10 );
+			self::log_cron_state();
+		
+			if($have_more_mails){
+				if( ! isset($mailing_loops_interval) )
+					throw new Exception('$mailing_loops_interval n\'est pas défini !');
+				self::init_cron($mailing_loops_interval * 60);
+			}
 		}
 		
-		self::log_cron_state();
-
 		return true;
 	}
 	

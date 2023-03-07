@@ -185,21 +185,42 @@ class AgendaPartage_Admin_Evenement {
 	/**
 	 * Init
 	 */
+	public static function get_my_agdpevents($num_posts = 5) {
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+	    $current_user = wp_get_current_user();
+		$user_id = $current_user->ID;
+		$user_email = $current_user->user_email;
+		
+		$sql = "SELECT post.ID, post.post_title, post.post_name, post.post_status, post.post_date, post.post_modified"
+			. "\n FROM {$blog_prefix}posts post"
+			. "\n LEFT JOIN {$blog_prefix}postmeta post_email"
+			. "\n ON post_email.post_id = post.ID"
+			. "\n AND post_email.meta_key = 'ev-email'"
+			. "\n WHERE post.post_type = '".AgendaPartage_Evenement::post_type."'"
+			. "\n AND post.post_status IN ('publish', 'pending', 'draft')"
+			. "\n AND ( post.post_author = {$user_id}"
+				. "\n OR post_email.meta_value = '{$user_email}')"
+			. "\n ORDER BY post.post_modified DESC"
+			. "\n LIMIT {$num_posts}"
+			;
+		$dbresults = $wpdb->get_results($sql);
+		if( is_a($dbresults, 'WP_Error') )
+			throw $dbresults;
+		// $ids = array_map(function($dbresult){ return $dbresult->ID;}, $dbresults);
+		// $agdpevents = get_posts([ 'post__in'=>$ids/* , 'fields' => ['ID', 'post_title', 'post_status'] */ ]);
+		// debug_log($ids, $agdpevents);
+		return $dbresults;
+	}
+	
+	/**
+	 * Init
+	 */
 	public static function add_dashboard_widgets() {
 	    global $wp_meta_boxes;
-		$current_user = wp_get_current_user();
 		//TODO : trier par les derniers ajoutés
 		//TODO : author OR email
-		$agdpevents = AgendaPartage_Evenements::get_posts(5
-			, array( 
-				// 'author' => $current_user->ID,
-				// 'relation' => 'OR',
-				'meta_query' => [
-					'key' => 'ev-email',
-					'value' => $current_user->user_email,
-					'compare' => '='
-				]
-			));
+		$agdpevents = self::get_my_agdpevents(5);
 	    if( count($agdpevents) ) {
 			add_meta_box( 'dashboard_my_agdpevents',
 				__('Mes évènements', AGDP_TAG),
@@ -225,7 +246,9 @@ class AgendaPartage_Admin_Evenement {
 		
 		if(current_user_can('manage_options')
 		|| current_user_can('agdpevent')){
-		    $agdpevents = AgendaPartage_Evenements::get_posts(10);
+		    $agdpevents = AgendaPartage_Evenements::get_posts( 10, [
+				'post_status' => ['publish', 'pending', 'draft']
+			]);
 			if( count($agdpevents) ) {
 				add_meta_box( 'dashboard_all_agdpevents',
 					__('Les évènements', AGDP_TAG),
@@ -262,6 +285,7 @@ class AgendaPartage_Admin_Evenement {
 	public static function dashboard_my_agdpevents_cb($post , $widget) {
 		$agdpevents = $widget['args']['agdpevents'];
 		$edit_url = current_user_can('manage_options');
+		$post_statuses = get_post_statuses();
 		?><ul><?php
 		foreach($agdpevents as $agdpevent){
 			echo '<li>';
@@ -277,13 +301,15 @@ class AgendaPartage_Admin_Evenement {
 				$the_modified_date = get_the_modified_date('', $agdpevent);
 				$html = sprintf('<span>ajouté le %s</span>', $the_date) ;
 				if($the_date != $the_modified_date)
-					$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;		
-				echo sprintf( '<cite>%s</cite><hr>', $html);		
+					$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;
+				if($agdpevent->post_status != 'publish')
+					$html .= sprintf('<br><b>%s</b>', AgendaPartage::html_icon( 'warning', '',$post_statuses[$agdpevent->post_status])) ;		
+				echo sprintf( '<cite>%s</cite>', $html);		
 			?></header><?php
 			/*?><div class="entry-summary">
 				<?php echo get_the_excerpt($agdpevent); //TODO empty !!!!? ?>
 			</div><?php */
-			echo '</li>';
+			echo '<hr></li>';
 			
 		}
 		?></ul><?php
@@ -304,13 +330,14 @@ class AgendaPartage_Admin_Evenement {
 			$the_date = get_the_date('', $agdpevent);
 			$the_modified_date = get_the_modified_date('', $agdpevent);
 			$html = '';
-			if($agdpevent->post_status != 'publish')
-				$html .= sprintf('<b>%s</b> - ', $post_statuses[$agdpevent->post_status]) ;
 			$html .= sprintf('<span>ajouté le %s</span>', $the_date) ;
 			if($the_date != $the_modified_date)
-				$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;		
-			edit_post_link( $html, '<cite>', '</cite><hr>', $agdpevent );			
-			echo '</li>';
+				$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;
+			if($agdpevent->post_status != 'publish')
+				$html .= sprintf('<br><b>%s</b>', AgendaPartage::html_icon( 'warning', '', $post_statuses[$agdpevent->post_status])) ;
+				
+			echo sprintf( '<cite>%s</cite>', $html);		
+			echo '<hr></li>';
 
 			if( --$max_rows <= 0 && $the_modified_date != $today_date )
 				break;
@@ -321,3 +348,4 @@ class AgendaPartage_Admin_Evenement {
 	}
 
 }
+?>

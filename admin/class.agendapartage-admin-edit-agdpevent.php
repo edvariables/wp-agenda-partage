@@ -368,7 +368,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		?><label for="post_author_override"><?php _e( 'Utilisateur' ); ?></label><?php
 		wp_dropdown_users(
 			array(
-				'capability'       => 'authors',
+				// 'capability'       => 'authors',
 				'name'             => 'post_author_override',
 				'selected'         => empty( $post->ID ) ? $user_ID : $post->post_author,
 				'include_selected' => true,
