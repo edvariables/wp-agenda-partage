@@ -283,6 +283,5 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 		
 		return false;
 	}
-
-
 }
+?>
