@@ -194,11 +194,19 @@ class AgendaPartage_Admin_Evenement {
 		
 		$sql = "SELECT post.ID, post.post_title, post.post_name, post.post_status, post.post_date, post.post_modified"
 			. "\n FROM {$blog_prefix}posts post"
-			. "\n LEFT JOIN {$blog_prefix}postmeta post_email"
+			. "\n INNER JOIN {$blog_prefix}postmeta post_email"
 			. "\n ON post_email.post_id = post.ID"
 			. "\n AND post_email.meta_key = 'ev-email'"
+			. "\n INNER JOIN {$blog_prefix}postmeta post_date_debut"
+			. "\n ON post_date_debut.post_id = post.ID"
+			. "\n AND post_date_debut.meta_key = 'ev-date-debut'"
+			. "\n INNER JOIN {$blog_prefix}postmeta post_date_fin"
+			. "\n ON post_date_fin.post_id = post.ID"
+			. "\n AND post_date_fin.meta_key = 'ev-date-fin'"
 			. "\n WHERE post.post_type = '".AgendaPartage_Evenement::post_type."'"
 			. "\n AND post.post_status IN ('publish', 'pending', 'draft')"
+			. "\n AND GREATEST(post_date_debut.meta_value, post_date_fin.meta_value) >= CURRENT_DATE()"
+			. "\n AND post.post_author = {$user_id}"
 			. "\n AND ( post.post_author = {$user_id}"
 				. "\n OR post_email.meta_value = '{$user_email}')"
 			. "\n ORDER BY post.post_modified DESC"
@@ -207,9 +215,6 @@ class AgendaPartage_Admin_Evenement {
 		$dbresults = $wpdb->get_results($sql);
 		if( is_a($dbresults, 'WP_Error') )
 			throw $dbresults;
-		// $ids = array_map(function($dbresult){ return $dbresult->ID;}, $dbresults);
-		// $agdpevents = get_posts([ 'post__in'=>$ids/* , 'fields' => ['ID', 'post_title', 'post_status'] */ ]);
-		// debug_log($ids, $agdpevents);
 		return $dbresults;
 	}
 	
