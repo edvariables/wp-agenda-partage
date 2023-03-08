@@ -110,3 +110,13 @@ img.coo-favicon {
 #dashboard-widgets-wrap .dashboard-agdpmaillogs .entry-title {
 	font-weight: bold;
 }
+
+#the-list .type-agdpevent.status-pending td.column-titre,
+#the-list .type-agdpevent.status-pending td.column-date {
+	color: #975d17;
+}
+
+#the-list .type-agdpevent.status-draft td.column-titre,
+#the-list .type-agdpevent.status-draft td.column-date {
+	color: darkred;
+}

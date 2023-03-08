@@ -155,7 +155,6 @@ class AgendaPartage_Evenements {
 		$query = self::get_posts_query(...$queries);
 
 		// debug_log('get_posts $queries ', $queries);
-		// debug_log('get_posts $query ', $query);
 
         $the_query = new WP_Query( $query );
 		
@@ -377,7 +376,7 @@ class AgendaPartage_Evenements {
 				, $month
 			);
 			if(!$ajax && $month_events_count){
-				$html .= self::get_month_events_list_html( $month, $requested_id, $options );
+				$html .= self::get_month_events_list_html( $month, $requested_id, $options, $query );
 			}
 		
 			$html .= '</ul></li>';
@@ -399,26 +398,28 @@ class AgendaPartage_Evenements {
 	public static function get_list_for_email($query = false, $content = '', $options = false){
 		if(!isset($options) || !is_array($options))
 			$options = array();
-		
+		$term_id = AgendaPartage::get_option('agdpevent_tax_publication_newsletter_term_id');
 		$options = array_merge(
 			array(
 				'ajax' => false,
 				'months' => date('d') < 10 ? 1 : 2,
-				'mode' => 'email' 
+				'mode' => 'email'
 			), $options);
-		
+			
+		if( ! is_array($query) )
+			$query = [];
+		if( empty($query['tax_query']) )
+			$query['tax_query'] = [];
+		$query['tax_query'][] = [
+			'taxonomy' => AgendaPartage_Evenement::taxonomy_publication,
+			'field' => 'term_id',
+			'terms' => $term_id
+		];
+				
 		$css = '<style>'
 			. '
 .entry-content {
 	font-family: arial;
-}
-.agdp-agdpevents-email * {
-	background-color: #FFFFFF;
-	color: #000000 !important;
-}
-body.colors-dark .agdp-agdpevents-email * {
-	background-color: #FFFFFF;
-	color: #000000 !important;
 }
 .toggle-trigger {
 	margin: 0px;
@@ -450,15 +451,18 @@ body.colors-dark .agdp-agdpevents-email * {
 	font-size: larger;
 	font-weight: bold;
 } 
-.agdp-agdpevents-email ul {
+.agdp-agdpevents-email a-ul {
 	list-style: none;
 } 
-.agdp-agdpevents-email li {
+.agdp-agdpevents-email a-li a-li {
+	margin-left: 1em;
 	padding-top: 1em;
 } 
 '
 			. '</style>';
-		$html = $css . self::get_list_html($query, $content, $options );
+		$html = self::get_list_html($query, $content, $options );
+		$html = $css . $html;
+
 		foreach([
 			'agdp-agdpevents'=> 'aevs'
 			, 'agdpevents'=> 'evs'
@@ -466,15 +470,20 @@ body.colors-dark .agdp-agdpevents-email * {
 			, 'agdpevent '=> 'ev '
 			, 'toggle-trigger' => 'tgt'
 			, 'toggle-container' => 'tgc'
+			
+			, '<ul' => '<div class="a-ul"'
+			, '</ul' => '</div'
+			, '<li' => '<div class="a-li"'
+			, '</li' => '</div'
+			
 			] as $search=>$replace)
 			$html = str_replace($search, $replace, $html);
 		foreach([
 			'/\sagdpevent="\{[^\}]*\}"/' => '',
 			'/\sid="\w*"/' => '',
-			// '/(\s)\s+/' => '$1'
+			'/([\}\>\;]\s)\s+/m' => '$1'
 			] as $search=>$replace)
 			$html = preg_replace($search, $replace, $html);
-		
 		return $html;
 	}
 	
@@ -572,9 +581,9 @@ body.colors-dark .agdp-agdpevents-email * {
 	/**
 	* Rendu Html des évènements d'un mois sous forme de liste
 	*/
-	public static function get_month_events_list_html($month, $requested_id = false, $options = false){
+	public static function get_month_events_list_html($month, $requested_id = false, $options = false, $query = false){
 		
-		$events = self::get_month_posts($month);
+		$events = self::get_month_posts($month, $query);
 		
 		if(is_wp_error( $events)){
 			$html = sprintf('<p class="alerte no-events">%s</p>%s', __('Erreur lors de la recherche d\'évènements.', AGDP_TAG), var_export($events, true));

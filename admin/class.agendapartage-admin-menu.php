@@ -36,50 +36,7 @@ class AgendaPartage_Admin_Menu {
 	public static function init_settings(){
 		// register a new setting for "agendapartage" page
 		register_setting( AGDP_TAG, AGDP_TAG );
-
-		// register a new section in the "agendapartage" page
-		add_settings_section(
-			'agendapartage_section_general',
-			__( 'En général', AGDP_TAG ),
-			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG
-		);
-
-			// 
-			$field_id = AGDP_MAILLOG_ENABLE;
-			add_settings_field(
-				$field_id, 
-				__( 'Traçage des mails', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
-				AGDP_TAG,
-				'agendapartage_section_general',
-				[
-					'label_for' => $field_id,
-					'label' => __( 'Activer', AGDP_TAG ),
-					'learn-more' => [__( 'A n\'utiliser que pour la poursuite d\'envois abusifs ou de robots.', AGDP_TAG )
-									, __( 'Pensez à purger les Traces mail et à vider la corbeille.', AGDP_TAG )],
-					'class' => 'agendapartage_row',
-					'input_type' => 'checkbox'
-				]
-			);
-
-			// 
-			$field_id = AGDP_DEBUGLOG_ENABLE;
-			add_settings_field(
-				$field_id, 
-				__( 'Traçage des alertes', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
-				AGDP_TAG,
-				'agendapartage_section_general',
-				[
-					'label_for' => $field_id,
-					'label' => __( 'Activer', AGDP_TAG ),
-					'learn-more' => [sprintf(__( 'Des traces sont disponibles dans le fichier %s.', AGDP_TAG ), debug_log_file())],
-					'class' => 'agendapartage_row',
-					'input_type' => 'checkbox'
-				]
-			);
-
+		
 		add_settings_section(
 			'agendapartage_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
@@ -242,6 +199,64 @@ class AgendaPartage_Admin_Menu {
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
 					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+
+			// 
+			$field_id = 'agdpevent_tax_publication_newsletter_term_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Publication "Lettre-info"', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_terms_cb'),
+				AGDP_TAG,
+				'agendapartage_section_agdpevents',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'taxonomy' => AgendaPartage_Evenement::taxonomy_publication
+				]
+			);
+
+		// register a new section in the "agendapartage" page
+		add_settings_section(
+			'agendapartage_section_general',
+			__( 'En général', AGDP_TAG ),
+			array(__CLASS__, 'settings_sections_cb'),
+			AGDP_TAG
+		);
+
+			// 
+			$field_id = AGDP_MAILLOG_ENABLE;
+			add_settings_field(
+				$field_id, 
+				__( 'Traçage des mails', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'label' => __( 'Activer', AGDP_TAG ),
+					'learn-more' => [__( 'A n\'utiliser que pour la poursuite d\'envois abusifs ou de robots.', AGDP_TAG )
+									, __( 'Pensez à purger les Traces mail et à vider la corbeille.', AGDP_TAG )],
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
+
+			// 
+			$field_id = AGDP_DEBUGLOG_ENABLE;
+			add_settings_field(
+				$field_id, 
+				__( 'Traçage des alertes', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_general',
+				[
+					'label_for' => $field_id,
+					'label' => __( 'Activer', AGDP_TAG ),
+					'learn-more' => [sprintf(__( 'Des traces sont disponibles dans le fichier %s.', AGDP_TAG ), debug_log_file())],
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
 				]
 			);
 
@@ -462,6 +477,45 @@ class AgendaPartage_Admin_Menu {
 				<div class="dashicons-before dashicons-welcome-learn-more">Dans les formulaires, les adresses emails comme organisateur@<?php echo AGDP_EMAIL_DOMAIN?> ou client@<?php echo AGDP_EMAIL_DOMAIN?> sont remplacées par des valeurs dépendantes du contexte.</div>
 				<?php
 				break;
+		}
+	}
+
+	/**
+	 * Option parmi la liste des termes d'une taxonomy
+	 * $args['taxonomy'] doit être fourni
+	 */
+	public static function agendapartage_combos_terms_cb( $args ) {
+		// get the value of the setting we've registered with register_setting()
+		$option_id = $args['label_for'];
+		$taxonomy = $args['taxonomy'];
+		$option_value = AgendaPartage::get_option($option_id);
+		if( ! isset( $option_value ) ) $option_value = -1;
+
+		// output the field
+		?>
+		<select id="<?php echo esc_attr( $option_id ); ?>"
+			name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>]"
+		><option/>
+		<?php
+		$terms = get_terms( array('hide_empty' => false, 'taxonomy' => $taxonomy) );
+		foreach($terms as $term) {
+			echo sprintf('<option value="%d" %s>%s</option>'
+				, $term->term_id
+				, selected( $option_value, $term->term_id, false )
+				, esc_attr( $term->name )
+			);
+		}
+		echo '</select>';
+	
+
+		if( ! $option_value){
+			switch($args['taxonomy']){
+				default:
+					?>
+					<div class="dashicons-before dashicons-warning">Un élément de la liste doit être sélectionné !</div>
+					<?php
+					break;
+			}
 		}
 	}
 

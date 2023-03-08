@@ -76,6 +76,8 @@ class AgendaPartage_Admin_Edit_Maillog extends AgendaPartage_Admin_Edit_Post_Typ
 		
 		foreach($meta_input as $meta_name => $meta_value){
 			$meta_value = implode("\r\n", $meta_value);
+			if(is_serialized($meta_value))
+				$meta_value = var_export(unserialize($meta_value), true);
 			?><tr><th><label><?=$meta_name?></label></th>
 				<td><?php
 					echo sprintf('<pre><code>%s</code></pre>', htmlentities( $meta_value));

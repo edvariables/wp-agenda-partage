@@ -169,3 +169,12 @@ body.colors-dark .agdp-agdpevents-list .agdp-agdpevents-list-header form {
 	font-weight: bold;
 	display: block;
 }
+
+.agdp-agdpevents-email *, .aevs-email * {
+	background-color: #FFFFFF ;
+	color: #000000 !important;
+}
+body.colors-dark .agdp-agdpevents-email *, body.colors-dark .aevs-email * {
+	background-color: #FFFFFF;
+	color: #000000 !important;
+}

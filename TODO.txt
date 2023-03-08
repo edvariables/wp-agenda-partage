@@ -7,10 +7,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * Créer un rôle author-agdpevent
 
-* Admin liste évènements
-- Tri liste par date
-- En rouge les pending
-
 * Titre (et content ?) des évents avec &amp;
 
 * Taxonomy Type event Color
@@ -26,13 +22,9 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - Export .ics
 
 * Newsletter
-- Saisie d'email -> retour d'ajax -> hide/show create account
-- Jours d'envoi
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
 - shortcode [agdp-stats] pour mailing admin
 - Désabonnement : suppression du user si jamais connecté
-- cron loop 5 minutes
-- (cron inactif) en prod !!!
 
 * Publish wp plugin
 
