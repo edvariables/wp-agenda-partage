@@ -5,6 +5,7 @@ jQuery( function( $ ) {
 	 * agdpevent-edit shortcode
 	 * cf class.agendapartage-agdpevent-edit.php
 	 * Hack des form wpcf7
+	 * Les valeurs des champs sont dans un input.agdpevent_edit_form_data hidden
 	 */
 	$( document ).ready(function() {
 		$( 'body' ).on('agdpevent_edit_form-init', function(){
@@ -137,64 +138,19 @@ jQuery( function( $ ) {
 			});
 		}); 
 		
-		/* //Show more posts
-		$(' body ').on('click', ".agdp-agdpevents-list .show-more .toggle-trigger", function(event){
-			//Load more posts via Ajax
-			var $showMore = $(this).parents('.show-more');
-			var $list = $showMore.parents('.agdp-agdpevents-list');
-			var $lastPost = $list.find('.agdpevent[agdpevent]:last');
-			if($lastPost.length > 0){
-				var agdpevent = JSON.parse( $lastPost.attr('agdpevent') );
-				jQuery.ajax({
-					url : agendapartage_ajax.ajax_url,
-					type : 'post',
-					data : {
-						action : AGDP_TAG + '_show_more',
-						_nonce : agendapartage_ajax.check_nonce,               
-						'last-post' : agdpevent
-					},
-					success : function( response ) {
-						var $newList = $(response);
-						//TODO merge mois incomplet
-						var $firstMonth = $newList.find('.agdpevents-month:first');
-						var monthId = $firstMonth.attr('id');
-						$existingMonth = $list.children().find('.agdpevents-month[id="'+monthId+'"]:first');
-						if($existingMonth.length){
-							var $parent = $firstMonth.parent('li:first');
-							$firstMonth.children().appendTo($existingMonth);
-							$parent.remove();
-							//Déplie le parent TODO attention en mode ajax
-							$existingMonth.prev('.toggle-trigger:not(.active)').click();
-						}
-						$newList.children().children()
-							.appendTo($list.children());
-						$( 'body' ).trigger('toggle-init');
-						$showMore.remove();
-					},
-					fail : function( response ){
-						$showMore.remove();
-					}
-				});
-				$(this)
-					.html("Chargement en cours")
-					.toggleClass("active");
-			}
-			else
-				$showMore.remove();
-			event.preventDefault();  
-			return false;
-		}); */
-
 		/**
-		 * Abonnement à la lettre-info : la saisie d'une adresse email met à jour les options d'abonnement)
+		 * Abonnement à la lettre-info
+		 * la saisie d'une adresse email met à jour les options d'abonnement), masque ou affiche la création de compte
 		 *
 		 */
 		$('form.wpcf7-form input[name="nl-email"]').on('change', function(event){
 			var $actionElnt = $(this);
-			var email = $actionElnt.val();
-			if( ! email )
-				return;
 			var $form = $actionElnt.parents('form:first');
+			var email = $actionElnt.val();
+			if( ! email ){
+				$form.find('.if-not-connected').show();
+				return;
+			}
 			var post_id = $actionElnt.parents('article[id]:first').attr('id');
 			if( ! post_id || ! post_id.startsWith('post-'))
 				return;
@@ -210,12 +166,18 @@ jQuery( function( $ ) {
 				},
 				success : function( response ) {
 					if(response){
-						if((typeof response === 'string' || response instanceof String)
-						&& response ){
-							response = response.replace(/^(.*)\|(.*)$/, '$2');
-							var $radio = $form.find('input[name="nl-period"][value="' + response + '"]');
-							$radio.prop("checked", true);
+						var is_user = false;
+						if(typeof response === 'object'){
+							if( response.subscription_name ){
+								var $radio = $form.find('input[name="nl-period"][value="' + response.subscription_name + '"]');
+								$radio.prop("checked", true);
+							}
+							is_user = response.is_user;
 						}
+						if(is_user)
+							$form.find('.if-not-connected').hide().prop("checked", false);
+						else
+							$form.find('.if-not-connected').show();
 					}
 					$spinner.remove();
 				},

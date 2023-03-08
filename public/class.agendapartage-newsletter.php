@@ -339,8 +339,8 @@ class AgendaPartage_Newsletter {
 		
 		/** Create account **/
 		if( self::get_current_user()){
-			$html = preg_replace('/\<div class="if-not-connected">[\s\S]*\<\/div\>/'
-								, ''
+			$html = preg_replace('/\<div\s+class="if-not-connected"/'
+								, '$0 style="display: none"'
 								, $html);
 		}
 		
@@ -487,9 +487,11 @@ class AgendaPartage_Newsletter {
 		&& array_key_exists("email", $_POST)){
 			$subscription = self::get_subscription($_POST['email'], $_POST['post_id']);
 			if($subscription === false)
-				$ajax_response = '';
+				$ajax_response = [];
 			else
-				$ajax_response = sprintf('%s|%s', $subscription, self::subscription_period_name($subscription));
+				$ajax_response = ['subscription' => $subscription, 'subscription_name' => self::subscription_period_name($subscription)];
+			if( email_exists($_POST['email']))
+				$ajax_response['is_user'] = true;
 		}
 		
 		wp_send_json($ajax_response);
@@ -564,8 +566,6 @@ class AgendaPartage_Newsletter {
 		}
 		
 		$period = $inputs['nl-period'];
-		
-		debug_log('$period',  $inputs['nl-period']);
 		
 		if(is_array($period))
 			$period = count($period) && $period[0] ? $period[0] : 'none';//wpcf7 is strange with first radio option
@@ -880,9 +880,31 @@ class AgendaPartage_Newsletter {
 			}
 		}
 		$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
-		$message = get_the_content(false, false, $newsletter);
-		$message = '<div style=\'white-space: pre\'>' . do_shortcode( $message ) . '</div>';
+		$message = do_shortcode( get_the_content(false, false, $newsletter) );
 		
+		$message = '<!DOCTYPE html><html>'
+				. '<head>'
+					. '<meta name="viewport" content="width=device-width">'
+					. '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+/* 					. '<style>body {
+font-family: \'Segoe UI\', Arial;
+font-size: 14px;
+height: 100% !important;
+line-height: 1.5;
+-ms-text-size-adjust: 100%;
+-webkit-text-size-adjust: 100%;
+width: 100% !important;
+background-color: #fff;
+margin: 0;
+padding: 0;
+white-space: pre;
+						}</style>' */
+				. '</head>'
+				//TODO white-space does'nt work with my android mailbox
+				. sprintf('<body style="white-space: pre-line;">%s</body>', $message)
+				. '</html>'
+		;
+			
 		if(is_array($emails))
 			$to = implode(', ', $emails);
 		else
