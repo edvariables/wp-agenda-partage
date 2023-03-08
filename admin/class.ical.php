@@ -143,6 +143,11 @@ class iCal
 	
 	public static function escapeDateTime($dateTime)
     {
+		if(is_string($dateTime)){
+			if($dateTime[strlen($dateTime)-1] === ':')
+				$dateTime .= '00';
+			$dateTime = strtotime($dateTime);
+		}
         return wp_date('Ymd\THis', $dateTime);
     }
 	
