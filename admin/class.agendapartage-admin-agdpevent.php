@@ -111,7 +111,8 @@ class AgendaPartage_Admin_Evenement {
 	 */
 	public static function on_pre_get_posts( $query ) {
 		global $wpdb;
-		if(empty($query->query_vars))
+		if(empty($query->query_vars)
+		|| empty($query->query_vars['orderby']))
 			return;
 		switch( $query->query_vars['orderby']) {
 			case 'dates':

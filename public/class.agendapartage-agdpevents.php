@@ -939,12 +939,12 @@ class AgendaPartage_Evenements {
 			$event->summary = $post->post_title;
 			$event->description = $post->post_content;
 			$event->location = empty($metas['localisation']) ? '' : $metas['localisation'];
-			$event->dateStart = rtrim($metas['ev-date-debut'] . ' ' . $metas['ev-heure-debut']);
-			$event->dateEnd = rtrim(($metas['ev-date-fin'] ? $metas['ev-date-fin'] : $metas['ev-date-debut']) . ' ' . $metas['ev-heure-debut']);
+			$event->dateStart = rtrim($metas['ev-date-debut'] . ' ' . str_replace('h', ':', $metas['ev-heure-debut']));
+			$event->dateEnd = rtrim(($metas['ev-date-fin'] ? $metas['ev-date-fin'] : $metas['ev-date-debut']) . ' ' . str_replace('h', ':', $metas['ev-heure-fin']));
 			$event->created = $post->post_date;
 			$event->updated = $post->post_modified ;
 			$event->status = $post->post_status;
-			
+			debug_log($event);
 			$iCal->events[] = $event;
 		}
 		return $iCal->generate();
