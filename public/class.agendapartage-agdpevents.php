@@ -10,6 +10,8 @@ class AgendaPartage_Evenements {
 	public static $default_posts_query = [];
 	
 	private static $default_posts_per_page = 30;
+	
+	private static $filters_summary = null;
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -20,6 +22,25 @@ class AgendaPartage_Evenements {
 
 			self::init_hooks();
 		}
+	}
+
+	/**
+	 * Hook
+	 */
+	public static function init_hooks() {
+		add_action( 'wp_ajax_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
+		add_action( 'wp_ajax_'.AGDP_TAG.'_agdpevents_action', array(__CLASS__, 'on_wp_ajax_agdpevents') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_agdpevents_action', array(__CLASS__, 'on_wp_ajax_agdpevents') );
+	}
+	/*
+	 * Hook
+	 ******/
+	
+	public static function get_url(){
+		$url = get_permalink(AgendaPartage::get_option('agenda_page_id')) . '#main';
+		// $url = home_url();
+		return $url;
 	}
 	
 	public static function init_default_posts_query() {
@@ -59,20 +80,6 @@ class AgendaPartage_Evenements {
 			'posts_per_page' => self::$default_posts_per_page
 		);
 
-	}
-
-	/**
-	 * Hook
-	 */
-	public static function init_hooks() {
-		add_action( 'wp_ajax_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
-	}
-	
-	public static function get_url(){
-		$url = get_permalink(AgendaPartage::get_option('agenda_page_id')) . '#main';
-		// $url = home_url();
-		return $url;
 	}
 	
 	/**
@@ -213,17 +220,19 @@ class AgendaPartage_Evenements {
 	/**
 	 * Complète les filtres de requêtes
 	 */
-	public static function add_filters_query($query = false, $return_sql = false){
-		if(isset($_REQUEST['action'])
-		&& $_REQUEST['action'] == 'filters'){
+	public static function add_filters_query($query = false, $return_sql = false, $filters = null){
+		if( $filters === null)
+			$filters = $_REQUEST;
+		if(isset($filters['action'])
+		&& $filters['action'] == 'filters'){
 			$query_tax_terms = [];
 			$all_sql = [];
 		foreach( AgendaPartage_Evenement_Post_Type::get_taxonomies() as $tax_name => $taxonomy){
 			$field = $taxonomy['filter'];
-			if(isset($_REQUEST[$field])){
+			if(isset($filters[$field])){
 				$query_tax_terms[$tax_name] = [];
 				$all_sql[$tax_name] = ['IN'=>[]];
-				foreach($_REQUEST[$field] as $term_id => $checked){
+				foreach($filters[$field] as $term_id => $checked){
 					if($term_id === '*'){
 						unset($query_tax_terms[$tax_name]);
 						unset($all_sql[$tax_name]);
@@ -387,6 +396,10 @@ class AgendaPartage_Evenements {
 		}
 		
 		$html .= '</ul>';
+		
+		if( $options['mode'] !== 'email' )
+			$html .= self::download_links();
+		
 		$html .= '</div>' . $content;
 		return $html;
 	}
@@ -542,6 +555,7 @@ class AgendaPartage_Evenements {
 		
 		$html .= '<input type="hidden" name="action" value="filters"/>';
 		$html .= '<input type="submit" value="Filtrer"/>';
+		
 		foreach( $taxonomies as $tax_name => $taxonomy){
 			$field = $taxonomy['filter'];
 			if( count($taxonomy['terms']) === 1 )
@@ -571,13 +585,14 @@ class AgendaPartage_Evenements {
 			}
 			$html .= '</div>';
 		}
-		$html .= '<!--</select>-->';
 		
 		$html .= '</form></div>';
 		
+		self::$filters_summary = $filters_summary;
+		
 		return $html;
 	}
-
+	
 	/**
 	* Rendu Html des évènements d'un mois sous forme de liste
 	*/
@@ -788,4 +803,204 @@ class AgendaPartage_Evenements {
 		// Don't forget to stop execution afterward.
 		wp_die();
 	} */
+	
+	
+	
+	public static function download_links(){
+		$html = '';
+		$data = [
+			'file_format' => 'ics'
+		];
+		$title = 'Télécharger les évènements';
+		if( count($_GET) && self::$filters_summary ){
+			$title .= ' filtrés (' . self::$filters_summary . ')';
+			$data['filters'] = $_GET;
+		}
+		$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data);
+		
+		return $html;
+	}
+
+	/**
+	 * Requête Ajax
+	 */
+	public static function on_wp_ajax_agdpevents() {
+		if( ! AgendaPartage::check_nonce()
+		|| empty($_POST['method']))
+			wp_die();
+		
+		$ajax_response = '';
+		
+		$method = $_POST['method'];
+		$data = $_POST['data'];
+		
+		try{
+			//cherche une fonction du nom "on_ajax_action_{method}"
+			$function = array(__CLASS__, sprintf('on_ajax_action_%s', $method));
+			$ajax_response = call_user_func( $function, $data);
+		}
+		catch( Exception $e ){
+			$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
+		}
+		
+		// Make your array as json
+		wp_send_json($ajax_response);
+	 
+		// Don't forget to stop execution afterward.
+		wp_die();
+	}
+
+	/**
+	 * Requête Ajax de téléchargement de fichier
+	 */
+	public static function on_ajax_action_download_file($data) {
+		
+		$filters = empty($data['filters']) ? false : $data['filters'];
+		$query = array(
+			'meta_query' => [[
+				'key' => 'ev-date-debut',
+				'value' => wp_date('Y-m-d', strtotime(wp_date('Y-m-d') . ' + 1 year')),
+				'compare' => '<=',
+				'type' => 'DATE',
+			], 
+			'relation' => 'AND',
+			[
+				'key' => 'ev-date-debut',
+				'value' => wp_date('Y-m-01'),
+				'compare' => '>=',
+				'type' => 'DATE',
+			]],
+			'orderby' => [
+				'ev-date-debut' => 'ASC',
+				'ev-heure-debut' => 'ASC',
+			],
+			'nopaging' => true
+		);
+		$query = self::add_filters_query($query, false, $filters);
+		
+		$posts = self::get_posts($query);
+
+		if( ! $posts)
+			return sprintf('Aucun évènement à exporter');
+		
+		// if( empty($data['download_ready']) ){
+			// $url = $_SERVER['REQUEST_URI'];
+			// $url = add_query_arg($_POST, $url);
+			// $url = add_query_arg('download_ready', 1, $url);
+			// return '-download:' . $url;
+		// }
+		
+		$file_format = $data['file_format'];
+		
+		switch($file_format){
+			case 'ics':
+				$export_data = self::export_posts_ics($posts, true);
+				break;
+			default:
+				return sprintf('format inconnu : "%s"', $file_format);
+		}
+
+		if( ! $export_data)
+			return sprintf('Aucune donnée à exporter');
+		
+		self::clear_export_history();
+		
+		$file = self::get_export_filename( $file_format );
+
+		$handle = fopen($file, "w");
+		fwrite($handle, $export_data);
+		fclose($handle);
+		
+		$url = self::get_export_url(basename($file));
+		
+		return 'download:' . $url;
+	}
+	
+	/**
+	 * Retourne le nom d'un fichier temporaire pour le téléchargement de l'export des évènements
+	 */
+	public static function export_posts_ics($posts){
+/* 		return var_export( array_map(function($post){
+			return [$post->ID, $post->post_title];
+		}, $posts), true); */
+		
+		require_once(AGDP_PLUGIN_DIR . '/admin/class.ical.php');
+		$iCal = new iCal();
+		$iCal->title = get_bloginfo( 'name', 'display' );
+		$iCal->description = content_url();
+		foreach($posts as $post){
+			$metas = get_post_meta($post->ID, '', true);
+			foreach($metas as $key=>$value)
+				if(is_array($value))
+					$metas[$key] = implode(', ', $value);
+			
+			$event = new iCal_Event();
+			$event->uid = crypt( AgendaPartage_Evenement::post_type . '-' . $post->ID, AGDP_TAG );
+			$event->summary = $post->post_title;
+			$event->description = $post->post_content;
+			$event->location = empty($metas['localisation']) ? '' : $metas['localisation'];
+			$event->dateStart = rtrim($metas['ev-date-debut'] . ' ' . $metas['ev-heure-debut']);
+			$event->dateEnd = rtrim(($metas['ev-date-fin'] ? $metas['ev-date-fin'] : $metas['ev-date-debut']) . ' ' . $metas['ev-heure-debut']);
+			$event->created = $post->post_date;
+			$event->updated = $post->post_modified ;
+			$event->status = $post->post_status;
+			
+			$iCal->events[] = $event;
+		}
+		return $iCal->generate();
+	}
+	
+	/**
+	 * Retourne le nom d'un fichier temporaire pour le téléchargement de l'export des évènements
+	 */
+	public static function get_export_filename($extension, $sub_path = 'export'){
+		$folder = self::get_export_folder($sub_path);
+		$file = wp_tempnam(AGDP_TAG, $folder . '/');
+		return str_replace('.tmp', '.' . $extension, $file);
+	}
+	/**
+	 * Retourne le répertoire d'exportation pour téléchargement
+	 */
+	public static function get_export_folder($sub_path = 'export'){
+		$folder = WP_CONTENT_DIR;
+		if($sub_path){
+			$folder .= '/' . $sub_path;
+			if( ! file_exists($folder) )
+				mkdir ( $folder );
+		}
+		$period = wp_date('Y-m');
+		$folder .= '/' . $period;
+		if( ! file_exists($folder) )
+			mkdir ( $folder );
+		
+		return $folder;
+	}
+	public static function get_export_url($file = false, $sub_path = 'export'){
+		$url = content_url($sub_path);
+		$period = wp_date('Y-m');
+		$url .= '/' . $period;
+		if($file)
+			$url .= '/' . $file;
+		return $url;
+	}
+	/**
+	 * Nettoie le répertoire d'exportation pour téléchargement
+	 */
+	public static function clear_export_history($sub_path = 'export'){
+		$folder = dirname(self::get_export_folder($sub_path));
+		if( ! file_exists($folder) )
+			return;
+		$period = wp_date('Y-m');
+		$periods_to_keep = [ $period, wp_date('Y-m', strtotime($period . '-01 - 1 month'))];
+		
+		$cdir = scandir($folder);
+		foreach ($cdir as $key => $value){
+			if (!in_array($value, array(".",".."))){
+				if (is_dir($folder . DIRECTORY_SEPARATOR . $value)
+				&& ! in_array($value, $periods_to_keep)){
+					rrmdir($folder . DIRECTORY_SEPARATOR . $value);
+				}
+			}
+		}
+	}
 }

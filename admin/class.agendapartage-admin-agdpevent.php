@@ -111,6 +111,8 @@ class AgendaPartage_Admin_Evenement {
 	 */
 	public static function on_pre_get_posts( $query ) {
 		global $wpdb;
+		if(empty($query->query_vars))
+			return;
 		switch( $query->query_vars['orderby']) {
 			case 'dates':
 				$query->set('meta_key','ev-date-debut');  
