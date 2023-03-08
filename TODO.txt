@@ -7,8 +7,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * Créer un rôle author-agdpevent
 
-* Titre (et content ?) des évents avec &amp;
-
 * Taxonomy Type event Color
 
 * $(recaptcha).init après ajax sur androïd
@@ -32,3 +30,5 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - new events only
 - newsletter subscribers
 
+* events
+- ajax month : filters included  ?

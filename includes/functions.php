@@ -92,3 +92,25 @@ function debug_log(...$messages){
 			$data .= var_export($msg, true).PHP_EOL;
 	file_put_contents(debug_log_file(), $data, FILE_APPEND);
 }
+
+
+/**
+ * Delete a directory and all files in it
+ */
+
+function rrmdir($src) {
+    $dir = opendir($src);
+    while(false !== ( $file = readdir($dir)) ) {
+        if (( $file != '.' ) && ( $file != '..' )) {
+            $full = $src . '/' . $file;
+            if ( is_dir($full) ) {
+                rrmdir($full);
+            }
+            else {
+                unlink($full);
+            }
+        }
+    }
+    closedir($dir);
+    rmdir($src);
+}

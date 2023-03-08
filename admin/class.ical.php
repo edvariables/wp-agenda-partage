@@ -134,6 +134,55 @@ class iCal
 		return str_replace("\\n", "\n", 
 				str_replace("\\,", ",", $text));
 	}
+	
+	public static function escape($text){
+		return str_replace("\r", "", 
+				str_replace("\n", "\\n", 
+				str_replace(",", "\\,", $text)));
+	}
+	
+	public static function escapeDateTime($dateTime)
+    {
+        return wp_date('Ymd\THis', $dateTime);
+    }
+	
+	public function generate(){
+		$min_date = strtotime('2222-12-31');
+		$events = implode("\n", array_map(
+			function($event) use($min_date){
+				$min_date = min($min_date, strtotime($event->dateStart));
+				return $event->generate();
+			}, $this->events));
+		$output = "BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:-//AgendaPartage//AGDPDAV//FR
+X-WR-CALNAME:" . self::escape($this->title) . "
+X-APPLE-CALENDAR-COLOR:#8000ff
+REFRESH-INTERVAL;VALUE=DURATION:PT4H
+X-PUBLISHED-TTL:PT4H
+BEGIN:VTIMEZONE
+TZID:Europe/Paris
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+{$events}
+END:VCALENDAR";
+		
+		return $output;
+	}
 }
 
 
@@ -268,13 +317,13 @@ class iCal_Event
 		// Date start
 		if (preg_match('`^DTSTART(?:;.+)?:([0-9]+(T[0-9]+Z?)?)`m', $content, $m)) {
 			$this->_timeStart = strtotime($m[1]);
-			$this->dateStart  = date('Y-m-d H:i:s', $this->_timeStart);
+			$this->dateStart = wp_date('Y-m-d H:i:s', $this->_timeStart);
 		}
 
 		// Date end
 		if (preg_match('`^DTEND(?:;.+)?:([0-9]+(T[0-9]+Z?)?)`m', $content, $m)) {
 			$this->_timeEnd = strtotime($m[1]);
-			$this->dateEnd  = date('Y-m-d H:i:s', $this->_timeEnd);
+			$this->dateEnd  = wp_date('Y-m-d H:i:s', $this->_timeEnd);
 		}
 
 		// Exdate
@@ -282,7 +331,7 @@ class iCal_Event
 			foreach ($m[2] as $dates) {
 				$dates = explode(',', $dates);
 				foreach ($dates as $d) {
-					$this->exdate[] = date('Y-m-d', strtotime($d));
+					$this->exdate[] = wp_date('Y-m-d', strtotime($d));
 				}
 			}
 		}
@@ -300,7 +349,7 @@ class iCal_Event
 			}
 
 			if (isset($rules->until)) {
-				$rules->until = date('Y-m-d H:i:s', strtotime($rules->until));
+				$rules->until = wp_date('Y-m-d H:i:s', strtotime($rules->until));
 			}
 			if (isset($rules->count)) {
 				$rules->count = intval($rules->count);
@@ -332,11 +381,11 @@ class iCal_Event
 
 		// Created
 		if (preg_match('`^CREATED:(.*)`m', $content, $m))
-			$this->created = date('Y-m-d H:i:s', strtotime(trim($m[1])));
+			$this->created = wp_date('Y-m-d H:i:s', strtotime(trim($m[1])));
 
 		// Updated
 		if (preg_match('`^LAST-MODIFIED:(.*)`m', $content, $m))
-			$this->updated = date('Y-m-d H:i:s', strtotime(trim($m[1])));
+			$this->updated = wp_date('Y-m-d H:i:s', strtotime(trim($m[1])));
 
 		return $this;
 	}
@@ -351,7 +400,7 @@ class iCal_Event
 		if ((string) (int) $date != $date) {
 			$date = strtotime($date);
 		}
-		$date = date('Y-m-d', $date);
+		$date = wp_date('Y-m-d', $date);
 
 		return in_array($date, $this->exdate);
 	}
@@ -496,6 +545,44 @@ class iCal_Event
 				return $date;
 			}
 		}
+	}
+	
+	public function get_dateEnd(){
+		if( ! $this->dateEnd
+		|| $this->dateEnd == $this->dateStart
+		|| date('Y-m-d', strtotime($this->dateEnd)) == date('Y-m-d', strtotime($this->dateStart))
+		)
+			return wp_date('Y-m-d', strtotime( $this->dateStart . ' + 1 day'));
+		return $this->dateEnd;
+	}
+	
+	public function get_status($status = false){
+		if( ! $status)
+			$status = $this->status;
+		switch($status){
+			case 'publish' :
+				return 'CONFIRMED';
+			default :
+				return strtoupper($status);
+		}
+	}
+	
+	public function generate(){
+		$output = "BEGIN:VEVENT
+CREATED:".iCal::escapeDateTime($this->created)."
+DTSTAMP:".iCal::escapeDateTime($this->created)."
+LAST-MODIFIED:".iCal::escapeDateTime($this->updated)."
+SEQUENCE:0
+UID:".$this->uid."
+DTSTART;TZID=Europe/Paris:".iCal::escapeDateTime($this->dateStart)."
+DTEND;TZID=Europe/Paris:".iCal::escapeDateTime($this->get_dateEnd())."
+STATUS:".$this->get_status()."
+SUMMARY:".iCal::escape($this->summary)."
+LOCATION:".iCal::escape($this->location)."
+DESCRIPTION:".iCal::escape($this->description)."
+END:VEVENT";
+		
+		return $output;
 	}
 }
 

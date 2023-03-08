@@ -471,7 +471,7 @@ class AgendaPartage_Evenement {
 	 */
 	public static function on_wp_ajax_agdpevent_action_cb() {
 		
-		debug_log('on_wp_ajax_agdpevent_action_cb');	
+		// debug_log('on_wp_ajax_agdpevent_action_cb');	
 		
 		if( ! AgendaPartage::check_nonce())
 			wp_die();

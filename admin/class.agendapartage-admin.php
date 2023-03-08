@@ -199,7 +199,7 @@ class AgendaPartage_Admin {
 		if(!$default_post_status)
 			$default_post_status = 'publish';
 		
-		if($user = wp_get_current_user()
+		if(($user = wp_get_current_user())
 		&& $user->ID){
 		    $post_author = $user->ID;
 		}
@@ -236,7 +236,6 @@ class AgendaPartage_Admin {
 				$timeEnd = '';
 			$dateStart = substr($dateStart, 0, 10);
 			$dateEnd = substr($dateEnd, 0, 10);
-			
 			if(strtotime($dateStart) < $today) {
 				$ignoreCounter++;
 				continue;
@@ -384,11 +383,11 @@ class AgendaPartage_Admin {
 		if(!array_key_exists("method", $_POST)){
 			wp_die();
 		}
-		$action = $_POST['method'];
+		$method = $_POST['method'];
 		if(array_key_exists("post_id", $_POST)){
 			// try{
 				// cherche une fonction du nom "agdpevent_action_{method}"
-				// $function = array(__CLASS__, sprintf('agdpevent_action_%s', $action));
+				// $function = array(__CLASS__, sprintf('agdpevent_action_%s', $method));
 				// $ajax_response = call_user_func( $function, $_POST['post_id']);
 			// }
 			// catch( Exception $e ){
@@ -398,7 +397,7 @@ class AgendaPartage_Admin {
 		elseif(array_key_exists("user_id", $_POST)){
 			try{
 				//cherche une fonction du nom "user_action_{method}"
-				$function = array('AgendaPartage_Admin_User', sprintf('user_action_%s', $action));
+				$function = array('AgendaPartage_Admin_User', sprintf('user_action_%s', $method));
 				$ajax_response = call_user_func( $function, $_POST['user_id']);
 			}
 			catch( Exception $e ){

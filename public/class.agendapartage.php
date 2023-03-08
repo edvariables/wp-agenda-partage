@@ -451,7 +451,7 @@ class AgendaPartage {
 		else 
 			$class = is_admin() ? 'admin' : '';
 		
-		if(!$caption)
+		if($caption === null)
 			$caption = __($method, AGDP_TAG);
 				
 		if(!$title)
@@ -460,7 +460,6 @@ class AgendaPartage {
 		if($icon === true)
 			$icon = $method;
 		$html = '';
-		$url = get_post_permalink($post);
 		
 		$query = [
 			'action' => sprintf('%s%s_action'
@@ -469,7 +468,9 @@ class AgendaPartage {
 			),
 			'method' => $method
 		];
-		if( is_a($post, 'WP_User')){
+		if( ! $post){
+			
+		} elseif( is_a($post, 'WP_User')){
 			$post_id = $post->ID;
 			$query['user_id'] = $post_id;
 		} else {
