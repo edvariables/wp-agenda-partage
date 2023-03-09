@@ -157,14 +157,21 @@ class AgendaPartage_Evenements_Export {
 		return $vevent;
 	}
 	
-	public static function sanitize_datetime($date, $time, $date_alt = null){
+	public static function sanitize_datetime($date, $time, $date_start = false){
 		if( ! $date )
-			$date = $date_alt;
+			$date = $date_start;
 		if( ! $date )
 			return;
+		if( $date_start
+		&& (! $time || $time == '00:00' || $time == '00:00:00')
+		&& strpos($date_start, ':') == false){
+			//date_start without hour, date_end is the next day, meaning 'full day'
+			return date('Y-m-d', strtotime($date . ' + 1 day'));
+		}
 		$dateTime = rtrim($date . ' ' . str_replace('h', ':', $time));
 		if($dateTime[strlen($dateTime)-1] === ':')
 			$dateTime .= '00';
+		$dateTime = preg_replace('/\s+00\:00(\:00)?$/', '', $dateTime);
 		return $dateTime;
 	}
 		

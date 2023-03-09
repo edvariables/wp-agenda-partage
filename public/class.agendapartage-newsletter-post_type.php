@@ -139,7 +139,13 @@ class AgendaPartage_Newsletter_Post_type {
 	}
 	
 	public static function plugin_activation(){
-		/** initialise les périodes **/
+		self::init_taxonomy();
+		
+		AgendaPartage_Newsletter::init_cron();
+	}
+	
+	/** initialise les périodes **/
+	public static function init_taxonomy(){
 		
 		$terms = array(
 			'none'=>'Aucun abonnement',
@@ -161,8 +167,5 @@ class AgendaPartage_Newsletter_Post_type {
 					'slug' => (string)$new_slug
 				)
 			);
-		
-		// debug_log($_SERVER['REQUEST_URI'], __CLASS__ . ' AgendaPartage_Newsletter::init_cron()');
-		AgendaPartage_Newsletter::init_cron();
 	}
 }

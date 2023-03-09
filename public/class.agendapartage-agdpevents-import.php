@@ -94,7 +94,7 @@ class AgendaPartage_Evenements_Import {
 			);
 						
 			$post_title = $event['summary'];
-			$post_content = $event['description'];
+			$post_content = empty($event['description']) ? '' : $event['description'];
 			if ($post_content === null) $post_content = '';
 			
 			//Check doublon
@@ -109,6 +109,7 @@ class AgendaPartage_Evenements_Import {
 			}
 			
 			// terms
+			$all_taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies();
 			$taxonomies = [];
 			foreach([ 
 				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_type_agdpevent
@@ -124,9 +125,17 @@ class AgendaPartage_Evenements_Import {
 				$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				foreach($event[$node_name] as $term_name){
 					if( ! array_key_exists($term_name, $all_terms)){
-						$log[] = sprintf('<li>Dans la taxonomie %s, le terme "%s" n\'existe pas.</li>', $tax_name, htmlentities($term_name));
-						//TODO : create ?
-						continue;
+						$data = [
+							'post_type'=>AgendaPartage_Evenement::post_type,
+							'taxonomy'=>$tax_name,
+							'term'=>$term_name
+						];
+						$log[] = sprintf('<li>Dans la taxonomie "%s", le terme "<b>%s</b>" n\'existe pas. %s</li>'
+							, $all_taxonomies[$tax_name]['label']
+							, htmlentities($term_name)
+							, AgendaPartage::get_ajax_action_link(false, 'insert_term', 'add', 'Cliquez ici pour l\'ajouter', 'Crée un nouveau terme', true, $data)
+						);
+						continue 3;
 					}
 					$taxonomies[$tax_name][] =  $all_terms[$term_name]->term_id;
 				}
@@ -209,10 +218,15 @@ class AgendaPartage_Evenements_Import {
 			}
 		}
 		
-		if(empty($iCal['description']))
-			$iCal['description'] = 'vcalendar_' . wp_date('Y-m-d H:i:s');
-		if(empty($iCal['title']))
-			$iCal['title'] = $iCal['description'];
+		if( ! empty($vcalendar['x-wr-calname'])){
+			if(empty($vcalendar['title']))
+				$vcalendar['title'] = $vcalendar['x-wr-calname'];
+		}
+		
+		if(empty($vcalendar['description']))
+			$vcalendar['description'] = 'vcalendar_' . wp_date('Y-m-d H:i:s');
+		if(empty($vcalendar['title']))
+			$vcalendar['title'] = $vcalendar['description'];
 		
 		$vevents = [];
 		if(isset($ical->tree->child)) {
@@ -252,6 +266,11 @@ class AgendaPartage_Evenements_Import {
 							}
 						}
 					}
+					//if no hour specified, dtend means the day before
+					if(strpos($vevent['dtstart'], 'T') === false
+					&& strpos($vevent['dtend'], 'T') === false
+					&& $vevent['dtend'] != $vevent['dtstart'])
+						$vevent['dtend'] = date('Y-m-d', strtotime($vevent['dtend'] . ' - 1 day')); 
 					$vevent['dtstart'] = date('Y-m-d H:i:s', strtotime($vevent['dtstart'])); 
 					$vevent['dtend'] = date('Y-m-d H:i:s', strtotime($vevent['dtend'])); 
 					$vevents[] = $vevent;
@@ -260,7 +279,7 @@ class AgendaPartage_Evenements_Import {
 		}
 		
 		$vcalendar['events'] = $vevents;
-		debug_log($vcalendar);
+		// debug_log($vcalendar);
 		return $vcalendar;
 	}
 	/*
