@@ -26,6 +26,11 @@ class AgendaPartage_Evenements_Import {
 		$log[] = sprintf('<ul><b>Importation ICS "%s", %s</b>'
 			, isset($original_file_name) && $original_file_name ? $original_file_name : basename( $file_name )
 			, date_i18n('Y-m-d H:i'));
+		$log[] = sprintf('<ul><b>Source : "%s", le %s - %s</b>'
+			, empty($iCal['title']) ? '' : $iCal['title']
+			, date_i18n('d/m/Y H:i:s', strtotime($iCal['events'][0]['dtstamp']))
+			, empty($iCal['description']) ? '' : $iCal['description']);
+		
 		if(!$default_post_status)
 			$default_post_status = 'publish';
 		
@@ -119,6 +124,7 @@ class AgendaPartage_Evenements_Import {
 				$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				foreach($event[$node_name] as $term_name){
 					if( ! array_key_exists($term_name, $all_terms)){
+						$log[] = sprintf('<li>Dans la taxonomie %s, le terme "%s" n\'existe pas.</li>', $tax_name, htmlentities($term_name));
 						//TODO : create ?
 						continue;
 					}

@@ -71,11 +71,18 @@ class AgendaPartage_Evenements_Export {
 	
 	public static function get_new_ZCiCal(){
 		$ical= new ZCiCal();
+		//TITLE
 		$datanode = new ZCiCalDataNode("TITLE:" . ZCiCal::formatContent( get_bloginfo( 'name', 'display' )));
 		$ical->curnode->data[$datanode->getName()] = $datanode;
-		$datanode = new ZCiCalDataNode("DESCRIPTION:" . content_url());
+		//DESCRIPTION
+		$page_id = AgendaPartage::get_option('agenda_page_id');
+		if($page_id)
+			$url = get_permalink($page_id);
+		else
+			$url = get_site_url();
+		$datanode = new ZCiCalDataNode("DESCRIPTION:" . ZCiCal::formatContent( $url ));
 		$ical->curnode->data[$datanode->getName()] = $datanode;
-		
+		//VTIMEZONE
 		$vtimezone = new ZCiCalNode("VTIMEZONE", $ical->curnode);
 		$vtimezone->addNode(new ZCiCalDataNode("TZID:Europe/Paris"));
 		
