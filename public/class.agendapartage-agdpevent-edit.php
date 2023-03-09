@@ -765,7 +765,6 @@ class AgendaPartage_Evenement_Edit {
 				
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) ){
-						$selected = [];
 						$tax_terms[$tax_name] = array_map( //En théorie, wpcf7 retourne les identifiants mais comme on modifie à la volé les valeurs, il ne retourne que le nom
 												function($term) use ($all_terms){ 
 													if(is_numeric($term)) return $term;
