@@ -148,7 +148,7 @@ class iCal
 				$dateTime .= '00';
 			$dateTime = strtotime($dateTime);
 		}
-        return wp_date('Ymd\THis', $dateTime);
+        return date('Ymd\THis', $dateTime);
     }
 	
 	public function generate(){
@@ -161,7 +161,7 @@ class iCal
 		$output = "BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
-PRODID:-//AgendaPartage//AGDPDAV//FR
+PRODID:-//AgendaPartage//AGDPDAV ".AGDP_VERSION."//FR
 X-WR-CALNAME:" . self::escape($this->title) . "
 X-APPLE-CALENDAR-COLOR:#8000ff
 REFRESH-INTERVAL;VALUE=DURATION:PT4H
@@ -264,14 +264,50 @@ class iCal_Event
 	 */
 	protected $_occurrences;
 
+	/**
+	 * @var array
+	 */
+	protected $_categories;
 
-	public function __construct($content = null)
+
+	public function __construct($content = null, $content_type = null)
 	{
-		if ($content) {
+		if( $content_type === AgendaPartage_Evenement::post_type )
+			$this->init_with_agdpevent($post);
+		elseif ($content) {
 			$this->parse($content);
 		}
 	}
-
+	
+	
+	protected function init_with_agdpevent($post){
+		$metas = get_post_meta($post->ID, '', true);
+		foreach($metas as $key=>$value)
+			if(is_array($value))
+				$metas[$key] = implode(', ', $value);
+		
+		$this->uid = crypt( AgendaPartage_Evenement::post_type . '-' . $post->ID, AGDP_TAG );
+		$this->summary = $post->post_title;
+		$this->description = $post->post_content;
+		$this->location = empty($metas['ev-localisation']) ? '' : $metas['ev-localisation'];
+		$this->dateStart = $this->sanitize_datetime($metas['ev-date-debut'], $metas['ev-heure-debut']);
+		$this->dateEnd = $this->sanitize_datetime($metas['ev-date-fin'], $metas['ev-heure-fin'], $metas['ev-date-debut']);
+		$this->created = $post->post_date;
+		$this->updated = $post->post_modified ;
+		$this->status = $post->post_status;
+		debug_log($this);
+	}
+	
+	public function sanitize_datetime($date, $time, $date_alt = null){
+		if( ! $date )
+			$date = $date_alt;
+		if( ! $date )
+			return;
+		$dateTime = rtrim($metas['ev-date-debut'] . ' ' . str_replace('h', ':', $metas['ev-heure-debut']));
+		if($dateTime[strlen($dateTime)-1] === ':')
+			$dateTime .= '00';
+		return $dateTime;
+	}
 
 	public function summary()
 	{
