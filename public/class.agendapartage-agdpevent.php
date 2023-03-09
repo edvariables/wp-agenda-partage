@@ -245,11 +245,11 @@ class AgendaPartage_Evenement {
 		
 		$html = '[agdpevent-categories label="Catégories : "]
 		[agdpevent-cities label="à "]
-		[agdpevent-publications label="Publication (sous réserve) : "]
 		[agdpevent-description]
 		[agdpevent info="organisateur" label="Organisateur : "]
 		[agdpevent info="phone" label="Téléphone : "]
-		[agdpevent info="siteweb"]';
+		[agdpevent info="siteweb"]
+		[agdpevent-publications label="Publication (sous réserve) : "]';
 
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);

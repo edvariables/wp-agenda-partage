@@ -93,13 +93,13 @@ class AgendaPartage_Evenements_Export {
 		$vevent = new ZCiCalNode("VEVENT", $ical->curnode);
 
 		// add start date
-		$vevent->addNode(new ZCiCalDataNode("CREATED:" . ZCiCal::fromSqlDateTime($post->post_date)));
+		$vevent->addNode(new ZCiCalDataNode("CREATED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_date)));
 
 		// DTSTAMP is a required item in VEVENT
-		$vevent->addNode(new ZCiCalDataNode("DTSTAMP:" . ZCiCal::fromSqlDateTime()));
+		$vevent->addNode(new ZCiCalDataNode("DTSTAMP;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime()));
 
 		// add last modified date
-		$vevent->addNode(new ZCiCalDataNode("LAST-MODIFIED:" . ZCiCal::fromSqlDateTime($post->post_modified)));
+		$vevent->addNode(new ZCiCalDataNode("LAST-MODIFIED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_modified)));
 
 		// Add status
 		$vevent->addNode(new ZCiCalDataNode("STATUS:" . self::get_vcalendar_status( $post )));
@@ -108,10 +108,10 @@ class AgendaPartage_Evenements_Export {
 		$vevent->addNode(new ZCiCalDataNode("SUMMARY:" . $post->post_title));
 
 		// add start date
-		$vevent->addNode(new ZCiCalDataNode("DTSTART:" . ZCiCal::fromSqlDateTime($metas['date_start'])));
+		$vevent->addNode(new ZCiCalDataNode("DTSTART;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_start'])));
 
 		// add end date
-		$vevent->addNode(new ZCiCalDataNode("DTEND:" . ZCiCal::fromSqlDateTime($metas['date_end'])));
+		$vevent->addNode(new ZCiCalDataNode("DTEND;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_end'])));
 
 		// UID is a required item in VEVENT, create unique string for this event
 		// Adding your domain to the end is a good way of creating uniqueness
@@ -137,11 +137,14 @@ class AgendaPartage_Evenements_Export {
 			'CATEGORIES' => AgendaPartage_Evenement::taxonomy_type_agdpevent
 			, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
 			, 'PUBLICATIONS' => AgendaPartage_Evenement::taxonomy_publication
-		] as $node_name => $term_name){
-			$terms = AgendaPartage_Evenement::get_event_terms ($term_name, $post->ID, 'names');
+		] as $node_name => $tax_name){
+			$terms = AgendaPartage_Evenement::get_event_terms ($tax_name, $post->ID, 'names');
 			if($terms){
-				$terms = array_map(function($term_name){ return str_replace(',','-', $term_name);}, $terms);//escape ','
-				$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( implode(',', $terms) )));
+				//$terms = array_map(function($tax_name){ return str_replace(',','-', $tax_name);}, $terms);//escape ','
+				foreach($terms as $term_name)
+					$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $term_name)));
+					
+				// $vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( implode(',', $terms) )));
 			}
 		}
 		return $vevent;
