@@ -179,16 +179,14 @@ class AgendaPartage_Admin {
 	* import_ics
 	*/
 	public static function import_ics($file_name, $default_post_status = 'publish', $original_file_name = null){
-		 // die("import_ics " . $default_post_status);
-		require_once( AGDP_PLUGIN_DIR . '/admin/class.ical.php' );				
+		// require_once( AGDP_PLUGIN_DIR . '/admin/class.ical.php' );				
+		// $iCal = new iCal($file_name);
+		$iCal = self::get_vcalendar($file_name);
 		
-		//TODO try {}
-		$iCal = new iCal($file_name);
-		
-		$import_source = 'import_ics_' . $iCal->description;
+		$import_source = 'import_ics_' . $iCal['title'];
 		
 		$post_statuses = get_post_statuses();
-		$today = strtotime(date("Y-m-d"));
+		$today = strtotime(wp_date("Y-m-d"));
 		$successCounter = 0;
 		$failCounter = 0;
 		$ignoreCounter = 0;
@@ -207,9 +205,9 @@ class AgendaPartage_Admin {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
 	
-		foreach($iCal->events() as $event){
+		foreach($iCal['events'] as $event){
 			
-			switch(strtoupper($event->status)){
+			switch(strtoupper($event['status'])){
 				case 'CONFIRMED':
 				case 'TENTATIVE':
 					$post_status = $default_post_status;
@@ -221,13 +219,14 @@ class AgendaPartage_Admin {
 					$post_status = 'trash';//TODO signaler
 					break;
 				default: 
+					debug_log('[UNKNOWN]$event->status = ' . $event['status']);
 					$ignoreCounter++;
 					continue 2;
 			}
 			// if(($successCounter + $ignoreCounter) > 5) break;//debug
 			
-			$dateStart = $event->dateStart;
-			$dateEnd = $event->dateEnd;
+			$dateStart = $event['dtstart'];
+			$dateEnd = $event['dtend'];
 			$timeStart = substr($dateStart, 11, 5);//TODO
 			$timeEnd = substr($dateEnd, 11, 5);//TODO 
 			if($timeStart == '00:00')
@@ -237,6 +236,7 @@ class AgendaPartage_Admin {
 			$dateStart = substr($dateStart, 0, 10);
 			$dateEnd = substr($dateEnd, 0, 10);
 			if(strtotime($dateStart) < $today) {
+					debug_log('[IGNORE]$dateStart = ' . $dateStart);
 				$ignoreCounter++;
 				continue;
 			}
@@ -246,20 +246,25 @@ class AgendaPartage_Admin {
 				'ev-date-fin' => $dateEnd,
 				'ev-heure-debut' =>$timeStart,
 				'ev-heure-fin' => $timeEnd,
-				'ev-localisation' => $event->location,
+				'ev-localisation' => empty($event['location']) ? '' : $event['location'],
+				'ev-organisateur' => empty($event['organisateur']) ? '' : $event['organisateur'],
+				'ev-email' => empty($event['email']) ? '' : $event['email'],
+				'ev-phone' => empty($event['phone']) ? '' : $event['phone'],
+				'ev-import-uid' => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
 				'ev-codesecret' => AgendaPartage::get_secret_code(6),
 				'post-source' => $import_source
 			);
 						
-			$post_title = $event->summary;
-			$post_content = $event->description;
+			$post_title = $event['summary'];
+			$post_content = $event['description'];
 			if ($post_content === null) $post_content = '';
 			
 			//Check doublon
 			$doublon = AgendaPartage_Evenement_Edit::get_post_idem($post_title, $inputs);
 			if($doublon){
 				//var_dump($doublon);var_dump($post_title);var_dump($inputs);
+				debug_log('[IGNORE]$doublon = ' . var_export($doublon, true));
 				$ignoreCounter++;
 				$url = AgendaPartage_Evenement::get_post_permalink($doublon);
 				$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
@@ -305,10 +310,72 @@ class AgendaPartage_Admin {
 		
 		return $successCounter;
 	}
-
+	/**
+	 * get_vcalendar($file_name)
+	 */
+	public static function get_vcalendar($file_name){
+		require_once(AGDP_PLUGIN_DIR . "/includes/icalendar/zapcallib.php");	
+		$ical= new ZCiCal(file_get_contents($file_name));
+		$vcalendar = [];
+		
+		// debug_log($ical->tree->data);
+		
+		foreach($ical->tree->data as $key => $value){
+			$key = strtolower($key);
+			if(is_array($value)){
+				$vcalendar[$key] = '';
+				for($i = 0; $i < count($value); $i++){
+					$p = $value[$i]->getParameters();
+					if($vcalendar[$key])
+						$vcalendar[$key] .= ',';
+					$vcalendar[$key] .= $value[$i]->getValues();
+				}
+			} else {
+				$vcalendar[$key] = $value->getValues();
+			}
+		}
+		
+		if(empty($iCal['description']))
+			$iCal['description'] = 'vcalendar_' . wp_date('Y-m-d H:i:s');
+		if(empty($iCal['title']))
+			$iCal['title'] = $iCal['description'];
+		
+		$vevents = [];
+		if(isset($ical->tree->child)) {
+			foreach($ical->tree->child as $node) {
+				// debug_log($node->data);
+				if($node->getName() == "VEVENT") {
+					$vevent = [];
+					foreach($node->data as $key => $value) {
+						$key = strtolower($key);
+						if(is_array($value)){
+							for($i = 0; $i < count($value); $i++) {
+								$p = $value[$i]->getParameters();
+								if($vevent[$key])
+									$vevent[$key] .= ',';
+								$vevent[$key] .= $value[$i]->getValues();
+							}
+						} else {
+							$vevent[$key] = $value->getValues();
+						}
+					}
+					$vevent['dtstart'] = wp_date('Y-m-d H:i:s', strtotime($vevent['dtstart'])); 
+					$vevent['dtend'] = wp_date('Y-m-d H:i:s', strtotime($vevent['dtend'])); 
+					$vevents[] = $vevent;
+				}
+			}
+		}
+		
+		$vcalendar['events'] = $vevents;
+		debug_log($vcalendar);
+		return $vcalendar;
+	}
 	//import
 	public static function set_import_report($logs){
-		self::add_admin_notice(implode("\r\n", $logs), 'success', true);
+		if( is_array($logs))
+			self::add_admin_notice(implode("\r\n", $logs), 'success', true);
+		else
+			self::add_admin_notice($logs, 'success', true);
 	}
 	public static function get_import_report($clear = false){
 		self::show_admin_notices();
