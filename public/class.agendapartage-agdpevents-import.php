@@ -94,7 +94,7 @@ class AgendaPartage_Evenements_Import {
 			);
 						
 			$post_title = $event['summary'];
-			$post_content = $event['description'];
+			$post_content = empty($event['description']) ? '' : $event['description'];
 			if ($post_content === null) $post_content = '';
 			
 			//Check doublon
@@ -218,10 +218,15 @@ class AgendaPartage_Evenements_Import {
 			}
 		}
 		
-		if(empty($iCal['description']))
-			$iCal['description'] = 'vcalendar_' . wp_date('Y-m-d H:i:s');
-		if(empty($iCal['title']))
-			$iCal['title'] = $iCal['description'];
+		if( ! empty($vcalendar['x-wr-calname'])){
+			if(empty($vcalendar['title']))
+				$vcalendar['title'] = $vcalendar['x-wr-calname'];
+		}
+		
+		if(empty($vcalendar['description']))
+			$vcalendar['description'] = 'vcalendar_' . wp_date('Y-m-d H:i:s');
+		if(empty($vcalendar['title']))
+			$vcalendar['title'] = $vcalendar['description'];
 		
 		$vevents = [];
 		if(isset($ical->tree->child)) {
@@ -261,6 +266,11 @@ class AgendaPartage_Evenements_Import {
 							}
 						}
 					}
+					//if no hour specified, dtend means the day before
+					if(strpos($vevent['dtstart'], 'T') === false
+					&& strpos($vevent['dtend'], 'T') === false
+					&& $vevent['dtend'] != $vevent['dtstart'])
+						$vevent['dtend'] = date('Y-m-d', strtotime($vevent['dtend'] . ' - 1 day')); 
 					$vevent['dtstart'] = date('Y-m-d H:i:s', strtotime($vevent['dtstart'])); 
 					$vevent['dtend'] = date('Y-m-d H:i:s', strtotime($vevent['dtend'])); 
 					$vevents[] = $vevent;
@@ -269,7 +279,7 @@ class AgendaPartage_Evenements_Import {
 		}
 		
 		$vcalendar['events'] = $vevents;
-		debug_log($vcalendar);
+		// debug_log($vcalendar);
 		return $vcalendar;
 	}
 	/*
