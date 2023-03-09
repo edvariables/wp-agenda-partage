@@ -109,6 +109,7 @@ class AgendaPartage_Evenements_Import {
 			}
 			
 			// terms
+			$all_taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies();
 			$taxonomies = [];
 			foreach([ 
 				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_type_agdpevent
@@ -124,9 +125,17 @@ class AgendaPartage_Evenements_Import {
 				$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				foreach($event[$node_name] as $term_name){
 					if( ! array_key_exists($term_name, $all_terms)){
-						$log[] = sprintf('<li>Dans la taxonomie %s, le terme "%s" n\'existe pas.</li>', $tax_name, htmlentities($term_name));
-						//TODO : create ?
-						continue;
+						$data = [
+							'post_type'=>AgendaPartage_Evenement::post_type,
+							'taxonomy'=>$tax_name,
+							'term'=>$term_name
+						];
+						$log[] = sprintf('<li>Dans la taxonomie "%s", le terme "<b>%s</b>" n\'existe pas. %s</li>'
+							, $all_taxonomies[$tax_name]['label']
+							, htmlentities($term_name)
+							, AgendaPartage::get_ajax_action_link(false, 'insert_term', 'add', 'Cliquez ici pour l\'ajouter', 'Crée un nouveau terme', true, $data)
+						);
+						continue 3;
 					}
 					$taxonomies[$tax_name][] =  $all_terms[$term_name]->term_id;
 				}

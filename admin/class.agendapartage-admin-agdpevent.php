@@ -370,6 +370,24 @@ class AgendaPartage_Admin_Evenement {
 		?>
 		</ul><?php
 	}
+	
+	/**
+	 *
+	 *
+	 * cf AgendaPartage_Admin::on_wp_ajax_admin_action_cb
+	 */
+	public static function on_wp_ajax_action_insert_term($data){
+		$tax_name = $data['taxonomy'];
+		$term = $data['term'];
+		$result = wp_insert_term($term, $tax_name
+			, array(
+				'slug' => sanitize_title($term)
+			)
+		);
+		if( is_wp_error($result) )
+			return AgendaPartage::html_icon('warning', '', $result->get_error_message());
+		return AgendaPartage::html_icon('info', '', sprintf('Le terme "%s" a été ajouté.', $tax_name));
+	}
 
 }
 ?>

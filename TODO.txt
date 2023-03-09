@@ -17,7 +17,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - récurrent
 	- via cron
 	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
-- Export .ics
+- &amp; dans le content via admin/edit
 
 * WPCF7 form
 - Submit : scroll to ajax message

@@ -256,21 +256,31 @@ class AgendaPartage_Admin {
 			wp_die();
 		}
 		$method = $_POST['method'];
-		if(array_key_exists("post_id", $_POST)){
-			// try{
-				// cherche une fonction du nom "agdpevent_action_{method}"
-				// $function = array(__CLASS__, sprintf('agdpevent_action_%s', $method));
-				// $ajax_response = call_user_func( $function, $_POST['post_id']);
-			// }
-			// catch( Exception $e ){
-				// $ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
-			// }
-		}
-		elseif(array_key_exists("user_id", $_POST)){
+		$data = empty($_POST['data']) ? [] : $_POST['data'];
+		if(array_key_exists("user_id", $_POST)){
 			try{
 				//cherche une fonction du nom "user_action_{method}"
 				$function = array('AgendaPartage_Admin_User', sprintf('user_action_%s', $method));
 				$ajax_response = call_user_func( $function, $_POST['user_id']);
+			}
+			catch( Exception $e ){
+				$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
+			}
+		}
+		elseif(array_key_exists("post_type", $data)){
+			try{
+				switch($data['post_type']){
+					case AgendaPartage_Evenement::post_type :
+						$class = 'AgendaPartage_Admin_Evenement';
+						break;
+					default:
+						$method = $data['post_type'] . '_' . $method;
+						$class = __CLASS__;
+						break;
+				}
+				// cherche une fonction du nom "{$post_type}_action_{method}"
+				$function = array($class, sprintf('on_wp_ajax_action_%s', $method));
+				$ajax_response = call_user_func( $function, $data );
 			}
 			catch( Exception $e ){
 				$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
