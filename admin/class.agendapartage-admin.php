@@ -140,27 +140,29 @@ class AgendaPartage_Admin {
 		
 		static $static_updating;
 		if( ! empty($static_updating))
+			return;		
+		$static_updating = true;
+		
+		//Import d'un fichier d'évènements
 		$option_key = 'agdpevent_import_ics';
-		if( count($_FILES)
-			&& array_key_exists( 'name', $_FILES[AGDP_TAG])
-			&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
-		){
-			$fileName = $_FILES[AGDP_TAG]['tmp_name'][$option_key];
-			if($fileName){
-				$original_file_name = $_FILES[AGDP_TAG]['name'][$option_key];
-				if(array_key_exists($option_key . '-post_status', $values)){
-					$post_status = $values[$option_key . '-post_status'];
-				}
-				else
-					$post_status = 'publish';
-				if( ! array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
-					self::set_import_report(sprintf('<div class="error notice"><p><strong>%s</strong></p></div>', 
-							__('Vous n\'avez pas confirmé l\'importation.', AGDP_TAG)));
-					var_dump($_POST);
-				}
-				else{
-					require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents-import.php');
-					AgendaPartage_Evenements_Import::import_ics($fileName, $post_status, $original_file_name );
+		if( array_key_exists($option_key, $values) ){
+			if( count($_FILES)
+				&& array_key_exists( AGDP_TAG, $_FILES)
+				&& array_key_exists( 'name', $_FILES[AGDP_TAG])
+				&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
+			){
+				$fileName = $_FILES[AGDP_TAG]['tmp_name'][$option_key];
+				if($fileName){
+					$original_file_name = $_FILES[AGDP_TAG]['name'][$option_key];
+					if(array_key_exists($option_key . '-post_status', $values)){
+						$post_status = $values[$option_key . '-post_status'];
+					}
+					else
+						$post_status = 'publish';
+					if( ! array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
+						self::set_import_report(sprintf('<div class="error notice"><p><strong>%s</strong></p></div>', 
+								__('Vous n\'avez pas confirmé l\'importation.', AGDP_TAG)));
+						var_dump($_POST);
 					}
 					else{
 						require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents-import.php');
