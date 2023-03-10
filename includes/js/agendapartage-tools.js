@@ -43,7 +43,9 @@ jQuery( function( $ ) {
 							if(response.endsWith('null'))
 								response = substr(response, 0, response.length-4);
 							if(response.startsWith('redir:')){
-								$spinner.after('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
+								$msg = $('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
+								$spinner.after($msg);
+								$msg.get(0).scrollIntoView();
 								response = response.substring('redir:'.length);
 								document.location = response;
 								return;
@@ -55,12 +57,13 @@ jQuery( function( $ ) {
 							}
 							if(response.startsWith('download:')){
 								var url = response.substring('download:'.length);
-								response = 'Le téléchargement est lancé';
-								window.location.href = url;
+								response = 'Le téléchargement est lancé. Consultez vos téléchargements.';
+								// 	window.location.href = url;
 							}
 							var $msg = $('<div class="ajax_action-response"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 								.click(function(){$msg.remove()});
 							$actionElnt.after($msg);
+							$msg.get(0).scrollIntoView();
 						}
 					}
 					$spinner.remove();
@@ -70,6 +73,7 @@ jQuery( function( $ ) {
 					var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 						.click(function(){$msg.remove()});
 					$actionElnt.after($msg);
+					$msg.get(0).scrollIntoView();
 				}
 			});
 			var $spinner = $actionElnt.next('.wpcf7-spinner');
