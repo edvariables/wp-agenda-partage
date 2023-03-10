@@ -11,8 +11,6 @@ class AgendaPartage_Evenements_Import {
 	* import_ics
 	*/
 	public static function import_ics($file_name, $default_post_status = 'publish', $original_file_name = null){
-		// require_once( AGDP_PLUGIN_DIR . '/admin/class.ical.php' );				
-		// $iCal = new iCal($file_name);
 		$iCal = self::get_vcalendar($file_name);
 		
 		$import_source = 'import_ics_' . $iCal['title'];

@@ -17,8 +17,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - récurrent
 	- via cron
 	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
-- &amp; dans le content via admin/edit
-
+- révisions depuis /public
+	
 * WPCF7 form
 - Submit : scroll to ajax message
 
@@ -26,13 +26,10 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
 - shortcode [agdp-stats] pour mailing admin
 - Désabonnement : suppression du user si jamais connecté
+- meta_key mailing blog_id
 
 * Publish wp plugin
 
 * Admin dashboard
 - new events only
 - newsletter subscribers
-
-* events
-- ajax month : filters included  ?
-- export : décalage horaire, localisation, organisateur, (téléphone, email)

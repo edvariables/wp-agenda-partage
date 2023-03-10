@@ -200,6 +200,8 @@ class AgendaPartage_Newsletter {
 	 */
 	public static function get_next_date($period = false, $newsletter = false, $after_date = false){
 		$newsletter = self::get_newsletter($newsletter);
+		if( ! $newsletter )
+			return false;
 		if( ! $period){
 			$min_date = 0;
 			foreach(self::subscription_periods($newsletter) as $period=>$period_name)
@@ -231,6 +233,8 @@ class AgendaPartage_Newsletter {
 		switch($period){
 			case 'm':
 				$month_day = get_post_meta($newsletter->ID, 'mailing-month-day', true);
+				if( $month_day === '')
+					return $today;
 				if(wp_date('d', $today) > $month_day){
 					if($month_day > 28
 					&& wp_date('m', strtotime(wp_date('Y-m-' . $month_day, $today)) )
@@ -246,6 +250,8 @@ class AgendaPartage_Newsletter {
 				$today_month_day = wp_date('d', $today);
 				$half2_month_day = get_post_meta($newsletter->ID, 'mailing-2W2-day', true);
 				$half1_month_day = get_post_meta($newsletter->ID, 'mailing-2W1-day', true);
+				if( $half1_month_day === '' || $half2_month_day === '')
+					return $today;
 				if($today_month_day > $half2_month_day){
 					$date = strtotime(wp_date('Y-m-d', $today) . ' + 28 day');
 					return strtotime(wp_date('Y-m-' . $half1_month_day, $date));
@@ -255,6 +261,8 @@ class AgendaPartage_Newsletter {
 				return strtotime(wp_date('Y-m-' . $half1_month_day, $today));
 			case 'w':
 				$week_day = get_post_meta($newsletter->ID, 'mailing-week-day', true);
+				if( $week_day === '')
+					return $today;
 				$today_week_day = wp_date('w', $today);
 				if( $week_day >= $today_week_day )
 					$date = strtotime(wp_date('Y-m-d', $today) . ' + ' . ($week_day - $today_week_day) . ' day');
@@ -987,18 +995,19 @@ white-space: pre;
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
+		$user_prefix = $wpdb->get_blog_prefix( 1 );
 		
 		/** Liste d'abonnés **/
 		//$meta_name = sprintf('next_date_%s', $period);
 		$meta_next_date = 'next_date_';
 		$today_mysql = wp_date('Y-m-d', $today);
 		$sql = "SELECT subscription.meta_value AS period, user.ID, user.user_email, user.user_nicename"
-			. "\n FROM {$blog_prefix}users user"
-			// . "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			. "\n FROM {$user_prefix}users user"
+			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			// . "\n ON user.ID = usermetacap.user_id"
 			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
 			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
-			. "\n INNER JOIN {$blog_prefix}usermeta subscription"
+			. "\n INNER JOIN {$user_prefix}usermeta subscription"
 				. "\n ON user.ID = subscription.user_id"
 				. "\n AND subscription.meta_key = '{$subscription_meta_key}'"
 				. "\n AND subscription.meta_value IN ({$periods_in})"
@@ -1006,7 +1015,7 @@ white-space: pre;
 				. "\n ON next_date.post_id = {$newsletter_id}"
 				. "\n AND next_date.meta_key = CONCAT( '{$meta_next_date}', subscription.meta_value)"
 				. "\n AND next_date.meta_value = '{$today_mysql}'"
-			. "\n LEFT JOIN {$blog_prefix}usermeta mailing"
+			. "\n LEFT JOIN {$user_prefix}usermeta mailing"
 				. "\n ON user.ID = mailing.user_id"
 				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"
 				. "\n AND mailing.meta_value = '{$today_mysql}'"

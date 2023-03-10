@@ -160,7 +160,7 @@ class AgendaPartage_Evenements_Export {
 	
 	public static function sanitize_datetime($date, $time, $date_start = false, $time_start = false){
 		if( ! $date ){
-			debug_log('sanitize_datetime(', $date, $time, $date_start);
+			// debug_log('sanitize_datetime(', $date, $time, $date_start);
 			//if not end date, not time and start date contains time, skip dtend
 			if($date_start
 			&& (! $time || $time == '00:00' || $time == '00:00:00')

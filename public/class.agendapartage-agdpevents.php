@@ -582,6 +582,8 @@ class AgendaPartage_Evenements {
 		$html .= '<input type="submit" value="Filtrer"/>';
 		
 		foreach( $taxonomies as $tax_name => $taxonomy){
+			if( empty($taxonomy['terms']))
+				continue;
 			$field = $taxonomy['filter'];
 			if( count($taxonomy['terms']) === 1 )
 				$label = $taxonomy['label'];

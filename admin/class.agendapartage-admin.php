@@ -17,7 +17,7 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-user.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_User', 'init' ) );
 
-		if( WP_DEBUG || is_multisite()){
+		if( is_multisite()){
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-multisite.php' );
 			add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Multisite', 'init' ) );
 		}
@@ -135,12 +135,13 @@ class AgendaPartage_Admin {
 	* Hook de mise à jour d'option
 	*/
 	public static function on_updated_option( $old_values, $values, $option ) {
-
-		//Import d'un fichier
-		// !!! à cause du <form enctype="multipart/form-data">, le nom du fichier n'apparait plus dans $values
+		if( $option !== AGDP_TAG )
+			return;
+		
+		static $static_updating;
+		if( ! empty($static_updating))
 		$option_key = 'agdpevent_import_ics';
 		if( count($_FILES)
-			&& array_key_exists( AGDP_TAG, $_FILES)
 			&& array_key_exists( 'name', $_FILES[AGDP_TAG])
 			&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
 		){
@@ -160,19 +161,32 @@ class AgendaPartage_Admin {
 				else{
 					require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents-import.php');
 					AgendaPartage_Evenements_Import::import_ics($fileName, $post_status, $original_file_name );
+					}
+					else{
+						require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents-import.php');
+						AgendaPartage_Evenements_Import::import_ics($fileName, $post_status, $original_file_name );
+					}
 				}
 			}
 		}
+		
+		//Import d'un site
+		$option_key = 'site_import';
+		if( array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
+			AgendaPartage_Admin_Multisite::import_site();
+		}
+		
+		$static_updating = false;
 	}
 	/**
 	* Hook avant mise à jour d'option
 	*/
 	public static function on_pre_update_option( $values, $old_values, $option ) {
-		//clear confirmation
-		$option_key = 'agdpevent_import_ics';
-		if(array_key_exists($option_key . '-confirm', $values)){
-			//force un changement de valeur pour s'assurer de provoquer la mise à jour et passer par le hook update_option
-			$values[$option_key . '-confirm'] = rand();
+		//clear confirmation and force a random value to hook update_option
+		foreach(['site_import', 'agdpevent_import_ics'] as $option_key){
+			if(array_key_exists($option_key . '-confirm', $values)){
+				$values[$option_key . '-confirm'] = rand();
+			}
 		}
 		return $values;
 	}
@@ -189,7 +203,7 @@ class AgendaPartage_Admin {
 	}
 	
 	public static function wpcf7_admin_notices($tag, $action, $contact_form){
-		if( ! is_object($contact_form))
+		if( ! is_a($contact_form, 'WPCF7_ContactForm'))
 			return;
 		foreach(['agdpevent_edit_form_id'
 				, 'admin_message_contact_form_id'

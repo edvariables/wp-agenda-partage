@@ -37,6 +37,31 @@ class AgendaPartage_Admin_Menu {
 		// register a new setting for "agendapartage" page
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
+		if(is_multisite()){
+			// register a new section in the "agendapartage" page
+			add_settings_section(
+				'agendapartage_section_site_import',
+				__( 'Importation d\'un site', AGDP_TAG ),
+				array(__CLASS__, 'settings_sections_cb'),
+				AGDP_TAG
+			);
+				if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
+					// 
+					$field_id = 'site_import';
+					add_settings_field(
+						$field_id, 
+						__( 'Importation des données du site principal', AGDP_TAG ),
+						array(__CLASS__, 'agendapartage_site_import_cb'),
+						AGDP_TAG,
+						'agendapartage_section_site_import',
+						[
+							'label_for' => $field_id,
+							'class' => 'agendapartage_row',
+						]
+					);
+				}
+		}
+		
 		add_settings_section(
 			'agendapartage_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
@@ -219,8 +244,8 @@ class AgendaPartage_Admin_Menu {
 
 		// register a new section in the "agendapartage" page
 		add_settings_section(
-			'agendapartage_section_general',
-			__( 'En général', AGDP_TAG ),
+			'agendapartage_section_security',
+			__( 'Contrôles de sécurité', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG
 		);
@@ -232,7 +257,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Traçage des mails', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_security',
 				[
 					'label_for' => $field_id,
 					'label' => __( 'Activer', AGDP_TAG ),
@@ -250,7 +275,7 @@ class AgendaPartage_Admin_Menu {
 				__( 'Traçage des alertes', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_general',
+				'agendapartage_section_security',
 				[
 					'label_for' => $field_id,
 					'label' => __( 'Activer', AGDP_TAG ),
@@ -305,7 +330,7 @@ class AgendaPartage_Admin_Menu {
 	 */
 	public static function settings_sections_cb($args ) {
 		switch($args['id']){
-			case 'agendapartage_section_general' : 
+			case 'agendapartage_section_security' : 
 				$message = __('Paramètres réservés aux administrateurs, c\'est à dire à ceux qui savent ce qu\'ils font...', AGDP_TAG);
 				break;
 			case 'agendapartage_section_pages' : 
@@ -323,6 +348,24 @@ class AgendaPartage_Admin_Menu {
 		?>
 		<p id="<?php echo esc_attr( $args['id'] ); ?>"><?php esc_html_e(  $message, AGDP_TAG ); ?></p>
 		<?php
+	}
+	
+	public static function agendapartage_site_import_cb( $args ){
+		// get the value of the setting we've registered with register_setting()
+		$option_id = $args['label_for'];
+		// output the field
+		?><label>
+			<input id="<?php echo esc_attr( $option_id ); ?>-confirm"
+				name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>-confirm]"
+				type="checkbox"
+			/> Je confirme l'importation des données manquantes ici depuis le site principal
+		</label>
+		<br>
+		<br>
+		<div class="dashicons-before dashicons-welcome-learn-more">Les pages, les formulaires, les lettres-infos.</div>
+		<?php
+		echo AgendaPartage_Admin::get_import_report(true);
+
 	}
 	
 	public static function agendapartage_import_ics_cb( $args ){

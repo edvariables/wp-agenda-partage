@@ -144,7 +144,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				'readonly' => ! WP_DEBUG,
 				'learn-more' => $cron_exec_comment
 			],
-			[	'name' => 'sep',
+			[	'name' => '',
 				'input' => 'label'
 			],
 			[	'name' => 'mailing-month-day',
@@ -223,6 +223,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
+		$user_prefix = $wpdb->get_blog_prefix( 1 );
 		
 		
 		foreach($periods as $period => $period_name){
@@ -262,23 +263,23 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		
 		/** Nombre d'abonnés **/
 		$sql = "SELECT usermeta.meta_value AS period, COUNT(usermeta.umeta_id) AS count"
-			. "\n FROM {$blog_prefix}users user"
-			. "\n INNER JOIN {$blog_prefix}usermeta usermeta"
+			. "\n FROM {$user_prefix}users user"
+			. "\n INNER JOIN {$user_prefix}usermeta usermeta"
 			. "\n ON user.ID = usermeta.user_id"
 			. "\n AND usermeta.meta_key = '{$subscription_meta_key}'"
-			// . "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			// . "\n ON user.ID = usermetacap.user_id"
 			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
 			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
 			. "\n GROUP BY usermeta.meta_value";
 		$sql .= " UNION ";
 		$sql .= "SELECT '0', COUNT(ID) AS count"
-			. "\n FROM {$blog_prefix}users user"
-			. "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			. "\n FROM {$user_prefix}users user"
+			. "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			. "\n ON user.ID = usermetacap.user_id"
 			. "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
 			. "\n AND usermetacap.meta_value LIKE '%subscriber%'"
-			. "\n LEFT JOIN {$blog_prefix}usermeta usermeta"
+			. "\n LEFT JOIN {$user_prefix}usermeta usermeta"
 			. "\n ON user.ID = usermeta.user_id"
 			. "\n AND usermeta.meta_key = '{$subscription_meta_key}'"
 			. "\n WHERE usermeta.meta_key IS NULL";
@@ -289,12 +290,12 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		
 		/** Liste d'abonnés **/
 		$sql = "SELECT usermeta.meta_value AS period, user.ID, user.user_email, user.user_nicename"
-			. "\n FROM {$blog_prefix}users user"
-			// . "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			. "\n FROM {$user_prefix}users user"
+			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			// . "\n ON user.ID = usermetacap.user_id"
 			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
 			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
-			. "\n INNER JOIN {$blog_prefix}usermeta usermeta"
+			. "\n INNER JOIN {$user_prefix}usermeta usermeta"
 			. "\n ON user.ID = usermeta.user_id"
 			. "\n WHERE usermeta.meta_key = '{$subscription_meta_key}'"
 			. "\n ORDER BY user.user_email"
@@ -353,12 +354,12 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		$meta_next_date = 'next_date_';
 		$two_months_before_mysql = wp_date('Y-m-d', strtotime(wp_date('Y-m-01', $today) . ' - 2 month'));
 		$sql = "SELECT mailing.meta_value AS mailing_date, COUNT(user.ID) AS count"
-			. "\n FROM {$blog_prefix}users user"
-			// . "\n INNER JOIN {$blog_prefix}usermeta usermetacap"
+			. "\n FROM {$user_prefix}users user"
+			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			// . "\n ON user.ID = usermetacap.user_id"
 			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
 			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
-			. "\n INNER JOIN {$blog_prefix}usermeta mailing"
+			. "\n INNER JOIN {$user_prefix}usermeta mailing"
 				. "\n ON user.ID = mailing.user_id"
 				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"
 				. "\n AND mailing.meta_value >= '{$two_months_before_mysql}'"

@@ -207,6 +207,8 @@ class AgendaPartage_Admin_Newsletter {
 	 */
 	public static function on_dashboard_crontab($post , $widget) {
 		$newsletter = AgendaPartage_Newsletter::get_newsletter();
+		if( ! $newsletter )
+			return;
 		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
 		
 		/** En attente d'envoi **/	
