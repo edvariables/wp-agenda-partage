@@ -58,7 +58,7 @@ jQuery( function( $ ) {
 							if(response.startsWith('download:')){
 								var url = response.substring('download:'.length);
 								response = 'Le téléchargement est lancé. Consultez vos téléchargements.';
-								// 	window.location.href = url;
+								window.location.href = url;
 							}
 							var $msg = $('<div class="ajax_action-response"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 								.click(function(){$msg.remove()});
