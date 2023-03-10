@@ -567,7 +567,7 @@ class AgendaPartage_Evenement_Edit {
 		else
 			$wpcf7_mailcounter = 1;
 
-		if( ! $emails['client']
+		if( empty( $emails['client'] )
 		|| ! is_email($emails['client'])
 		|| ( $emails['client'] == 'client@agendapartage.net' ) ){
 			// 2ème mail à destination du client mais email invalide
@@ -883,7 +883,6 @@ class AgendaPartage_Evenement_Edit {
 			else{
 				
 				$prev_email = get_post_meta($post->ID, 'ev-email', true);
-				debug_log('$prev_email', $prev_email);
 				
 				self::save_post_revision($post, $postarr);
 				
