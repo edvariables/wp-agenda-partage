@@ -291,11 +291,15 @@ class AgendaPartage_Evenement {
 				if($email_sent = get_transient(AGDP_TAG . '_email_sent_' . $agdpevent->ID)){
 					delete_transient(AGDP_TAG . '_email_sent_' . $agdpevent->ID);
 				}
+				elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID)){
+					delete_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID);
+				}
 				
 				$alerte = sprintf('<p class="alerte">Cet évènement est <b>en attente de validation</b>, il a le statut "%s".'
 					.'<br>Il n\'est <b>pas visible</b> dans l\'agenda.'
 					. '</p>'
 					. (isset($email_sent) && $email_sent ? '<div class="info">Un e-mail a été envoyé pour permettre la validation de ce nouvel évènement. Vérifiez votre boîte mails, la rubrique spam aussi.</div>' : '')
+					. (isset($no_email) && $no_email ? '<div class="alerte">Vous n\'avez pas indiqué d\'adresse mail pour permettre la validation de ce nouvel évènement.<br>Vous devrez attendre la validation par un modérateur pour que cet évènement soit public.<br>Vous pouvez encore modifier cet évènement et renseigner l\'adresse mail.</div>' : '')
 					, $status);
 				$html = $alerte . $html;
 				break;
@@ -766,8 +770,11 @@ class AgendaPartage_Evenement {
 	 */
 	public static function do_post_activation($post){
 		if(is_numeric($post)){
+			$post_id = $post;
 			$post = get_post($post);
 		}
+		else
+			$post_id = $post->ID;
 		if(isset($_GET['ak']) 
 		&& (! self::waiting_for_activation($post_id)
 			|| self::check_activation_key($post, $_GET['ak']))){
@@ -856,10 +863,10 @@ class AgendaPartage_Evenement {
 		$heure_fin    = get_post_meta( $post_id, 'ev-heure-fin', true );
 		return mb_strtolower( trim(
 			  ($date_fin && $date_fin != $date_debut ? 'du ' : '')
-			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( 'D. j M Y', $date_debut )) : '')
+			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( 'l j M Y', $date_debut )) : '')
 			. (/* !$date_jour_entier && */ $heure_debut 
 				? ($heure_fin ? ' de ' : ' à ') . $heure_debut : '')
-			. ($date_fin && $date_fin != $date_debut ? ' au ' . str_ireplace(' mar ', ' mars ', mysql2date( 'D. j M Y', $date_fin )) : '')
+			. ($date_fin && $date_fin != $date_debut ? ' au ' . str_ireplace(' mar ', ' mars ', mysql2date( 'l j M Y', $date_fin )) : '')
 			. (/* !$date_jour_entier && */ $heure_fin 
 				? ($heure_debut ? ' à ' : ' jusqu\'à ')  . $heure_fin
 				: '')
@@ -920,7 +927,7 @@ class AgendaPartage_Evenement {
 			
 		}
 		else {
-			if($url_args[0] === true)
+			if(count($url_args) && $url_args[0] === true)
 				$url_args = array_slice($url_args, 1);
 			$post_link = add_query_arg(
 				array(

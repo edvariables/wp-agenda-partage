@@ -63,7 +63,7 @@ class AgendaPartage_Evenements_Import {
 			// if(($successCounter + $ignoreCounter) > 5) break;//debug
 			
 			$dateStart = $event['dtstart'];
-			$dateEnd = $event['dtend'];
+			$dateEnd = empty($event['dtend']) ? '' : $event['dtend'];
 			$timeStart = substr($dateStart, 11, 5);//TODO
 			$timeEnd = substr($dateEnd, 11, 5);//TODO 
 			if($timeStart == '00:00')
@@ -267,12 +267,14 @@ class AgendaPartage_Evenements_Import {
 						}
 					}
 					//if no hour specified, dtend means the day before
-					if(strpos($vevent['dtstart'], 'T') === false
-					&& strpos($vevent['dtend'], 'T') === false
-					&& $vevent['dtend'] != $vevent['dtstart'])
-						$vevent['dtend'] = date('Y-m-d', strtotime($vevent['dtend'] . ' - 1 day')); 
+					if(isset($vevent['dtend']) && $vevent['dtend']){
+						if(strpos($vevent['dtstart'], 'T') === false
+						&& strpos($vevent['dtend'], 'T') === false
+						&& $vevent['dtend'] != $vevent['dtstart'])
+							$vevent['dtend'] = date('Y-m-d', strtotime($vevent['dtend'] . ' - 1 day')); 
+						$vevent['dtend'] = date('Y-m-d H:i:s', strtotime($vevent['dtend'])); 
+					}
 					$vevent['dtstart'] = date('Y-m-d H:i:s', strtotime($vevent['dtstart'])); 
-					$vevent['dtend'] = date('Y-m-d H:i:s', strtotime($vevent['dtend'])); 
 					$vevents[] = $vevent;
 				}
 			}

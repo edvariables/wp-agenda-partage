@@ -296,7 +296,7 @@ class AgendaPartage_Evenement_Edit {
 		$html .= '</div>';
 		
 		return $html;
-}
+	}
 	
 	/**
 	 * Interception du formulaire avant que les shortcodes ne soient analysés.
@@ -350,6 +350,15 @@ class AgendaPartage_Evenement_Edit {
 									, $selected ? 'default:' . rtrim($selected, '_') : ''
 									, $checkboxes)
 								, $html);
+		}
+		
+		/** e-mail non-obligatoire si connecté **/
+		if(($user = wp_get_current_user())
+			&& $user->ID !== 0){
+			// $html = preg_replace('/' . preg_quote('<span class="required">*</span>') . '(\s*\[email)\*/', '$1', $html);
+			// var_dump(substr( preg_replace('/(\[email)\*/', '$1', $html), strpos($html, '[email')-30));
+			// die();
+			$html = preg_replace('/(\[email)\*/', '$1', $html);
 		}
 		
 		/** reCaptcha */
@@ -873,6 +882,9 @@ class AgendaPartage_Evenement_Edit {
 			}
 			else{
 				
+				$prev_email = get_post_meta($post->ID, 'ev-email', true);
+				debug_log('$prev_email', $prev_email);
+				
 				self::save_post_revision($post, $postarr);
 				
 				$postarr['ID'] = $post->ID;
@@ -916,9 +928,24 @@ class AgendaPartage_Evenement_Edit {
 		AgendaPartage::$skip_mail = true;
 		
 		if( $post_is_new && ! is_user_logged_in()){
-			$email_sent = true;
+			if( $data['ev-email']) {
+				$result = AgendaPartage_Evenement::send_validation_email($post_id, false, false, 'bool');
+				//TODO what to do if mail problem ?
+				
+				//En cas de succès, on recharge la page dans laquelle on affichera un message.
+				if($result)
+					set_transient(AGDP_TAG . '_email_sent_' . $post_id, $post_id, 20);
+			} else {
+				//Aucun email saisi
+				set_transient(AGDP_TAG . '_no_email_' . $post_id, $post_id, 20);
+			}
+		}
+		// Modification d'un post en attente et qui n'avait pas d'e-mail associé
+		elseif( ! $post_is_new && ! is_user_logged_in()
+		&& $post->post_status === 'pending'
+		&& $data['ev-email'] && empty($prev_email)
+		&& AgendaPartage_Evenement::waiting_for_activation($post)){
 			$result = AgendaPartage_Evenement::send_validation_email($post_id, false, false, 'bool');
-			//TODO what to do if mail problem ?
 			
 			//En cas de succès, on recharge la page dans laquelle on affichera un message.
 			if($result)
@@ -1229,7 +1256,7 @@ class AgendaPartage_Evenement_Edit {
 			$contact_form = $submission->get_contact_form();
 			$messages = ($contact_form->get_properties())['messages'];
 		
-			$messages['spam'] = __("Désolé vous avez peut-être été trop rapide. Veuillez essayer à nouveau dans quelques secondes.", AGDP_TAG);
+			$messages['spam'] = __("Désolé vous avez peut-être été trop rapide. Veuillez essayer à nouveau.", AGDP_TAG);
 				
 			$contact_form->set_properties(array('messages' => $messages));
 		}
