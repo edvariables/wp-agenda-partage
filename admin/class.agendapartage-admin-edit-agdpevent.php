@@ -21,7 +21,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		
 		if(basename($_SERVER['PHP_SELF']) === 'post.php'
 		&& isset($_POST['post_type'])
-			&& $_POST['post_type'] == AgendaPartage_Evenement::post_type 
+			&& $_POST['post_type'] === AgendaPartage_Evenement::post_type 
 		&& isset($_POST['post_status'])
 			&& ! in_array($_POST['post_status'], [ 'trash', 'trashed' ]) ){
 			add_filter( 'wp_insert_post_data', array(__CLASS__, 'wp_insert_post_data_cb'), 10, 2 );
@@ -30,19 +30,20 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		if( in_array( basename($_SERVER['PHP_SELF']), [ 'revision.php', 'admin-ajax.php' ])) {
 			add_filter( 'wp_get_revision_ui_diff', array(__CLASS__, 'on_wp_get_revision_ui_diff_cb'), 10, 3 );		
 		}
+		
+		if(array_key_exists('post_type', $_POST)
+		&& $_POST['post_type'] === AgendaPartage_Evenement::post_type){
+			/** validation du post_content **/
+			add_filter( 'content_save_pre', array(__CLASS__, 'on_post_content_save_pre'), 10, 1 );
 
-		/** save des meta values et + **/
-		if(basename($_SERVER['PHP_SELF']) === 'post.php'
-		&& array_key_exists('post_type', $_POST)
-		&& $_POST['post_type'] == AgendaPartage_Evenement::post_type){
-			add_action( 'save_post_agdpevent', array(__CLASS__, 'save_post_agdpevent_cb'), 10, 3 );
-		}
-
-		/** initialisation des publications par défaut pour les nouveaux évènements */
-		if(basename($_SERVER['PHP_SELF']) === 'post-new.php'
-		&& array_key_exists('post_type', $_GET)
-		&& $_GET['post_type'] == AgendaPartage_Evenement::post_type){
-			add_filter( 'wp_terms_checklist_args', array( __CLASS__, "on_wp_terms_checklist_args" ), 10, 2 ); 
+			/** save des meta values et + **/
+			if(basename($_SERVER['PHP_SELF']) === 'post.php'){
+				add_action( 'save_post_agdpevent', array(__CLASS__, 'save_post_agdpevent_cb'), 10, 3 );
+			}
+			/** initialisation des publications par défaut pour les nouveaux évènements */
+			if(basename($_SERVER['PHP_SELF']) === 'post-new.php'){
+				add_filter( 'wp_terms_checklist_args', array( __CLASS__, "on_wp_terms_checklist_args" ), 10, 2 ); 
+			}
 		}
 		add_action( 'add_meta_boxes_' . AgendaPartage_Evenement::post_type, array( __CLASS__, 'register_agdpevent_metaboxes' ), 10, 1 ); //edit
 	}
@@ -61,19 +62,32 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		}
 		
 		//On sauve les révisions de meta_values
-		AgendaPartage_Evenement_Edit::save_post_revision($postarr['post_ID'], $postarr, true);
+		$post_id = empty($postarr['post_ID']) ? $postarr['ID'] : $postarr['post_ID'];
+		AgendaPartage_Evenement_Edit::save_post_revision($post_id, $postarr, true);
 		
 		return $data;
+	}
+	
+	/**
+	 * Callback lors de l'enregistrement du post_content d'un évènement.
+	 */
+	public static function on_post_content_save_pre($value){
+		// &amp; &gt; ...
+		if( preg_match('/\&\w+\;/', $value ) !== false){
+			$value = html_entity_decode( $value );
+		}
+		
+		return $value;
 	}
 	/**
 	 * Callback lors de l'enregistrement d'un évènement.
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function save_post_agdpevent_cb ($post_id, $post, $is_update){
+		
 		if( $post->post_status == 'trashed' ){
 			return;
 		}
-
 		self::save_metaboxes($post_id, $post);
 	}
 
@@ -82,7 +96,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function create_user_on_save ($data, $postarr){
-		$email = array_key_exists('ev-email', $postarr) ? $postarr['ev-email'] : false;
+		/* $email = array_key_exists('ev-email', $postarr) ? $postarr['ev-email'] : false;
 		if(!$email || !is_email($email)) {
 			AgendaPartage_Admin::add_admin_notice("Il manque l'adresse e-mail de l\'organisateur de l\'évènement ou elle est incorrecte.", 'error');
 			return $data;
@@ -107,7 +121,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			AgendaPartage_Admin::add_admin_notice("Désormais, l'auteur de la page est {$user->display_name}", 'success');
 		}
 
-		return $data;
+		return $data; */
 	}
 
 	/**
