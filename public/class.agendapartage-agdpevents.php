@@ -229,6 +229,9 @@ class AgendaPartage_Evenements {
 			}
 			elseif( isset($_REQUEST['data']) &&  isset($_REQUEST['data']['filters']))
 				return $_REQUEST['data']['filters'];
+			
+			//possible aussi avec $_SERVER['referer']
+			
 			return [];
 		}
 		if( isset($filters['data']) &&  isset($filters['data']['filters']))
