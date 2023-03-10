@@ -91,6 +91,13 @@ jQuery( function( $ ) {
 		//
 		$( 'body' ).on('reset', 'form.wpcf7-form.preventdefault-reset', function(e) {
 			e.preventDefault();
+			
+			// $dom = $(this).find(".wpcf7-response-output");
+			// var observer = new MutationObserver( function(e){
+				// if( $dom.is(':visible') && $dom.get(0).innerText )
+					// $dom.get(0).scrollIntoView();//{block: "end", inline: "nearest"});
+			// });
+			// observer.observe($dom.get(0), { attributes: true, characterData: true,  childList: true });
 		});
 
 		/**
@@ -105,8 +112,11 @@ jQuery( function( $ ) {
 			var $dom = $('#' + matches[0]);
 			if( $dom.length === 0)
 				return;
-			var offset = $dom.offset().top;
-			$('html,body').animate({scrollTop: offset - window.innerHeight/4}, 200);
+			
+			$dom.get(0).scrollIntoView();
+			
+			// var offset = $dom.offset().top;
+			// $('html,body').animate({scrollTop: offset - window.innerHeight/4}, 200);
 			$dom.addClass('agdp-scrolled-to');
 			return false;
 			 
@@ -187,6 +197,7 @@ jQuery( function( $ ) {
 						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 							.click(function(){$msg.remove()});
 						$actionElnt.after($msg);
+						$msg.get(0).scrollIntoView();
 					}
 				}
 			});

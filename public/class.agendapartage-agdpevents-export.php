@@ -95,7 +95,7 @@ class AgendaPartage_Evenements_Export {
 			if(is_array($value))
 				$metas[$key] = implode(', ', $value);
 		$metas['date_start'] = self::sanitize_datetime($metas['ev-date-debut'], $metas['ev-heure-debut']);
-		$metas['date_end'] = self::sanitize_datetime($metas['ev-date-fin'], $metas['ev-heure-fin'], $metas['ev-date-debut']);
+		$metas['date_end'] = self::sanitize_datetime($metas['ev-date-fin'], $metas['ev-heure-fin'], $metas['ev-date-debut'], $metas['ev-heure-debut']);
 				
 		$vevent = new ZCiCalNode("VEVENT", $ical->curnode);
 
@@ -118,7 +118,8 @@ class AgendaPartage_Evenements_Export {
 		$vevent->addNode(new ZCiCalDataNode("DTSTART;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_start'])));
 
 		// add end date
-		$vevent->addNode(new ZCiCalDataNode("DTEND;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_end'])));
+		if($metas['date_end'])
+			$vevent->addNode(new ZCiCalDataNode("DTEND;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_end'])));
 
 		// UID is a required item in VEVENT, create unique string for this event
 		// Adding your domain to the end is a good way of creating uniqueness
@@ -157,14 +158,22 @@ class AgendaPartage_Evenements_Export {
 		return $vevent;
 	}
 	
-	public static function sanitize_datetime($date, $time, $date_start = false){
-		if( ! $date )
+	public static function sanitize_datetime($date, $time, $date_start = false, $time_start = false){
+		if( ! $date ){
+			debug_log('sanitize_datetime(', $date, $time, $date_start);
+			//if not end date, not time and start date contains time, skip dtend
+			if($date_start
+			&& (! $time || $time == '00:00' || $time == '00:00:00')
+			&& $time_start)
+				return '';
+				
 			$date = $date_start;
+		}
 		if( ! $date )
 			return;
 		if( $date_start
 		&& (! $time || $time == '00:00' || $time == '00:00:00')
-		&& strpos($date_start, ':') == false){
+		&& ! $time_start){
 			//date_start without hour, date_end is the next day, meaning 'full day'
 			return date('Y-m-d', strtotime($date . ' + 1 day'));
 		}
