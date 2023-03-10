@@ -218,42 +218,59 @@ class AgendaPartage_Evenements {
     }
 
 	/**
+	 * Retourne les filtres
+	 */
+	public static function get_filters($filters = null){
+		if( ! $filters){
+			if(isset($_REQUEST['action'])
+			&& $_REQUEST['action'] === 'filters'){
+				$filters = $_REQUEST;
+				unset($filters['action']);
+			}
+			elseif( isset($_REQUEST['data']) &&  isset($_REQUEST['data']['filters']))
+				return $_REQUEST['data']['filters'];
+			return [];
+		}
+		if( isset($filters['data']) &&  isset($filters['data']['filters']))
+			return $filters['data']['filters'];
+		return $filters;
+	}
+
+	/**
 	 * Complète les filtres de requêtes
 	 */
 	public static function add_filters_query($query = false, $return_sql = false, $filters = null){
-		if( $filters === null)
-			$filters = $_REQUEST;
-		if(isset($filters['action'])
-		&& $filters['action'] == 'filters'){
+		$filters = self::get_filters($filters);
+		if(count($filters)){
 			$query_tax_terms = [];
 			$all_sql = [];
-		foreach( AgendaPartage_Evenement_Post_Type::get_taxonomies() as $tax_name => $taxonomy){
-			$field = $taxonomy['filter'];
-			if(isset($filters[$field])){
-				$query_tax_terms[$tax_name] = [];
-				$all_sql[$tax_name] = ['IN'=>[]];
-				foreach($filters[$field] as $term_id => $checked){
-					if($term_id === '*'){
-						unset($query_tax_terms[$tax_name]);
-						unset($all_sql[$tax_name]);
-						break;
+			foreach( AgendaPartage_Evenement_Post_Type::get_taxonomies() as $tax_name => $taxonomy){
+				$field = $taxonomy['filter'];
+				if(isset($filters[$field])){
+					$query_tax_terms[$tax_name] = [];
+					$all_sql[$tax_name] = ['IN'=>[]];
+					foreach($filters[$field] as $term_id => $checked){
+						if($term_id === '*'){
+							unset($query_tax_terms[$tax_name]);
+							unset($all_sql[$tax_name]);
+							break;
+						}
+						if($term_id == 0){
+							$query_tax_terms[$tax_name][] = array(
+								'taxonomy' => $tax_name,
+								'operator' => 'NOT EXISTS');
+							$all_sql[$tax_name]['NOT EXISTS'] = true;
+						} else {
+							$query_tax_terms[$tax_name][] = array(
+								'taxonomy' => $tax_name,
+								'field' => 'term_id',
+								'terms' => $term_id);
+							$all_sql[$tax_name]['IN'][] = $term_id;
+						}
 					}
-					if($term_id == 0){
-						$query_tax_terms[$tax_name][] = array(
-							'taxonomy' => $tax_name,
-							'operator' => 'NOT EXISTS');
-						$all_sql[$tax_name]['NOT EXISTS'] = true;
-					} else {
-						$query_tax_terms[$tax_name][] = array(
-							'taxonomy' => $tax_name,
-							'field' => 'term_id',
-							'terms' => $term_id);
-						$all_sql[$tax_name]['IN'][] = $term_id;
-					}
-				}
-				if(isset($query_tax_terms[$tax_name]) && count($query_tax_terms[$tax_name]) > 1)
-					$query_tax_terms[$tax_name]['relation'] = 'OR';
-				
+					if(isset($query_tax_terms[$tax_name]) && count($query_tax_terms[$tax_name]) > 1)
+						$query_tax_terms[$tax_name]['relation'] = 'OR';
+					
 				}
 			}
 			$sql = '';
@@ -327,6 +344,8 @@ class AgendaPartage_Evenements {
 		
 		$option_ajax = (bool)$options['ajax'];
 		
+		$filters = self::get_filters();
+		
 		$months = self::get_posts_months($query);
 		
 		if($options['months'] > 0 && count($months) > $options['months'])
@@ -366,10 +385,13 @@ class AgendaPartage_Evenements {
 			&& ($not_empty_month_index >= $options['start_ajax_at_month_index'])
 			&& $month_events_count > 0
 			&& $month !== $requested_month) {
+				$data = [ 'month' => $month ];
+				if($filters && count($filters))
+					$data['filters'] = $filters;
 				$ajax = sprintf('ajax="once" data="%s"',
 					esc_attr( json_encode ( array(
 						'action' => AGDP_TAG.'_show_more',
-						'data' => [ 'month' => $month ]
+						'data' => $data
 					)))
 				);
 			} else
