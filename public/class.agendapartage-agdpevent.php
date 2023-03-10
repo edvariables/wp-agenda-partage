@@ -293,13 +293,19 @@ class AgendaPartage_Evenement {
 				}
 				elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID)){
 					delete_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID);
+					if(empty($codesecret))
+						$secretcode = get_post_meta($post->ID, 'ev-'.AGDP_SECRETCODE, true);
 				}
 				
 				$alerte = sprintf('<p class="alerte">Cet évènement est <b>en attente de validation</b>, il a le statut "%s".'
 					.'<br>Il n\'est <b>pas visible</b> dans l\'agenda.'
 					. '</p>'
 					. (isset($email_sent) && $email_sent ? '<div class="info">Un e-mail a été envoyé pour permettre la validation de ce nouvel évènement. Vérifiez votre boîte mails, la rubrique spam aussi.</div>' : '')
-					. (isset($no_email) && $no_email ? '<div class="alerte">Vous n\'avez pas indiqué d\'adresse mail pour permettre la validation de ce nouvel évènement.<br>Vous devrez attendre la validation par un modérateur pour que cet évènement soit public.<br>Vous pouvez encore modifier cet évènement et renseigner l\'adresse mail.</div>' : '')
+					. (isset($no_email) && $no_email ? '<div class="alerte">Vous n\'avez pas indiqué d\'adresse mail pour permettre la validation de ce nouvel évènement.'
+											. '<br>Vous devrez attendre la validation par un modérateur pour que cet évènement soit public.'
+											. '<br>Vous pouvez encore modifier cet évènement et renseigner l\'adresse mail.'
+											. '<br>Le code secret de cet évènement est : <b>'.$secretcode.'</b>'
+											. '</div>' : '')
 					, $status);
 				$html = $alerte . $html;
 				break;
