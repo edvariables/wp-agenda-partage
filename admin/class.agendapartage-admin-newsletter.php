@@ -206,6 +206,9 @@ class AgendaPartage_Admin_Newsletter {
 	 * Callback
 	 */
 	public static function on_dashboard_crontab($post , $widget) {
+		if( is_network_admin())
+			return;
+		
 		$newsletter = AgendaPartage_Newsletter::get_newsletter();
 		if( ! $newsletter )
 			return;

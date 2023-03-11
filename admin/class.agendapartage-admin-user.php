@@ -5,8 +5,9 @@ class AgendaPartage_Admin_User {
 		//Add custom user contact Methods
 		add_filter( 'user_contactmethods', array( __CLASS__, 'custom_user_contact_methods' ), 10, 2);
 		
-		if( basename($_SERVER['PHP_SELF']) === 'profile.php' 
-		|| basename($_SERVER['PHP_SELF']) === 'user-edit.php') {
+		if( ! is_network_admin()
+		&& (basename($_SERVER['PHP_SELF']) === 'profile.php' 
+		|| basename($_SERVER['PHP_SELF']) === 'user-edit.php')) {
 			add_action( 'show_user_profile', array(__CLASS__, 'on_custom_user_profil'), 10, 1 );
 			add_action( 'edit_user_profile', array(__CLASS__, 'on_custom_user_profil'), 10, 1 );
 			add_action( 'insert_custom_user_meta', array(__CLASS__, 'on_insert_custom_user_meta'), 10, 4);
