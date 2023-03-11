@@ -717,7 +717,8 @@ class AgendaPartage_Admin_Menu {
 		, 'agdpevent_message_contact_post_id' => 'page'
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
-		, 'blog_presentation_page_id' => 'page']
+		, 'blog_presentation_page_id' => 'page'
+		, 'agdpevent_tax_publication_newsletter_term_id' => 'term']
 		as $option_name => $post_type){
 		
 			$option_label = AgendaPartage::get_option_label($option_name);
@@ -728,14 +729,24 @@ class AgendaPartage_Admin_Menu {
 				continue;
 			}
 			$source_option_value = $source_options[$option_name];
+			if($post_type === 'term'){
+				$source_term = get_term( $source_option_value );
+				if( ! $source_term ){
+					$logs[] = sprintf('<p>Impossible de retrouver le terme <b>%s</b> (%s) #%d</p>', 
+						$option_label, $option_name, $source_option_value);
+					
+					continue;
+				}
+				continue;
+			}
 			$source_post = get_post( $source_option_value );
 			if( ! $source_post ){
 				$logs[] = sprintf('<p>Impossible de retrouver le post <b>%s</b> (%s) #%d</p>', 
 					$option_label, $option_name, $source_option_value);
 				
-				restore_current_blog();
-				break;
+				continue;
 			}
+
 			if( $source_post->post_status !== 'publish' ){
 				$logs[] = sprintf('<p>Le post source <b>%s</b> (%s) n\'est pas publié (%s).</p>', 
 					$option_label, $option_name, $source_post->post_status);

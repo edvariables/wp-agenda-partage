@@ -65,20 +65,40 @@ class AgendaPartage_Admin_Multisite {
 				restore_current_blog();
 				$logs[] = sprintf('<pre>Importation de la taxonomie <b>%s</b></pre>', $tax_name);
 				foreach( $terms as $term){
-					$logs[] = sprintf('<li><b>%s</b></li>', $term->slug);//, var_export($term, true));
-					$new_term = wp_insert_term($term->name, $tax_name, ['slug' => $term->slug, 'description' => $term->description]);
 					switch_to_blog($source_blog_id);
 						$term_metas = get_term_meta($term->term_id, '', true);
 					restore_current_blog();
+					
+					if( $tax_name === 'publication'){
+						
+						//create only "default_checked" terms
+						$meta_name = 'default_checked';
+						if( empty($term_metas[$meta_name]) ){
+							continue;
+						}
+					}
+					
+					$logs[] = sprintf('<li><b>%s</b></li>', $term->slug);//, var_export($term, true));
+					$new_term = wp_insert_term($term->name, $tax_name, ['slug' => $term->slug, 'description' => $term->description]);
 					$doublons = '';
 					foreach($term_metas as $term_meta => $term_meta_value ){
 						if( strpos($doublons, $term_meta . '|') !== false)
 							continue;
 						$doublons .= $term_meta . '|';
-						$error = update_term_meta($new_term['term_id'], $term_meta, implode(',',$term_meta_value));
-						if( is_wp_error($error))
+						$term_meta_value = maybe_unserialize($term_meta_value[0]);
+						if( is_array($term_meta_value))
+							$term_meta_value = implode(',', $term_meta_value);//TODO
+						$error = update_term_meta($new_term['term_id'], $term_meta, $term_meta_value);
+						if( is_wp_error($error)){
 							$logs[] = 'Erreur : ' . $error->get_error_message() . '<br>';
+						}
 					}
+					
+					if( $tax_name === 'publication'
+					&& ! empty($source_options['agdpevent_tax_publication_newsletter_term_id'])
+					&& $term->term_id == $source_options['agdpevent_tax_publication_newsletter_term_id']){
+						AgendaPartage::update_option('agdpevent_tax_publication_newsletter_term_id', $new_term['term_id']);
+					};
 				}
 			}
 		}
@@ -217,8 +237,8 @@ class AgendaPartage_Admin_Multisite {
 				continue;
 			}
 			$dest_post = get_post($dest_post);
-			$logs[] = sprintf('<p>Post créé <b>%s</b> (%s)</p>', 
-				$dest_post->post_title, $dest_post->ID);
+			$logs[] = AgendaPartage::html_icon('plus','', sprintf('Post créé <b>%s</b> (%s)', 
+				$dest_post->post_title, $dest_post->ID), 'p');
 				
 			AgendaPartage::update_option($option_name, $dest_post->ID);
 			$source_post_ids[$source_option_value . ''] = $dest_post->ID;

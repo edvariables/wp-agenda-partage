@@ -198,6 +198,8 @@ class AgendaPartage {
 				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
 			case 'blog_presentation_page_id':
 				return __( 'Page "Page de présentation du site"', AGDP_TAG );
+			case 'agdpevent_tax_publication_newsletter_term_id':
+				return __( 'Publication "Lettre-info"', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}
