@@ -583,7 +583,7 @@ class AgendaPartage_Evenements {
 			. ($filters_summary ? '<div class="filters-summary">' . $filters_summary . '</div>' : '')
 			. '</div>';
 		
-		$html .= '<form action="" method="get" class="toggle-container" >';
+		$html .= '<form action="#main" method="get" class="toggle-container" >';
 		
 		$html .= '<input type="hidden" name="action" value="filters"/>';
 		$html .= '<input type="submit" value="Filtrer"/>';
