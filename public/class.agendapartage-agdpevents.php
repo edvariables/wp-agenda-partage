@@ -150,6 +150,7 @@ class AgendaPartage_Evenements {
 			
 		);
 		$query = self::add_filters_query($query);
+		// debug_log('get_month_posts ' . '<pre>'.var_export($query, true).'</pre>' . '<pre>'.var_export($queries, true).'</pre>');
 		$queries[] = $query;
 		return self::get_posts(...$queries);
     }
@@ -186,7 +187,7 @@ class AgendaPartage_Evenements {
 				WHERE posts.post_status = 'publish'
 					AND posts.post_type = '". AgendaPartage_Evenement::post_type ."'
 					AND meta.meta_key = 'ev-date-debut'
-					AND meta.meta_value > CURDATE()
+					AND meta.meta_value >= CURDATE()
 		";
 		if($sql_filters)
 			$sql .= " AND posts.ID IN ({$sql_filters})";
@@ -195,6 +196,7 @@ class AgendaPartage_Evenements {
 				ORDER BY year, month
 				";
 		$result = $wpdb->get_results($sql);
+		// debug_log('get_posts_months', $result, '<pre>'.$sql.'</pre>');
 		$months = [];
 		$prev_row = false;
 		foreach($result as $row){
@@ -221,21 +223,24 @@ class AgendaPartage_Evenements {
 	 * Retourne les filtres
 	 */
 	public static function get_filters($filters = null){
+		// debug_log('get_filters IN $_REQUEST', $_REQUEST);
 		if( ! $filters){
 			if(isset($_REQUEST['action'])
 			&& $_REQUEST['action'] === 'filters'){
 				$filters = $_REQUEST;
 				unset($filters['action']);
 			}
-			elseif( isset($_REQUEST['data']) &&  isset($_REQUEST['data']['filters']))
+			elseif( isset($_REQUEST['data']) &&  isset($_REQUEST['data']['filters'])){
 				return $_REQUEST['data']['filters'];
-			
+			}
+			else
+				return [];
 			//possible aussi avec $_SERVER['referer']
 			
-			return [];
 		}
 		if( isset($filters['data']) &&  isset($filters['data']['filters']))
 			return $filters['data']['filters'];
+		// debug_log('get_filters RETURN $filters', $filters);
 		return $filters;
 	}
 
@@ -244,6 +249,7 @@ class AgendaPartage_Evenements {
 	 */
 	public static function add_filters_query($query = false, $return_sql = false, $filters = null){
 		$filters = self::get_filters($filters);
+		// debug_log('add_filters_query IN ', $query, $filters);
 		if(count($filters)){
 			$query_tax_terms = [];
 			$all_sql = [];
@@ -319,6 +325,7 @@ class AgendaPartage_Evenements {
 				}
 			}
 		}
+		// debug_log('add_filters_query', isset($sql) ? $sql : '', $query);
 		if($return_sql)
 			return isset($sql) ? $sql : '';
 		return $query;
