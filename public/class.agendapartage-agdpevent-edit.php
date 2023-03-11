@@ -748,7 +748,7 @@ class AgendaPartage_Evenement_Edit {
 				'ev-localisation' => 1,
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;
-				$data[$post_field] = $inputs[$input_field];
+				$data[$post_field] = trim($inputs[$input_field]);
 			}
 			//checkboxes
 			foreach(array(
@@ -1216,9 +1216,11 @@ class AgendaPartage_Evenement_Edit {
 		//Même lieu
 		$args['meta_query'] = [
 				[ 'key' => 'ev-date-debut', 'value' => $meta_values['ev-date-debut']],
-				[ 'key' => 'ev-heure-debut', 'value' => $meta_values['ev-heure-debut']],
 				[ 'key' => 'ev-localisation', 'value' => $meta_values['ev-localisation']]
 		];
+		if($meta_values['ev-heure-debut'])
+			$args['meta_query'][] = [ 'key' => 'ev-heure-debut', 'value' => $meta_values['ev-heure-debut']];
+				
         //var_dump($args);
 		add_filter('posts_where', array(__CLASS__, 'title_query_filter'),10,2);
 		$the_query = new WP_Query( $args );
@@ -1229,6 +1231,7 @@ class AgendaPartage_Evenement_Edit {
 		if ( $the_query->have_posts() ) {
 			return $the_query->posts[0]; 
 		}
+		// debug_log($the_query);
 		return false;
     }
 	/**

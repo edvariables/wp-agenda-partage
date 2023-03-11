@@ -81,10 +81,10 @@ class AgendaPartage_Evenements_Import {
 				'ev-date-fin' => $dateEnd,
 				'ev-heure-debut' =>$timeStart,
 				'ev-heure-fin' => $timeEnd,
-				'ev-localisation' => empty($event['location']) ? '' : $event['location'],
-				'ev-organisateur' => empty($event['organisateur']) ? '' : $event['organisateur'],
-				'ev-email' => empty($event['email']) ? '' : $event['email'],
-				'ev-phone' => empty($event['phone']) ? '' : $event['phone'],
+				'ev-localisation' => empty($event['location']) ? '' : trim($event['location']),
+				'ev-organisateur' => empty($event['organisateur']) ? '' : trim($event['organisateur']),
+				'ev-email' => empty($event['email']) ? '' : trim($event['email']),
+				'ev-phone' => empty($event['phone']) ? '' : trim($event['phone']),
 				'ev-import-uid' => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
 				'ev-codesecret' => AgendaPartage::get_secret_code(6),
@@ -92,14 +92,14 @@ class AgendaPartage_Evenements_Import {
 			);
 						
 			$post_title = $event['summary'];
-			$post_content = empty($event['description']) ? '' : $event['description'];
+			$post_content = empty($event['description']) ? '' : trim($event['description']);
 			if ($post_content === null) $post_content = '';
 			
 			//Check doublon
 			$doublon = AgendaPartage_Evenement_Edit::get_post_idem($post_title, $inputs);
 			if($doublon){
 				//var_dump($doublon);var_dump($post_title);var_dump($inputs);
-				debug_log('[IGNORE]$doublon = ' . var_export($doublon, true));
+				debug_log('[IGNORE]$doublon = ' . var_export($post_title, true));
 				$ignoreCounter++;
 				$url = AgendaPartage_Evenement::get_post_permalink($doublon);
 				$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
