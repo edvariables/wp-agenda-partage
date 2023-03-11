@@ -39,7 +39,7 @@ class AgendaPartage_Evenements_Import {
 		else {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
-	
+	debug_log($iCal['events'], "\r\n\r\n\r\n\r\n");
 		foreach($iCal['events'] as $event){
 			
 			switch(strtoupper($event['status'])){
@@ -71,7 +71,7 @@ class AgendaPartage_Evenements_Import {
 			$dateStart = substr($dateStart, 0, 10);
 			$dateEnd = substr($dateEnd, 0, 10);
 			if(strtotime($dateStart) < $today) {
-					debug_log('[IGNORE]$dateStart = ' . $dateStart);
+				debug_log('[IGNORE]$dateStart = ' . $dateStart);
 				$ignoreCounter++;
 				continue;
 			}
@@ -133,7 +133,7 @@ class AgendaPartage_Evenements_Import {
 							, htmlentities($term_name)
 							, AgendaPartage::get_ajax_action_link(false, 'insert_term', 'add', 'Cliquez ici pour l\'ajouter', 'Crée un nouveau terme', true, $data)
 						);
-						continue 3;
+						continue;
 					}
 					$taxonomies[$tax_name][] =  $all_terms[$term_name]->term_id;
 				}

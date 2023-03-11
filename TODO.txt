@@ -38,5 +38,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - import médiathèque
 	option theme_mods_twentyseventeen
 	get_site_icon_url()
+- import sur nouveau site, il semble qu'il faille le faire 2 fois.
 
 * Remplcer dans .js scrollToView() (merdouille, par exemple, dans l'import, "Dans la taxonomie "Commune", le terme "Pailharès" n'existe pas. Cliquez ici pour l'ajouter")

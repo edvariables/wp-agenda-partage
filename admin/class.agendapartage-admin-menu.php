@@ -413,6 +413,7 @@ class AgendaPartage_Admin_Menu {
 			<li>Contrôler la liste des publications (menu Evènements / publications). En particulier, que pour "La lettre-info", sélectionner "Coché par défaut lors de la création d'un évènement."</li>
 			<li>Contrôler les options de périodicités de la lettre-info.</li>
 			<li>Valider toutes les options de cette page de paramètres.</li>
+			<li>Editer chaque page pour sélectionner les formulaires associés et contrôler les url.</li>
 			<li>Personnaliser le thème, le menu, ...</li>
 			<li>Si la première page est l'agenda local, le menu "Agenda local" doit être un lien personnalisé avec pour url "/#main"</li>
 			<li>Tester tous les liens.</li>
