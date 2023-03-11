@@ -312,21 +312,21 @@ class AgendaPartage_Admin_Menu {
 				array(__CLASS__, 'settings_sections_cb'),
 				AGDP_TAG
 			);
-				if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
-					// 
-					$field_id = 'site_import';
-					add_settings_field(
-						$field_id, 
-						__( 'Importation des données du site principal', AGDP_TAG ),
-						array(__CLASS__, 'agendapartage_site_import_cb'),
-						AGDP_TAG,
-						'agendapartage_section_blog_import',
-						[
-							'label_for' => $field_id,
-							'class' => 'agendapartage_row',
-						]
-					);
-				}
+			if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
+				// 
+				$field_id = 'site_import';
+				add_settings_field(
+					$field_id, 
+					__( 'Importation des données du site principal', AGDP_TAG ),
+					array(__CLASS__, 'agendapartage_site_import_cb'),
+					AGDP_TAG,
+					'agendapartage_section_blog_import',
+					[
+						'label_for' => $field_id,
+						'class' => 'agendapartage_row',
+					]
+				);
+			}
 		}
 	}
 
@@ -366,6 +366,10 @@ class AgendaPartage_Admin_Menu {
 				$message = __('Importation d\'évènements depuis une source externe', AGDP_TAG);
 				break;
 			case 'agendapartage_section_blog_import' : 
+				if( get_current_blog_id() === BLOG_ID_CURRENT_SITE ){
+					?><p id="<?php echo esc_attr( $args['id'] ); ?>" class="dashicons-before dashicons-welcome-learn-more">Vous êtes sur le site principal, vous ne pouvez pas faire d'importation de modèles.</p><?php
+					return;
+				}
 				$message = __('Importation des éléments de base depuis un autre site d\'agenda partagé.', AGDP_TAG);
 				break;
 			default : 
@@ -378,6 +382,7 @@ class AgendaPartage_Admin_Menu {
 	}
 	
 	public static function agendapartage_site_import_cb( $args ){
+					
 		$option_id = $args['label_for'];
 		?><label>
 			<input id="<?php echo esc_attr( $option_id ); ?>-confirm"
