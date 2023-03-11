@@ -14,27 +14,29 @@ class AgendaPartage_Admin_Multisite {
 		// }
 	}
 
-	public static function import_site (){
+	public static function import_site ( $source_blog_id = null){
 		$user = wp_get_current_user();
 			
-		$source_site_id = SITE_ID_CURRENT_SITE;
-		$dest_site_id = get_current_blog_id();
+		if( $source_blog_id === null )
+			$source_blog_id = BLOG_ID_CURRENT_SITE;
 		
-		switch_to_blog($source_site_id);
-		$source_name = get_bloginfo( 'name' );
-		$source_url = network_site_url( '/' );
+		$dest_blog_id = get_current_blog_id();
+		
+		switch_to_blog($source_blog_id);
+			$source_name = get_bloginfo( 'name' );
+			$source_url = network_site_url( '/' );
 		restore_current_blog();
 		
 		$dest_name = get_bloginfo( 'name' );
 		$dest_url = network_site_url( '/' );
 		
-		$source_options = get_blog_option( $source_site_id, AGDP_TAG );
-		$dest_options = get_blog_option( $dest_site_id, AGDP_TAG );
+		$source_options = get_blog_option( $source_blog_id, AGDP_TAG );
+		$dest_options = get_blog_option( $dest_blog_id, AGDP_TAG );
 			
 		$logs = [];
 		$logs[] = sprintf('<p>Importation depuis <b>%s (%d)</b> vers <b>%s (%d)</b></p>', 
-				$source_name, $source_site_id
-				, $dest_name, $dest_site_id);
+				$source_name, $source_blog_id
+				, $dest_name, $dest_blog_id);
 				
 		
 		$logs[] = sprintf('<p>Périodicités des lettres-infos</p>');
@@ -42,7 +44,7 @@ class AgendaPartage_Admin_Multisite {
 		//TODO "La lettre-info" = default checked
 		
 		//import agdpevent->taxonomies->terms
-		switch_to_blog($source_site_id);
+		switch_to_blog($source_blog_id);
 			$source_taxonomies = get_taxonomies(['object_type' => ['agdpevent']],'names');
 		restore_current_blog();
 		foreach($source_taxonomies as $tax_name){
@@ -53,7 +55,7 @@ class AgendaPartage_Admin_Multisite {
 				'hide_empty' => false,
 			) );
 			if( empty($terms)){
-				switch_to_blog($source_site_id);
+				switch_to_blog($source_blog_id);
 					$terms = get_terms(array(
 								'taxonomy' => $tax_name,
 								'hide_empty' => false,
@@ -63,7 +65,7 @@ class AgendaPartage_Admin_Multisite {
 				foreach( $terms as $term){
 					$logs[] = sprintf('<li><b>%s</b> %s</li>', $term->slug, var_export($term, true));
 					$new_term = wp_insert_term($term->name, $tax_name, ['slug' => $term->slug, 'description' => $term->description]);
-					switch_to_blog($source_site_id);
+					switch_to_blog($source_blog_id);
 						$term_metas = get_term_meta($term->term_id, '', true);
 					restore_current_blog();
 					$doublons = '';
@@ -95,8 +97,8 @@ class AgendaPartage_Admin_Multisite {
 			$option_label = AgendaPartage::get_option_label($option_name);
 			
 			if ( ! isset( $source_options[$option_name] ) ) {
-				$logs[] = sprintf('<p>Le paramètre <b>%d</b> est vide sur le site source</p>', 
-						$source_site_id, $dest_site_id);
+				$logs[] = sprintf('<p>Le paramètre <b>%s</b> est vide sur le site source</p>', 
+						$option_label);
 				continue;
 			}
 			$source_option_value = $source_options[$option_name];
@@ -119,7 +121,7 @@ class AgendaPartage_Admin_Multisite {
 				continue;
 			}
 		
-			switch_to_blog($source_site_id);
+			switch_to_blog($source_blog_id);
 				$source_post = get_post( $source_option_value );
 				if( ! $source_post ){
 					$logs[] = sprintf('<p>Impossible de retrouver le post source <b>%s</b> (%s) #%d</p>', 
@@ -128,15 +130,18 @@ class AgendaPartage_Admin_Multisite {
 					restore_current_blog();
 					break;
 				}
-				elseif( $source_post->post_status !== 'publish' ){
+				if( $source_post->post_status !== 'publish' ){
 					$logs[] = sprintf('<p>Le post source <b>%s</b> (%s) n\'est pas publié (%s), il va être importé et restera dans son état.</p>', 
 						$option_label, $option_name, $source_post->post_status);
 				}
 				
 				$tax_terms = [];
 				foreach( get_taxonomies([ 'object_type' => [$source_post->post_type] ]) as $tax_name){
-					$tax_terms[ $tax_name ] = array_map( function($t){return $t->term_id;}, get_the_terms($source_post->ID, $tax_name));
-					
+					$terms = get_the_terms($source_post->ID, $tax_name);
+					if( ! is_array($terms))
+						debug_log($tax_name . '$terms ! array', $terms);
+					else
+						$tax_terms[ $tax_name ] = array_map( function($t){ return $t->term_id; }, $terms);
 				}
 				
 				$source_metas = get_post_meta( $source_option_value, '', true );
@@ -152,7 +157,7 @@ class AgendaPartage_Admin_Multisite {
 					$dest_metas[$meta_key] = maybe_unserialize($meta_value[0]);
 				}
 			}
-			$dest_metas['_agdp_multisite_import'] = sprintf('%d|%s|%d', $source_site_id, $source_post->post_type, $source_post->ID);
+			$dest_metas['_agdp_multisite_import'] = sprintf('%d|%s|%d', $source_blog_id, $source_post->post_type, $source_post->ID);
 			// $logs[] = '<pre>' . var_export($source_metas,true) . '</pre>';
 			// $logs[] = '<pre>' . var_export($dest_metas,true) . '</pre>';
 			// AgendaPartage_Admin::set_import_report($logs);

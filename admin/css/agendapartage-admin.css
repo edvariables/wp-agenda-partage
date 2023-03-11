@@ -120,3 +120,60 @@ img.coo-favicon {
 #the-list .type-agdpevent.status-draft td.column-date {
 	color: darkred;
 }
+
+
+
+/*toggle shortcode*/
+.toggle-trigger {
+	cursor: pointer;
+	margin: 0px !important;
+}
+.toggle-trigger:not(.dashicons-before) {
+	background-color: #F5F5F5;
+	background-image: url('../../public/images/toggle-plus.png');
+	background-position: 10px center;
+	background-repeat: no-repeat;
+}
+body.colors-dark .toggle-trigger {
+	background-color: #252525;
+}
+
+.toggle-trigger a {
+	color: #333;
+	text-decoration: none;
+	display: block;
+}
+body.colors-dark .toggle-trigger a {
+	color: #CCC;
+}
+.toggle-trigger.dashicons-before a {
+	display: inline-block;
+}
+
+.toggle-trigger a:hover {
+	color: #0489B7;
+	text-decoration: none;
+}
+body.colors-dark .toggle-trigger a:hover {
+	color: #FA7628;
+}
+.toggle-trigger .wpcf7-spinner {
+	float: right;
+}
+
+.toggle-trigger.active{
+	background-image: url('../../public/images/toggle-minus.png') !important;
+	background-repeat: no-repeat;
+}
+
+.toggle-container {
+	/* display: none; TODO hide on load before jQuery */
+	display: none;
+	overflow: hidden;
+	padding: 10px 10px;
+}
+.toggle-trigger.active + .toggle-container {
+	display: block;
+}
+/*
+ *******/

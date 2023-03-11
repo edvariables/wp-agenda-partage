@@ -37,31 +37,6 @@ class AgendaPartage_Admin_Menu {
 		// register a new setting for "agendapartage" page
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
-		if(is_multisite()){
-			// register a new section in the "agendapartage" page
-			add_settings_section(
-				'agendapartage_section_site_import',
-				__( 'Importation d\'un site', AGDP_TAG ),
-				array(__CLASS__, 'settings_sections_cb'),
-				AGDP_TAG
-			);
-				if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
-					// 
-					$field_id = 'site_import';
-					add_settings_field(
-						$field_id, 
-						__( 'Importation des données du site principal', AGDP_TAG ),
-						array(__CLASS__, 'agendapartage_site_import_cb'),
-						AGDP_TAG,
-						'agendapartage_section_site_import',
-						[
-							'label_for' => $field_id,
-							'class' => 'agendapartage_row',
-						]
-					);
-				}
-		}
-		
 		add_settings_section(
 			'agendapartage_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
@@ -306,6 +281,31 @@ class AgendaPartage_Admin_Menu {
 					'class' => 'agendapartage_row',
 				]
 			);
+		
+		if(is_multisite()){
+			// register a new section in the "agendapartage" page
+			add_settings_section(
+				'agendapartage_section_site_import',
+				__( 'Initialisation du site', AGDP_TAG ),
+				array(__CLASS__, 'settings_sections_cb'),
+				AGDP_TAG
+			);
+				if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
+					// 
+					$field_id = 'site_import';
+					add_settings_field(
+						$field_id, 
+						__( 'Importation des données du site principal', AGDP_TAG ),
+						array(__CLASS__, 'agendapartage_site_import_cb'),
+						AGDP_TAG,
+						'agendapartage_section_site_import',
+						[
+							'label_for' => $field_id,
+							'class' => 'agendapartage_row',
+						]
+					);
+				}
+		}
 	}
 
 	/**
@@ -351,28 +351,47 @@ class AgendaPartage_Admin_Menu {
 	}
 	
 	public static function agendapartage_site_import_cb( $args ){
-		// get the value of the setting we've registered with register_setting()
 		$option_id = $args['label_for'];
-		// output the field
 		?><label>
 			<input id="<?php echo esc_attr( $option_id ); ?>-confirm"
 				name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>-confirm]"
 				type="checkbox"
-			/> Je confirme l'importation des données manquantes ici depuis le site principal
+			/> Je confirme l'importation des données manquantes ici depuis le site suivant :
 		</label>
+		<?php $value = AgendaPartage::get_option($option_id . '-source');
+		$this_blog_id = get_current_blog_id();
+		?><select name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>-source]"><?php
+			foreach(get_sites() as $site)
+				if( $this_blog_id != $site->blog_id)
+					echo sprintf('<option value="%d" %s>%s</option>'
+					, $site->blog_id
+					, selected($site->blog_id, $value)
+					, $site->domain . rtrim($site->path, '/'));
+		?></select>
 		<br>
 		<br>
-		<div class="dashicons-before dashicons-welcome-learn-more">Les pages, les formulaires, les lettres-infos.</div>
+		<div class="dashicons-before dashicons-welcome-learn-more">Importe les pages, les formulaires et les lettres-infos référencés par les options de l'extension.</div>
+		<ul><span class=""></span>
+		<div class="toggle-trigger dashicons-before dashicons-welcome-learn-more"><a href="#">Pour configurer un nouveau site, il faut : </a><span class="dashicons-before dashicons-arrow-right"/></div>
+		<div class="toggle-container">
+			<li>Configurer le SMTP (menu Réglages/SMTP).</li>
+			<li>Configurer l'intégration du reCaptcha (menu Contacts / Intégration).</li>
+			<li>Configurer la version du reCaptcha (menu Contacts / reCaptcha version).</li>
+			<li>Saisir les communes du territoire du site (menu Evènements / communes).</li>
+			<li>Contrôler la liste des publications (menu Evènements / publications). En particulier, que pour "La lettre-info", sélectionner "Coché par défaut lors de la création d'un évènement."</li>
+			<li>Valider toutes les options de cette page de paramètres.</li>
+			<li>Personnaliser le thème, le menu, ...</li>
+			<li>Si la première page est l'agenda local, le menu "Agenda local" doit être un lien personnalisé avec pour url "/#main"</li>
+			<li>Tester tous les liens.</li>
+		</div></ul>
 		<?php
 		echo AgendaPartage_Admin::get_import_report(true);
 
 	}
 	
 	public static function agendapartage_import_ics_cb( $args ){
-		// get the value of the setting we've registered with register_setting()
 		$option_id = $args['label_for'];
 		$post_status = AgendaPartage::get_option($option_id . '-post_status');
-		// output the field
 		?>
 		<input id="<?php echo esc_attr( $option_id ); ?>"
 			name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>]"

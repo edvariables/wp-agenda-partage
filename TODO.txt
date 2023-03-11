@@ -33,3 +33,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 * Admin dashboard
 - new events only
 - newsletter subscribers
+
+* Multisites
+- import médiathèque
+
+* Supprimer dans .js scrollToView (merdouille dans "Dans la taxonomie "Commune", le terme "Pailharès" n'existe pas. Cliquez ici pour l'ajouter")

@@ -145,7 +145,7 @@ class AgendaPartage_Admin {
 		
 		//Import d'un fichier d'évènements
 		$option_key = 'agdpevent_import_ics';
-		if( array_key_exists($option_key, $values) ){
+		if( array_key_exists($option_key . '-confirm', $values) ){
 			if( count($_FILES)
 				&& array_key_exists( AGDP_TAG, $_FILES)
 				&& array_key_exists( 'name', $_FILES[AGDP_TAG])
@@ -166,7 +166,7 @@ class AgendaPartage_Admin {
 					}
 					else{
 						require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents-import.php');
-						AgendaPartage_Evenements_Import::import_ics($fileName, $post_status, $original_file_name );
+						AgendaPartage_Evenements_Import::import_ics($fileName, $post_status, $original_file_name);
 					}
 				}
 			}
@@ -175,7 +175,8 @@ class AgendaPartage_Admin {
 		//Import d'un site
 		$option_key = 'site_import';
 		if( array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
-			AgendaPartage_Admin_Multisite::import_site();
+			$source_id = AgendaPartage::get_option($option_key . '-source');
+			AgendaPartage_Admin_Multisite::import_site($source_id);
 		}
 		
 		$static_updating = false;
@@ -205,8 +206,10 @@ class AgendaPartage_Admin {
 	}
 	
 	public static function wpcf7_admin_notices($tag, $action, $contact_form){
-		if( ! is_a($contact_form, 'WPCF7_ContactForm'))
+		if( ! is_a($contact_form, 'WPCF7_ContactForm')){
+			debug_log('wpcf7_admin_notices', $tag, $action, $contact_form);
 			return;
+		}
 		foreach(['agdpevent_edit_form_id'
 				, 'admin_message_contact_form_id'
 				, 'agdpevent_message_contact_post_id'
