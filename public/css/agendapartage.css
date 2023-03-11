@@ -158,7 +158,7 @@ label.textarea-rows-5 textarea {
 .agdp-title-link {
 	float:right;
 	position: relative;
-	top: -1em;
+	/* top: -1em; */
 }
 .agdp-title-link a {
 	box-shadow: none !important;
