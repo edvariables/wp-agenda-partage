@@ -19,6 +19,9 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
 - révisions depuis /public
 	
+* Events
+- filtres sur toutes les cases à cocher : 0 résultat
+	
 * WPCF7 form
 - Submit : scroll to ajax message
 

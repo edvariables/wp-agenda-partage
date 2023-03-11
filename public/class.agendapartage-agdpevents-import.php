@@ -238,10 +238,21 @@ class AgendaPartage_Evenements_Import {
 							$vevent[$key] = [];
 							$vevent[$key .'[parameters]'] = [];
 							for($i = 0; $i < count($value); $i++) {
-								$vevent[$key][] = $value[$i]->getValues();
-								$p = $value[$i]->getParameters();
-								if($p){
-									$vevent[$key .'[parameters]'][] = $p;
+								if(is_array($value[$i])){
+									array_walk_recursive( $value[$i], function(&$value, $value_key, &$vevent_key_arr){
+										if(is_a($value, 'ZCiCalDataNode'))
+											$vevent_key_arr[] = $value->value[0];
+										else
+											$vevent_key_arr[] = $value;
+									}, $vevent[$key]);
+									debug_log($vevent[$key]);
+								}
+								else {
+									$vevent[$key][] = $value[$i]->getValues();
+									$p = $value[$i]->getParameters();
+									if($p){
+										$vevent[$key .'[parameters]'][] = $p;
+									}
 								}
 							}
 						} else {
