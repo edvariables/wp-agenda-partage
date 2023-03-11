@@ -113,12 +113,12 @@ class AgendaPartage_Newsletter {
 	
 	public static function get_subscription_meta_key($newsletter = false){
 		$newsletter = self::get_newsletter($newsletter);
-		return sprintf('%s_subscr_%s', self::post_type, $newsletter->ID);
+		return sprintf('%s_subscr_%d_%d', self::post_type, get_current_blog_id(), $newsletter->ID);
 	}
 	
 	public static function get_mailing_meta_key($newsletter = false){
 		$newsletter = self::get_newsletter($newsletter);
-		return sprintf('%s_mailing_%s', self::post_type, $newsletter->ID);
+		return sprintf('%s_mailing_%d_%d', self::post_type, get_current_blog_id(), $newsletter->ID);
 	}
 	
 	/**
@@ -302,7 +302,6 @@ class AgendaPartage_Newsletter {
 		/** périodicité de l'abonnement **/
 		$input_name = 'nl-period';
 		$subscription_periods = self::subscription_periods(true);
-		
 		if(isset($_REQUEST['action']))
 			switch($_REQUEST['action']){
 				case 'unsubscribe':
@@ -538,7 +537,7 @@ class AgendaPartage_Newsletter {
 		
 		$user_metas = get_user_meta($user_id, '', true);
 		
-		$meta_key_like = sprintf('%s_mailing_', self::post_type);
+		$meta_key_like = sprintf('%s_mailing_%d_', self::post_type, get_current_blog_id());
 		$history = [];
 		$newsletters = self::get_newsletters_names();
 		foreach($user_metas as $meta_key => $meta_value)

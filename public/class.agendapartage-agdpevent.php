@@ -124,7 +124,7 @@ class AgendaPartage_Evenement {
 	public static function on_redirect_canonical_cb ( $redirect_url, $requested_url ){
 		$query = parse_url($requested_url, PHP_URL_QUERY);
 		parse_str($query, $query);
-		// var_dump($query, $redirect_url, $requested_url);
+		//var_dump($query, $redirect_url, $requested_url);
 		if(isset($query['post_type']) && $query['post_type'] == self::post_type
 		&& isset($query['p']) && $query['p']){
 			$post = get_post($query['p']);

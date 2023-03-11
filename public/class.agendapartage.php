@@ -152,7 +152,7 @@ class AgendaPartage {
 	 * Retourne la valeur d'un paramétrage.
 	 * Cf AgendaPartage_Admin_Menu
 	 */
-	public static function get_option( $name, $default = false ) {
+	public static function get_option( $name = false, $default = false ) {
 			
 		$options = get_option( AGDP_TAG );
 
@@ -160,7 +160,9 @@ class AgendaPartage {
 			return $default;
 		}
 
-		if ( isset( $options[$name] ) ) {
+		if ( $name === false ) {
+			return $options;
+		} elseif ( isset( $options[$name] ) ) {
 			return $options[$name];
 		} else {
 			return $default;
@@ -194,6 +196,8 @@ class AgendaPartage {
 				return __( 'Page contenant l\'agenda', AGDP_TAG );
 			case 'new_agdpevent_page_id':
 				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
+			case 'blog_presentation_page_id':
+				return __( 'Page "Page de présentation du site"', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}

@@ -24,17 +24,19 @@ class AgendaPartage_Admin_Multisite {
 		
 		switch_to_blog($source_blog_id);
 			$source_name = get_bloginfo( 'name' );
-			$source_url = network_site_url( '/' );
+			$source_description = get_bloginfo( 'description' );
+			$source_url = get_bloginfo( 'url' );
 		restore_current_blog();
 		
 		$dest_name = get_bloginfo( 'name' );
-		$dest_url = network_site_url( '/' );
+		$dest_description = get_bloginfo( 'description' );
+		$dest_url = get_bloginfo( 'url' );
 		
 		$source_options = get_blog_option( $source_blog_id, AGDP_TAG );
 		$dest_options = get_blog_option( $dest_blog_id, AGDP_TAG );
 			
 		$logs = [];
-		$logs[] = sprintf('<p>Importation depuis <b>%s (%d)</b> vers <b>%s (%d)</b></p>', 
+		$logs[] = sprintf('<p>Importation depuis <b>%s #%d</b> vers <b>%s #%d</b></p>', 
 				$source_name, $source_blog_id
 				, $dest_name, $dest_blog_id);
 				
@@ -63,7 +65,7 @@ class AgendaPartage_Admin_Multisite {
 				restore_current_blog();
 				$logs[] = sprintf('<pre>Importation de la taxonomie <b>%s</b></pre>', $tax_name);
 				foreach( $terms as $term){
-					$logs[] = sprintf('<li><b>%s</b> %s</li>', $term->slug, var_export($term, true));
+					$logs[] = sprintf('<li><b>%s</b></li>', $term->slug);//, var_export($term, true));
 					$new_term = wp_insert_term($term->name, $tax_name, ['slug' => $term->slug, 'description' => $term->description]);
 					switch_to_blog($source_blog_id);
 						$term_metas = get_term_meta($term->term_id, '', true);
@@ -92,7 +94,9 @@ class AgendaPartage_Admin_Multisite {
 		, 'contact_form_id' => 'WPCF7_Contact_Form'
 		, 'agdpevent_message_contact_post_id' => 'page'
 		, 'agenda_page_id' => 'page'
-		, 'new_agdpevent_page_id' => 'page']
+		, 'new_agdpevent_page_id' => 'page'
+		, 'blog_presentation_page_id' => 'page'
+		]
 		as $option_name => $post_type){
 			$option_label = AgendaPartage::get_option_label($option_name);
 			
@@ -154,14 +158,25 @@ class AgendaPartage_Admin_Multisite {
 				&&  ! str_starts_with($meta_key, 'agdpnl_mailing_')
 				&& count($meta_value) && $meta_value[0] !== null
 				){
-					$dest_metas[$meta_key] = maybe_unserialize($meta_value[0]);
+					//TODO count($meta_value) > 1
+					$meta_value = maybe_unserialize($meta_value[0]);
+					
+					//Replace url in value
+					if( is_string($meta_value )
+					&& strpos($meta_value, $source_url) !== false){
+						if( $meta_value && is_string($meta_value ))
+							$meta_value = str_replace($source_url, $dest_url, $meta_value );
+						elseif( is_array($meta_value))
+							array_walk_recursive($meta_value, function(&$meta_value, $meta_key) use($source_url, $dest_url){
+								if( $meta_value && is_string($meta_value ))
+									$meta_value = str_replace($source_url, $dest_url, $meta_value );
+							});
+					}
+			
+					$dest_metas[$meta_key] = $meta_value;
 				}
 			}
 			$dest_metas['_agdp_multisite_import'] = sprintf('%d|%s|%d', $source_blog_id, $source_post->post_type, $source_post->ID);
-			// $logs[] = '<pre>' . var_export($source_metas,true) . '</pre>';
-			// $logs[] = '<pre>' . var_export($dest_metas,true) . '</pre>';
-			// AgendaPartage_Admin::set_import_report($logs);
-			// return;
 			
 			$postarr = [
 				'post_author' => $user->ID,
@@ -169,10 +184,30 @@ class AgendaPartage_Admin_Multisite {
 				'post_status' => $source_post->post_status,
 				'post_title' => $source_post->post_title,
 				'post_name' => $source_post->post_name,
-				'post_content' => $source_post->post_content, //TODO replace url
+				'post_content' => $source_post->post_content, 
 				'meta_input' => $dest_metas,
 				'tax_input' => $tax_terms
 			];
+			
+			//Replace blog name
+			switch($option_name){
+				case 'blog_presentation_page_id':
+					$postarr['post_title'] = $dest_name;
+					//slug, try to replace with slugged name
+					$source_slug = sanitize_title($source_post->post_title);
+					$dest_slug = sanitize_title($dest_name);
+					$postarr['post_name'] = str_replace($source_slug, $dest_slug, $postarr['post_name']);
+					
+					break;
+			}
+			//Replace url in content
+			$postarr['post_content'] = str_replace($source_url, $dest_url, $postarr['post_content'] );
+			
+			// $logs[] = '<pre>' . var_export($source_metas,true) . '</pre>';
+			// $logs[] = '<pre>' . $source_url . ' >> ' . $dest_url . '</pre>';
+			// $logs[] = '<pre>' . var_export($postarr,true) . '</pre>';
+			// AgendaPartage_Admin::set_import_report($logs);
+			// return;
 			
 			$dest_post = wp_insert_post($postarr);
 			

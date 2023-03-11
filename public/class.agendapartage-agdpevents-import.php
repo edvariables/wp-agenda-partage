@@ -39,7 +39,7 @@ class AgendaPartage_Evenements_Import {
 		else {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
-	debug_log($iCal);
+	
 		foreach($iCal['events'] as $event){
 			
 			switch(strtoupper($event['status'])){

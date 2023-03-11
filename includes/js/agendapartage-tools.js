@@ -45,7 +45,7 @@ jQuery( function( $ ) {
 							if(response.startsWith('redir:')){
 								$msg = $('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
 								$spinner.after($msg);
-								$msg.get(0).scrollIntoView();
+								// $msg.get(0).scrollIntoView();
 								response = response.substring('redir:'.length);
 								document.location = response;
 								return;
@@ -63,7 +63,7 @@ jQuery( function( $ ) {
 							var $msg = $('<div class="ajax_action-response"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 								.click(function(){$msg.remove()});
 							$actionElnt.after($msg);
-							$msg.get(0).scrollIntoView();
+							// $msg.get(0).scrollIntoView();
 						}
 					}
 					$spinner.remove();
@@ -73,7 +73,7 @@ jQuery( function( $ ) {
 					var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 						.click(function(){$msg.remove()});
 					$actionElnt.after($msg);
-					$msg.get(0).scrollIntoView();
+					// $msg.get(0).scrollIntoView();
 				}
 			});
 			var $spinner = $actionElnt.next('.wpcf7-spinner');

@@ -26,7 +26,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
 - shortcode [agdp-stats] pour mailing admin
 - Désabonnement : suppression du user si jamais connecté
-- meta_key mailing blog_id
+- affichage date de prochain qd tout le monde a été traité
 
 * Publish wp plugin
 
@@ -36,5 +36,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * Multisites
 - import médiathèque
+	option theme_mods_twentyseventeen
+	get_site_icon_url()
 
-* Supprimer dans .js scrollToView (merdouille dans "Dans la taxonomie "Commune", le terme "Pailharès" n'existe pas. Cliquez ici pour l'ajouter")
+* Remplcer dans .js scrollToView() (merdouille, par exemple, dans l'import, "Dans la taxonomie "Commune", le terme "Pailharès" n'existe pas. Cliquez ici pour l'ajouter")

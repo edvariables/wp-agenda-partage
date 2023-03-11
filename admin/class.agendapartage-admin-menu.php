@@ -30,7 +30,7 @@ class AgendaPartage_Admin_Menu {
 		
 		add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
 
-
+		
 	}
 
 	public static function init_settings(){
@@ -38,11 +38,33 @@ class AgendaPartage_Admin_Menu {
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
 		add_settings_section(
+			'agendapartage_section_checkup',
+			'',
+			array(__CLASS__, 'check_module_health'),
+			AGDP_TAG
+		);
+		
+		add_settings_section(
 			'agendapartage_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG
 		);
+
+			// 
+			$field_id = 'blog_presentation_page_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_pages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => 'page'
+				]
+			);
 
 			// 
 			$field_id = 'admin_message_contact_form_id';
@@ -285,7 +307,7 @@ class AgendaPartage_Admin_Menu {
 		if(is_multisite()){
 			// register a new section in the "agendapartage" page
 			add_settings_section(
-				'agendapartage_section_site_import',
+				'agendapartage_section_blog_import',
 				__( 'Initialisation du site', AGDP_TAG ),
 				array(__CLASS__, 'settings_sections_cb'),
 				AGDP_TAG
@@ -298,7 +320,7 @@ class AgendaPartage_Admin_Menu {
 						__( 'Importation des données du site principal', AGDP_TAG ),
 						array(__CLASS__, 'agendapartage_site_import_cb'),
 						AGDP_TAG,
-						'agendapartage_section_site_import',
+						'agendapartage_section_blog_import',
 						[
 							'label_for' => $field_id,
 							'class' => 'agendapartage_row',
@@ -329,25 +351,30 @@ class AgendaPartage_Admin_Menu {
 	 * Section
 	 */
 	public static function settings_sections_cb($args ) {
+		
 		switch($args['id']){
 			case 'agendapartage_section_security' : 
-				$message = __('Paramètres réservés aux administrateurs, c\'est à dire à ceux qui savent ce qu\'ils font...', AGDP_TAG);
+				$message = __('Paramètres de surveillance de l\'activité', AGDP_TAG);
 				break;
 			case 'agendapartage_section_pages' : 
-				$message = __('Paramètres réservés aux administrateurs, c\'est à dire à ceux qui savent ce qu\'ils font...', AGDP_TAG);
+				// $message = __('Paramètres concernant les références de pages et formulaires', AGDP_TAG);
 				break;
 			case 'agendapartage_section_agdpevents' : 
-				$message = __('Paramètres concernant les évènements et leurs pages.', AGDP_TAG);
+				$message = __('Paramètres concernant les évènements, leurs pages et formulaires.', AGDP_TAG);
 				break;
 			case 'agendapartage_section_agdpevents_import' : 
-				$message = '';//__('Outils d\'importation d\'évènements.', AGDP_TAG);
+				$message = __('Importation d\'évènements depuis une source externe', AGDP_TAG);
+				break;
+			case 'agendapartage_section_blog_import' : 
+				$message = __('Importation des éléments de base depuis un autre site d\'agenda partagé.', AGDP_TAG);
 				break;
 			default : 
 				$message = '';
 		}
+		if( ! empty($message) ){
 		?>
 		<p id="<?php echo esc_attr( $args['id'] ); ?>"><?php esc_html_e(  $message, AGDP_TAG ); ?></p>
-		<?php
+		<?php }
 	}
 	
 	public static function agendapartage_site_import_cb( $args ){
@@ -379,12 +406,15 @@ class AgendaPartage_Admin_Menu {
 			<li>Configurer la version du reCaptcha (menu Contacts / reCaptcha version).</li>
 			<li>Saisir les communes du territoire du site (menu Evènements / communes).</li>
 			<li>Contrôler la liste des publications (menu Evènements / publications). En particulier, que pour "La lettre-info", sélectionner "Coché par défaut lors de la création d'un évènement."</li>
+			<li>Contrôler les options de périodicités de la lettre-info.</li>
 			<li>Valider toutes les options de cette page de paramètres.</li>
 			<li>Personnaliser le thème, le menu, ...</li>
 			<li>Si la première page est l'agenda local, le menu "Agenda local" doit être un lien personnalisé avec pour url "/#main"</li>
 			<li>Tester tous les liens.</li>
 		</div></ul>
 		<?php
+		
+		
 		echo AgendaPartage_Admin::get_import_report(true);
 
 	}
@@ -585,6 +615,9 @@ class AgendaPartage_Admin_Menu {
 	 * top level menu
 	 */
 	public static function init_admin_menu() {
+		if( is_network_admin())
+			return;
+		
 		// add top level menu page
 		add_menu_page(
 			__('Réglages', AGDP_TAG),
@@ -664,6 +697,56 @@ class AgendaPartage_Admin_Menu {
 			remove_meta_box( 'dashboard_right_now', 'dashboard', 'normal' );
 		}
 		remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
+	}
+
+	/**
+	 *
+	 */
+	public static function check_module_health() {
+		
+		$source_options = AgendaPartage::get_option();
+	    $logs = [];
+		foreach([
+		  'admin_message_contact_form_id' => 'WPCF7_Contact_Form'
+		, 'newsletter_events_register_form_id' => 'WPCF7_Contact_Form'
+		, 'newsletter_post_id' => 'agdpnl'
+		, 'newsletter_subscribe_page_id' => 'page'
+		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
+		, 'contact_page_id' => 'page'
+		, 'contact_form_id' => 'WPCF7_Contact_Form'
+		, 'agdpevent_message_contact_post_id' => 'page'
+		, 'agenda_page_id' => 'page'
+		, 'new_agdpevent_page_id' => 'page'
+		, 'blog_presentation_page_id' => 'page']
+		as $option_name => $post_type){
+		
+			$option_label = AgendaPartage::get_option_label($option_name);
+			
+			if ( ! isset( $source_options[$option_name] ) || ! $source_options[$option_name] ) {
+				$logs[] = sprintf('<p>Le paramètre <b>%s</b> (%s) n\'est pas défini.</p>', 
+						$option_label, $option_name);
+				continue;
+			}
+			$source_option_value = $source_options[$option_name];
+			$source_post = get_post( $source_option_value );
+			if( ! $source_post ){
+				$logs[] = sprintf('<p>Impossible de retrouver le post <b>%s</b> (%s) #%d</p>', 
+					$option_label, $option_name, $source_option_value);
+				
+				restore_current_blog();
+				break;
+			}
+			if( $source_post->post_status !== 'publish' ){
+				$logs[] = sprintf('<p>Le post source <b>%s</b> (%s) n\'est pas publié (%s).</p>', 
+					$option_label, $option_name, $source_post->post_status);
+			}
+		}
+		
+		//TODO default_check "La lettre-info"
+		
+		if( count($logs) ){
+			AgendaPartage_Admin::add_admin_notice($logs, 'error', true);
+		}
 	}
 }
 

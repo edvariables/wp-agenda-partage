@@ -351,7 +351,6 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		}
 				
 		/** Historique **/
-		$meta_next_date = 'next_date_';
 		$two_months_before_mysql = wp_date('Y-m-d', strtotime(wp_date('Y-m-01', $today) . ' - 2 month'));
 		$sql = "SELECT mailing.meta_value AS mailing_date, COUNT(user.ID) AS count"
 			. "\n FROM {$user_prefix}users user"

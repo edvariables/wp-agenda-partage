@@ -106,6 +106,8 @@ class AgendaPartage_Admin {
 		$notices = get_transient(self::admin_notices_tag());
 		if( ! is_array($notices))
 			$notices = array();
+		if( is_array($msg))
+			$msg = implode("\r\n", $msg);
 		$notices[] = array(
 			'message' => $is_html ? $msg : esc_html($msg),
 			'type' => $type,
