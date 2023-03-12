@@ -161,6 +161,7 @@ jQuery( function( $ ) {
 			$('#agdp-filters .agdp-title-link a[href]').on('click', function(e){
 				e.preventDefault();
 				document.location.href = this.getAttribute('href');
+				return false;
 			});
 		}); 
 		
