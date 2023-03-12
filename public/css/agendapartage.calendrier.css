@@ -130,6 +130,16 @@ body.colors-dark .toggle-trigger.month-title {
 .agdp-agdpevents-list .agdp-agdpevents-list-header {
 	margin-bottom: 2em;
 }
+.agdp-agdpevents-list .agdp-agdpevents-list-header table {
+	margin: 0;
+}
+.agdp-agdpevents-list .agdp-agdpevents-list-header table tr,
+.agdp-agdpevents-list .agdp-agdpevents-list-header table th {
+	border: none;
+}
+.agdp-agdpevents-list .agdp-agdpevents-list-header table th {
+	width: 1px;
+}
 
 .agdp-agdpevents-list .agdp-agdpevents-list-header .filters-summary {
 	text-align: right;

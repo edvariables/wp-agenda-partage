@@ -659,13 +659,14 @@ class AgendaPartage_Evenements {
 				$all_selected_terms[$tax_name] = false;
 		}
 		$html = '<div class="agdp-agdpevents-list-header">
-			<div id="agdp-filters" class="toggle-trigger">'
-			. __('Filtres', AGDP_TAG)
+			<div id="agdp-filters" class="toggle-trigger">
+			<table><tr><th>'. __('Filtres', AGDP_TAG).'</th>
+			<td>'
 			. ($filters_summary ? '<div class="filters-summary">' 
 				. $filters_summary
 				. AgendaPartage::html_icon('no', 'clear-filters', '', 'span', __('Efface les filtres', AGDP_TAG))
 				. '</div>' : '')
-			. '</div>';
+			. '</th></tr></table></div>';
 		
 		$html .= '<form action="#main" method="get" class="toggle-container" >';
 		
