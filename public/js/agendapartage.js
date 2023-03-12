@@ -152,7 +152,10 @@ jQuery( function( $ ) {
 					//check the first checkbox 'All' 
 					$(this).next('label:first').children('input[type="checkbox"]:not(:checked)').click();
 				});
-				$(this).parents('.filters-summary').html('');
+				$(this)
+					.parents('.filters-summary').html('')
+						.parents('.toggle-trigger:first')
+							.trigger('toggle-active');
 				return false;
 			});
 		}); 

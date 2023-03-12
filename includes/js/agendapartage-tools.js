@@ -173,5 +173,11 @@ jQuery( function( $ ) {
 				.prev('.toggle-trigger').removeClass('active');
 			return false;
 		} );
+		$( 'body' ).on('toggle-active', '.toggle-trigger', function(activate = true) {
+			if(activate)
+				$(this).addClass( "active" ).next(".toggle-container").slideDown( "normal" );
+			else
+				$(this).removeClass( "active" ).next(".toggle-container").slideUp( "normal" );
+		} );
 	} );
 } );

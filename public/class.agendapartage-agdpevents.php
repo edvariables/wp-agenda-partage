@@ -183,7 +183,7 @@ class AgendaPartage_Evenements {
 				debug_log('get_posts wp_error ',$sql, $result->request);
 				return 'Erreur sql';
 			}
-			debug_log('get_month_posts posts via sql ', $result, $sql);
+			// debug_log('get_month_posts posts via sql ', $result, $sql);
 			return $result;
 		}
 		
