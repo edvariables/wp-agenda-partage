@@ -154,13 +154,8 @@ label.textarea-rows-5 textarea {
 .adgpevent-forbidden ul > li {
 	margin-left: 1em;
 }
-
-.agdp-title-link {
-	float:right;
-	position: relative;
-	/* top: -1em; */
-}
 .agdp-title-link a {
+	float:right;
 	box-shadow: none !important;
 	text-decoration: none;
 	outline: none;

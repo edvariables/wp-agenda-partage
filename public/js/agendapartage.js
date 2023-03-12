@@ -158,6 +158,10 @@ jQuery( function( $ ) {
 							.trigger('toggle-active');
 				return false;
 			});
+			$('#agdp-filters .agdp-title-link a[href]').on('click', function(e){
+				e.preventDefault();
+				document.location.href = this.getAttribute('href');
+			});
 		}); 
 		
 		/**

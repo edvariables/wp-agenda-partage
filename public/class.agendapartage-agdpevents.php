@@ -660,6 +660,10 @@ class AgendaPartage_Evenements {
 			. '<div id="agdp-filters" class="toggle-trigger">'
 			. '<table><tr><th>'. __('Filtres', AGDP_TAG).'</th>'
 			. '<td>'
+			. '<p class="agdp-title-link">'
+				. '<a href="'. get_page_link( AgendaPartage::get_option('new_agdpevent_page_id')) .'" title="Cliquez ici pour ajouter un nouvel évènement"><span class="dashicons dashicons-welcome-add-page"></span></a>'
+				. '<a href="'. get_page_link( AgendaPartage::get_option('agenda_page_id')) .'?#main" title="Cliquez ici pour recharger la liste"><span class="dashicons dashicons-update"></span></a>'
+			. '</p>'
 			. (count($filters_summary) ? '<div class="filters-summary">' 
 				. implode(', ', $filters_summary)
 				. AgendaPartage::html_icon('no', 'clear-filters', '', 'span', __('Efface les filtres', AGDP_TAG))
