@@ -425,8 +425,14 @@ class AgendaPartage {
 	/**
 	 * HTML tools
 	 */
-	public static function html_icon($icon, $class = '', $inner = '', $tag = 'span'){
-		 return sprintf('<%s class="dashicons-before dashicons-%s %s">%s</%s>', $tag, $icon, $class, $inner, $tag);
+	public static function html_icon($icon, $class = '', $inner = '', $tag = 'span', $title = false){
+		 return sprintf('<%s class="dashicons-before dashicons-%s %s"%s>%s</%s>'
+			, $tag
+			, $icon
+			, $class
+			, $title ? ' title="' . esc_attr($title) . '"' : ''
+			, $inner
+			, $tag);
 	 }
 	 
 	 /**

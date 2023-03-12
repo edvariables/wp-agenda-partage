@@ -146,6 +146,15 @@ jQuery( function( $ ) {
 						$checkboxes.filter('[name="'+tax_name+'[*]"]').prop("checked", true );
 				}
 			});
+			$('#agdp-filters .clear-filters').on('click', function(event){
+				//For each taxonomy, 
+				$form.find('label[for]').each(function(e){
+					//check the first checkbox 'All' 
+					$(this).next('label:first').children('input[type="checkbox"]:not(:checked)').click();
+				});
+				$(this).parents('.filters-summary').html('');
+				return false;
+			});
 		}); 
 		
 		/**

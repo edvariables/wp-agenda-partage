@@ -117,15 +117,16 @@ class AgendaPartage_Evenements {
 	}
 	
 	/**
-	 * Recherche de évènements d'un mois
+	 * Recherche des évènements d'un mois
 	 */
 	public static function get_month_posts($month, ...$queries){
-		if(!$month) $month = date('Y-m');
-		$date_min = substr($month, 0,4) . '-' . substr($month, 5,2) . '-01';
+		$today_month = date('Y-m');
+		if(!$month) $month = $today_month;
+		$date_min = substr($month, 0,4) . '-' . substr($month, 5,2) . '-' . ($month === $today_month ? date('d') : '01');
 		if(substr($month, 5,2) === '12')
 			$date_max = ((int)substr($month, 0,4) + 1) . '-01-01';
 		else
-			$date_max = substr($month, 0,4) . '-' . ((int)substr($month, 5,2) + 1 ) . '-01';
+			$date_max = substr($month, 0,4) . '-' . sprintf('%02d', ((int)substr($month, 5,2) + 1 )) . '-01';
 		$query = array(
 			'meta_query' => [
 				'relation' => 'AND',
@@ -149,8 +150,45 @@ class AgendaPartage_Evenements {
 			'nopaging' => true
 			
 		);
+		
+		//TODO $queries
+		if(count($queries)){
+			while( count($queries) && ($queries[0] === null || $queries[0] === false))
+				unset($queries[0]);
+			if(count($queries))
+				debug_log('get_month_posts $queries NON PRIS EN COMPTE', $queries);
+		}
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$filters_sql = self::add_filters_query(false, true, $queries);
+		if( $filters_sql) {
+			$sql = "SELECT posts.*, date_debut.meta_value AS dt_debut, heure_debut.meta_value AS h_debut"
+				. "\n FROM {$blog_prefix}posts posts"
+				. "\n INNER JOIN {$blog_prefix}postmeta date_debut"
+					. "\n ON date_debut.post_id = posts.ID"
+					. "\n AND date_debut.meta_key = 'ev-date-debut'"
+					. "\n AND date_debut.meta_value < '" . $date_max . "'"
+					. "\n AND date_debut.meta_value >= '" . $date_min . "'"
+				. "\n LEFT JOIN {$blog_prefix}postmeta heure_debut"
+					. "\n ON heure_debut.post_id = posts.ID"
+					. "\n AND heure_debut.meta_key = 'ev-heure-debut'"
+				. "\n WHERE posts.post_status = 'publish'"
+				. "\n AND posts.ID IN ("
+					. $filters_sql
+				.")"
+				. "\n ORDER BY date_debut.meta_value, heure_debut.meta_value";
+			$result = $wpdb->get_results($sql);
+			
+			if( is_wp_error($result)){
+				debug_log('get_posts wp_error ',$sql, $result->request);
+				return 'Erreur sql';
+			}
+			debug_log('get_month_posts posts via sql ', $result, $sql);
+			return $result;
+		}
+		
 		$query = self::add_filters_query($query);
-		// debug_log('get_month_posts ' . '<pre>'.var_export($query, true).'</pre>' . '<pre>'.var_export($queries, true).'</pre>');
+		// debug_log('get_month_posts query ', $query, $queries);
 		$queries[] = $query;
 		return self::get_posts(...$queries);
     }
@@ -180,14 +218,16 @@ class AgendaPartage_Evenements {
 		$sql_filters = self::add_filters_query(null, true);
 		
 		//Find this in other blog 
-		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year, DATE_FORMAT(meta.meta_value, '%m') as month, COUNT(post_id) as count
+		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year
+				, DATE_FORMAT(meta.meta_value, '%m') as month
+				, COUNT(post_id) as count
 				FROM {$blog_prefix}posts posts
 				INNER JOIN {$blog_prefix}postmeta meta
 					ON posts.ID = meta.post_id
-				WHERE posts.post_status = 'publish'
-					AND posts.post_type = '". AgendaPartage_Evenement::post_type ."'
 					AND meta.meta_key = 'ev-date-debut'
 					AND meta.meta_value >= CURDATE()
+				WHERE posts.post_status = 'publish'
+					AND posts.post_type = '". AgendaPartage_Evenement::post_type ."'
 		";
 		if($sql_filters)
 			$sql .= " AND posts.ID IN ({$sql_filters})";
@@ -275,6 +315,8 @@ class AgendaPartage_Evenements {
 								'field' => 'term_id',
 								'terms' => $term_id);
 							$all_sql[$tax_name]['IN'][] = $term_id;
+							//not possible to add OR 'ev-localisation' LIKE %tax_term.name%
+							// so only 
 						}
 					}
 					if(isset($query_tax_terms[$tax_name]) && count($query_tax_terms[$tax_name]) > 1)
@@ -295,17 +337,33 @@ class AgendaPartage_Evenements {
 					global $wpdb;
 					$blog_prefix = $wpdb->get_blog_prefix();
 					$sql = "SELECT post.ID"
-						. "\n FROM {$blog_prefix}posts post"
-						. "\n LEFT JOIN {$blog_prefix}term_relationships tax"
-						. "\n ON post.ID = tax.object_id";
+						. "\n FROM {$blog_prefix}posts post";
 					$sql_where = '';
 					foreach($all_sql as $tax_name => $tax_data){
-						$tax_sql = '';
-						if(count($tax_data['IN'])){
-							$tax_sql = "\n tax.term_taxonomy_id"
-									. " IN (" . implode(', ', $tax_data['IN']) . ')'
+						$sql .= "\n LEFT JOIN {$blog_prefix}term_relationships tax_rl_{$tax_name}"
+									. "\n ON post.ID = tax_rl_{$tax_name}.object_id"
+						;
+						if($tax_name === 'city'
+						&& count($tax_data['IN'])){
+							$sql .=   "\n INNER JOIN {$blog_prefix}postmeta as localisation"
+										. "\n ON post.ID = localisation.post_id"
+										. "\n AND localisation.meta_key = 'ev-localisation'"
 							;
 						}
+					}
+					foreach($all_sql as $tax_name => $tax_data){
+						if(count($tax_data['IN'])){
+							$tax_sql = "\n tax_rl_{$tax_name}.term_taxonomy_id"
+									. " IN (" . implode(', ', $tax_data['IN']) . ')'
+							;
+							if($tax_name === 'city'){
+								$terms_like = self::get_terms_like($tax_name, $tax_data['IN']);
+								foreach($terms_like as $like)
+									$tax_sql .= "\n OR localisation.meta_value LIKE '%{$like}%'";
+							}
+						}
+						else
+							$tax_sql = '';
 						if(isset($tax_data['NOT EXISTS'])){
 							if($tax_sql)
 								$tax_sql .= ' OR ';
@@ -313,7 +371,7 @@ class AgendaPartage_Evenements {
 								. "\n SELECT 1"
 								. "\n FROM {$blog_prefix}term_relationships taxx"
 								. "\n INNER JOIN {$blog_prefix}term_taxonomy taxname"
-								. "\n ON taxx.term_taxonomy_id = taxname.term_id"
+									. "\n ON taxx.term_taxonomy_id = taxname.term_id"
 								. "\n WHERE taxname.taxonomy = '{$tax_name}'"
 								. "\n AND taxx.object_id = post.ID"
 								. ')';
@@ -329,6 +387,28 @@ class AgendaPartage_Evenements {
 		if($return_sql)
 			return isset($sql) ? $sql : '';
 		return $query;
+	}
+	
+	/**
+	 * Retourne les termes d'une taxonomie avec leurs alternatives syntaxiques pour un like.
+	 * Utilisée pour chercher les communes dans la meta_value 'ev-localisation'.
+	 */
+	public static function get_terms_like($tax_name, $term_ids){
+		$like = [];
+		foreach( get_terms(array(
+				'taxonomy' => $tax_name,
+				'hide_empty' => false,
+		)) as $term){
+			if( in_array($term->term_id, $term_ids)){
+				$like[] = $term->name;
+				foreach(['-'=>' ', 'saint'=>'st', 'saint-'=>'st-', 'sainte-'=>'ste-'] as $search=>$replace){
+					$alt_term = str_ireplace($search, $replace, $term->name);
+					if($alt_term !== $term->name)
+						$like[] = $alt_term;
+				}
+			}
+		}
+		return $like;
 	}
 	
 	/**
@@ -353,8 +433,6 @@ class AgendaPartage_Evenements {
 		}
 		
 		$option_ajax = (bool)$options['ajax'];
-		
-		$filters = self::get_filters();
 		
 		$months = self::get_posts_months($query);
 		
@@ -388,6 +466,9 @@ class AgendaPartage_Evenements {
 			
 		$not_empty_month_index = 0;
 		$events_count = 0;
+		
+		if( $option_ajax )
+			$filters = self::get_filters();
 		
 		$html .= '<ul>';
 		foreach($months as $month => $month_events_count) {
@@ -580,7 +661,10 @@ class AgendaPartage_Evenements {
 		$html = '<div class="agdp-agdpevents-list-header">
 			<div id="agdp-filters" class="toggle-trigger">'
 			. __('Filtres', AGDP_TAG)
-			. ($filters_summary ? '<div class="filters-summary">' . $filters_summary . '</div>' : '')
+			. ($filters_summary ? '<div class="filters-summary">' 
+				. $filters_summary
+				. AgendaPartage::html_icon('no', 'clear-filters', '', 'span', __('Efface les filtres', AGDP_TAG))
+				. '</div>' : '')
 			. '</div>';
 		
 		$html .= '<form action="#main" method="get" class="toggle-container" >';
@@ -656,7 +740,7 @@ class AgendaPartage_Evenements {
 			}
 		}
 		else{
-				$html .= sprintf('<p class="alerte no-events">%s</p>', __('Aucun évènement trouvé', AGDP_TAG));
+				$html = sprintf('<p class="alerte no-events">%s</p>', __('Aucun évènement trouvé', AGDP_TAG));
 			}
 			
 		return $html;
@@ -910,10 +994,34 @@ class AgendaPartage_Evenements {
 			],
 			'nopaging' => true
 		);
-		$query = self::add_filters_query($query, false, $filters);
+			
+		//$query = self::add_filters_query($query, false, $filters);
+		// $posts = self::get_posts($query);
+		$filters_sql = self::add_filters_query(false, true, $filters);
 		
-		$posts = self::get_posts($query);
-
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$sql = "SELECT posts.*, date_debut.meta_value AS dt_debut, heure_debut.meta_value as h_debut"
+			. "\n FROM {$blog_prefix}posts posts"
+			. "\n INNER JOIN {$blog_prefix}postmeta date_debut"
+			. "\n ON date_debut.post_id = posts.ID"
+			. "\n AND date_debut.meta_key = 'ev-date-debut'"
+			. "\n AND date_debut.meta_value BETWEEN '" . wp_date('Y-m-01') . "'"
+				. "\n AND '" . wp_date('Y-m-d', strtotime(wp_date('Y-m-d') . ' + 1 year')) . "'"
+			. "\n LEFT JOIN {$blog_prefix}postmeta heure_debut"
+			. "\n ON heure_debut.post_id = posts.ID"
+			. "\n AND heure_debut.meta_key = 'ev-heure-debut'"
+			. "\n WHERE posts.post_status = 'publish'"
+			. ($filters_sql ? "\n AND posts.ID IN (" . $filters_sql . ")" : '')
+			. "\n ORDER BY date_debut.meta_value, heure_debut.meta_value";
+		$result = $wpdb->get_results($sql);
+		
+		if( is_wp_error($result)){
+			debug_log('on_ajax_action_download_file wp_error ',$sql, $result->request);
+			return 'Erreur sql';
+		}
+        $posts = $result->posts; 
+		
 		if( ! $posts)
 			return sprintf('Aucun évènement à exporter');
 		

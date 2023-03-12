@@ -21,6 +21,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 	
 * Events
 - filtres sur toutes les cases à cocher : 0 résultat
+- suppr filtres d'une croix
+- filtres dans <table>
 	
 * WPCF7 form
 - Submit : scroll to ajax message
