@@ -127,50 +127,52 @@ body.colors-dark .toggle-trigger.month-title {
 	cursor: pointer;
 }
 
-.agdp-agdpevents-list .agdp-agdpevents-list-header {
+.agdp-agdpevents-list-header {
 	margin-bottom: 2em;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header table {
+.agdp-agdpevents-list-header table {
 	margin: 0;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header table tr,
-.agdp-agdpevents-list .agdp-agdpevents-list-header table th {
+.agdp-agdpevents-list-header table tr,
+.agdp-agdpevents-list-header table th {
 	border: none;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header table th {
-	width: 1px;
+.agdp-agdpevents-list-header table th {
+	width: 1px; /* autosize */
+	padding-right: 1em;
+	overflow-wrap: break-word;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header table td {
+.agdp-agdpevents-list-header table td {
 	text-align: right;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header .toggle-trigger {
+.agdp-agdpevents-list-header .toggle-trigger {
 	font-size: smaller;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header form {
+.agdp-agdpevents-list-header form {
 	background-color: #dddddd;
 }
-body.colors-dark .agdp-agdpevents-list .agdp-agdpevents-list-header form {
+body.colors-dark .agdp-agdpevents-list-header form {
 	background-color: #373733;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header form input[type="submit"] {
+.agdp-agdpevents-list-header form input[type="submit"] {
 	float: right;
 	font-size: smaller;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header form select {
+.agdp-agdpevents-list-header form select {
 	height: 5em;
 	font-size: smaller;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header form input[type="checkbox"] {
+.agdp-agdpevents-list-header form input[type="checkbox"] {
 	margin-right: 0.2em;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header form label {
+.agdp-agdpevents-list-header form label {
 	font-size: smaller;
 	font-weight: normal;
 	display: inline-block;
 	margin-right: 1em;
 	white-space: nowrap;
 }
-.agdp-agdpevents-list .agdp-agdpevents-list-header form label[for] {
+.agdp-agdpevents-list-header form label[for] {
 	font-weight: bold;
 	display: block;
 }
