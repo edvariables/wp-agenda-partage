@@ -140,13 +140,8 @@ body.colors-dark .toggle-trigger.month-title {
 .agdp-agdpevents-list .agdp-agdpevents-list-header table th {
 	width: 1px;
 }
-
-.agdp-agdpevents-list .agdp-agdpevents-list-header .filters-summary {
+.agdp-agdpevents-list .agdp-agdpevents-list-header table td {
 	text-align: right;
-	max-width: 80%;
-	float: right;
-	font-style: italic;
-	overflow-y: hidden;
 }
 .agdp-agdpevents-list .agdp-agdpevents-list-header .toggle-trigger {
 	font-size: smaller;

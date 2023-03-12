@@ -621,7 +621,7 @@ class AgendaPartage_Evenements {
 	public static function get_list_header($query = false, $requested_month = false, $options = false){
 		//TODO header('Location:index.php#main');
 		
-		$filters_summary = '';
+		$filters_summary = [];
 		$all_selected_terms = [];
 		$except_tax = current_user_can('manage_options') ? '' : 'publication';
 		$taxonomies = AgendaPartage_Evenement_Post_Type::get_taxonomies($except_tax);
@@ -649,9 +649,7 @@ class AgendaPartage_Evenements {
 						$id = $term->term_id;
 					}
 					if($id != '*' && $selected_terms && array_key_exists( $id, $selected_terms) ){
-						if($filters_summary)
-							$filters_summary .= ', ';
-						$filters_summary .= $name;
+						$filters_summary[] = $name;
 					}
 				}
 			}
@@ -662,8 +660,8 @@ class AgendaPartage_Evenements {
 			<div id="agdp-filters" class="toggle-trigger">
 			<table><tr><th>'. __('Filtres', AGDP_TAG).'</th>
 			<td>'
-			. ($filters_summary ? '<div class="filters-summary">' 
-				. $filters_summary
+			. (count($filters_summary) ? '<div class="filters-summary">' 
+				. implode(', ', $filters_summary)
 				. AgendaPartage::html_icon('no', 'clear-filters', '', 'span', __('Efface les filtres', AGDP_TAG))
 				. '</div>' : '')
 			. '</th></tr></table></div>';
@@ -707,7 +705,7 @@ class AgendaPartage_Evenements {
 		
 		$html .= '</form></div>';
 		
-		self::$filters_summary = $filters_summary;
+		self::$filters_summary = implode(', ', $filters_summary);
 		
 		return $html;
 	}
@@ -1021,7 +1019,7 @@ class AgendaPartage_Evenements {
 			debug_log('on_ajax_action_download_file wp_error ',$sql, $result->request);
 			return 'Erreur sql';
 		}
-        $posts = $result->posts; 
+        $posts = $result; 
 		
 		if( ! $posts)
 			return sprintf('Aucun évènement à exporter');
