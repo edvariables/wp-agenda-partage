@@ -323,6 +323,7 @@ class AgendaPartage_Evenement_Edit {
 			$selected = '';
 			$free_text = false;
 			$index = 0;
+			$titles = [];
 			foreach($all_terms as $term){
 				$checkboxes .= sprintf(' "%s|%d"', $term->name, $term->term_id);
 				if($post_terms && array_key_exists($term->term_id . '', $post_terms)){
@@ -330,6 +331,10 @@ class AgendaPartage_Evenement_Edit {
 				}
 				elseif( ! $post && $term->default_checked)
 					$selected .= sprintf('%d_', $index+1);
+				
+				if($term->description)
+					$titles[$term->name] = $term->description;
+				
 				$index++;
 			}
 			$input_name = $taxonomy['input'];
@@ -344,12 +349,22 @@ class AgendaPartage_Evenement_Edit {
 					// debug_log($all_terms);
 					break;
 			}
+			if( count($titles) === 0 )
+				$titles = '';
+			else
+				//cf agendapartage.js
+				$titles = sprintf('<span class="agdpevents-tax_titles hidden" input="%s" titles="%s"></span>'
+							, 'ev-' . $tax_name . 's[]'
+							, esc_attr(json_encode($titles))
+				);
 			$html = preg_replace('/\[(checkbox '.$input_name.')[^\]]*[\]]/'
-								, sprintf('[$1 %s use_label_element %s %s]'
+								, sprintf('[$1 %s use_label_element %s %s]%s'
 									, $free_text
 									, $selected ? 'default:' . rtrim($selected, '_') : ''
-									, $checkboxes)
+									, $checkboxes
+									, $titles)
 								, $html);
+								
 		}
 		
 		/** e-mail non-obligatoire si connecté **/

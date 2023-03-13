@@ -51,7 +51,6 @@ jQuery( function( $ ) {
 					}, false );
 				});
 				
-				
 				//Si la localisation est vide, la sélection d'une commune affecte la valeur
 				$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]').on('click', function(event){
 					var $localisation = $form.find('input[name="ev-localisation"]');
@@ -62,6 +61,24 @@ jQuery( function( $ ) {
 						});
 						$localisation.attr('placeholder', cities );
 					}
+				});
+				
+				//Récupère les titres des cases à cocher pour ajouter l'attribut
+				$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
+					var input = this.getAttribute('input');
+					var titles = JSON.parse(this.getAttribute('titles'));
+					for(title in titles){
+						$form.find('input[name="' + input + '"][value="' + title + '"]').parent('label').attr('title', titles[title]);
+					}
+					$(this)
+						.addClass('dashicons dashicons-info')
+							.click(function(){
+								var msg = '';
+								for(title in titles)
+									msg += '- ' + title + ' : ' + titles[title] + '\r\n';
+								alert( msg );
+							})
+						.removeClass('hidden')
 				});
 			});
 		}).trigger('agdpevent_edit_form-init');

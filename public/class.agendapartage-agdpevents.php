@@ -583,7 +583,11 @@ class AgendaPartage_Evenements {
 .agdp-agdpevents-email a-li a-li {
 	margin-left: 1em;
 	padding-top: 1em;
-} 
+}
+.footer {
+	border-bottom-color: rgb(51, 51, 51);
+	margin-bottom: 2em;
+}
 '
 			. '</style>';
 		$html = self::get_list_html($query, $content, $options );

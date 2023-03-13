@@ -235,3 +235,11 @@ input.wpcf7-form-control[name="nl-user-name"] {
 .wpcf7-list-item input[name="nl-period"]:checked + span.wpcf7-list-item-label {
 	font-weight: bold;
 }
+
+.wpcf7-form .agdpevents-tax_titles.hidden {
+	display: none;
+}
+.wpcf7-form .agdpevents-tax_titles {
+	margin-left: 1.2em
+	cursor: pointer;
+}
