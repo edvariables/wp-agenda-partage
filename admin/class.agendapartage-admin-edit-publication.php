@@ -27,8 +27,28 @@ class AgendaPartage_Admin_Edit_Publication extends AgendaPartage_Admin_Edit_Post
 
 		add_action( AgendaPartage_Evenement::taxonomy_publication . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
 		add_action( AgendaPartage_Evenement::taxonomy_publication . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
+
+		//add custom columns for list view
+		add_filter( 'manage_edit-' . AgendaPartage_Evenement::taxonomy_publication . '_columns', array( __CLASS__, 'manage_columns' ) );
+		add_filter( 'manage_' . AgendaPartage_Evenement::taxonomy_publication . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
+
 	}
 	/****************/
+	public static function manage_columns($columns){
+		$columns['default_checked'] = 'Coché par défaut';
+		return $columns;
+	}
+	public static function manage_custom_columns($content, string $column_name, int $term_id){
+		switch ( $column_name ) {
+			case 'default_checked' :
+				if( get_term_meta( $term_id, $column_name, true ) )
+					echo 'Coché par défaut';
+				else
+					echo 'non';
+			break;
+		}
+		return $content;
+	}
 	
 	public static function get_metabox_all_fields(){}//for abstract
 
@@ -58,6 +78,10 @@ class AgendaPartage_Admin_Edit_Publication extends AgendaPartage_Admin_Edit_Post
 	 */
 	public static function on_edit_form_fields( $tag, string $taxonomy ){
 		
+    ?><tr class="form-comment">
+        <th scope="row">
+        <td><i>La description appraitra en information complémentaire lors de l'édition d'un évènement.</td>
+    </tr><?php
     ?><tr class="form-field">
         <th scope="row"><label for="default_checked">Coché par défaut</label></th>
         <td><?php
