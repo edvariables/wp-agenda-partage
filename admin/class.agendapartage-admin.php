@@ -37,8 +37,8 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Evenement', 'init' ) );
 
-		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-publication.php' );
-		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Publication', 'init' ) );
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-diffusion.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Diffusion', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-newsletter.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Newsletter', 'init' ) );

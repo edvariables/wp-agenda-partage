@@ -1,14 +1,14 @@
 <?php
 
 /**
- * AgendaPartage Admin -> Edit -> Evenement -> publication
+ * AgendaPartage Admin -> Edit -> Evenement -> diffusion
  * Custom taxonomy term for WordPress in Admin UI.
  * 
- * Edition d'une publication
- * Définition des metaboxes et des champs personnalisés des publications
+ * Edition d'une diffusion
+ * Définition des metaboxes et des champs personnalisés des diffusions
  *
  */
-class AgendaPartage_Admin_Edit_Publication extends AgendaPartage_Admin_Edit_Post_Type {
+class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_Type {
 
 	public static function init() {
 		parent::init();
@@ -22,15 +22,15 @@ class AgendaPartage_Admin_Edit_Publication extends AgendaPartage_Admin_Edit_Post
 		// && array_key_exists('post_type', $_POST)
 		// && $_POST['post_type'] == AgendaPartage_Evenement::post_type
 		// && array_key_exists('taxonomy', $_POST)
-		// && $_POST['taxonomy'] == AgendaPartage_Evenement::taxonomy_publication)
-			add_action( 'saved_' . AgendaPartage_Evenement::taxonomy_publication , array(__CLASS__, 'saved_term_cb'), 10, 4 );
+		// && $_POST['taxonomy'] == AgendaPartage_Evenement::taxonomy_diffusion)
+			add_action( 'saved_' . AgendaPartage_Evenement::taxonomy_diffusion , array(__CLASS__, 'saved_term_cb'), 10, 4 );
 
-		add_action( AgendaPartage_Evenement::taxonomy_publication . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
-		add_action( AgendaPartage_Evenement::taxonomy_publication . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
+		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
+		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
 
 		//add custom columns for list view
-		add_filter( 'manage_edit-' . AgendaPartage_Evenement::taxonomy_publication . '_columns', array( __CLASS__, 'manage_columns' ) );
-		add_filter( 'manage_' . AgendaPartage_Evenement::taxonomy_publication . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
+		add_filter( 'manage_edit-' . AgendaPartage_Evenement::taxonomy_diffusion . '_columns', array( __CLASS__, 'manage_columns' ) );
+		add_filter( 'manage_' . AgendaPartage_Evenement::taxonomy_diffusion . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
 
 	}
 	/****************/

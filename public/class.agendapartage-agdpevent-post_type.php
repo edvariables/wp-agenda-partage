@@ -6,7 +6,7 @@
  * Custom user role for WordPress.
  * 
  * Définition du Post Type 'agdpevent'
- * Définition de la taxonomie 'type_agdpevent'
+ * Définition de la taxonomie 'ev_category'
  * Définition du rôle utilisateur 'agdpevent'
  * A l'affichage d'un évènement, le Content est remplacé par celui de l'évènement Modèle
  * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor', see AgendaPartage_Admin_Evenement::init_PostType_Supports
@@ -47,7 +47,9 @@ class AgendaPartage_Evenement_Post_type {
 			'description'           => __( 'Évènement de l\'agenda partagé', AGDP_TAG ),
 			'labels'                => $labels,
 			'supports'              => array( 'title', 'thumbnail', 'revisions' ),//, 'author', 'editor' see AgendaPartage_Admin_Evenement::init_PostType_Supports
-			'taxonomies'            => array( 'type_agdpevent' ),
+			'taxonomies'            => array( AgendaPartage_Evenement::taxonomy_ev_category
+											, AgendaPartage_Evenement::taxonomy_city
+											, AgendaPartage_Evenement::taxonomy_diffusion ),
 			'hierarchical'          => false,
 			'public'                => true,
 			'show_ui'               => true,
@@ -88,7 +90,7 @@ class AgendaPartage_Evenement_Post_type {
 	/**
 	 * Register Custom Taxonomy
 	 */
-	public static function register_taxonomy_type_agdpevent() {
+	public static function register_taxonomy_ev_category() {
 
 		$labels = array(
 			'name'                       => _x( 'Catégorie d\'évènement', 'Taxonomy General Name', AGDP_TAG ),
@@ -121,7 +123,7 @@ class AgendaPartage_Evenement_Post_type {
 			'show_in_nav_menus'          => true,
 			'show_tagcloud'              => true,
 		);
-		register_taxonomy( AgendaPartage_Evenement::taxonomy_type_agdpevent, array( AgendaPartage_Evenement::post_type ), $args );
+		register_taxonomy( AgendaPartage_Evenement::taxonomy_ev_category, array( AgendaPartage_Evenement::post_type ), $args );
 
 	}
 	
@@ -168,7 +170,7 @@ class AgendaPartage_Evenement_Post_type {
 	/**
 	 * Register Custom Taxonomy
 	 */
-	public static function register_taxonomy_publication() {
+	public static function register_taxonomy_diffusion() {
 
 		$labels = array(
 			'name'                       => _x( 'Diffusion', 'Taxonomy General Name', AGDP_TAG ),
@@ -201,7 +203,7 @@ class AgendaPartage_Evenement_Post_type {
 			'show_in_nav_menus'          => true,
 			'show_tagcloud'              => true,
 		);
-		register_taxonomy( AgendaPartage_Evenement::taxonomy_publication, array( AgendaPartage_Evenement::post_type ), $args );
+		register_taxonomy( AgendaPartage_Evenement::taxonomy_diffusion, array( AgendaPartage_Evenement::post_type ), $args );
 
 	}
 	
@@ -242,13 +244,13 @@ class AgendaPartage_Evenement_Post_type {
 	 * Retourne tous les termes
 	 */
 	public static function get_all_types_agdpevent($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_type_agdpevent, $array_keys_field);
+		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_ev_category, $array_keys_field);
 	}
 	public static function get_all_cities($array_keys_field = 'term_id'){
 		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_city, $array_keys_field);
 	}
-	public static function get_all_publications($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_publication, $array_keys_field );
+	public static function get_all_diffusions($array_keys_field = 'term_id'){
+		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion, $array_keys_field );
 	}
 
 	/**
@@ -265,7 +267,7 @@ class AgendaPartage_Evenement_Post_type {
 		
 		$meta_names = [];
 		switch($taxonomy){
-			case 'publication' :
+			case AgendaPartage_Evenement::taxonomy_diffusion :
 				$meta_names[] = 'default_checked';
 				break;
 		}
@@ -282,7 +284,7 @@ class AgendaPartage_Evenement_Post_type {
 	public static function get_taxonomies ( $except = false ){
 		$taxonomies = [];
 		
-		$tax_name = 'type_agdpevent';
+		$tax_name = AgendaPartage_Evenement::taxonomy_ev_category;
 		if( ! $except || strpos($except, $tax_name ) === false)
 			$taxonomies[$tax_name] = array(
 				'name' => $tax_name,
@@ -294,7 +296,7 @@ class AgendaPartage_Evenement_Post_type {
 				'none_label' => '(sans catégorie)'
 			);
 		
-		$tax_name = 'city';
+		$tax_name = AgendaPartage_Evenement::taxonomy_city;
 		if( ! $except || strpos($except, $tax_name ) === false)
 			$taxonomies[$tax_name] = array(
 				'name' => $tax_name,
@@ -306,16 +308,16 @@ class AgendaPartage_Evenement_Post_type {
 				'none_label' => '(sans commune)'
 			);
 		
-		$tax_name = 'publication';
+		$tax_name = AgendaPartage_Evenement::taxonomy_diffusion;
 		if( ! $except || strpos($except, $tax_name ) === false)
 			$taxonomies[$tax_name] = array(
 				'name' => $tax_name,
-				'input' => 'ev-publications',
-				'filter' => 'publications',
+				'input' => 'ev-diffusions',
+				'filter' => 'diffusions',
 				'label' => 'Diffusion',
 				'plural' => 'Diffusions',
 				'all_label' => '(toutes)',
-				'none_label' => '(sans publication)'
+				'none_label' => '(sans diffusion)'
 			);
 		
 		return $taxonomies;

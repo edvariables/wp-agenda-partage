@@ -42,7 +42,7 @@ class AgendaPartage_Evenement_Shortcodes {
 		add_shortcode( 'agdpevent-titre', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-categories', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-cities', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-publications', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'agdpevent-diffusions', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-description', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-dates', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-localisation', array(__CLASS__, 'shortcodes_callback') );
@@ -329,14 +329,14 @@ class AgendaPartage_Evenement_Shortcodes {
 				return $html;
 				break;
 				
-			case 'agdpevent-publications':
-				$tax_name = AgendaPartage_Evenement::taxonomy_publication;
+			case 'agdpevent-diffusions':
+				$tax_name = AgendaPartage_Evenement::taxonomy_diffusion;
 			case 'agdpevent-cities':
 				if(!isset($tax_name) || !$tax_name)
 					$tax_name = AgendaPartage_Evenement::taxonomy_city;
 			case 'agdpevent-categories':
 				if(!isset($tax_name) || !$tax_name)
-					$tax_name = AgendaPartage_Evenement::taxonomy_type_agdpevent;
+					$tax_name = AgendaPartage_Evenement::taxonomy_ev_category;
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
 				$terms = AgendaPartage_Evenement::get_event_terms( $tax_name, $post_id, 'names');
 				if($terms){

@@ -225,17 +225,17 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
-			$field_id = 'agdpevent_tax_publication_newsletter_term_id';
+			$field_id = 'newsletter_diffusion_term_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Publication "Lettre-info"', AGDP_TAG ),
+				__( 'Diffusion "Lettre-info"', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_terms_cb'),
 				AGDP_TAG,
 				'agendapartage_section_agdpevents',
 				[
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
-					'taxonomy' => AgendaPartage_Evenement::taxonomy_publication
+					'taxonomy' => AgendaPartage_Evenement::taxonomy_diffusion
 				]
 			);
 
@@ -410,7 +410,7 @@ class AgendaPartage_Admin_Menu {
 			<li>Configurer l'intégration du reCaptcha (menu Contacts / Intégration).</li>
 			<li>Configurer la version du reCaptcha (menu Contacts / reCaptcha version).</li>
 			<li>Saisir les communes du territoire du site (menu Evènements / communes).</li>
-			<li>Contrôler la liste des publications (menu Evènements / publications). En particulier, que pour "La lettre-info", sélectionner "Coché par défaut lors de la création d'un évènement."</li>
+			<li>Contrôler la liste des diffusions (menu Evènements / diffusions). En particulier, que pour "La lettre-info", sélectionner "Coché par défaut lors de la création d'un évènement."</li>
 			<li>Contrôler les options de périodicités de la lettre-info.</li>
 			<li>Valider toutes les options de cette page de paramètres.</li>
 			<li>Editer chaque page pour sélectionner les formulaires associés et contrôler les url.</li>
@@ -724,7 +724,7 @@ class AgendaPartage_Admin_Menu {
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'
-		, 'agdpevent_tax_publication_newsletter_term_id' => 'term']
+		, 'newsletter_diffusion_term_id' => 'term']
 		as $option_name => $post_type){
 		
 			$option_label = AgendaPartage::get_option_label($option_name);

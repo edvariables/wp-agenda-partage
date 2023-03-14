@@ -50,7 +50,7 @@ class AgendaPartage_Admin_Multisite {
 			$source_taxonomies = get_taxonomies(['object_type' => ['agdpevent']],'names');
 		restore_current_blog();
 		foreach($source_taxonomies as $tax_name){
-			if( $tax_name === 'city')
+			if( $tax_name === AgendaPartage_Evenement::taxonomy_city)
 				continue;
 			$terms = get_terms(array(
 				'taxonomy' => $tax_name,
@@ -69,7 +69,7 @@ class AgendaPartage_Admin_Multisite {
 						$term_metas = get_term_meta($term->term_id, '', true);
 					restore_current_blog();
 					
-					if( $tax_name === 'publication'){
+					if( $tax_name === AgendaPartage_Evenement::taxonomy_diffusion ){
 						
 						//create only "default_checked" terms
 						$meta_name = 'default_checked';
@@ -94,10 +94,10 @@ class AgendaPartage_Admin_Multisite {
 						}
 					}
 					
-					if( $tax_name === 'publication'
-					&& ! empty($source_options['agdpevent_tax_publication_newsletter_term_id'])
-					&& $term->term_id == $source_options['agdpevent_tax_publication_newsletter_term_id']){
-						AgendaPartage::update_option('agdpevent_tax_publication_newsletter_term_id', $new_term['term_id']);
+					if( $tax_name === AgendaPartage_Evenement::taxonomy_diffusion
+					&& ! empty($source_options['newsletter_diffusion_term_id'])
+					&& $term->term_id == $source_options['newsletter_diffusion_term_id']){
+						AgendaPartage::update_option('newsletter_diffusion_term_id', $new_term['term_id']);
 					};
 				}
 			}
@@ -311,10 +311,10 @@ class AgendaPartage_Admin_Multisite {
 			AgendaPartage_Admin::add_admin_notice("Erreur SQL in synchronise_to_other_blog() : {$message->get_error_messages()}", 'error');
 		}
 		elseif(count($results) == 0){
-			// AgendaPartage_Admin::add_admin_notice("La publication \"{$post->post_title}\" n'a pas d'équivalent dans le blog {$to_blog->blogname}. La synchronisation ne peut pas être faite. L'équivalence porte sur le titre, l'auteur, le statut et le type.\n{$sql}", 'warning');
+			// AgendaPartage_Admin::add_admin_notice("Le post \"{$post->post_title}\" n'a pas d'équivalent dans le blog {$to_blog->blogname}. La synchronisation ne peut pas être faite. L'équivalence porte sur le titre, l'auteur, le statut et le type.\n{$sql}", 'warning');
 		}
 		elseif(count($results) > 1){
-			AgendaPartage_Admin::add_admin_notice("La publication \"{$post->post_title}\" a plusieurs équivalents dans le blog {$to_blog->blogname}. La synchronisation ne peut pas être faite. L'équivalence porte sur le titre, l'auteur, le statut et le type.", 'warning');
+			AgendaPartage_Admin::add_admin_notice("Le post \"{$post->post_title}\" a plusieurs équivalents dans le blog {$to_blog->blogname}. La synchronisation ne peut pas être faite. L'équivalence porte sur le titre, l'auteur, le statut et le type.", 'warning');
 		}
 		elseif(count($results) == 1){
 			//TODO Synchro des images

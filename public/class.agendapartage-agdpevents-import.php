@@ -110,9 +110,9 @@ class AgendaPartage_Evenements_Import {
 			$all_taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies();
 			$taxonomies = [];
 			foreach([ 
-				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_type_agdpevent
+				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_ev_category
 				, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
-				, 'PUBLICATIONS' => AgendaPartage_Evenement::taxonomy_publication
+				, 'DIFFUSIONS' => AgendaPartage_Evenement::taxonomy_diffusion
 			] as $node_name => $tax_name){
 				$node_name = strtolower($node_name);
 				if( empty($event[$node_name]))
@@ -153,9 +153,9 @@ class AgendaPartage_Evenements_Import {
 			// terms
 			$taxonomies = [];
 			foreach([ 
-				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_type_agdpevent
+				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_ev_category
 				, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
-				, 'PUBLICATIONS' => AgendaPartage_Evenement::taxonomy_publication
+				, 'DIFFUSIONS' => AgendaPartage_Evenement::taxonomy_diffusion
 			] as $node_name => $term_name){
 				if( ! empty($event[strtolower($node_name)]))
 					$taxonomies[$term_name] = $event[strtolower($node_name)];

@@ -40,7 +40,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			if(basename($_SERVER['PHP_SELF']) === 'post.php'){
 				add_action( 'save_post_agdpevent', array(__CLASS__, 'save_post_agdpevent_cb'), 10, 3 );
 			}
-			/** initialisation des publications par défaut pour les nouveaux évènements */
+			/** initialisation des diffusions par défaut pour les nouveaux évènements */
 			if(basename($_SERVER['PHP_SELF']) === 'post-new.php'){
 				add_filter( 'wp_terms_checklist_args', array( __CLASS__, "on_wp_terms_checklist_args" ), 10, 2 ); 
 			}
@@ -307,14 +307,6 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				'default' => 'checked'
 			)
 		;
-
-		// $fields[] =
-			// array('name' => 'ev-publication',
-				// 'label' => __('Publication de cet évènement (Bulle verte, ...)', AGDP_TAG),
-				// 'type' => 'bool',
-				// 'default' => 'unchecked'
-			// )
-		// ;
 		return $fields;
 	}
 
@@ -392,7 +384,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	}
 	
 	public static function on_wp_terms_checklist_args($args, int $post_id){
-		if($args['taxonomy'] == 'publication'){
+		if($args['taxonomy'] === AgendaPartage_Evenement::taxonomy_diffusion){
 			$meta_name = 'default_checked';
 			$args['selected_cats'] = [];
 			foreach($args['popular_cats'] as $term_id)

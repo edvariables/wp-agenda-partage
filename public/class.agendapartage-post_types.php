@@ -31,9 +31,9 @@ class AgendaPartage_Post_Types {
 		do_action( 'agendapartage_register_post_types' );
 
 		AgendaPartage_Evenement_Post_Type::register_post_type();
-		AgendaPartage_Evenement_Post_Type::register_taxonomy_type_agdpevent();
+		AgendaPartage_Evenement_Post_Type::register_taxonomy_ev_category();
 		AgendaPartage_Evenement_Post_Type::register_taxonomy_city();
-		AgendaPartage_Evenement_Post_Type::register_taxonomy_publication();
+		AgendaPartage_Evenement_Post_Type::register_taxonomy_diffusion();
 		
 		AgendaPartage_Newsletter_Post_Type::register_post_type();
 		AgendaPartage_Newsletter_Post_Type::register_taxonomy_period();

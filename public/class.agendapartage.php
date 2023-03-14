@@ -9,7 +9,7 @@ class AgendaPartage {
 	public static $skip_mail = false;
 
 	public static function init() {
-		
+		self::update_db();
 		self::init_includes();
 		self::init_hooks();
 		self::load_modules();
@@ -27,7 +27,8 @@ class AgendaPartage {
 	public static function init_includes() {
 			
 		//TODO seulemet à l'activation / desactivation, non ? pourtant sans ça, le menu du plugin n'est plus visible
-		self::register_post_types();
+		add_action( 'agendapartage-init', array( __CLASS__, 'register_post_types' ) );
+		// self::register_post_types();
 
 		if(!function_exists('antispam_shortcode_cb'))
 			require_once( AGDP_PLUGIN_DIR . '/public/shortcode.antispam.php' );
@@ -99,7 +100,6 @@ class AgendaPartage {
 	}
 
 	public static function load_modules() {
-		//self::load_module( 'agdpevent' );
 	}
 
 	protected static function load_module( $mod ) {
@@ -198,8 +198,8 @@ class AgendaPartage {
 				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
 			case 'blog_presentation_page_id':
 				return __( 'Page "Page de présentation du site"', AGDP_TAG );
-			case 'agdpevent_tax_publication_newsletter_term_id':
-				return __( 'Publication "Lettre-info"', AGDP_TAG );
+			case 'newsletter_diffusion_term_id':
+				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}
@@ -212,7 +212,12 @@ class AgendaPartage {
 	public static function update_option( $name, $value ) {
 		$options = get_option( AGDP_TAG );
 		$options = ( false === $options ) ? array() : (array) $options;
-		$options = array_merge( $options, array( $name => $value ) );
+		if( $value === null){
+			if( isset($options[$name]))
+				unset($options[$name]);
+		}
+		else
+			$options = array_merge( $options, array( $name => $value ) );
 		update_option( AGDP_TAG, $options );
 	}
 		
@@ -361,7 +366,7 @@ class AgendaPartage {
 	}
 
 	/**
-	 * register_post_types
+	 * require_once(class) then class::init()
 	 */
 	private static function include_and_init($class_name){
 		if(! class_exists($class_name)){
@@ -409,7 +414,7 @@ class AgendaPartage {
 	/**
 	 * register_post_types
 	 */
-	private static function register_post_types(){
+	public static function register_post_types(){
 		self::include_and_init('AgendaPartage_Post_Types');
 		AgendaPartage_Post_Types::register_post_types();
 	}
@@ -515,5 +520,30 @@ class AgendaPartage {
 		if( ! isset($_POST['_nonce']))
 			return false;
 		return wp_verify_nonce( $_POST['_nonce'], 'agdp-nonce' );
+	}
+
+
+	public static function update_db(){
+		$current_version = AgendaPartage::get_option(AGDP_TAG.'_db_version');
+		debug_log('$current_version = ' . $current_version);
+		foreach(['1.0.22'] as $version){
+			if( $current_version && version_compare($current_version, $version, '>='))
+				break;
+			if( ! self::update_db_version($version))
+				break;
+			debug_log('update_db_version ' . $version . ' done');
+			$current_version = $version;
+		}
+		return $current_version;
+	}
+	public static function update_db_version($version){
+		require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-db-update.php');
+		$function = 'update_db_' . str_replace('.', '_', $version);
+		if ( ! method_exists( AgendaPartage_DB_Update::class, $function ) )
+			throw new BadFunctionCallException('AgendaPartage_DB_Update::' . $function . __(' n\'existe pas.', AGDP_TAG));
+		if ( ! AgendaPartage_DB_Update::$function() )
+			return false;
+		AgendaPartage::update_option(AGDP_TAG.'_db_version', $version);
+		return $version;
 	}
 }

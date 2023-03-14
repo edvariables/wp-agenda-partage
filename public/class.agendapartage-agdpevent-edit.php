@@ -226,7 +226,7 @@ class AgendaPartage_Evenement_Edit {
 				$attrs[$meta_name] = $user->user_email;
 			}
 		}
-		//Les catégories, communes et publications sont traitées dans wpcf7_form_init_tags_cb
+		//Les catégories, communes et diffusions sont traitées dans wpcf7_form_init_tags_cb
 		
 		// Génère le formulaire
 		// Interception du formulaire avant la génération du html
@@ -344,7 +344,7 @@ class AgendaPartage_Evenement_Edit {
 					// $checkboxes .= '"(autre)|0"';
 					// $free_text = 'free_text';
 					break;
-				case AgendaPartage_Evenement::taxonomy_publication :
+				case AgendaPartage_Evenement::taxonomy_diffusion :
 					
 					// debug_log($all_terms);
 					break;
@@ -767,8 +767,7 @@ class AgendaPartage_Evenement_Edit {
 			}
 			//checkboxes
 			foreach(array(
-				'ev-date-journee-entiere',
-				'ev-publication',
+				// 'ev-date-journee-entiere',
 				'ev-message-contact'
 				) as $field){
 				if(array_key_exists($field, $inputs)){
@@ -779,7 +778,7 @@ class AgendaPartage_Evenement_Edit {
 				}
 			}
 			
-			//categories, communes et publications
+			//categories, communes et diffusions
 			$tax_terms = [];
 			foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 				$field = $taxonomy['input'];

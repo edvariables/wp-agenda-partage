@@ -5,7 +5,7 @@
  * Custom post type for WordPress.
  * 
  * Définition du Post Type agdpevent
- * Définition de la taxonomie type_agdpevent
+ * Définition de la taxonomie ev_category
  * Redirection des emails envoyés depuis une page Évènement
  * A l'affichage d'un évènement, le Content est remplacé par celui de l'évènement Modèle
  * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor'
@@ -15,9 +15,9 @@
 class AgendaPartage_Evenement {
 
 	const post_type = 'agdpevent';
-	const taxonomy_type_agdpevent = 'type_agdpevent';
-	const taxonomy_city = 'city';
-	const taxonomy_publication = 'publication';
+	const taxonomy_ev_category = 'ev_category';
+	const taxonomy_city = 'ev_city';
+	const taxonomy_diffusion = 'ev_diffusion';
 
 	const user_role = 'author';
 
@@ -249,7 +249,7 @@ class AgendaPartage_Evenement {
 		[agdpevent info="organisateur" label="Organisateur : "]
 		[agdpevent info="phone" label="Téléphone : "]
 		[agdpevent info="siteweb"]
-		[agdpevent-publications label="Publication (sous réserve) : "]';
+		[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
 
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
@@ -717,7 +717,7 @@ class AgendaPartage_Evenement {
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Afficher l\'e-mail', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
 		$meta_name = 'ev-message-contact';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Recevoir des messages', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Publication (sous réserve)', htmlentities(implode(', ', self::get_event_publications ($post_id, 'names'))));
+		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Diffusion (sous réserve)', htmlentities(implode(', ', self::get_event_diffusions ($post_id, 'names'))));
 		
 		$html .= '</tbody></table>';
 		return $html;
@@ -883,7 +883,7 @@ class AgendaPartage_Evenement {
 	 * Retourne les catégories d'un évènement
 	 */
 	public static function get_event_categories( $post_id, $args = 'names' ) {
-		return self::get_event_terms( self::taxonomy_type_agdpevent, $post_id, $args);
+		return self::get_event_terms( self::taxonomy_ev_category, $post_id, $args);
 	}
 	/**
 	 * Retourne les communes d'un évènement
@@ -892,10 +892,10 @@ class AgendaPartage_Evenement {
 		return self::get_event_terms( self::taxonomy_city, $post_id, $args);
 	}
 	/**
-	 * Retourne les publications possibles d'un évènement
+	 * Retourne les diffusions possibles d'un évènement
 	 */
-	public static function get_event_publications( $post_id, $args = 'names' ) {
-		return self::get_event_terms( self::taxonomy_publication, $post_id, $args);
+	public static function get_event_diffusions( $post_id, $args = 'names' ) {
+		return self::get_event_terms( self::taxonomy_diffusion, $post_id, $args);
 	}
 	
 	/**

@@ -75,9 +75,11 @@ function debug_log_callstack(...$messages){
 	$backtrace = debug_backtrace();
 	// $backtrace = array_slice($backtrace, 1);
 	$backtrace[0] = $_SERVER['REQUEST_URI'];
-	for($i=0;$i<count($backtrace);$i++)
+	for($i = 1; $i<count($backtrace);$i++){
 		if(isset($backtrace[$i]['object']))
 			$backtrace[$i]['object'] = get_class($backtrace[$i]['object']);
+		$backtrace[$i] = preg_replace('/\r?\n\s*/', ' ', var_export($backtrace[$i], true));
+	}
 	array_push($messages, '[callstack]', ...$backtrace);
 	debug_log(...$messages);
 }
@@ -85,6 +87,8 @@ function debug_log(...$messages){
 	if( ! AgendaPartage::debug_log_enable() )
 		return;
 	$data = '[' . wp_date("Y-m-d H:i:s") . '] ';
+	if(is_multisite())
+		$data = '['. get_bloginfo( 'name' ) .']'.$data;
 	foreach($messages as $msg)
 		if(is_string($msg))
 			$data .= $msg.PHP_EOL;

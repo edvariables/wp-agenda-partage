@@ -42,9 +42,9 @@ class AgendaPartage_Admin_Evenement {
 			'titre'     => __( 'Titre', AGDP_TAG ),
 			'dates'     => __( 'Date(s)', AGDP_TAG ),
 			'details'     => __( 'Détails', AGDP_TAG ),
-			'type_agdpevent'     => __( 'Catégories', AGDP_TAG ),
+			'ev_category'     => __( 'Catégories', AGDP_TAG ),
 			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
-			'publication'      => __( 'Publication', AGDP_TAG ),
+			'diffusion'      => __( 'Diffusion', AGDP_TAG ),
 			'author'        => __( 'Auteur', AGDP_TAG ),
 			'date'      => __( 'Date', AGDP_TAG )
 		);
@@ -64,14 +64,14 @@ class AgendaPartage_Admin_Evenement {
 				echo $organisateur . ($email && $organisateur ? ' - ' : '' ) . $email;
 				
 				break;
-			case 'type_agdpevent' :
-				the_terms( $post_id, 'type_agdpevent', '<cite class="entry-terms">', ', ', '</cite>' );
-				break;
 			case 'dates' :
 				echo AgendaPartage_Evenement::get_event_dates_text( $post_id );
 				break;
-			case 'publication' :
-				the_terms( $post_id, 'publication', '<cite class="entry-terms">', ', ', '</cite>' );
+			case 'ev_category' :
+				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
+				break;
+			case 'diffusion' :
+				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
 				break;
 			case 'details' :
 				$post = get_post( $post_id );
@@ -102,7 +102,7 @@ class AgendaPartage_Admin_Evenement {
 		$columns['author']    = 'author';
 		$columns['dates'] = 'dates';
 		$columns['details'] = 'details';
-		$columns['publication'] = 'publication';
+		$columns['diffusion'] = 'diffusion';
 		$columns['organisateur'] = 'organisateur';
 		return $columns;
 	}
@@ -319,7 +319,7 @@ class AgendaPartage_Admin_Evenement {
 				else
 					$url = AgendaPartage_Evenement::get_post_permalink($agdpevent);
 				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Evenement::get_post_title($agdpevent) );
-				the_terms( $agdpevent->ID, 'type_agdpevent', 
+				the_terms( $agdpevent->ID, AgendaPartage_Evenement::taxonomy_ev_category, 
 					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
 				$the_date = get_the_date('', $agdpevent);
 				$the_modified_date = get_the_modified_date('', $agdpevent);

@@ -322,7 +322,7 @@ class AgendaPartage_Evenements {
 					$sql .= "\n LEFT JOIN {$blog_prefix}term_relationships tax_rl_{$tax_name}"
 								. "\n ON post.ID = tax_rl_{$tax_name}.object_id"
 					;
-					if($tax_name === 'city'
+					if($tax_name === AgendaPartage_Evenement::taxonomy_city
 					&& count($tax_data['IN'])){
 						$sql .=   "\n INNER JOIN {$blog_prefix}postmeta as localisation"
 									. "\n ON post.ID = localisation.post_id"
@@ -337,7 +337,7 @@ class AgendaPartage_Evenements {
 						$tax_sql = "\n tax_rl_{$tax_name}.term_taxonomy_id"
 								. " IN (" . implode(', ', $tax_data['IN']) . ')'
 						;
-						if($tax_name === 'city'){
+						if($tax_name === AgendaPartage_Evenement::taxonomy_city){
 							$terms_like = AgendaPartage_Evenement_Post_type::get_terms_like($tax_name, $tax_data['IN']);
 							foreach($terms_like as $like)
 								$tax_sql .= "\n OR localisation.meta_value LIKE '%{$like}%'";
@@ -491,8 +491,8 @@ class AgendaPartage_Evenements {
 				'mode' => 'email'
 			), $options);
 		
-		$term_id = AgendaPartage::get_option('agdpevent_tax_publication_newsletter_term_id');
-		self::add_tax_filter(AgendaPartage_Evenement::taxonomy_publication, $term_id);
+		$term_id = AgendaPartage::get_option('newsletter_diffusion_term_id');
+		self::add_tax_filter(AgendaPartage_Evenement::taxonomy_diffusion, $term_id);
 		
 		$css = '<style>'
 			. '
@@ -576,7 +576,7 @@ class AgendaPartage_Evenements {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		$except_tax = current_user_can('manage_options') ? '' : 'publication';
+		$except_tax = current_user_can('manage_options') ? '' : AgendaPartage_Evenement::taxonomy_diffusion;
 		$taxonomies = AgendaPartage_Evenement_Post_Type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
 			$taxonomy['terms'] = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name);

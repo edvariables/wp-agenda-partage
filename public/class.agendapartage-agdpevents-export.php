@@ -142,9 +142,9 @@ class AgendaPartage_Evenements_Export {
 
 		// Add terms
 		foreach([ 
-			'CATEGORIES' => AgendaPartage_Evenement::taxonomy_type_agdpevent
+			'CATEGORIES' => AgendaPartage_Evenement::taxonomy_ev_category
 			, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
-			, 'PUBLICATIONS' => AgendaPartage_Evenement::taxonomy_publication
+			, 'DIFFUSIONS' => AgendaPartage_Evenement::taxonomy_diffusion
 		] as $node_name => $tax_name){
 			$terms = AgendaPartage_Evenement::get_event_terms ($tax_name, $post->ID, 'names');
 			if($terms){
