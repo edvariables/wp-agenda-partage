@@ -515,17 +515,18 @@ class AgendaPartage {
 	
 	
 	/**
-	*/
+	 */
 	public static function check_nonce(){
 		if( ! isset($_POST['_nonce']))
 			return false;
 		return wp_verify_nonce( $_POST['_nonce'], 'agdp-nonce' );
 	}
 
-
+	/**
+	 * Update DB based on blog db version
+	 */
 	public static function update_db(){
 		$current_version = AgendaPartage::get_option(AGDP_TAG.'_db_version');
-		debug_log('$current_version = ' . $current_version);
 		foreach(['1.0.22'] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
 				break;
@@ -538,7 +539,7 @@ class AgendaPartage {
 	}
 	public static function update_db_version($version){
 		require_once(AGDP_PLUGIN_DIR . '/public/class.agendapartage-db-update.php');
-		$function = 'update_db_' . str_replace('.', '_', $version);
+		$function = 'update_db_' . str_replace('.', '_', $version); //eg, function update_db_1.0.22
 		if ( ! method_exists( AgendaPartage_DB_Update::class, $function ) )
 			throw new BadFunctionCallException('AgendaPartage_DB_Update::' . $function . __(' n\'existe pas.', AGDP_TAG));
 		if ( ! AgendaPartage_DB_Update::$function() )
