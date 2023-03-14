@@ -10,7 +10,7 @@ jQuery( function( $ ) {
 	$( document ).ready(function() {
 		$( 'body' ).on('agdpevent_edit_form-init', function(){
 			$("input.agdpevent_edit_form_data").each(function(){
-				// Complète les champs de formulaires avec les valeurs fournies
+				/** Complète les champs de formulaires avec les valeurs fournies **/
 				var $agdpDataInput = $(this);
 				var $form = $agdpDataInput.parents('form.wpcf7-form:first');
 				if($form.length == 0) return;
@@ -23,12 +23,12 @@ jQuery( function( $ ) {
 						$input.val(fields[field_name]);
 				}
 				
-				//Bloque l'effacement du formulaire
+				/** Bloque l'effacement du formulaire **/
 				$form.on('reset', 'form.wpcf7-form', function(e) {
 					e.preventDefault();
 				});
 				
-				//En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié
+				/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
 				document.addEventListener( 'wpcf7mailsent', function( event ) {
 					var post_url = event.detail.apiResponse['message'];
 					if(post_url && post_url.startsWith('redir:')){
@@ -39,7 +39,7 @@ jQuery( function( $ ) {
 						}
 					}
 				}, false );
-				//En réponse d'enregistremement : autorise le html dans le message de réponse
+				/** En réponse d'enregistremement : autorise le html dans le message de réponse **/
 				['wpcf7invalid','wpcf7mailfailed', 'wpcf7submit', 'wpcf7mailsent'].forEach( function(evt) {
 						document.addEventListener( evt, function( event ) {
 						var response = event.detail.apiResponse['message'];
@@ -51,7 +51,7 @@ jQuery( function( $ ) {
 					}, false );
 				});
 				
-				//Si la localisation est vide, la sélection d'une commune affecte la valeur
+				/** Si la localisation est vide, la sélection d'une commune affecte la valeur **/
 				$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]').on('click', function(event){
 					var $localisation = $form.find('input[name="ev-localisation"]');
 					if( ! $localisation.val()){
@@ -63,7 +63,7 @@ jQuery( function( $ ) {
 					}
 				});
 				
-				//Récupère les titres des cases à cocher pour ajouter l'attribut
+				/** Récupère les titres des cases à cocher pour ajouter l'attribut title **/
 				$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
 					var input = this.getAttribute('input');
 					var titles = JSON.parse(this.getAttribute('titles'));
@@ -108,18 +108,10 @@ jQuery( function( $ ) {
 		//
 		$( 'body' ).on('reset', 'form.wpcf7-form.preventdefault-reset', function(e) {
 			e.preventDefault();
-			
-			// $dom = $(this).find(".wpcf7-response-output");
-			// var observer = new MutationObserver( function(e){
-				// if( $dom.is(':visible') && $dom.get(0).innerText )
-					// $dom.get(0).scrollIntoView();//{block: "end", inline: "nearest"});
-			// });
-			// observer.observe($dom.get(0), { attributes: true, characterData: true,  childList: true });
 		});
 
 		/**
 		 * Scroll jusqu'au #hash de la forme #eventid%d (correction de la hauteur du menu)
-		 *
 		 */
 		if( window.location.hash
 		&& /eventid[0-9]+/.test(window.location.hash)) {
@@ -132,8 +124,6 @@ jQuery( function( $ ) {
 			
 			$dom.get(0).scrollIntoView();
 			
-			// var offset = $dom.offset().top;
-			// $('html,body').animate({scrollTop: offset - window.innerHeight/4}, 200);
 			$dom.addClass('agdp-scrolled-to');
 			return false;
 			 
@@ -142,11 +132,11 @@ jQuery( function( $ ) {
 
 		/**
 		 * Liste d'évènements
-		 *
 		 */
 		//Filtres de l'agenda
 		$(' .agdp-agdpevents-list-header form').each(function(event){
 			var $form = $(this);
+			/** manage 'all' checkbox **/
 			$form.find('label:not([for]) > input[type="checkbox"]').on('click', function(event){
 				var name = this.getAttribute('name');
 				const regexp = /(\w+)\[(.*)\]/g;
@@ -163,6 +153,7 @@ jQuery( function( $ ) {
 						$checkboxes.filter('[name="'+tax_name+'[*]"]').prop("checked", true );
 				}
 			});
+			/** clear filters link **/
 			$('#agdp-filters .clear-filters').on('click', function(event){
 				//For each taxonomy, 
 				$form.find('label[for]').each(function(e){
@@ -175,9 +166,22 @@ jQuery( function( $ ) {
 							.trigger('toggle-active');
 				return false;
 			});
+			/** reload and add links. a.click are skipped due to toggle-trigger **/
 			$('#agdp-filters .agdp-title-link a[href]').on('click', function(e){
 				e.preventDefault();
-				document.location.href = this.getAttribute('href');
+				var href = this.getAttribute('href');
+				if( href === 'reload:' ){//due to #main, it does not reload
+					var tick = parseInt(Date.now()) % 1000000;
+					href = document.location.href;
+					if( href.indexOf('#') === -1 )
+						document.location.href = href;
+					else if( href.indexOf('?') === -1 )
+						document.location.href = href.replace(/\#/, '?_t='+tick+'#');
+					else
+						document.location.href = href.replace(/\?(_t=[0-9]+)?/, '?_t='+tick+'&');
+				}
+				else
+					document.location.href = href;
 				return false;
 			});
 		}); 
@@ -185,7 +189,6 @@ jQuery( function( $ ) {
 		/**
 		 * Abonnement à la lettre-info
 		 * la saisie d'une adresse email met à jour les options d'abonnement), masque ou affiche la création de compte
-		 *
 		 */
 		$('form.wpcf7-form input[name="nl-email"]').on('change', function(event){
 			var $actionElnt = $(this);

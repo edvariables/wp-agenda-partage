@@ -320,4 +320,26 @@ class AgendaPartage_Evenement_Post_type {
 		
 		return $taxonomies;
 	}
+	
+	/**
+	 * Retourne les termes d'une taxonomie avec leurs alternatives syntaxiques pour un like.
+	 * Utilisée pour chercher les communes dans la meta_value 'ev-localisation'.
+	 */
+	public static function get_terms_like($tax_name, $term_ids){
+		$like = [];
+		foreach( get_terms(array(
+				'taxonomy' => $tax_name,
+				'hide_empty' => false,
+		)) as $term){
+			if( in_array($term->term_id, $term_ids)){
+				$like[] = $term->name;
+				foreach(['-'=>' ', 'saint'=>'st', 'saint-'=>'st-', 'sainte-'=>'ste-'] as $search=>$replace){
+					$alt_term = str_ireplace($search, $replace, $term->name);
+					if($alt_term !== $term->name)
+						$like[] = $alt_term;
+				}
+			}
+		}
+		return $like;
+	}
 }

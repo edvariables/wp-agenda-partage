@@ -1218,7 +1218,7 @@ class AgendaPartage_Evenement_Edit {
 			throw new TypeError('$meta_values should be an array.');
 		$args = AgendaPartage_Evenements::get_posts_query( 
 			array(
-				'post_status' => array( 'pending', 'draft', 'publish', 'future' ),
+				'post_status' => array( 'pending', 'publish', 'future' ),
 				'posts_per_page' => 1
 			)
 		);

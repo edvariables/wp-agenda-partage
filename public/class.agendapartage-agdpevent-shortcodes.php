@@ -512,11 +512,11 @@ class AgendaPartage_Evenement_Shortcodes {
 				$shortcode = 'agdpevents-list';
 			case 'agdpevents-list':
 				
-				return AgendaPartage_Evenements::get_list_html( null, $content );
+				return AgendaPartage_Evenements::get_list_html( $content );
 				
 			case 'agdpevents-email':
 				
-				$html = AgendaPartage_Evenements::get_list_for_email( null, $content );
+				$html = AgendaPartage_Evenements::get_list_for_email( $content );
 				return $html;
 
 			default:
