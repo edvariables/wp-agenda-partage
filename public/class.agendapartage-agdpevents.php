@@ -807,6 +807,7 @@ class AgendaPartage_Evenements {
 		$localisation = str_ireplace('saint', 'st'
 					, preg_replace('/\s|-/', '', $localisation)
 		);
+		//TODO accents ?
 		return stripos( $localisation, $cities );
 	}
 

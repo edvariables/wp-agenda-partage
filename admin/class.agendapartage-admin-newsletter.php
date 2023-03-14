@@ -20,92 +20,10 @@ class AgendaPartage_Admin_Newsletter {
 		add_action( 'admin_head', array(__CLASS__, 'init_post_type_supports'), 10, 4 );
 		add_filter( 'map_meta_cap', array(__CLASS__, 'map_meta_cap'), 10, 4 );
 		
-		//add custom columns for list view
-		// add_filter( 'manage_' . AgendaPartage_Newsletter::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
-		// add_action( 'manage_' . AgendaPartage_Newsletter::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
-		// // set custom columns sortable
-		// add_filter( 'manage_edit-' . AgendaPartage_Newsletter::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
-
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 		
 		
 	}
-	/****************/
-
-	/**
-	 * Liste de évènements
-	 */
-	/* public static function manage_columns( $columns ) {
-		unset( $columns );
-		$columns = array(
-			'cb'     => __( 'Sélection', AGDP_TAG ),
-			'titre'     => __( 'Titre', AGDP_TAG ),
-			'dates'     => __( 'Date(s)', AGDP_TAG ),
-			'details'     => __( 'Détails', AGDP_TAG ),
-			'type_agdpnl'     => __( 'Catégories', AGDP_TAG ),
-			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
-			'publication'      => __( 'Publication', AGDP_TAG ),
-			'author'        => __( 'Auteur', AGDP_TAG ),
-			'date'      => __( 'Date', AGDP_TAG )
-		);
-		return $columns;
-	}
-	public static function manage_custom_columns( $column, $post_id ) {
-		switch ( $column ) {
-			case 'titre' :
-				//Evite la confusion avec AgendaPartage_Newsletter::the_agdpnl_title
-				$post = get_post( $post_id );
-				echo $post->post_title;
-				
-				break;
-			case 'organisateur' :
-				$organisateur = get_post_meta( $post_id, 'ev-organisateur', true );
-				$email = get_post_meta( $post_id, 'ev-email', true );
-				echo $organisateur . ($email && $organisateur ? ' - ' : '' ) . $email;
-				
-				break;
-			case 'type_agdpnl' :
-				the_terms( $post_id, 'type_agdpnl', '<cite class="entry-terms">', ', ', '</cite>' );
-				break;
-			case 'dates' :
-				echo AgendaPartage_Newsletter::get_event_dates_text( $post_id );
-				break;
-			case 'publication' :
-				the_terms( $post_id, 'publication', '<cite class="entry-terms">', ', ', '</cite>' );
-				break;
-			case 'details' :
-				$post = get_post( $post_id );
-				$localisation = get_post_meta( $post_id, 'ev-localisation', true );
-				if(strlen($localisation)>20)
-						$localisation = trim(substr($localisation, 0, 20)) . '...';
-				// $organisateur = get_post_meta( $post_id, 'ev-organisateur', true );
-				$description = $post->post_content;
-				if(strlen($description)>20)
-						$description = trim(substr($description, 0, 20)) . '...';
-				$siteweb    = get_post_meta( $post_id, 'ev-siteweb', true );
-				echo trim(
-					  ($localisation ? $localisation . ' - ' : '')
-					// . ($organisateur ? $organisateur . ' - ' : '')
-					. ($description ? $description . ' - ' : '')
-					. ($siteweb ? make_clickable( esc_html($siteweb) ) : '')
-				);
-				break;
-			default:
-				break;
-		}
-	}
-
-	public static function manage_sortable_columns( $columns ) {
-		$columns['titre']    = 'titre';
-		$columns['author']    = 'author';
-		$columns['dates'] = 'dates';
-		$columns['details'] = 'details';
-		$columns['publication'] = 'publication';
-		$columns['organisateur'] = 'organisateur';
-		return $columns;
-	} */
-	/****************/
-
 	/**
 	 * N'affiche le bloc Auteur qu'en Archive (liste) / modification rapide
 	 * N'affiche l'éditeur que pour l'évènement modèle ou si l'option AgendaPartage::agdpnl_show_content_editor

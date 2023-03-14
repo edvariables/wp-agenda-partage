@@ -14,15 +14,12 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 * Event 
 - avec image
 	- load on toggle
-- récurrent
+- récurrents
 	- via cron
 	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
 - révisions depuis /public
 	
 * Events
-- filtres sur toutes les cases à cocher : 0 résultat
-- suppr filtres d'une croix
-- filtres dans <table>
 - Pour les utilisateurs administrateurs, ajouter le rédacteur de l'évènement
 	
 * WPCF7 form
@@ -33,8 +30,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - shortcode [agdp-stats] pour mailing admin
 - Désabonnement : suppression du user si jamais connecté
 - affichage date de prochain qd tout le monde a été traité
-- Pour les destinateurs administrateurs, ajouter le rédacteur de l'évènement
-- dans le mail : avril 2023 (3) alors que ne suivent que deux évnts (car 1 n'est pas diffusé Lettre-info) : get_posts_months n'a pas le filtre 'ev-publication' == 'la-lettre-info'
+- Pour les destinataires administrateurs, ajouter le rédacteur de l'évènement
 
 * Publish wp plugin
 
@@ -47,8 +43,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 	option theme_mods_twentyseventeen
 	get_site_icon_url()
 - import sur nouveau site, il semble qu'il faille le faire 2 fois.
-
-* Remplcer dans .js scrollToView() (merdouille, par exemple, dans l'import, "Dans la taxonomie "Commune", le terme "Pailharès" n'existe pas. Cliquez ici pour l'ajouter")
 
 * Remplacer le logo WP au login
 function my_login_logo() { ?>
