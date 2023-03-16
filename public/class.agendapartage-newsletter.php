@@ -578,8 +578,9 @@ class AgendaPartage_Newsletter {
 		foreach($user_metas as $meta_key => $meta_value)
 			if(str_starts_with($meta_key, $meta_key_like)){
 				$newsletter_id = substr($meta_key, strlen($meta_key_like));
-				$history[ sprintf('%d|%s', $newsletter_id, $newsletters[$newsletter_id]) ] 
-					= is_array($meta_value) ? implode(', ', $meta_value) : $meta_value;
+				if ( ! empty($newsletters[$newsletter_id]) )
+					$history[ sprintf('%d|%s', $newsletter_id, $newsletters[$newsletter_id]) ] 
+						= is_array($meta_value) ? implode(', ', $meta_value) : $meta_value;
 			}
 		return array_reverse($history, true);//TODO sort
 	}
