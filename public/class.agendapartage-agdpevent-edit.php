@@ -59,19 +59,8 @@ class AgendaPartage_Evenement_Edit {
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_SECRETCODE, array(__CLASS__, 'on_wp_ajax_agdpevent_code_secret_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_SECRETCODE, array(__CLASS__, 'on_wp_ajax_agdpevent_code_secret_cb') );
-		
-		//Définit les paramètres d'url autorisés
-		add_filter( 'query_vars', array(__CLASS__, 'on_query_var_cb' ) );
 	}
  	/////////////
- 	
-	/**
-	 * Définit les paramètres d'url autorisés
-	 */
-	public static function on_query_var_cb( $vars ){
-		$vars[] = AGDP_ARG_EVENTID;
-		return $vars;
-	}
 	
 	/**
 	* Retourne le post actuel si c'est bien du type agdpevent

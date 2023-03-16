@@ -43,6 +43,7 @@ define( 'AGDP_DEBUGLOG_ENABLE', 'debuglog_enable');
 //argument de requête pour modification d'évènement. code généré par AgendaPartage::get_secret_code()
 define( 'AGDP_SECRETCODE', 'codesecret' ); 
 define( 'AGDP_ARG_EVENTID', 'eventid' ); 
+define( 'AGDP_ARG_NEWSLETTERID', 'agdpnlid' ); 
 
 // see translate_level_to_role()
 define( 'USER_LEVEL_ADMIN', 8 ); 

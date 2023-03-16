@@ -31,6 +31,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - Désabonnement : suppression du user si jamais connecté
 - affichage date de prochain qd tout le monde a été traité
 - Pour les destinataires administrateurs, ajouter le rédacteur de l'évènement
+- Pour les abonnés mensuels, afficher 2 mois
+- Abonnement : if(user_can('manage_options')) <form><select name="evnlid"><option ...</select><input name="email" value="js:"/><input type="sumit" value="Basculer"></form>
 
 * Publish wp plugin
 

@@ -453,9 +453,16 @@ class AgendaPartage_Evenement_Shortcodes {
 					return '<div class="error">Le paramètre info="'.$meta_name.'" du shortcode "agdpevent" est inconnu.</div>';
 				$val = AgendaPartage_Evenement::get_post_meta($post_id, 'ev-' . $meta_name, true, false);
 				
-				if($val && $meta_name == 'siteweb')
-					$val = make_clickable(esc_html($val));
-				
+				if($val)
+					switch($meta_name){
+						case 'siteweb' :
+							$val = make_clickable(esc_html($val));
+							break;
+						case 'phone' :
+						case 'email' :
+							$val = antispambot(esc_html($val), -0.5);
+							break;
+					}
 				if($val || $content){
 					return '<div class="agdp-agdpevent">'
 						. ($label ? '<span class="label"> '.$label.'<span>' : '')

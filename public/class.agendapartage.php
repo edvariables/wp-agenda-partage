@@ -70,6 +70,18 @@ class AgendaPartage {
 		add_action( 'plugins_loaded', array(__CLASS__, 'load_plugin_textdomain') );
 
 		add_action( 'validate_password_reset', array(__CLASS__, 'validate_password_reset'), 100, 2 );
+		
+		//Définit les paramètres d'url autorisés
+		add_filter( 'query_vars', array(__CLASS__, 'on_query_var_cb' ), 10, 1 );
+	}
+ 	
+	/**
+	 * Définit les paramètres d'url autorisés
+	 */
+	public static function on_query_var_cb( $vars ){
+		$vars[] = AGDP_ARG_EVENTID;
+		$vars[] = AGDP_ARG_NEWSLETTERID;
+		return $vars;
 	}
 
 	/*

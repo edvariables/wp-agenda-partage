@@ -293,6 +293,8 @@ class AgendaPartage_Newsletter {
 	}
 	
  	private static function wpcf7_newsletter_form_init_tags( $form ) { 
+		$current_nl = self::get_newsletter();
+		$current_nl_id = $current_nl ? $current_nl->ID : 0;
 		
 		$form = WPCF7_ContactForm::get_current();
 		$html = $form->prop('form');//avec shortcodes du wpcf7
@@ -327,7 +329,9 @@ class AgendaPartage_Newsletter {
 			}
 			$index++;
 		} 
-		// debug_log('$checkboxes',$subscription_periods, $checkboxes, $selected);
+		/** nl_id **/
+		$html .= "<input class='hidden' name='".AGDP_ARG_NEWSLETTERID."' value='{$current_nl_id}'/>";
+		
 		
 		$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
 							, sprintf('[$1 %s use_label_element %s]'
@@ -358,7 +362,26 @@ class AgendaPartage_Newsletter {
 								// , ''
 								// , $html);
 		}
+		
+		/** admin **/
+		if( current_user_can('manage_options')){
+			$urls = [];
+			$nls = self::get_newsletters_names();
+			$basic_url = get_post_permalink();
 					
+			if( count($nls) > 1){
+				$html .= '<br><br><div>';
+				foreach($nls as $nl_id=>$nl_name)
+					if($nl_id === $current_nl_id)
+						$html .= "<br>Administratriceur, vous êtes sur la page de la lettre-info \"{$nl_name}\".";
+				foreach($nls as $nl_id=>$nl_name)
+					if($nl_id !== $current_nl_id){
+						$url = add_query_arg( AGDP_ARG_NEWSLETTERID, $nl_id, $basic_url);
+						$html .= "<br>Basculer vers la lettre-info \"<a href=\"{$url}\">{$nl_name}</a>\".";
+					}				
+				$html .= '</div>';
+			}
+		}
 		$form->set_properties(array('form'=>$html));
 				
 	}
@@ -392,8 +415,12 @@ class AgendaPartage_Newsletter {
 	}
 	
 	public static function get_newsletter($newsletter = false){
-		if( ! $newsletter || $newsletter === true)
-			$newsletter = AgendaPartage::get_option('newsletter_post_id');
+		if( ! $newsletter || $newsletter === true){
+			if( empty($_REQUEST[AGDP_ARG_NEWSLETTERID]))
+				$newsletter = AgendaPartage::get_option('newsletter_post_id');
+			else
+				$newsletter = $_REQUEST[AGDP_ARG_NEWSLETTERID];
+		}
 		$newsletter = get_post($newsletter);
 		if(is_a($newsletter, 'WP_Post')
 		&& $newsletter->post_type == AgendaPartage_Newsletter::post_type)
