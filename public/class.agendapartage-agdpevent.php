@@ -317,7 +317,7 @@ class AgendaPartage_Evenement {
 					$url .= '#' . AGDP_ARG_EVENTID . $agdpevent->ID;
 					$html .= sprintf('<br><br>Pour voir cet évènement dans l\'agenda, <a href="%s">cliquez ici %s</a>.'
 					, $url
-					, AgendaPartage::html_icon('calendar-alt'));
+					, AgendaPartage::icon('calendar-alt'));
 				}
 				break;
 		}
@@ -464,7 +464,7 @@ class AgendaPartage_Evenement {
 				$query['confirm'] = $confirmation;
 			}
 			if($icon)
-				$icon = AgendaPartage::html_icon($icon);
+				$icon = AgendaPartage::icon($icon);
 			$html .= sprintf('<span><a href="#" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
 				, $title ? $title : ''
 				, $method

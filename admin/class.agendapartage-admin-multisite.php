@@ -237,8 +237,8 @@ class AgendaPartage_Admin_Multisite {
 				continue;
 			}
 			$dest_post = get_post($dest_post);
-			$logs[] = AgendaPartage::html_icon('plus','', sprintf('Post créé <b>%s</b> (%s)', 
-				$dest_post->post_title, $dest_post->ID), 'p');
+			$logs[] = AgendaPartage::icon('plus', sprintf('Post créé <b>%s</b> (%s)', 
+				$dest_post->post_title, $dest_post->ID),'', 'p');
 				
 			AgendaPartage::update_option($option_name, $dest_post->ID);
 			$source_post_ids[$source_option_value . ''] = $dest_post->ID;

@@ -440,9 +440,9 @@ class AgendaPartage {
 	}
 	
 	/**
-	 * HTML tools
+	 * HTML icon
 	 */
-	public static function html_icon($icon, $class = '', $inner = '', $tag = 'span', $title = false){
+	public static function icon($icon, $inner = '', $class = '', $tag = 'span', $title = false){
 		 return sprintf('<%s class="dashicons-before dashicons-%s %s"%s>%s</%s>'
 			, $tag
 			, $icon
@@ -513,7 +513,7 @@ class AgendaPartage {
 			$query['confirm'] = $confirmation;
 		}
 		if($icon)
-			$icon = self::html_icon($icon);
+			$icon = self::icon($icon);
 		$html .= sprintf('<span><a href="#" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
 			, $title ? $title : ''
 			, $method

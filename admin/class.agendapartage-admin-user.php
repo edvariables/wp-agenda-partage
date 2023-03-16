@@ -20,9 +20,11 @@ class AgendaPartage_Admin_User {
 	 * Mise à jour des paramètres spécifiques de l'utilisateur
 	 */
 	public static function on_insert_custom_user_meta($custom_meta, $user, $update, $userdata){
-		$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key();
-		if( array_key_exists($meta_key, $_POST))
-			$custom_meta[$meta_key] = $_POST[$meta_key];
+		foreach(AgendaPartage_Newsletter::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
+			$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter_id);
+			if( array_key_exists($meta_key, $_POST))
+				$custom_meta[$meta_key] = $_POST[$meta_key];
+		}
 		return $custom_meta;
 	}
 	
@@ -30,27 +32,32 @@ class AgendaPartage_Admin_User {
 	 * A l'affichage de l'édition d'un utilisateur, ajoute des champs spécifiques
 	 */
 	public static function on_custom_user_profil( $profile_user ) {
-		$user_subscription = AgendaPartage_Newsletter::get_subscription($profile_user->user_email);
-		$user_history = AgendaPartage_Newsletter::get_user_mailings($profile_user->user_email);
-		$subscription_periods = AgendaPartage_Newsletter::subscription_periods(true);		
-		
-		$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key();
 		
 		?><br><h2>Abonnement à la lettre-info de l'Agenda partagé</h2>
 
-		<table class="form-table" role="presentation">
-			<tr id="agdp-newsletter">
-				<th><label>Lettre-info</label></th>
-				<td><ul>
-					<?php 
-						foreach( $subscription_periods as $subscribe_code => $label){
-							$selected = $user_subscription == $subscribe_code ? 'checked' : '';
-							echo sprintf('<li><label><input type="radio" name="%s" value="%s" %s>%s</label></li>'
-								, $meta_key, $subscribe_code, $selected, $label);
-						}
-					?></ul>
-				</td>
-			</tr><?php
+		<table class="form-table" role="presentation"><?php
+			$active_newsletters = AgendaPartage_Newsletter::get_active_newsletters();
+			foreach(AgendaPartage_Newsletter::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
+				$subscription_periods = AgendaPartage_Newsletter::subscription_periods($newsletter_id);		
+				$user_subscription = AgendaPartage_Newsletter::get_subscription($profile_user->user_email, $newsletter_id);
+				$user_history = AgendaPartage_Newsletter::get_user_mailings($profile_user->user_email, $newsletter_id);
+				$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter_id);
+				?><tr class="agdp-newsletter-subscription">
+					<th><label>Lettre-info "<?=htmlentities($newsletter_name)?>"</label><?php 
+						if( empty($active_newsletters[$newsletter_id]))
+							echo '<br>' . AgendaPartage::icon('info', 'inactive');
+					?></th>
+					<td><ul>
+						<?php 
+							foreach( $subscription_periods as $subscribe_code => $label){
+								$selected = $user_subscription == $subscribe_code ? 'checked' : '';
+								echo sprintf('<li><label><input type="radio" name="%s" value="%s" %s>%s</label></li>'
+									, $meta_key, $subscribe_code, $selected, $label);
+							}
+						?></ul>
+					</td>
+				</tr><?php
+			}
 			if( count($user_history) ){?>
 			<tr id="agdp-newsletter-history">
 				<th><label>Derniers envois</label></th>

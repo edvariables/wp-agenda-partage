@@ -140,7 +140,7 @@ class AgendaPartage_Newsletter {
 			'post_type' => AgendaPartage_Newsletter::post_type
 			, 'fields' => 'post_title'
 			]) as $post)
-			$newsletters[ $post->ID ] = $post->post_title;
+			$newsletters[ $post->ID . '' ] = $post->post_title;
 		return $newsletters;
 	}
 	
@@ -148,13 +148,16 @@ class AgendaPartage_Newsletter {
 	 * Returns posts where post_status == 'publish' && meta['mailing-enable'] == true
 	 */
 	 public static function get_active_newsletters(){
-		return get_posts([
+		$posts = [];
+		foreach( get_posts([
 			'post_type' => AgendaPartage_Newsletter::post_type
 			, 'post_status' => 'publish'
 			, 'meta_key' => 'mailing-enable'
 			, 'meta_value' => '1'
 			, 'meta_compare' => '='
-			]);
+			]) as $post)
+			$posts[$post->ID . ''] = $post;
+		return $posts;
 	}
 	
 	/**
@@ -556,7 +559,7 @@ class AgendaPartage_Newsletter {
 	/**
 	 * Retourne l'historique
 	 */
-	public static function get_user_mailings($email){
+	public static function get_user_mailings($email, $newsletter_id = false){
 		
 		$user_id = email_exists( $email );
 		if( ! $user_id)
@@ -566,7 +569,12 @@ class AgendaPartage_Newsletter {
 		
 		$meta_key_like = sprintf('%s_mailing_%d_', self::post_type, get_current_blog_id());
 		$history = [];
-		$newsletters = self::get_newsletters_names();
+		if($newsletter_id){
+			$newsletter = self::get_newsletter();
+			$newsletters = [$newsletter->ID => $newsletter->post_title];
+		}
+		else
+			$newsletters = self::get_newsletters_names();
 		foreach($user_metas as $meta_key => $meta_value)
 			if(str_starts_with($meta_key, $meta_key_like)){
 				$newsletter_id = substr($meta_key, strlen($meta_key_like));

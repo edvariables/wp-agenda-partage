@@ -364,14 +364,14 @@ class AgendaPartage_Evenement_Shortcodes {
 				$meta_name = 'ev-email' ;
 				$email = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, false);
 				if(!$email) {
-					return AgendaPartage::html_icon('warning', 'agdp-error-light'
-						, 'Vous ne pouvez pas envoyer de message, l\'évènement n\'a pas indiqué d\'adresse email.', 'div');
+					return AgendaPartage::icon('warning'
+						, 'Vous ne pouvez pas envoyer de message, l\'évènement n\'a pas indiqué d\'adresse email.', 'agdp-error-light', 'div');
 				}
 
 				$form_id = AgendaPartage::get_option('agdpevent_message_contact_post_id');
 				if(!$form_id){
-					return AgendaPartage::html_icon('warning', 'agdp-error-light'
-						, 'Un formulaire de message aux organisteurs d\'évènement n\'est pas défini dans les réglages de AgendaPartage.', 'div');
+					return AgendaPartage::icon('warning'
+						, 'Un formulaire de message aux organisteurs d\'évènement n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
 				}
 
 				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisteur d\'évènement ***"]', $form_id);

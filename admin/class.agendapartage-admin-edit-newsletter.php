@@ -250,7 +250,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 					if( isset($periods[$user->period]) )
 						$period_name = $periods[$user->period]['name'];
 					else
-						$period_name =  AgendaPartage::html_icon('warning', '', $user->period . ' ?!');
+						$period_name =  AgendaPartage::icon('warning', $user->period . ' ?!');
 					echo sprintf("<a href='/wp-admin/user-edit.php?user_id=%d' title=\"%s\">%s</a> (%s), "
 								, $user->ID, $user->user_nicename, $user->user_email, $period_name);
 						

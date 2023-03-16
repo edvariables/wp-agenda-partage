@@ -619,7 +619,7 @@ class AgendaPartage_Evenements {
 			. '</p>'
 			. (count($filters_summary) ? '<div class="filters-summary">' 
 				. implode(', ', $filters_summary)
-				. AgendaPartage::html_icon('no', 'clear-filters', '', 'span', __('Efface les filtres', AGDP_TAG))
+				. AgendaPartage::icon('no', '', 'clear-filters', 'span', __('Efface les filtres', AGDP_TAG))
 				. '</div>' : '')
 			. '</td></tr></table></div>';
 		
@@ -714,7 +714,7 @@ class AgendaPartage_Evenements {
 			$html .= sprintf(
 					'<div class="show-post"><a href="%s">%s</a></div>'
 				, $url
-				, AgendaPartage::html_icon('media-default')
+				, AgendaPartage::icon('media-default')
 			);
 			
 		$html .= sprintf('<div id="%s%d" class="agdpevent toggle-trigger %s" agdpevent="%s">'
@@ -776,14 +776,14 @@ class AgendaPartage_Evenements {
 			
 			if( ! $email_mode )
 				$html .= '<td class="trigger-collapser"><a href="#replier">'
-					.AgendaPartage::html_icon('arrow-up-alt2')
+					.AgendaPartage::icon('arrow-up-alt2')
 					.'</a></td>';
 
 			$url = AgendaPartage_Evenement::get_post_permalink($event);
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page l\'évènement'
-					. ($email_mode  ? '' : AgendaPartage::html_icon('media-default'))
+					. ($email_mode  ? '' : AgendaPartage::icon('media-default'))
 				.'</a></td>'
 				, $url);
 				

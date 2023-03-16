@@ -154,7 +154,7 @@ class AgendaPartage_Evenement_Edit {
 		
 		$form_id = AgendaPartage::get_option('agdpevent_edit_form_id');
 		if(!$form_id){
-			return AgendaPartage::html_icon('warning', 'agdp-error-light'
+			return AgendaPartage::icon('warning', '', 'agdp-error-light'
 				, 'Le formulaire de modification d\'évènement n\'est pas défini dans les réglages de AgendaPartage.', 'div');
 		}
 		
@@ -181,8 +181,9 @@ class AgendaPartage_Evenement_Edit {
 			$email = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, false);
 			
 			/*if(!$email) {
-				return AgendaPartage::html_icon('warning', 'agdp-error-light'
-					, 'Vous ne pouvez pas modifier cet évènement, l\'évènement n\'a pas indiqué d\'adresse email.', 'div');
+				return AgendaPartage::icon('warning'
+					, 'Vous ne pouvez pas modifier cet évènement, l\'évènement n\'a pas indiqué d\'adresse email.'
+					, 'agdp-error-light', 'div');
 			}*/
 			$attrs['ev-email'] = $email;
 			$attrs['ev-titre'] = $post->post_title;
@@ -266,7 +267,7 @@ class AgendaPartage_Evenement_Edit {
 		$html .= sprintf('<span class="agdpevent-tool"><a href="%s" title="%s">%s%s</a></span>'
 				, esc_url($url)
 				, __('Ecrivez-nous pour signaler un problème avec cet évènement', AGDP_TAG)
-				, AgendaPartage::html_icon('email-alt')
+				, AgendaPartage::icon('email-alt')
 				, __('Un problème ?', AGDP_TAG)
 		);
 				
@@ -385,8 +386,8 @@ class AgendaPartage_Evenement_Edit {
 		$post_id = $post->ID;
 		
 		$html = '<div class="adgpevent-forbidden">';
-		$html .= '<div>' . AgendaPartage::html_icon('lock', ''
-				, 'Vous n\'êtes pas autorisé à modifier cet évènement.', 'h4');
+		$html .= '<div>' . AgendaPartage::icon('lock'
+				, 'Vous n\'êtes pas autorisé à modifier cet évènement.', '', 'h4');
 		
 		if($post->post_status == 'trash'){
 				$html .= 'L\évènement a été supprimé.';
@@ -416,7 +417,7 @@ class AgendaPartage_Evenement_Edit {
 			$url = '/wp-admin';
 			$html .= sprintf('<li>avoir un compte utilisateur sur le site, être <a href="%s">%sconnecté(e)</a> et avoir des droits suffisants.'
 				, $url
-				, AgendaPartage::html_icon('unlock')
+				, AgendaPartage::icon('unlock')
 			);
 			if(is_user_logged_in()){
 				global $current_user;
@@ -433,7 +434,7 @@ class AgendaPartage_Evenement_Edit {
 			$url = add_query_arg(AGDP_ARG_EVENTID, $post_id, $url );
 			$html .= sprintf('<br><a href="%s">%s cliquez ici pour nous écrire à propos de cet évènement.</a>'
 					, esc_url($url)
-					, AgendaPartage::html_icon('email-alt'));
+					, AgendaPartage::icon('email-alt'));
 			
 			$html .= '</ul>';
 		}

@@ -327,7 +327,7 @@ class AgendaPartage_Admin_Evenement {
 				if($the_date != $the_modified_date)
 					$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;
 				if($agdpevent->post_status != 'publish')
-					$html .= sprintf('<br><b>%s</b>', AgendaPartage::html_icon( 'warning', '',$post_statuses[$agdpevent->post_status])) ;		
+					$html .= sprintf('<br><b>%s</b>', AgendaPartage::icon( 'warning',$post_statuses[$agdpevent->post_status])) ;		
 				echo sprintf( '<cite>%s</cite>', $html);		
 			?></header><?php
 			/*?><div class="entry-summary">
@@ -358,7 +358,7 @@ class AgendaPartage_Admin_Evenement {
 			if($the_date != $the_modified_date)
 				$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;
 			if($agdpevent->post_status != 'publish')
-				$html .= sprintf('<br><b>%s</b>', AgendaPartage::html_icon( 'warning', '', $post_statuses[$agdpevent->post_status])) ;
+				$html .= sprintf('<br><b>%s</b>', AgendaPartage::icon( 'warning', $post_statuses[$agdpevent->post_status])) ;
 				
 			echo sprintf( '<cite>%s</cite>', $html);		
 			echo '<hr></li>';
@@ -385,8 +385,8 @@ class AgendaPartage_Admin_Evenement {
 			)
 		);
 		if( is_wp_error($result) )
-			return AgendaPartage::html_icon('warning', '', $result->get_error_message());
-		return AgendaPartage::html_icon('info', '', sprintf('Le terme "%s" a été ajouté.', $tax_name));
+			return AgendaPartage::icon('warning', $result->get_error_message());
+		return AgendaPartage::icon('info', sprintf('Le terme "%s" a été ajouté.', $tax_name));
 	}
 
 }
