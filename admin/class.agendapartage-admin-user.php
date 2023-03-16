@@ -67,10 +67,14 @@ class AgendaPartage_Admin_User {
 						foreach( $user_history as $key => $mailing_date){
 							//debug_log('$key = ' . $key);
 							$newsletter = [];
-							preg_match_all('/^([^\|]+)\|(.+)$/', $key, $newsletter);
-							$newsletter_id = $newsletter[1][0];
-							// if( ! ($newsletter_name = $newsletter[2][0]))
-								$newsletter_name = $newsletters_names[$newsletter_id];
+							if(is_numeric($key)){
+								$newsletter_id = (int)$key;
+								$newsletter_name = $newsletters_names[$newsletter_id];	
+							}else{
+								preg_match_all('/^([^\|]+)\|(.+)$/', $key, $newsletter);
+								$newsletter_id = $newsletter[1][0];
+								$newsletter_name = $newsletter[2][0];
+							}
 							$ajax_data = [
 								'ID' => $profile_user->ID,
 								'nl_id' => $newsletter_id
