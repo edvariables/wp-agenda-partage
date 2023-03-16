@@ -570,7 +570,7 @@ class AgendaPartage_Newsletter {
 		$meta_key_like = sprintf('%s_mailing_%d_', self::post_type, get_current_blog_id());
 		$history = [];
 		if($newsletter_id){
-			$newsletter = self::get_newsletter();
+			$newsletter = self::get_newsletter($newsletter_id);
 			$newsletters = [$newsletter->ID => $newsletter->post_title];
 		}
 		else
