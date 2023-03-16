@@ -63,11 +63,14 @@ class AgendaPartage_Admin_User {
 				<th><label>Derniers envois</label></th>
 				<td><ul>
 					<?php 
+						$newsletters_names = AgendaPartage_Newsletter::get_newsletters_names();
 						foreach( $user_history as $key => $mailing_date){
+							//debug_log('$key = ' . $key);
 							$newsletter = [];
 							preg_match_all('/^([^\|]+)\|(.+)$/', $key, $newsletter);
 							$newsletter_id = $newsletter[1][0];
-							$newsletter_name = $newsletter[2][0];
+							if( ! ($newsletter_name = $newsletter[2][0]))
+								$newsletter_name = $newsletters_names[$newsletter_id];
 							$ajax_data = [
 								'ID' => $profile_user->ID,
 								'nl_id' => $newsletter_id
