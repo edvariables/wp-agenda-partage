@@ -69,7 +69,7 @@ class AgendaPartage_Admin_User {
 							$newsletter = [];
 							preg_match_all('/^([^\|]+)\|(.+)$/', $key, $newsletter);
 							$newsletter_id = $newsletter[1][0];
-							if( ! ($newsletter_name = $newsletter[2][0]))
+							// if( ! ($newsletter_name = $newsletter[2][0]))
 								$newsletter_name = $newsletters_names[$newsletter_id];
 							$ajax_data = [
 								'ID' => $profile_user->ID,
