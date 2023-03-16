@@ -32,7 +32,7 @@ class AgendaPartage_Admin_User {
 	 * A l'affichage de l'édition d'un utilisateur, ajoute des champs spécifiques
 	 */
 	public static function on_custom_user_profil( $profile_user ) {
-		
+		$user_histories = [];
 		?><br><h2>Abonnement à la lettre-info de l'Agenda partagé</h2>
 
 		<table class="form-table" role="presentation"><?php
@@ -41,6 +41,7 @@ class AgendaPartage_Admin_User {
 				$subscription_periods = AgendaPartage_Newsletter::subscription_periods($newsletter_id);		
 				$user_subscription = AgendaPartage_Newsletter::get_subscription($profile_user->user_email, $newsletter_id);
 				$user_history = AgendaPartage_Newsletter::get_user_mailings($profile_user->user_email, $newsletter_id);
+				$user_histories = array_merge($user_histories, $user_history);
 				$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter_id);
 				?><tr class="agdp-newsletter-subscription">
 					<th><label>Lettre-info "<?=htmlentities($newsletter_name)?>"</label><?php 
@@ -58,13 +59,13 @@ class AgendaPartage_Admin_User {
 					</td>
 				</tr><?php
 			}
-			if( count($user_history) ){?>
+			if( count($user_histories) ){?>
 			<tr id="agdp-newsletter-history">
 				<th><label>Derniers envois</label></th>
 				<td><ul>
 					<?php 
 						$newsletters_names = AgendaPartage_Newsletter::get_newsletters_names();
-						foreach( $user_history as $key => $mailing_date){
+						foreach( $user_histories as $key => $mailing_date){
 							//debug_log('$key = ' . $key);
 							$newsletter = [];
 							if(is_numeric($key)){
