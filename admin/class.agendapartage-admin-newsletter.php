@@ -22,6 +22,9 @@ class AgendaPartage_Admin_Newsletter {
 		
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 		
+		//add custom columns for list view
+		add_filter( 'manage_' . AgendaPartage_Newsletter::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
+		add_action( 'manage_' . AgendaPartage_Newsletter::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		
 	}
 	/**
@@ -94,6 +97,42 @@ class AgendaPartage_Admin_Newsletter {
 
 		/* Return the capabilities required by the user. */
 		return $caps;
+	}
+	/****************/
+
+	/**
+	 * Pots list view
+	 */
+	public static function manage_columns( $columns ) {
+		$new_columns = [];
+		foreach($columns as $key=>$column){
+			$new_columns[$key] = $column;
+			unset($columns[$key]);
+			if($key === 'title')
+				break;
+		}
+		$new_columns['mailing-enable'] = __( 'Active', AGDP_TAG );
+		return array_merge($new_columns, $columns);
+	}
+	/**
+	*/
+	public static function manage_custom_columns( $column, $post_id ) {
+		switch ( $column ) {
+			case 'mailing-enable' :
+				if( AgendaPartage_Newsletter::is_active($post_id))
+					_e('active', AGDP_TAG);
+				else{
+					//Evite la confusion avec AgendaPartage_Evenement::the_title
+					$post = get_post( $post_id );
+					if($post->post_status != 'publish')
+						echo 'non, statut "' . __($post->post_status) . '"';
+					else
+						_e('non', AGDP_TAG);
+				}
+				break;
+			default:
+				break;
+		}
 	}
 
 	/**
