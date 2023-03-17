@@ -421,7 +421,6 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 	 * Envoie un mail de test si demandé dans le $_POST.
 	 */
 	public static function send_test_email ($newsletter_id, $newsletter, $is_update){
-		
 		if( ! array_key_exists('send-nl-test', $_POST)
 		|| ! $_POST['send-nl-test']
 		|| ! array_key_exists('send-nl-test-email', $_POST))
@@ -433,7 +432,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			return;
 		}
 		
-		AgendaPartage_Newsletter::send_email($newsletter, 'test', [$email]);
+		AgendaPartage_Newsletter::send_email($newsletter, [$email]);
 			
 	}
 	
