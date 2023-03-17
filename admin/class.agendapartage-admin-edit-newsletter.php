@@ -68,6 +68,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		return array_merge(
 			self::get_metabox_mailing_fields(),
 			self::get_metabox_subscribers_fields(),
+			self::get_metabox_nl_test_fields(),
 		);
 	}	
 
@@ -76,10 +77,27 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		$newsletter = get_post();
 		$newsletter_id = $newsletter->ID;
 		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
-		$email = $current_user->user_email;
+		
+		$meta_name = 'send-nl-test-email';
+		$meta_value = get_post_meta($newsletter_id, $meta_name, true);
+		if( is_array($meta_value) ) $meta_value = $meta_value[0];
+		if( $meta_value )
+			$email = $meta_value;
+		else
+			$email = $current_user->user_email;
 		echo sprintf('<label><input type="checkbox" name="send-nl-test">Envoyer la lettre-info pour test</label>');
 		echo sprintf('<br><br><label>Destinataire(s) : </label><input type="email" name="send-nl-test-email" value="%s">', $email);
 		
+	}
+	public static function get_metabox_nl_test_fields(){
+		$fields = [];
+		$meta_name = 'send-nl-test-email';
+		$fields[] = array('name' => $meta_name,
+						'label' => __('Adresse de test', AGDP_TAG),
+						'type' => 'email'
+		);
+		return $fields;
+				
 	}
 	
 	public static function get_metabox_mailing_fields(){
