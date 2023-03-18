@@ -112,7 +112,7 @@ class AgendaPartage_Admin_Multisite {
 		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
 		, 'contact_page_id' => 'page'
 		, 'contact_form_id' => 'WPCF7_Contact_Form'
-		, 'agdpevent_message_contact_post_id' => 'page'
+		, 'agdpevent_message_contact_form_id' => 'page'
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'

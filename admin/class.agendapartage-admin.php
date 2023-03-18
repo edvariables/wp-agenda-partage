@@ -214,7 +214,7 @@ class AgendaPartage_Admin {
 		}
 		foreach(['agdpevent_edit_form_id'
 				, 'admin_message_contact_form_id'
-				, 'agdpevent_message_contact_post_id'
+				, 'agdpevent_message_contact_form_id'
 				, 'contact_form_id'
 				, 'newsletter_events_register_form_id'] as $option){
 			if($contact_form->id() == AgendaPartage::get_option($option)){

@@ -192,8 +192,8 @@ class AgendaPartage_Evenement {
  	/**
  	 * Retourne l'ID du post servant de message
  	 */
-	public static function get_agdpevent_message_contact_post_id( ) {
-		$option_id = 'agdpevent_message_contact_post_id';
+	public static function get_agdpevent_message_contact_form_id( ) {
+		$option_id = 'agdpevent_message_contact_form_id';
 		return AgendaPartage::get_option($option_id);
 	}
  
@@ -1064,7 +1064,7 @@ class AgendaPartage_Evenement {
 		switch($form->id()){
 			case AgendaPartage::get_option('contact_form_id') :
 			case AgendaPartage::get_option('admin_message_contact_form_id') :
-			case AgendaPartage::get_option('agdpevent_message_contact_post_id') :
+			case AgendaPartage::get_option('agdpevent_message_contact_form_id') :
 				self::wpcf7_contact_form_init_tags( $form );
 				$form_class .= ' preventdefault-reset';
 				break;
@@ -1120,7 +1120,6 @@ class AgendaPartage_Evenement {
 	
 	public static function change_email_recipient($contact_form){
 		$mail_data = $contact_form->prop('mail');
-		debug_log('change_email_recipient IN ', $mail_data['recipient']);
 		
 		$requested_id = isset($_REQUEST[AGDP_ARG_EVENTID]) ? $_REQUEST[AGDP_ARG_EVENTID] : false;
 		$agdpevent = AgendaPartage_Evenement_Edit::get_agdpevent_post($requested_id);
@@ -1129,7 +1128,5 @@ class AgendaPartage_Evenement {
 		$mail_data['recipient'] = self::get_post_meta($agdpevent, $meta_name, true);
 		
 		$contact_form->set_properties(array('mail'=>$mail_data));
-		
-		debug_log('change_email_recipient OUT ', $contact_form->prop('mail'));
 	}
 }

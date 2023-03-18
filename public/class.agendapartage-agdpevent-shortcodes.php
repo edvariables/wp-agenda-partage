@@ -368,7 +368,7 @@ class AgendaPartage_Evenement_Shortcodes {
 						, 'Vous ne pouvez pas envoyer de message, l\'évènement n\'a pas indiqué d\'adresse email.', 'agdp-error-light', 'div');
 				}
 
-				$form_id = AgendaPartage::get_option('agdpevent_message_contact_post_id');
+				$form_id = AgendaPartage::get_option('agdpevent_message_contact_form_id');
 				if(!$form_id){
 					return AgendaPartage::icon('warning'
 						, 'Un formulaire de message aux organisteurs d\'évènement n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');

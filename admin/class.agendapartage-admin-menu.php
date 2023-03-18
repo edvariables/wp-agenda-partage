@@ -67,21 +67,6 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
-			$field_id = 'admin_message_contact_form_id';
-			add_settings_field(
-				$field_id, 
-				__( 'Message de la part de l\'administrateur', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
-				AGDP_TAG,
-				'agendapartage_section_pages',
-				[
-					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
-					'post_type' => WPCF7_ContactForm::post_type
-				]
-			);
-
-			// 
 			$field_id = 'newsletter_subscribe_page_id';
 			add_settings_field(
 				$field_id, 
@@ -210,10 +195,25 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
-			$field_id = 'agdpevent_message_contact_post_id';
+			$field_id = 'agdpevent_message_contact_form_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Message aux organisateurs dans les pages des évènements', AGDP_TAG ),
+				__( 'Message à l\'organisateur d\'évènement', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_agdpevents',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+
+			// 
+			$field_id = 'admin_message_contact_form_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Message de la part de l\'administrateur à l\'organisateur', AGDP_TAG ),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
 				'agendapartage_section_agdpevents',
@@ -570,7 +570,7 @@ class AgendaPartage_Admin_Menu {
 				<div class="dashicons-before dashicons-welcome-learn-more">Dans les pages des évènements, seuls les administrateurs voient un formulaire d'envoi de message à l'organisateur.</div>
 				<?php
 				break;
-			case 'agdpevent_message_contact_post_id':
+			case 'agdpevent_message_contact_form_id':
 				?>
 				<div class="dashicons-before dashicons-welcome-learn-more">Dans les formulaires, les adresses emails comme organisateur@<?php echo AGDP_EMAIL_DOMAIN?> ou client@<?php echo AGDP_EMAIL_DOMAIN?> sont remplacées par des valeurs dépendantes du contexte.</div>
 				<?php
@@ -720,7 +720,7 @@ class AgendaPartage_Admin_Menu {
 		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
 		, 'contact_page_id' => 'page'
 		, 'contact_form_id' => 'WPCF7_Contact_Form'
-		, 'agdpevent_message_contact_post_id' => 'page'
+		, 'agdpevent_message_contact_form_id' => 'page'
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'

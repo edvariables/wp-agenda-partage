@@ -200,7 +200,7 @@ class AgendaPartage {
 				return __( 'Page "Ecrivez-nous"', AGDP_TAG );
 			case 'contact_form_id':
 				return __( 'Formulaire "Ecrivez-nous"', AGDP_TAG );
-			case 'agdpevent_message_contact_post_id':
+			case 'agdpevent_message_contact_form_id':
 				return __( 'Message aux organisateurs dans les pages des évènements', AGDP_TAG );
 			case 'agdpevent_import_ics':
 				return __( 'Importation d\'un fichier ICS', AGDP_TAG );
@@ -539,9 +539,11 @@ class AgendaPartage {
 	 */
 	public static function update_db(){
 		$current_version = AgendaPartage::get_option(AGDP_TAG.'_db_version');
-		foreach(['1.0.22'] as $version){
+		foreach([ '1.0.22'
+				, '1.0.23'
+			] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
-				break;
+				continue;
 			if( ! self::update_db_version($version))
 				break;
 			debug_log('update_db_version ' . $version . ' done');

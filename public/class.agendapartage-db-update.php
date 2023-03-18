@@ -2,7 +2,18 @@
 
 class AgendaPartage_DB_Update {
 
+	/**
+	*/
+	public static function update_db_1_0_23(){
+		
+		if( ! AgendaPartage::get_option('agdpevent_message_contact_form_id')){
+			AgendaPartage::update_option('agdpevent_message_contact_form_id', AgendaPartage::get_option('agdpevent_message_contact_post_id'));
+			AgendaPartage::update_option('agdpevent_message_contact_post_id', null);
+		}
+	}
 	
+	/**
+	*/
 	public static function update_db_1_0_22(){
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
