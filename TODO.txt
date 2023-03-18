@@ -18,6 +18,10 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 	- via cron
 	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
 - révisions depuis /public
+- Mail de la part de l'administrateur
+		ne part pas chez l'organisateur mais agdp
+		email en hexa
+	
 	
 * Events
 - Pour les utilisateurs administrateurs, ajouter le rédacteur de l'évènement

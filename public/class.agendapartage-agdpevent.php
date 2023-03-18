@@ -867,12 +867,20 @@ class AgendaPartage_Evenement {
 		$heure_debut    = get_post_meta( $post_id, 'ev-heure-debut', true );
 		$date_fin    = get_post_meta( $post_id, 'ev-date-fin', true );
 		$heure_fin    = get_post_meta( $post_id, 'ev-heure-fin', true );
+		if(mysql2date( 'j', $date_debut ) === '1')
+			$format_date_debut = 'l j\e\r M Y';
+		else
+			$format_date_debut = 'l j M Y';
+		if($date_fin && mysql2date( 'j', $date_fin ) === '1')
+			$format_date_fin = 'l j\e\r M Y';
+		else
+			$format_date_fin = 'l j M Y';
 		return mb_strtolower( trim(
 			  ($date_fin && $date_fin != $date_debut ? 'du ' : '')
-			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( 'l j M Y', $date_debut )) : '')
+			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( $format_date_debut, $date_debut )) : '')
 			. (/* !$date_jour_entier && */ $heure_debut 
 				? ($heure_fin ? ' de ' : ' à ') . $heure_debut : '')
-			. ($date_fin && $date_fin != $date_debut ? ' au ' . str_ireplace(' mar ', ' mars ', mysql2date( 'l j M Y', $date_fin )) : '')
+			. ($date_fin && $date_fin != $date_debut ? ' au ' . str_ireplace(' mar ', ' mars ', mysql2date( $format_date_fin, $date_fin )) : '')
 			. (/* !$date_jour_entier && */ $heure_fin 
 				? ($heure_debut ? ' à ' : ' jusqu\'à ')  . $heure_fin
 				: '')
@@ -1073,6 +1081,7 @@ class AgendaPartage_Evenement {
 		if( ! $agdpevent)
 			return;
 		
+		/** init message **/
 		$message = sprintf("Bonjour,\r\nJe vous écris à propos de \"%s\" (%s) du %s.\r\n%s\r\n\r\n-"
 			, $agdpevent->post_title
 			, self::get_post_meta($agdpevent, 'ev-localisation', true)
@@ -1090,8 +1099,37 @@ class AgendaPartage_Evenement {
 					, sprintf('%s%s', $matches[1][$i], $message)
 					, $html);
 		}
+		$user = wp_get_current_user();
+		if( $user ){
 		
+			/** init name **/	
+			$html = preg_replace( '/(autocomplete\:name[^\]]*)\]/'
+					, sprintf('$1 "%s"]', $user->display_name)
+					, $html);
+		
+			/** init email **/	
+			$html = preg_replace( '/(\[email[^\]]*)\]/'
+					, sprintf('$1 "%s"]', $user->user_email)
+					, $html);
+		}
+		
+		/** set **/
 		$form->set_properties(array('form'=>$html));
 		
+	}
+	
+	public static function change_email_recipient($contact_form){
+		$mail_data = $contact_form->prop('mail');
+		debug_log('change_email_recipient IN ', $mail_data['recipient']);
+		
+		$requested_id = isset($_REQUEST[AGDP_ARG_EVENTID]) ? $_REQUEST[AGDP_ARG_EVENTID] : false;
+		$agdpevent = AgendaPartage_Evenement_Edit::get_agdpevent_post($requested_id);
+		
+		$meta_name = 'ev-email' ;
+		$mail_data['recipient'] = self::get_post_meta($agdpevent, $meta_name, true);
+		
+		$contact_form->set_properties(array('mail'=>$mail_data));
+		
+		debug_log('change_email_recipient OUT ', $contact_form->prop('mail'));
 	}
 }

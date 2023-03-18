@@ -79,8 +79,6 @@ class AgendaPartage_WPCF7 {
 	   return current_user_can('manage_options');
 	} 
 	
-	
-	
 	/**
 	* Hook de wp_mail
 	* Interception des emails en localhost
@@ -132,6 +130,10 @@ class AgendaPartage_WPCF7 {
 		$form_id = $contact_form->id();
 
 		switch($form_id){
+			case AgendaPartage::get_option('admin_message_contact_form_id') :
+				AgendaPartage_Evenement::change_email_recipient($contact_form);
+				$abort = true;
+				break;
 			case AgendaPartage::get_option('agdpevent_edit_form_id') :
 				AgendaPartage_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
 				break;
@@ -152,8 +154,8 @@ class AgendaPartage_WPCF7 {
 		// debug_log_clear('check_email_is_abuse', $submission);
 		$emails = self::get_input_emails($submission);
 		$message = self::get_input_message($submission);
-		if( ! self::check_email_is_abuse( $emails ))
-			if( ! self::check_message_is_abuse( $message ))
+		if( ! self::check_email_is_abuse( $emails, $submission ))
+			if( ! self::check_message_is_abuse( $message, $submission ))
 				return false;
 		self::log_email_abuse($submission, $emails, $message);
 		return true;
@@ -183,14 +185,14 @@ class AgendaPartage_WPCF7 {
 	 * Contrôle la forme de l'email
 	 * 		hello.b.u.y.mycar@gnagna.sw
 	 */
-	public static function check_email_is_abuse($email){
+	public static function check_email_is_abuse($email, $submission){
 		if( ! $email )
 			return false;
 			
 			
 		if( is_array($email) ){
 			foreach($email as $single)
-				if( self::check_email_is_abuse($single) )
+				if( self::check_email_is_abuse($single, $submission) )
 					return true;
 			return false;
 		}
@@ -225,18 +227,66 @@ class AgendaPartage_WPCF7 {
 	 * Contrôle le contenu du message
 	 * 		<a href="https://hello.b.u.y.mycar.gnagna.sw">clic me</a>
 	 */
-	public static function check_message_is_abuse($message){
-		if( ! $message )
+	public static function check_message_is_abuse($message, $submission){
+		$suspect = false;
+		
+		$message = preg_replace("/^[^\n]+\n/", '', //skip first ligne
+					str_replace(get_bloginfo('name'), '', 
+						str_replace(get_bloginfo('url'), ''
+			, $message)));
+			
+		if( strlen($message) < 200)
 			return false;
 		
-		$blacklist = ['rgpalletracking.com']; //TODO
+		$forbidden_words = ['http']; //TODO
+		foreach($forbidden_words as $word)
+			if( strpos($message, $word) !== false ){
+				$error_message = sprintf('Veuillez retirer le terme "%s" de votre message.', $word);
+				$submission->set_response($error_message);
+				return true;
+			}
+			
+		$suspectlist = ['marketing']; //TODO
+		foreach($suspectlist as $word)
+			if( strpos($message, $word) !== false ){
+				$suspect = $word;
+				break;
+			}
+		if($suspect){
+			if(self::check_message_is_not_french($message)){
+				debug_log('email_is_abuse : not french language');
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Contrôle le contenu du message
+	 * 		texte en anglais
+	 */
+	public static function check_message_is_not_french($message){
+		/* if( ! $message )
+			return false;
+		
+		require_once(AGDP_PLUGIN_DIR . '/includes/LanguageDetector/LanguageDetector.php');
+        $detector = (new LanguageDetector\LanguageDetector(null, ['en', 'fr']))->evaluate($message);
+		debug_log('$detector->getSupportedLanguages()', $detector->getSupportedLanguages());
+		debug_log('$detector->getScores()', $detector->getScores());
+		debug_log('$winner', array_keys($detector->getScores())[0]);
+
+
+		return true;
+
+		$blacklist = ['to', 'the', 'marketing', 'website', 'and', 'we', 'you']; //TODO
+		$greenlist = ['bonjour', 'le', 'les', 'nous', 'je']; //TODO
 		
 		foreach($blacklist as $abuse)
 			if( strpos($message, $abuse) !== false ){
 				debug_log('message_is_abuse : contains black listed word : ' . $abuse);
 				return true;
 			}
-		
+		 */
 		return false;
 	}
 	
