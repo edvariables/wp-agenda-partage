@@ -132,7 +132,6 @@ class AgendaPartage_WPCF7 {
 		switch($form_id){
 			case AgendaPartage::get_option('admin_message_contact_form_id') :
 				AgendaPartage_Evenement::change_email_recipient($contact_form);
-				$abort = true;
 				break;
 			case AgendaPartage::get_option('agdpevent_edit_form_id') :
 				AgendaPartage_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
