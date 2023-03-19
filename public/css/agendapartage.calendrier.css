@@ -15,10 +15,10 @@
  
 .agdp-agdpevents-list > ul > li .toggle-trigger.no-items {
 	background-image: url('../images/toggle-minus.png');
-	color: #ddddd0;
+	color: #738080;
 }
 body.colors-dark .agdp-agdpevents-list > ul > li .toggle-trigger.no-items {
-	color: #738080;
+	color: #8c7f7f;
 }
  
 .agdp-agdpevents-list > ul > li .nb-items {
