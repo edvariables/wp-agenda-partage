@@ -48,10 +48,12 @@ class AgendaPartage_Admin_Stats {
 					'post_type' => AgendaPartage_Maillog::post_type,
 					'fields' => 'ids',
 					'post_status' => $post_status,
-					'post_date' => array(
-						'value' => strtotime(date('Y-m-d') . ' ' . $timelaps),
-						'compare' => '>='
+					'date_query' => array(
+						'column'  => 'post_date',
+						'after' => date('Y-m-d', strtotime(date('Y-m-d') . ' ' . $timelaps)),
+						'inclusive' => true
 					),
+					'nopaging' => true,
 				));
 				if( ! is_a($agdpmaillogs, 'WP_Query'))
 					continue;
@@ -136,12 +138,12 @@ class AgendaPartage_Admin_Stats {
 					'post_type' => AgendaPartage_Evenement::post_type,
 					'fields' => 'ids',
 					'post_status' => $post_status,
-					'post_date' => array(
-						'value' => strtotime(date('Y-m-d') . ' ' . $timelaps),
-						'compare' => '>='
+					'date_query' => array(
+						'column'  => 'post_date',
+						'after' => date('Y-m-d', strtotime(date('Y-m-d') . ' ' . $timelaps)),
+						'inclusive' => true
 					),
 					'nopaging' => true,
-					'orderby' => ['post_modified' => 'DESC']
 				));
 				if( ! is_a($agdpevents, 'WP_Query'))
 					continue;
