@@ -410,7 +410,7 @@ class AgendaPartage_Newsletter {
 	}
 	public static function get_email(){
 		if(isset($_REQUEST['email'])){
-			$email = $_REQUEST['email'];
+			$email = trim($_REQUEST['email']);
 			if(is_email($email))
 				return $email;
 		}

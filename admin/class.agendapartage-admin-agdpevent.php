@@ -272,6 +272,7 @@ class AgendaPartage_Admin_Evenement {
 		|| current_user_can('agdpevent')){
 		    $agdpevents = AgendaPartage_Evenements::get_posts( 10, [
 				'post_status' => ['publish', 'pending', 'draft']
+				, 'orderby' => ['post_modified' => 'DESC']
 			]);
 			if( count($agdpevents) ) {
 				add_meta_box( 'dashboard_all_agdpevents',
@@ -359,7 +360,12 @@ class AgendaPartage_Admin_Evenement {
 				$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;
 			if($agdpevent->post_status != 'publish')
 				$html .= sprintf('<br><b>%s</b>', AgendaPartage::icon( 'warning', $post_statuses[$agdpevent->post_status])) ;
-				
+			
+			$meta_key = 'ev-email';
+			$value = AgendaPartage_Evenement::get_post_meta($agdpevent, $meta_key, true);
+			if($value)
+				$html .= sprintf(' - %s', $value);
+			
 			echo sprintf( '<cite>%s</cite>', $html);		
 			echo '<hr></li>';
 

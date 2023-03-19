@@ -55,6 +55,8 @@ class AgendaPartage_Evenement_Shortcodes {
 		
 		add_shortcode( 'agdpevents', array(__CLASS__, 'shortcodes_callback') );
 		
+		add_shortcode( 'agdpstats', array(__CLASS__, 'shortcodes_callback') );
+		
 		add_shortcode( 'post', array(__CLASS__, 'shortcode_post_callback') );
 
 	}
@@ -210,6 +212,10 @@ class AgendaPartage_Evenement_Shortcodes {
 		//De la forme [agdpevents liste] ou [agdpevents-calendrier]
 		if($shortcode == 'agdpevents' || str_starts_with($shortcode, 'agdpevents-')){
 			return self::shortcodes_agdpevents_callback($atts, $content, $shortcode);
+		}
+		//De la forme [agdpstats stat] ou [agdpstats-stat]
+		if($shortcode == 'agdpstats' || str_starts_with($shortcode, 'agdpstats-')){
+			return self::shortcodes_agdpstats_callback($atts, $content, $shortcode);
 		}
 		return self::shortcodes_agdpevent_callback($atts, $content, $shortcode);
 	}
@@ -550,6 +556,12 @@ class AgendaPartage_Evenement_Shortcodes {
 	 
 		// Don't forget to stop execution afterward.
 		wp_die();
+	}
+	
+	
+	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
+		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-stats.php');
+		return AgendaPartage_Admin_Stats::get_stats_result() . $content;
 	}
 	
 	// shortcodes //
