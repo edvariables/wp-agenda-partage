@@ -77,7 +77,8 @@ class AgendaPartage_Admin_Stats {
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$user_prefix = $wpdb->get_blog_prefix( 1 );
-		$mailing_meta_key = AgendaPartage_Newsletter::get_mailing_meta_key();
+		$newsletter = AgendaPartage_Newsletter::get_newsletter( true );
+		$mailing_meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($newsletter);
 		
 						
 		/** Historique **/
@@ -103,7 +104,8 @@ class AgendaPartage_Admin_Stats {
 		}
 		if( count($mailings) ){
 			echo '<ul class="agdp-stats">';
-			echo sprintf("<header class='entry-header'><h3>Envois de la lettre-info depuis le %s</u> : %s %s</h3></header>"
+			echo sprintf("<header class='entry-header'><h3>Envois de la lettre-info \"%s\" depuis le %s</u> : %s %s</h3></header>"
+				, $newsletter->post_title
 				, wp_date('d/m/Y', strtotime($two_months_before_mysql))
 				, $users
 				, $users ? ' destinataire(s)' : '');

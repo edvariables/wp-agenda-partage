@@ -147,7 +147,6 @@ class AgendaPartage_Admin_Maillog {
 				if( ! is_a($agdpmaillogs, 'WP_Query'))
 					continue;
 				//;
-				debug_log($agdpmaillogs);
 				echo '<td>';
 				echo sprintf('<h3 class="entry-title">%s</h3>%d email(s)', $status_name, $agdpmaillogs->found_posts);
 				?></header><?php
