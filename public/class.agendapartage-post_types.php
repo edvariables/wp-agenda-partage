@@ -30,16 +30,16 @@ class AgendaPartage_Post_Types {
 
 		do_action( 'agendapartage_register_post_types' );
 
-		AgendaPartage_Evenement_Post_Type::register_post_type();
-		AgendaPartage_Evenement_Post_Type::register_taxonomy_ev_category();
-		AgendaPartage_Evenement_Post_Type::register_taxonomy_city();
-		AgendaPartage_Evenement_Post_Type::register_taxonomy_diffusion();
+		AgendaPartage_Evenement_Post_type::register_post_type();
+		AgendaPartage_Evenement_Post_type::register_taxonomy_ev_category();
+		AgendaPartage_Evenement_Post_type::register_taxonomy_city();
+		AgendaPartage_Evenement_Post_type::register_taxonomy_diffusion();
 		
-		AgendaPartage_Newsletter_Post_Type::register_post_type();
-		AgendaPartage_Newsletter_Post_Type::register_taxonomy_period();
+		AgendaPartage_Newsletter_Post_type::register_post_type();
+		AgendaPartage_Newsletter_Post_type::register_taxonomy_period();
 		
 		if(AgendaPartage::maillog_enable()){
-			AgendaPartage_Maillog_Post_Type::register_post_type();
+			AgendaPartage_Maillog_Post_type::register_post_type();
 		}
 		
 	    // clear the permalinks after the post type has been registered
@@ -56,7 +56,7 @@ class AgendaPartage_Post_Types {
 		do_action( 'agendapartage_unregister_post_types' );
 		
 		
-		foreach( AgendaPartage_Evenement_Post_Type::get_taxonomies() as $tax_name => $taxonomy){
+		foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 			if ( post_type_exists( $tax_name ) ) 
 				unregister_post_type($tax_name);
 		}
@@ -75,6 +75,6 @@ class AgendaPartage_Post_Types {
 	}
 	
 	public static function plugin_activation(){
-		AgendaPartage_Newsletter_Post_Type::plugin_activation();
+		AgendaPartage_Newsletter_Post_type::plugin_activation();
 	}
 }

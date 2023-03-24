@@ -296,7 +296,7 @@ class AgendaPartage_Evenements {
 		// debug_log('get_filters_query IN ', $filters);
 		if(count($filters)){
 			$query_tax_terms = [];
-			foreach( AgendaPartage_Evenement_Post_Type::get_taxonomies() as $tax_name => $taxonomy){
+			foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 				$field = $taxonomy['filter'];
 				if(isset($filters[$field])){
 					$query_tax_terms[$tax_name] = ['IN'=>[]];
@@ -493,8 +493,10 @@ class AgendaPartage_Evenements {
 				'mode' => 'email'
 			), $options);
 		
-		$term_id = AgendaPartage::get_option('newsletter_diffusion_term_id');
-		self::add_tax_filter(AgendaPartage_Evenement::taxonomy_diffusion, $term_id);
+		if(AgendaPartage_Evenement_Post_type::is_diffusion_managed()){
+			$term_id = AgendaPartage::get_option('newsletter_diffusion_term_id');
+			self::add_tax_filter(AgendaPartage_Evenement::taxonomy_diffusion, $term_id);
+		}
 		
 		$css = '<style>'
 			. '
@@ -582,7 +584,7 @@ class AgendaPartage_Evenements {
 			$except_tax = AgendaPartage_Evenement::taxonomy_diffusion;
 		else
 			$except_tax = '';
-		$taxonomies = AgendaPartage_Evenement_Post_Type::get_taxonomies($except_tax);
+		$taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
 			$taxonomy['terms'] = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name);
 			if( count($taxonomy['terms']) === 0 ){

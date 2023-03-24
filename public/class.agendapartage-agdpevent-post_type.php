@@ -325,6 +325,13 @@ class AgendaPartage_Evenement_Post_type {
 	}
 	
 	/**
+	 *
+	 */
+	public static function is_diffusion_managed(){
+		return AgendaPartage::get_option('newsletter_diffusion_term_id') != -1;
+	}
+	
+	/**
 	 * Retourne les termes d'une taxonomie avec leurs alternatives syntaxiques pour un like.
 	 * Utilisée pour chercher les communes dans la meta_value 'ev-localisation'.
 	 */

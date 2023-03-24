@@ -248,8 +248,9 @@ class AgendaPartage_Evenement {
 		[agdpevent-description]
 		[agdpevent info="organisateur" label="Organisateur : "]
 		[agdpevent info="phone" label="Téléphone : "]
-		[agdpevent info="siteweb"]
-		[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
+		[agdpevent info="siteweb"]';
+		if( AgendaPartage_Evenement_Post_type::is_diffusion_managed() )
+			$html .='[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
 
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
