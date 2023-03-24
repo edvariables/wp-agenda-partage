@@ -26,6 +26,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 * Events
 - Pour les utilisateurs administrateurs, ajouter le rédacteur de l'évènement
 - Liste : griser les évènements passés
+- Téléchargement : bulle-verte
+- Masquer Bulle verte
 
 * WPCF7 form
 - Submit : scroll to ajax message

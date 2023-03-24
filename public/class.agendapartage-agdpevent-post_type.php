@@ -269,6 +269,7 @@ class AgendaPartage_Evenement_Post_type {
 		switch($taxonomy){
 			case AgendaPartage_Evenement::taxonomy_diffusion :
 				$meta_names[] = 'default_checked';
+				$meta_names[] = 'download_link';
 				break;
 		}
 		foreach($meta_names as $meta_name){

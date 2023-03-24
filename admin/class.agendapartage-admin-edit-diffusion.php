@@ -36,6 +36,7 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 	/****************/
 	public static function manage_columns($columns){
 		$columns['default_checked'] = 'Coché par défaut';
+		$columns['download_link'] = 'Lien';
 		return $columns;
 	}
 	public static function manage_custom_columns($content, string $column_name, int $term_id){
@@ -45,7 +46,13 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 					echo 'Coché par défaut';
 				else
 					echo 'non';
-			break;
+				break;
+			case 'download_link' :
+				if( get_term_meta( $term_id, $column_name, true ) )
+					echo 'Téléchargement';
+				else
+					echo 'non';
+				break;
 		}
 		return $content;
 	}
@@ -57,13 +64,13 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		$meta_name = 'default_checked';
-		if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
-			update_term_meta($term_id, $meta_name, $args[$meta_name]);
-		}
-		else {
-			delete_term_meta($term_id, $meta_name);
-		}
+		foreach([ 'default_checked', 'download_link' ] as $meta_name)
+			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
+				update_term_meta($term_id, $meta_name, $args[$meta_name]);
+			}
+			else {
+				delete_term_meta($term_id, $meta_name);
+			}
 	}
 
 	/**
@@ -88,6 +95,17 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 			$meta_name = 'default_checked';
 			parent::metabox_html([array('name' => $meta_name,
 									'label' => __('Coché par défaut lors de la création d\'un évènement.', AGDP_TAG),
+									'type' => 'bool',
+									// 'default' => $checked
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+    ?><tr class="form-field">
+        <th scope="row"><label for="download_link">Lien en bas de l'agenda</label></th>
+        <td><?php
+			$meta_name = 'download_link';
+			parent::metabox_html([array('name' => $meta_name,
+									'label' => __('Téléchargement', AGDP_TAG),
 									'type' => 'bool',
 									// 'default' => $checked
 								)], $tag, null);

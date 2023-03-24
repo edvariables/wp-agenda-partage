@@ -236,10 +236,25 @@ input.wpcf7-form-control[name="nl-user-name"] {
 	font-weight: bold;
 }
 
-.wpcf7-form .hidden {
+form.wpcf7-form .hidden {
 	display: none;
 }
-.wpcf7-form .agdpevents-tax_titles {
+form.wpcf7-form .agdpevents-tax_titles {
 	margin-left: 1.2em;
 	cursor: pointer;
+}
+
+/** newsletter **/
+form.wpcf7-form.events_newsletter_register input.wpcf7-email {
+	display: inline-block;
+	width: auto;
+}
+ul.newsletter-change-nl {
+	list-style: none;
+	border: 1px solid gray;
+	margin-top: 2em;
+	padding-left: 1em;
+}
+ul.newsletter-change-nl p {
+	margin: 0;
 }

@@ -17,7 +17,10 @@ class AgendaPartage_Evenements_Export {
 			case 'vcalendar':
 				$file_format = 'ics';
 			case 'ics':
-				$export_data = self::export_posts_ics($posts, true);
+				$export_data = self::export_posts_ics($posts);
+				break;
+			case 'txt':
+				$export_data = self::export_posts_txt($posts);
 				break;
 			default:
 				return sprintf('format inconnu : "%s"', $file_format);
@@ -47,7 +50,38 @@ class AgendaPartage_Evenements_Export {
 	}
 	
 	/**
-	 * Retourne le nom d'un fichier temporaire pour le téléchargement de l'export des évènements
+	 * Retourne les données TXT pour le téléchargement de l'export des évènements
+	 */
+	public static function export_posts_txt($posts){
+
+		$txt = ['Exportation du ' . wp_date('d/m/Y \à H:i')];
+			$txt[] = str_repeat('*', 36);
+			$txt[] = str_repeat('*', 36);
+		$txt[] = '';
+		foreach($posts as $post){
+			$txt[] = $post->post_title;
+			$txt[] = str_repeat('-', 24);
+			$txt[] = AgendaPartage_Evenement::get_event_dates_text( $post->ID );
+			$txt[] = get_post_meta($post->ID, 'ev-localisation', true);
+			if( $value = AgendaPartage_Evenement::get_event_cities($post->ID))
+				$txt[] = implode(', ', $value);
+			if( $value = AgendaPartage_Evenement::get_event_categories($post->ID))
+				$txt[] = implode(', ', $value);
+			foreach(['ev-organisateur', 'ev-email', 'ev-phone', 'ev-siteweb'] as $meta_key)
+				if( $value = get_post_meta($post->ID, $meta_key, true) )
+					$txt[] = $value;
+			$txt[] = $post_post_content;
+			$txt[] = '';
+			$txt[] = str_repeat('*', 36);
+			$txt[] = '';
+			
+		}
+		return implode("\r\n", $txt);
+	}
+	
+	
+	/**
+	 * Retourne les données ICS pour le téléchargement de l'export des évènements
 	 */
 	public static function export_posts_ics($posts){
 

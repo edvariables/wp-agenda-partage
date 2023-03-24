@@ -596,6 +596,11 @@ class AgendaPartage_Admin_Menu {
 		><option/>
 		<?php
 		$terms = get_terms( array('hide_empty' => false, 'taxonomy' => $taxonomy) );
+		switch($taxonomy){
+			case AgendaPartage_Evenement::taxonomy_diffusion:
+				$terms[] = (object)[ 'term_id' => -1, 'name' => '(sans gestion de diffusion)' ];
+				break;
+		}
 		foreach($terms as $term) {
 			echo sprintf('<option value="%d" %s>%s</option>'
 				, $term->term_id
@@ -736,6 +741,8 @@ class AgendaPartage_Admin_Menu {
 			}
 			$source_option_value = $source_options[$option_name];
 			if($post_type === 'term'){
+				if($source_option_value == -1)
+					continue;
 				$source_term = get_term( $source_option_value );
 				if( ! $source_term ){
 					$logs[] = sprintf('<p>Impossible de retrouver le terme <b>%s</b> (%s) #%d</p>', 

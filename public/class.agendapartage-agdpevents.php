@@ -277,6 +277,8 @@ class AgendaPartage_Evenements {
 	 * Ajoute un filtre sur une taxonomie
 	 */
 	public static function add_tax_filter($taxonomy, $term_id){
+		if($term_id == -1)
+			return;
 		if(empty($_REQUEST['data']))
 			$_REQUEST['data'] = ['filters'=>[]];
 		elseif(empty($_REQUEST['data']['filters']))
@@ -576,7 +578,10 @@ class AgendaPartage_Evenements {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		$except_tax = current_user_can('manage_options') ? '' : AgendaPartage_Evenement::taxonomy_diffusion;
+		if( ! current_user_can('manage_options') || AgendaPartage::get_option('newsletter_diffusion_term_id') == -1)
+			$except_tax = AgendaPartage_Evenement::taxonomy_diffusion;
+		else
+			$except_tax = '';
 		$taxonomies = AgendaPartage_Evenement_Post_Type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
 			$taxonomy['terms'] = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name);
@@ -891,13 +896,24 @@ class AgendaPartage_Evenements {
 		$data = [
 			'file_format' => 'ics'
 		];
-		$title = 'Télécharger les évènements';
+		$title = 'Télécharger les évènements au format ICS';
 		if( count($_GET) && self::$filters_summary ){
 			$title .= ' filtrés (' . self::$filters_summary . ')';
 			$data['filters'] = $_GET;
 		}
 		$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data);
 		
+		$meta_name = 'download_link';
+		foreach(AgendaPartage_Evenement_Post_type::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion) as $term_id => $term){
+			if( get_term_meta($term->term_id, $meta_name, true) ){
+				$data = [
+					'file_format' => 'txt',
+					'filters' => [ AgendaPartage_Evenement::taxonomy_diffusion => $term_id]
+				];
+				$title = 'Télécharger les évènements pour ' . $term->name;
+				$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data);
+			}
+		}
 		return $html;
 	}
 

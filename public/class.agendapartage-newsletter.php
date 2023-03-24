@@ -294,7 +294,7 @@ class AgendaPartage_Newsletter {
 		switch($form->id()){
 			case AgendaPartage::get_option('newsletter_events_register_form_id') :
 				self::wpcf7_newsletter_form_init_tags( $form );
-				$form_class .= ' preventdefault-reset';
+				$form_class .= ' preventdefault-reset events_newsletter_register';
 				break;
 			default:
 				break;
@@ -380,16 +380,18 @@ class AgendaPartage_Newsletter {
 			$basic_url = get_post_permalink();
 					
 			if( count($nls) > 1){
-				$html .= '<br><br><div>';
+				$html .= '<ul class="newsletter-change-nl">';
 				foreach($nls as $nl_id=>$nl_name)
-					if($nl_id === $current_nl_id)
-						$html .= "<br>Administratriceur, vous êtes sur la page de la lettre-info \"{$nl_name}\".";
+					if($nl_id === $current_nl_id){
+						$html .= "<li>Administratriceur, vous êtes sur la page de la lettre-info \"{$nl_name}\".</li>";
+						break;
+					}
 				foreach($nls as $nl_id=>$nl_name)
 					if($nl_id !== $current_nl_id){
 						$url = add_query_arg( AGDP_ARG_NEWSLETTERID, $nl_id, $basic_url);
-						$html .= "<br>Basculer vers la lettre-info \"<a href=\"{$url}\">{$nl_name}</a>\".";
+						$html .= sprintf("<li>Basculer vers la lettre-info \"<a href=\"%s\">%s</a>\".</li>", esc_attr($url), $nl_name);
 					}				
-				$html .= '</div>';
+				$html .= '</ul>';
 			}
 		}
 		$form->set_properties(array('form'=>$html));
