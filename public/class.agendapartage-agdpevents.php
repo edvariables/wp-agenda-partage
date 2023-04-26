@@ -521,9 +521,11 @@ class AgendaPartage_Evenements {
 .toggle-container pre {
 	background-color: #F5F5F5;
 	color: #333;
+	white-space: pre-line;
 }
 .agdp-agdpevents-email .month-title {
 	margin-top: 1em;
+	margin-bottom: 1em;
 	font-size: larger;
 	font-weight: bold;
 	text-decoration: underline;
@@ -535,7 +537,13 @@ class AgendaPartage_Evenements {
 } 
 .agdp-agdpevents-email a-li a-li {
 	margin-left: 1em;
-	padding-top: 1em;
+	padding-top: 2em;
+}
+.agdp-agdpevents-email div.titre, .agdp-agdpevents-email div.localisation, .agdp-agdpevents-email div.ev-cities {
+	font-weight: bold;
+}
+.agdp-agdpevents-email i {
+	font-style: normal;
 }
 .footer {
 	border-bottom-color: rgb(51, 51, 51);
