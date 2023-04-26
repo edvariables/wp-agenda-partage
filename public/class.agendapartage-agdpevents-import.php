@@ -88,7 +88,7 @@ class AgendaPartage_Evenements_Import {
 				'ev-import-uid' => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
 				'ev-codesecret' => AgendaPartage::get_secret_code(6),
-				'post-source' => $import_source
+				'_post-source' => $import_source
 			);
 						
 			$post_title = $event['summary'];

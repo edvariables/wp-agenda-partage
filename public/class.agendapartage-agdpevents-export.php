@@ -22,6 +22,9 @@ class AgendaPartage_Evenements_Export {
 			case 'txt':
 				$export_data = self::export_posts_txt($posts);
 				break;
+			case 'bv.txt':
+				$export_data = self::export_posts_bv_txt($posts);
+				break;
 			default:
 				return sprintf('format inconnu : "%s"', $file_format);
 		}
@@ -32,6 +35,9 @@ class AgendaPartage_Evenements_Export {
 		if( ! $export_data)
 			return sprintf('Aucune donnée à exporter');
 		
+		$enc = mb_detect_encoding($export_data);
+		$export_data = mb_convert_encoding($export_data, "Windows-1252", $enc);
+
 		self::clear_export_history();
 		
 		$file = self::get_export_filename( $file_format );
@@ -70,9 +76,62 @@ class AgendaPartage_Evenements_Export {
 			foreach(['ev-organisateur', 'ev-email', 'ev-phone', 'ev-siteweb'] as $meta_key)
 				if( $value = get_post_meta($post->ID, $meta_key, true) )
 					$txt[] = $value;
-			$txt[] = $post_post_content;
+			$txt[] = $post->post_content;
 			$txt[] = '';
 			$txt[] = str_repeat('*', 36);
+			$txt[] = '';
+			
+		}
+		return implode("\r\n", $txt);
+	}
+	
+	/**
+	 * Retourne les données Bulle-Verte bv.txt pour le téléchargement de l'export des évènements
+	 */
+	public static function export_posts_bv_txt($posts){
+
+		$txt = [];
+		foreach($posts as $post){
+			if( $cities = AgendaPartage_Evenement::get_event_cities($post->ID))
+				$cities = ' - ' . implode(', ', $cities);
+			else
+				$cities = '';
+			$txt[] = $post->post_title . $cities;
+			
+			$localisation = get_post_meta($post->ID, 'ev-localisation', true);
+			if($localisation)
+				$localisation = ' - ' . $localisation;
+			$dates = AgendaPartage_Evenement::get_event_dates_text( $post->ID );
+			$dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
+			$txt[] = $dates . $localisation;
+			
+			$txt[] = $post->post_content;
+			
+			$meta_key = 'ev-organisateur';
+			if( $value = get_post_meta($post->ID, $meta_key, true) )
+				$txt[] = sprintf('Organisé par : %s', $value);
+				
+			$infos = '';
+			$meta_key = 'ev-phone';
+			if( $value = get_post_meta($post->ID, $meta_key, true) )
+				$infos = $value;
+				
+			$meta_key = 'ev-email';
+			if( $value = get_post_meta($post->ID, $meta_key, true) )
+				if($infos)
+					$infos .= '/';
+				$infos .= $value;
+				
+			$meta_key = 'ev-siteweb';
+			if( $value = get_post_meta($post->ID, $meta_key, true) )
+				$value = str_replace( [ 'http://', 'https://' ], '', $value);
+				if($infos)
+					$infos .= '/';
+				$infos .= $value;
+				
+			$txt[] = 'Infos : ' . $infos;
+			
+			$txt[] = '';
 			$txt[] = '';
 			
 		}

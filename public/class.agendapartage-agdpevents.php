@@ -907,12 +907,13 @@ class AgendaPartage_Evenements {
 		
 		$meta_name = 'download_link';
 		foreach(AgendaPartage_Evenement_Post_type::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion) as $term_id => $term){
-			if( get_term_meta($term->term_id, $meta_name, true) ){
+			$file_format = get_term_meta($term->term_id, $meta_name, true);
+			if( $file_format ){
 				$data = [
-					'file_format' => 'txt',
+					'file_format' => $file_format,
 					'filters' => [ AgendaPartage_Evenement::taxonomy_diffusion => $term_id]
 				];
-				$title = 'Télécharger les évènements pour ' . $term->name;
+				$title = sprintf('Télécharger les évènements pour %s (%s)', $term->name, $file_format);
 				$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data);
 			}
 		}

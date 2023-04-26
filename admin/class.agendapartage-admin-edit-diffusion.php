@@ -104,10 +104,17 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
         <th scope="row"><label for="download_link">Lien en bas de l'agenda</label></th>
         <td><?php
 			$meta_name = 'download_link';
+			
+			$values = [ '' => '(pas de téléchargement)'
+						, 'ics' => 'vCalendar (.ics)'
+						, 'txt' => 'texte brut (.txt)'
+						, 'bv.txt' => 'texte préformaté BV (.bv.txt)'
+					];
+			
 			parent::metabox_html([array('name' => $meta_name,
 									'label' => __('Téléchargement', AGDP_TAG),
-									'type' => 'bool',
-									// 'default' => $checked
+									'input' => 'select',
+									'values' => $values
 								)], $tag, null);
         ?></td>
     </tr><?php

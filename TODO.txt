@@ -21,16 +21,16 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - Mail de la part de l'administrateur
 		ne part pas chez l'organisateur mais agdp
 		email en hexa
-	
+- Interdiction de http dans message levée pour admin et modérateur
 	
 * Events
 - Pour les utilisateurs administrateurs, ajouter le rédacteur de l'évènement
 - Liste : griser les évènements passés
 - Téléchargement : bulle-verte
 - Masquer Bulle verte
+- Filtre (sans commune) : (autre commune)
+- Show more months without ajax to 30 events limit
 
-* WPCF7 form
-- Submit : scroll to ajax message
 
 * Newsletter
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
@@ -39,6 +39,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - affichage date de prochain qd tout le monde a été traité
 - Pour les destinataires administrateurs, ajouter le rédacteur de l'évènement
 - Pour les abonnés mensuels, afficher 2 mois
+- côté client, la saisie d'une adresse inconnue ne sélectionne pas "Aucun abonnement"
 
 
 * Publish wp plugin
