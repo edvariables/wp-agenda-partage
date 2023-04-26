@@ -126,7 +126,7 @@ class AgendaPartage_Evenements_Export {
 			if( $value = get_post_meta($post->ID, $meta_key, true) )
 				$value = str_replace( [ 'http://', 'https://' ], '', $value);
 				if($infos)
-					$infos .= '/';
+					$infos .= ' / ';
 				$infos .= $value;
 				
 			$txt[] = 'Infos : ' . $infos;
