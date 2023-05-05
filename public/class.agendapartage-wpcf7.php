@@ -122,13 +122,21 @@ class AgendaPartage_WPCF7 {
 	 * Appel une classe spécifique suivant l'id du formulaire que l'utilisateur vient de valider
 	 */
 	public static function wpcf7_before_send_mail ($contact_form, &$abort, $submission){
-		if( self::check_submission_is_abuse($submission) ){
-			$abort = true;
-			return;
-		}
 
 		$form_id = $contact_form->id();
 
+		switch($form_id){
+			case AgendaPartage::get_option('newsletter_events_register_form_id') :
+			case AgendaPartage::get_option('agdpevent_edit_form_id') :
+				break;
+			default:
+				if( self::check_submission_is_abuse($submission) ){
+					$abort = true;
+					return;
+				}
+				break;
+		}
+		
 		switch($form_id){
 			case AgendaPartage::get_option('admin_message_contact_form_id') :
 				AgendaPartage_Evenement::change_email_recipient($contact_form);
