@@ -221,7 +221,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
 		$fields = [];
 		foreach($periods as $period => $period_name){
-			$meta_name = sprintf('next_date_%s', $period);
+			$meta_name = sprintf('next_date_%s', strtoupper( $period ));
 			$fields[] = array('name' => $meta_name,
 							'label' => __($period_name, AGDP_TAG),
 							'input' => 'date'
@@ -242,7 +242,6 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$user_prefix = $wpdb->get_blog_prefix( 1 );
-		
 		
 		foreach($periods as $period => $period_name){
 			$periods[$period] = array(
@@ -333,23 +332,27 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				);
 			
 			if($period !== 'none'){
-				$meta_name = sprintf('next_date_%s', $period);
+				$meta_name = sprintf('next_date_%s', strtoupper( $period ));
 				echo '<ul>';
-				if(count($data['mailing']) == 0){
-					$next_date = AgendaPartage_Newsletter::get_next_date($period, $newsletter);
+				// if(count($data['mailing']) == 0){
+					$next_date = get_post_meta($newsletter_id, $meta_name, true);
+					if( $next_date)
+						$next_date = strtotime($next_date);
+					else
+						$next_date = AgendaPartage_Newsletter::get_next_date($period, $newsletter);
 					echo sprintf('<li>Prochain envoi : <input type="date" name="%s" value="%s"/></li>'
 							, $meta_name, wp_date('Y-m-d', $next_date));
-				} else {
-					$now = strtotime(wp_date('Y-m-d H:i:s'));
-					foreach($data['mailing'] as $mailing){
-						$mailing_date = strtotime($mailing->mailing_date);
-						if($mailing_date > $now)
-							echo sprintf('<li><input type="date" name="%s" value="%s"/> : %d inscrit(s)</li>'
-								, $meta_name, wp_date('Y-m-d', strtotime($mailing->mailing_date)), $mailing->count);
-						else
-							echo sprintf("<li>%s : %d envoi(s)</li>", $mailing->mailing_date, $mailing->count);
-					}
-				}
+				// } else {
+					// $now = strtotime(wp_date('Y-m-d H:i:s'));
+					// foreach($data['mailing'] as $mailing){
+						// $mailing_date = strtotime($mailing->mailing_date);
+						// if($mailing_date > $now)
+							// echo sprintf('<li><input type="date" name="%s" value="%s"/> : %d inscrit(s)</li>'
+								// , $meta_name, wp_date('Y-m-d', strtotime($mailing->mailing_date)), $mailing->count);
+						// else
+							// echo sprintf("<li>%s : %d envoi(s)</li>", $mailing->mailing_date, $mailing->count);
+					// }
+				// }
 				echo '</ul>';
 				echo '<div><code>';
 				if(count($data['subscribers'])){
