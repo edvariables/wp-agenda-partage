@@ -48,6 +48,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - new events only
 - newsletter subscribers
 
+* Stats pour admin : en objet, le nombre d'évènements publiés et en attente.
+
 * Multisites
 - import médiathèque
 	option theme_mods_twentyseventeen

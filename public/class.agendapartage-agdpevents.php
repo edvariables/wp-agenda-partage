@@ -504,7 +504,7 @@ class AgendaPartage_Evenements {
 	font-family: arial;
 }
 .toggle-trigger {
-	margin: 0px;
+	margin: 8px 0px 0px 0px;
 	font-size: larger;
 	padding-left: 10px;
 	background-color: #F5F5F5;
@@ -546,7 +546,7 @@ class AgendaPartage_Evenements {
 	font-style: normal;
 }
 .footer {
-	border-bottom-color: rgb(51, 51, 51);
+	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
 }
 '
