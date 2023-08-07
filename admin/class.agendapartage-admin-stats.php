@@ -162,5 +162,31 @@ class AgendaPartage_Admin_Stats {
 		?></ul><hr>
 		<?php
 	}
+
+	public static function agdpevents_stats_eventscounters() {
+		$sCounters = '';
+		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
+			foreach(['publish' => 'Publié', 'pending' => 'En attente'] as $post_status => $status_name){
+				$agdpevents = new WP_Query( array( 
+					'post_type' => AgendaPartage_Evenement::post_type,
+					'fields' => 'ids',
+					'post_status' => $post_status,
+					'date_query' => array(
+						'column'  => 'post_date',
+						'after' => date('Y-m-d', strtotime(date('Y-m-d') . ' ' . $timelaps)),
+						'inclusive' => true
+					),
+					'nopaging' => true,
+				));
+				if( ! is_a($agdpevents, 'WP_Query'))
+					continue;
+				if( strlen($sCounters) !== 0 )
+					$sCounters .= '|';
+				$sCounters .= $agdpevents->found_posts;
+				
+			}
+		}
+		return $sCounters;
+	}
 }
 ?>

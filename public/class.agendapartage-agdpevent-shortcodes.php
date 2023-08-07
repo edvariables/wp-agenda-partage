@@ -561,6 +561,10 @@ class AgendaPartage_Evenement_Shortcodes {
 	
 	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-stats.php');
+		if( count($atts)) {
+			if( in_array('eventscounters', $atts) )
+				return AgendaPartage_Admin_Stats::agdpevents_stats_eventscounters() . $content;
+		}
 		return AgendaPartage_Admin_Stats::get_stats_result() . $content;
 	}
 	

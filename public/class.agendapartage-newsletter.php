@@ -38,6 +38,8 @@ class AgendaPartage_Newsletter {
 	 * Hook
 	 */
 	public static function init_hooks() {
+		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
+		
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 		
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
@@ -49,6 +51,37 @@ class AgendaPartage_Newsletter {
 	}
 	/*
 	 **/
+	
+	
+	/***********
+	 * the_title()
+	 */
+ 	public static function the_title( $title, $post_id ) {
+ 		global $post;
+ 		if( ! $post
+ 		|| $post->ID != $post_id
+ 		|| $post->post_type != self::post_type){
+ 			return $title;
+		}
+	    return self::get_post_title( $post );
+	}
+ 
+ 	/**
+ 	 * Retourne le titre de la page
+ 	 */
+	public static function get_post_title( $newsletter = null, $no_html = false) {
+ 		if( ! isset($newsletter) || ! is_object($newsletter)){
+			global $post;
+			$newsletter = $post;
+		}
+		
+		$post_title = isset( $newsletter->post_title ) ? $newsletter->post_title : '';
+		//$separator = $no_html ? ', ' : '<br>';
+		$html = do_shortcode($post_title);
+		return $html;
+	}
+	/*
+	 **********/
 	 
 	/**
 	 * Retourne l'adresse d'expéditeur des mails 
@@ -933,7 +966,7 @@ class AgendaPartage_Newsletter {
 		
 		self::$sending_email = $newsletter;
 		
-		$subject = get_the_title(false, false, $newsletter);
+		$subject = get_the_title($newsletter);
 		if( ! $subject){
 			$subject = $newsletter->post_title;
 			if( ! $subject){
