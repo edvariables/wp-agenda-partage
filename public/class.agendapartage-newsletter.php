@@ -974,7 +974,11 @@ class AgendaPartage_Newsletter {
 				return false;
 			}
 		}
+		
+		$subject = do_shortcode( $subject );
+		
 		$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
+		
 		$message = do_shortcode( get_the_content(false, false, $newsletter) );
 		
 		$message = '<!DOCTYPE html><html>'
