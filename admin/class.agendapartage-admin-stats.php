@@ -150,8 +150,9 @@ class AgendaPartage_Admin_Stats {
 				if( ! is_a($agdpevents, 'WP_Query'))
 					continue;
 				//;
+				$url = get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=agdpevent', $post_status));
 				echo '<td>';
-				echo sprintf('<h5 class="entry-title">%s</h5>%d évènement(s)', $status_name, $agdpevents->found_posts);
+				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d évènement(s)</a>', $status_name, $url, $agdpevents->found_posts);
 				?></header><?php
 				echo '</td>';
 				
