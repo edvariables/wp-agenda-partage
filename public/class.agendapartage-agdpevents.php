@@ -188,7 +188,7 @@ class AgendaPartage_Evenements {
 	* Filtre WP_Query sur une requête
 	*/
 	public static function on_posts_where_filters($where, $wp_query){
-		debug_log('on_posts_where_filters', $where , $wp_query->get( 'posts_where_filters' ));
+		// debug_log('on_posts_where_filters', $where , $wp_query->get( 'posts_where_filters' ));
 		if($filters_sql = $wp_query->get( 'posts_where_filters' )){
 			global $wpdb;
 			$where .= ' AND ' . $wpdb->posts . '.ID IN ('.$filters_sql.')';
