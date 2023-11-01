@@ -177,3 +177,88 @@ body.colors-dark .toggle-trigger a:hover {
 }
 /*
  *******/
+ 
+ 
+
+/*
+ * Tabs
+ */
+#agdp-tabs-nav {
+	border-bottom: 1px solid #aaa;
+	padding: 9px 15px 0 10px;
+	margin: 0;
+}
+
+#agdp-tabs-nav li {
+	display: inline-block;
+	list-style: none;
+	border: 1px solid #ccc;
+	border-bottom: 1px solid #aaa;
+	padding: 0;
+	margin: 0 4px -1px;
+	background-color: #e4e4e4;
+}
+
+#agdp-tabs-nav li:hover {
+	background-color: #fff;
+}
+
+#agdp-tabs-nav li.ui-tabs-active,
+#agdp-tabs-nav li.ui-tabs-active:hover {
+	border-top: 1px solid #aaa;
+	border-right: 1px solid #aaa;
+	border-left: 1px solid #aaa;
+	border-bottom: 1px solid #f5f5f5;
+	background-color: #f5f5f5;
+}
+
+#agdp-tabs-nav li a {
+	padding: 6px 10px;
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 30px;
+	color: #333;
+	text-decoration: none;
+}
+
+#agdp-tabs-nav li.ui-tabs-active a {
+	color: #000;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+#agdp-tabs-nav li a:hover {
+	color: #000;
+}
+
+#agdp-tabs .agdp-panel > div.config-error {
+	margin-bottom: 1.4em;
+}
+
+#agdp-tabs-nav li.ui-tabs-active a .icon-in-circle {
+	display: none;
+}
+
+#agdp-tabs .agdp-panel h2 {
+	font-size: 18px;
+	font-weight: 400;
+	line-height: 24px;
+	margin: 8px 0;
+	padding: 0;
+}
+
+#agdp-tabs .agdp-panel {
+	background-color: #f5f5f5;
+	border: 1px solid #aaa;
+	border-top: none;
+	padding: 16px;
+}
+
+#agdp-tabs .form-table th {
+	width: 100px;
+}
+
+#agdp-tabs .agdp-panel fieldset legend {
+	line-height: 1.5;
+	margin: .6em 0 .4em;
+}

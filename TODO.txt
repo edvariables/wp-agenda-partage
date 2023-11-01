@@ -7,8 +7,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * Créer un rôle author-agdpevent
 
-* Abonnés voient pas les évènements attribués à leur compte (evnt.email != user.email)
-
 * Taxonomy Type event Color
 
 * $(recaptcha).init après ajax sur androïd
@@ -26,10 +24,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - Interdiction de http dans message levée pour admin et modérateur
 	
 * Events
-- Pour les utilisateurs administrateurs, ajouter le rédacteur de l'évènement
 - Liste : griser les évènements passés
-- Téléchargement : bulle-verte
-- Masquer Bulle verte
 - Filtre (sans commune) : (autre commune)
 - Show more months without ajax to 30 events limit
 

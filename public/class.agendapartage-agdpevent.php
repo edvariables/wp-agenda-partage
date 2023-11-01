@@ -322,6 +322,17 @@ class AgendaPartage_Evenement {
 				}
 				break;
 		}
+		
+			
+		if(is_user_logged_in()){
+			global $current_user;
+			//Rôle autorisé
+			if(	$current_user->has_cap( 'edit_posts' ) ){
+			
+				$creator = new WP_User($agdpevent->post_author);
+				$html .= '<p>créé par "' . $creator->get('user_nicename') . '"</p>';
+			}
+		}
 		return $html;
 	}
 		

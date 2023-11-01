@@ -789,6 +789,19 @@ class AgendaPartage_Evenements {
 				
 			$html .= '<table><tbody><tr>';
 			
+			if(is_user_logged_in()){
+				global $current_user;
+				//Rôle autorisé
+				if(	$current_user->has_cap( 'edit_posts' ) ){
+				
+					$html .= '<td/><td>';
+					$creator = new WP_User($event->post_author);
+					$html .= 'créé par "' . $creator->get('user_nicename') . '"';
+					
+					$html .= '</td></tr><tr>';
+				}
+			}
+			
 			if( ! $email_mode )
 				$html .= '<td class="trigger-collapser"><a href="#replier">'
 					.AgendaPartage::icon('arrow-up-alt2')

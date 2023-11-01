@@ -18,7 +18,7 @@ class AgendaPartage_Admin_Menu {
 		self::init_admin_menu();
 	}
 
-	public static function init_includes() {	
+	public static function init_includes() {
 	}
 
 	public static function init_hooks() {
@@ -29,6 +29,7 @@ class AgendaPartage_Admin_Menu {
 		add_action('wp_dashboard_setup', array(__CLASS__, 'init_dashboard_widgets') );
 		
 		add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
+		add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
 
 		
 	}
@@ -37,18 +38,23 @@ class AgendaPartage_Admin_Menu {
 		// register a new setting for "agendapartage" page
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
+		$section_args = array(
+			'before_section' => '<div class="tabs">',
+			'after_section' => '</div>'
+		);
+		
 		add_settings_section(
 			'agendapartage_section_checkup',
 			'',
 			array(__CLASS__, 'check_module_health'),
-			AGDP_TAG
+			AGDP_TAG, $section_args
 		);
 		
 		add_settings_section(
 			'agendapartage_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG
+			AGDP_TAG, $section_args
 		);
 
 			// 
@@ -146,7 +152,7 @@ class AgendaPartage_Admin_Menu {
 			'agendapartage_section_agdpevents',
 			__( 'Évènements', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG
+			AGDP_TAG, $section_args
 		);
 
 			// 
@@ -244,7 +250,7 @@ class AgendaPartage_Admin_Menu {
 			'agendapartage_section_security',
 			__( 'Contrôles de sécurité', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG
+			AGDP_TAG, $section_args
 		);
 
 			// 
@@ -287,7 +293,7 @@ class AgendaPartage_Admin_Menu {
 			'agendapartage_section_agdpevents_import',
 			__( 'Importation d\'évènements', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG
+			AGDP_TAG, $section_args
 		);
 
 			// 
@@ -310,7 +316,7 @@ class AgendaPartage_Admin_Menu {
 				'agendapartage_section_blog_import',
 				__( 'Initialisation du site', AGDP_TAG ),
 				array(__CLASS__, 'settings_sections_cb'),
-				AGDP_TAG
+				AGDP_TAG, $section_args
 			);
 			if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
 				// 
@@ -330,6 +336,32 @@ class AgendaPartage_Admin_Menu {
 		}
 	}
 
+
+	
+	public static function init_js_sections_tabs() {
+		
+		?><script type="text/javascript">
+	jQuery(document).ready(function(){
+		jQuery('form > div.tabs:first').each(function(){
+			var id = 'agdp-tabs';
+			var tabs_counter = 0;
+			var $tabs_contents = [];
+			var $tabs = jQuery(sprintf('<div id="%s"/>', id));
+			var $nav = jQuery(sprintf('<ul id="%s-nav"/>', id)).appendTo($tabs);
+			var $contents = jQuery('<ul/>').appendTo($tabs);
+			jQuery(this).find('div.tabs > h2').each(function(){
+				tabs_counter++;
+				$nav.append(sprintf('<li><a href="#%s-%d">%s</a></li>', id, tabs_counter, this.innerText));
+				var $content = jQuery(sprintf('<div id="%s-%d" class="agdp-panel"><div/>', id, tabs_counter));
+				jQuery(this).parent().children().appendTo($content);
+				$contents.append($content);
+			});
+			jQuery(this).html( $tabs.tabs() );
+		});
+	});</script>
+		<?php
+	}
+	
 	/**
 	* Modifie la balise <from en ajoutant l'attribut enctype="multipart/form-data".
 	* Injecté dans le <head>
