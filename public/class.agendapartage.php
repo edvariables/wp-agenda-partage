@@ -9,7 +9,7 @@ class AgendaPartage {
 	public static $skip_mail = false;
 
 	public static function init() {
-		self::update_db();
+		self::update_db();//TODO : trop fréquent
 		self::init_includes();
 		self::init_hooks();
 		self::load_modules();
@@ -535,10 +535,20 @@ class AgendaPartage {
 	}
 
 	/**
+	 * Blog db version
+	 */
+	public static function get_db_version(){
+		return self::get_option(AGDP_TAG.'_db_version');
+	}
+	/**
 	 * Update DB based on blog db version
 	 */
 	public static function update_db(){
-		$current_version = AgendaPartage::get_option(AGDP_TAG.'_db_version');
+		$current_version = self::get_db_version();
+		if( ! $current_version ){
+			debug_log('update_db $current_version === null !');
+			return $current_version;
+		}
 		foreach([ '1.0.22'
 				, '1.0.23'
 			] as $version){
@@ -546,7 +556,7 @@ class AgendaPartage {
 				continue;
 			if( ! self::update_db_version($version))
 				break;
-			debug_log('update_db_version ' . $version . ' done');
+			debug_log('update_db_version ' . $version . ' done (from '. $current_version . ')');
 			$current_version = $version;
 		}
 		return $current_version;
@@ -558,7 +568,7 @@ class AgendaPartage {
 			throw new BadFunctionCallException('AgendaPartage_DB_Update::' . $function . __(' n\'existe pas.', AGDP_TAG));
 		if ( ! AgendaPartage_DB_Update::$function() )
 			return false;
-		AgendaPartage::update_option(AGDP_TAG.'_db_version', $version);
+		self::update_option(AGDP_TAG.'_db_version', $version);
 		return $version;
 	}
 }

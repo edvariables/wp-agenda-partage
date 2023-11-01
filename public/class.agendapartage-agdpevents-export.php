@@ -12,7 +12,7 @@ class AgendaPartage_Evenements_Export {
 	  * $return = url|file|data
 	  */
 	 public static function do_export($posts, $file_format = 'ics', $return = 'url' ){
-		
+		$encode_to = "UTF-8";
 		switch( strtolower( $file_format )){
 			case 'vcalendar':
 				$file_format = 'ics';
@@ -20,9 +20,11 @@ class AgendaPartage_Evenements_Export {
 				$export_data = self::export_posts_ics($posts);
 				break;
 			case 'txt':
+				$encode_to = "Windows-1252";
 				$export_data = self::export_posts_txt($posts);
 				break;
 			case 'bv.txt':
+				$encode_to = "Windows-1252";
 				$export_data = self::export_posts_bv_txt($posts);
 				break;
 			default:
@@ -36,7 +38,7 @@ class AgendaPartage_Evenements_Export {
 			return sprintf('Aucune donnée à exporter');
 		
 		$enc = mb_detect_encoding($export_data);
-		$export_data = mb_convert_encoding($export_data, "Windows-1252", $enc);
+		$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
 
 		self::clear_export_history();
 		

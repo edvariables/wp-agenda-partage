@@ -7,6 +7,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * Créer un rôle author-agdpevent
 
+* Abonnés voient pas les évènements attribués à leur compte (evnt.email != user.email)
+
 * Taxonomy Type event Color
 
 * $(recaptcha).init après ajax sur androïd
@@ -47,8 +49,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 * Admin dashboard
 - new events only
 - newsletter subscribers
-
-* Stats pour admin : en objet, le nombre d'évènements publiés et en attente.
 
 * Multisites
 - import médiathèque

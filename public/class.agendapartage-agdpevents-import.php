@@ -39,7 +39,7 @@ class AgendaPartage_Evenements_Import {
 		else {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
-	debug_log($iCal['events'], "\r\n\r\n\r\n\r\n");
+		debug_log("\r\nimport_ics events", $iCal['events'], "\r\n\r\n\r\n\r\n");
 		foreach($iCal['events'] as $event){
 			
 			switch(strtoupper($event['status'])){
@@ -161,12 +161,23 @@ class AgendaPartage_Evenements_Import {
 					$taxonomies[$term_name] = $event[strtolower($node_name)];
 			}
 			
+			#DEBUG
+			// if( strlen($postarr['post_title']) >= 10 ){
+				// $postarr['post_title'] = substr($postarr['post_title'], 0, 5) . "[...]";
+				// $postarr['post_name'] = sanitize_title( $postarr['post_title'] );
+			// }
+			// if( strlen($postarr['post_content']) >= 10 )
+				// $postarr['post_content'] = substr($postarr['post_content'], 0, 5) . "[...]";
+			
 			$post_id = wp_insert_post( $postarr, true );
 			
 			if(!$post_id || is_wp_error( $post_id )){
 				$failCounter++;
+				debug_log('[INSERT ERROR]$post_title = ' . var_export($post_title, true));
+				debug_log('[INSERT ERROR+]$post_content = ' . var_export($post_content, true));
 				$log[] = '<li class="error">Erreur de création de l\'évènement</li>';
 				if(is_wp_error( $post_id)){
+					debug_log('[INSERT ERROR+]$post_id = ' . var_export($post_id, true));
 					$log[] = sprintf('<pre>%s</pre>', var_export($post_id, true));
 				}
 				$log[] = sprintf('<pre>%s</pre>', var_export($event, true));
@@ -185,7 +196,9 @@ class AgendaPartage_Evenements_Import {
 		}
 		
 		$log[] = sprintf('<li><b>%d importation(s), %d échec(s), %d ignorée(s)</b></li>', $successCounter, $failCounter, $ignoreCounter);
+		debug_log('[FINAL REPORT] ' . sprintf('%d importation(s), %d echec(s), %d ignoree(s)', $successCounter, $failCounter, $ignoreCounter));
 		$log[] = '</ul>';
+		
 		if(class_exists('AgendaPartage_Admin'))
 			AgendaPartage_Admin::set_import_report ( $log );
 		

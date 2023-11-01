@@ -10,6 +10,8 @@ class AgendaPartage_DB_Update {
 			AgendaPartage::update_option('agdpevent_message_contact_form_id', AgendaPartage::get_option('agdpevent_message_contact_post_id'));
 			AgendaPartage::update_option('agdpevent_message_contact_post_id', null);
 		}
+		
+		return true;
 	}
 	
 	/**

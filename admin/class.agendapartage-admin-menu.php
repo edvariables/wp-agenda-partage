@@ -459,8 +459,8 @@ class AgendaPartage_Admin_Menu {
 		<div class="dashicons-before dashicons-welcome-learn-more">Les évènements avec une date ancienne sont ignorés.</div>
 		<div class="dashicons-before dashicons-welcome-learn-more">Les évènements importés n'ont, à priori, ni catégories ni organisateur ni e-mail associés.</div>
 		<?php
-		$option_value = AgendaPartage::get_option($option_id);
-		echo AgendaPartage_Admin::get_import_report(true);
+		// $option_value = AgendaPartage::get_option($option_id);
+		// echo AgendaPartage_Admin::get_import_report(true);
 
 	}
 

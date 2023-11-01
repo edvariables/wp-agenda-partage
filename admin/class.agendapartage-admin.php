@@ -3,6 +3,7 @@
 class AgendaPartage_Admin {
 
 	public static function init() {
+		debug_log('AgendaPartage_Admin.init()', $_SERVER['QUERY_STRING']);
 		self::init_includes();
 		self::init_hooks();
 
@@ -112,7 +113,10 @@ class AgendaPartage_Admin {
 			'message' => $is_html ? $msg : esc_html($msg),
 			'type' => $type,
 		);
-		set_transient(self::admin_notices_tag(), $notices, 5);
+		$result = set_transient(self::admin_notices_tag(), $notices);
+		
+		return $result;
+		
 	}
 	public static function show_admin_notices(){
 		$notices = get_transient(self::admin_notices_tag());
@@ -198,8 +202,9 @@ class AgendaPartage_Admin {
 	
 	//import
 	public static function set_import_report($logs){
-		if( is_array($logs))
-			self::add_admin_notice(implode("\r\n", $logs), 'success', true);
+		if( is_array($logs)){
+			self::add_admin_notice( implode("\r\n", $logs), 'success', true);
+		}
 		else
 			self::add_admin_notice($logs, 'success', true);
 	}
