@@ -3,7 +3,6 @@
 class AgendaPartage_Admin {
 
 	public static function init() {
-		debug_log('AgendaPartage_Admin.init()', $_SERVER['QUERY_STRING']);
 		self::init_includes();
 		self::init_hooks();
 
@@ -214,7 +213,6 @@ class AgendaPartage_Admin {
 	
 	public static function wpcf7_admin_notices($tag, $action, $contact_form){
 		if( ! is_a($contact_form, 'WPCF7_ContactForm')){
-			// debug_log('wpcf7_admin_notices', $tag, $action, $contact_form);
 			return;
 		}
 		foreach(['agdpevent_edit_form_id'

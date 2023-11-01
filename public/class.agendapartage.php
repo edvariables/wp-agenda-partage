@@ -230,7 +230,8 @@ class AgendaPartage {
 		}
 		else
 			$options = array_merge( $options, array( $name => $value ) );
-		update_option( AGDP_TAG, $options );
+		
+		$result = update_option( AGDP_TAG, $options );
 	}
 		
 	/**
@@ -537,18 +538,17 @@ class AgendaPartage {
 	/**
 	 * Blog db version
 	 */
+	public static function get_db_version_option_name(){
+		return AGDP_TAG.'_db_version';
+	}
 	public static function get_db_version(){
-		return self::get_option(AGDP_TAG.'_db_version');
+		return get_option(self::get_db_version_option_name());
 	}
 	/**
 	 * Update DB based on blog db version
 	 */
 	public static function update_db(){
 		$current_version = self::get_db_version();
-		if( ! $current_version ){
-			debug_log('update_db $current_version === null !');
-			return $current_version;
-		}
 		foreach([ '1.0.22'
 				, '1.0.23'
 			] as $version){
@@ -568,7 +568,7 @@ class AgendaPartage {
 			throw new BadFunctionCallException('AgendaPartage_DB_Update::' . $function . __(' n\'existe pas.', AGDP_TAG));
 		if ( ! AgendaPartage_DB_Update::$function() )
 			return false;
-		self::update_option(AGDP_TAG.'_db_version', $version);
+		update_option(self::get_db_version_option_name(), $version);
 		return $version;
 	}
 }
