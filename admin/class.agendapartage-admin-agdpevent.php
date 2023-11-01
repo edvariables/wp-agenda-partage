@@ -25,7 +25,8 @@ class AgendaPartage_Admin_Evenement {
 		add_action( 'manage_' . AgendaPartage_Evenement::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		//set custom columns sortable
 		add_filter( 'manage_edit-' . AgendaPartage_Evenement::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
-		if(basename($_SERVER['PHP_SELF']) === 'edit.php' && $_GET['post_type'] === AgendaPartage_Evenement::post_type)
+		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
+		&& isset($_GET['post_type']) && $_GET['post_type'] === AgendaPartage_Evenement::post_type)
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
 
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard

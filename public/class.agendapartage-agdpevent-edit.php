@@ -414,7 +414,8 @@ class AgendaPartage_Evenement_Edit {
 			
 			$html .= '<li>utiliser la même session internet qu\'à la création de l\'évènement et, ce, le même jour.';
 
-			$url = '/wp-admin';
+			$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+			$url = '/wp-login.php?redirect_to=' . sanitize_url($url);
 			$html .= sprintf('<li>avoir un compte utilisateur sur le site, être <a href="%s">%sconnecté(e)</a> et avoir des droits suffisants.'
 				, $url
 				, AgendaPartage::icon('unlock')
