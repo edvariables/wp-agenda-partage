@@ -128,6 +128,7 @@ class AgendaPartage_WPCF7 {
 		switch($form_id){
 			case AgendaPartage::get_option('newsletter_events_register_form_id') :
 			case AgendaPartage::get_option('agdpevent_edit_form_id') :
+			case AgendaPartage::get_option('covoiturage_edit_form_id') :
 				break;
 			default:
 				if( self::check_submission_is_abuse($submission) ){
@@ -146,6 +147,9 @@ class AgendaPartage_WPCF7 {
 				break;
 			case AgendaPartage::get_option('newsletter_events_register_form_id') :
 				AgendaPartage_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
+				break;
+			case AgendaPartage::get_option('covoiturage_edit_form_id') :
+				AgendaPartage_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
 				break;
 				
 		}		

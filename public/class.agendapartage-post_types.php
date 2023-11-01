@@ -20,6 +20,9 @@ class AgendaPartage_Post_Types {
 			if(!class_exists('AgendaPartage_Maillog'))
 				require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog-post_type.php' );
+		if(!class_exists('AgendaPartage_Covoiturage'))
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage.php' );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-post_type.php' );
 		}
 	}
 
@@ -41,6 +44,11 @@ class AgendaPartage_Post_Types {
 		if(AgendaPartage::maillog_enable()){
 			AgendaPartage_Maillog_Post_type::register_post_type();
 		}
+
+		AgendaPartage_Covoiturage_Post_type::register_post_type();
+		AgendaPartage_Covoiturage_Post_type::register_taxonomy_cov_category();
+		AgendaPartage_Covoiturage_Post_type::register_taxonomy_city();
+		AgendaPartage_Covoiturage_Post_type::register_taxonomy_diffusion();
 		
 	    // clear the permalinks after the post type has been registered
 	    flush_rewrite_rules();

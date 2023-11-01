@@ -44,6 +44,7 @@ define( 'AGDP_DEBUGLOG_ENABLE', 'debuglog_enable');
 define( 'AGDP_SECRETCODE', 'codesecret' ); 
 define( 'AGDP_ARG_EVENTID', 'eventid' ); 
 define( 'AGDP_ARG_NEWSLETTERID', 'agdpnlid' ); 
+define( 'AGDP_ARG_COVOITURAGEID', 'covoitid' ); 
 
 // see translate_level_to_role()
 define( 'USER_LEVEL_ADMIN', 8 ); 

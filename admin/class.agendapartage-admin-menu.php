@@ -39,7 +39,7 @@ class AgendaPartage_Admin_Menu {
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
 		$section_args = array(
-			'before_section' => '<div class="tabs">',
+			'before_section' => '<div class="agdp-tabs-wrap">',
 			'after_section' => '</div>'
 		);
 		
@@ -244,6 +244,61 @@ class AgendaPartage_Admin_Menu {
 					'taxonomy' => AgendaPartage_Evenement::taxonomy_diffusion
 				]
 			);
+			
+		//////////////////////////////////////////
+		// register a new section in the "agendapartage" page
+		add_settings_section(
+			'agendapartage_section_covoiturages',
+			__( 'Covoiturages', AGDP_TAG ),
+			array(__CLASS__, 'settings_sections_cb'),
+			AGDP_TAG, $section_args
+		);
+
+			// 
+			$field_id = 'covoiturages_page_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Page des covoiturages', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => 'page'
+				]
+			);
+
+			// 
+			$field_id = 'new_covoiturage_page_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => 'page'
+				]
+			);
+
+			// 
+			$field_id = 'covoiturage_edit_form_id';
+			add_settings_field(
+				$field_id, 
+				__( 'Formulaire d\'ajout et modification de covoiturage', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+			//////////////////////////////////////////
 
 		// register a new section in the "agendapartage" page
 		add_settings_section(
@@ -342,21 +397,24 @@ class AgendaPartage_Admin_Menu {
 		
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
-		jQuery('form > div.tabs:first').each(function(){
+		jQuery('form > div.agdp-tabs-wrap:first').each(function(){
 			var id = 'agdp-tabs';
 			var tabs_counter = 0;
 			var $tabs_contents = [];
 			var $tabs = jQuery(sprintf('<div id="%s"/>', id));
 			var $nav = jQuery(sprintf('<ul id="%s-nav"/>', id)).appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
-			jQuery(this).find('div.tabs > h2').each(function(){
+			var $submit = jQuery(this).find('p.submit');
+			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
 				tabs_counter++;
 				$nav.append(sprintf('<li><a href="#%s-%d">%s</a></li>', id, tabs_counter, this.innerText));
 				var $content = jQuery(sprintf('<div id="%s-%d" class="agdp-panel"><div/>', id, tabs_counter));
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
 			});
-			jQuery(this).html( $tabs.tabs() );
+			jQuery(this)
+				.html( $tabs.tabs() )
+				.append($submit);
 		});
 	});</script>
 		<?php

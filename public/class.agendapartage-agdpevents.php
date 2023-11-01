@@ -810,7 +810,7 @@ class AgendaPartage_Evenements {
 			$url = AgendaPartage_Evenement::get_post_permalink($event);
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
-					.'Afficher la page l\'évènement'
+					.'Afficher la page de l\'évènement'
 					. ($email_mode  ? '' : AgendaPartage::icon('media-default'))
 				.'</a></td>'
 				, $url);

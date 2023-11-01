@@ -46,6 +46,17 @@ class AgendaPartage {
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevents.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenements', 'init' ) );
+		
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Covoiturage', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-edit.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Covoiturage_Edit', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturages.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Covoiturages', 'init' ) );
+		
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Newsletter', 'init' ) );
@@ -60,6 +71,9 @@ class AgendaPartage {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement_Shortcodes', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Covoiturage_Shortcodes', 'init' ) );
 		
 	}
 
@@ -81,6 +95,7 @@ class AgendaPartage {
 	public static function on_query_var_cb( $vars ){
 		$vars[] = AGDP_ARG_EVENTID;
 		$vars[] = AGDP_ARG_NEWSLETTERID;
+		$vars[] = AGDP_ARG_COVOITURAGEID;
 		return $vars;
 	}
 
@@ -136,6 +151,8 @@ class AgendaPartage {
 	    wp_enqueue_style( AGDP_TAG);
 	    wp_register_style( AGDP_TAG . '_cal', plugins_url( 'agenda-partage/public/css/agendapartage.calendrier.css' ), array(), AGDP_VERSION , 'all' );
 	    wp_enqueue_style( AGDP_TAG . '_cal');
+		wp_register_style( AGDP_TAG . '_cov', plugins_url( 'agenda-partage/public/css/agendapartage.covoiturage.css' ), array(), AGDP_VERSION , 'all' );
+	    wp_enqueue_style( AGDP_TAG . '_cov');
 		
 		if(!is_admin())
 			wp_enqueue_style('dashicons');
@@ -212,6 +229,13 @@ class AgendaPartage {
 				return __( 'Page "Page de présentation du site"', AGDP_TAG );
 			case 'newsletter_diffusion_term_id':
 				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
+				
+			case 'covoiturage_edit_form_id':
+				return __( 'Formulaire d\'ajout et de modification de covoiturage', AGDP_TAG );
+			case 'new_covoiturage_page_id':
+				return __( 'Page "Ajouter un covoiturage"', AGDP_TAG );
+			case 'covoiturages_page_id':
+				return __( 'Page contenant les covoiturages', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}
@@ -396,6 +420,10 @@ class AgendaPartage {
 				case 'AgendaPartage_Newsletter_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter-post_type.php';
 					break;
+
+				case 'AgendaPartage_Covoiturage_Post_type':
+		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-post_type.php';
+					break;
 				
 				default:
 					var_dump($class_name);//show calls stack
@@ -415,6 +443,8 @@ class AgendaPartage {
 		AgendaPartage_Evenement_Post_type::register_user_role();
 		self::include_and_init('AgendaPartage_Newsletter_Post_type');
 		AgendaPartage_Newsletter_Post_type::register_user_role();
+		self::include_and_init('AgendaPartage_Covoiturage_Post_type');
+		AgendaPartage_Covoiturage_Post_type::register_user_role();
 	}
 
 	/**

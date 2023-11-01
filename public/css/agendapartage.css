@@ -148,10 +148,10 @@ label.textarea-rows-5 textarea {
 	max-height: 8em;
 }
 
-.adgpevent-forbidden {
+.adgpevent-forbidden, .covoiturage-forbidden {
 	padding-left: 2em;
 }
-.adgpevent-forbidden ul > li {
+.adgpevent-forbidden ul > li, .covoiturage-forbidden ul > li {
 	margin-left: 1em;
 }
 .agdp-title-link a {
@@ -161,21 +161,25 @@ label.textarea-rows-5 textarea {
 	outline: none;
 }
 
-.adgpevent-forbidden form {
+.adgpevent-forbidden form, .covoiturage-forbidden form {
 	display: inline-flex;
 }
 
-.agdpevent-edit-toolbar {
+.agdpevent-edit-toolbar,
+.covoiturage-edit-toolbar {
 	text-align: right;
 }
-.agdpevent-edit-toolbar > .agdpevent-tool > * {
+.agdpevent-edit-toolbar > .agdpevent-tool > *,
+.covoiturage-edit-toolbar > .covoiturage-tool > * {
 	float: right;
 	margin-left: 1em;
 }
-.agdpevent-edit-toolbar > .agdpevent-tool .dashicons-before {
+.agdpevent-edit-toolbar > .agdpevent-tool .dashicons-before,
+.covoiturage-edit-toolbar > .covoiturage-tool .dashicons-before {
 	margin-right: 3px;
 }
 .agdpevent-edit-toolbar > .agdpevent-tool .close-box,
+.covoiturage-edit-toolbar > .covoiturage-tool .close-box,
 .ajax_action-response .close-box {
 	float: right;
 }
@@ -192,10 +196,12 @@ div.ajax_action-response {
 	padding: 5px;
 }
 
-input.wpcf7-form-control[name^="ev-date-"] {
+input.wpcf7-form-control[name^="ev-date-"],
+input.wpcf7-form-control[name^="cov-date-"] {
 	width: 11em;
 }
-input.wpcf7-form-control[name^="ev-heure-"] {
+input.wpcf7-form-control[name^="ev-heure-"],
+input.wpcf7-form-control[name^="cov-heure-"] {
 	width: 5em;
 }
 .wpcf7-form table {

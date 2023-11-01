@@ -8,80 +8,85 @@ jQuery( function( $ ) {
 	 * Les valeurs des champs sont dans un input.agdpevent_edit_form_data hidden
 	 */
 	$( document ).ready(function() {
-		$( 'body' ).on('agdpevent_edit_form-init', function(){
-			$("input.agdpevent_edit_form_data").each(function(){
-				/** Complète les champs de formulaires avec les valeurs fournies **/
-				var $agdpDataInput = $(this);
-				var $form = $agdpDataInput.parents('form.wpcf7-form:first');
-				if($form.length == 0) return;
-				var fields = JSON.parse($agdpDataInput.attr("data"));
-				for(var field_name in fields){
-					var $input = $form.find(':input[name="' + field_name + '"]');
-					if($input.attr('type') == 'checkbox')
-						$input.prop('checked', !! fields[field_name]);
-					else
-						$input.val(fields[field_name]);
+		function wpcf7_form_init_fields(){
+			/** Complète les champs de formulaires avec les valeurs fournies **/
+			var $agdpDataInput = $(this);
+			var $form = $agdpDataInput.parents('form.wpcf7-form:first');
+			if($form.length == 0) return;
+			var fields = JSON.parse($agdpDataInput.attr("data"));
+			for(var field_name in fields){
+				var $input = $form.find(':input[name="' + field_name + '"]');
+				if($input.attr('type') == 'checkbox')
+					$input.prop('checked', !! fields[field_name]);
+				else
+					$input.val(fields[field_name]);
+			}
+			
+			/** Bloque l'effacement du formulaire **/
+			$form.on('reset', 'form.wpcf7-form', function(e) {
+				e.preventDefault();
+			});
+			
+			/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
+			document.addEventListener( 'wpcf7mailsent', function( event ) {
+				var post_url = event.detail.apiResponse['message'];
+				if(post_url && post_url.startsWith('redir:')){
+					post_url = post_url.substring('redir:'.length);
+					if(post_url){
+						event.detail.apiResponse['message'] = 'La page de l\'évènement va être rechargée. Merci de patienter.';
+						document.location = post_url;
+					}
 				}
-				
-				/** Bloque l'effacement du formulaire **/
-				$form.on('reset', 'form.wpcf7-form', function(e) {
-					e.preventDefault();
-				});
-				
-				/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
-				document.addEventListener( 'wpcf7mailsent', function( event ) {
-					var post_url = event.detail.apiResponse['message'];
-					if(post_url && post_url.startsWith('redir:')){
-						post_url = post_url.substring('redir:'.length);
-						if(post_url){
-							event.detail.apiResponse['message'] = 'La page de l\'évènement va être rechargée. Merci de patienter.';
-							document.location = post_url;
-						}
+			}, false );
+			/** En réponse d'enregistremement : autorise le html dans le message de réponse **/
+			['wpcf7invalid','wpcf7mailfailed', 'wpcf7submit', 'wpcf7mailsent'].forEach( function(evt) {
+					document.addEventListener( evt, function( event ) {
+					var response = event.detail.apiResponse['message'];
+					//Si le message contient du html
+					if(response && response.indexOf('<') >= 0 && response.indexOf('<script') == -1){
+						//pas jojo mais wpcf7 affecte le texte par .innerText, on préfèrerait innerHTML
+						setTimeout(function(){$form.find(".wpcf7-response-output").html(response);}, 200);
 					}
 				}, false );
-				/** En réponse d'enregistremement : autorise le html dans le message de réponse **/
-				['wpcf7invalid','wpcf7mailfailed', 'wpcf7submit', 'wpcf7mailsent'].forEach( function(evt) {
-						document.addEventListener( evt, function( event ) {
-						var response = event.detail.apiResponse['message'];
-						//Si le message contient du html
-						if(response && response.indexOf('<') >= 0 && response.indexOf('<script') == -1){
-							//pas jojo mais wpcf7 affecte le texte par .innerText, on préfèrerait innerHTML
-							setTimeout(function(){$form.find(".wpcf7-response-output").html(response);}, 200);
-						}
-					}, false );
-				});
-				
-				/** Si la localisation est vide, la sélection d'une commune affecte la valeur **/
-				$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]').on('click', function(event){
-					var $localisation = $form.find('input[name="ev-localisation"]');
-					if( ! $localisation.val()){
-						var cities = '';
-						$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]:checked').each(function(e){
-							cities += (cities ? ', ' : '') + this.parentElement.innerText;
-						});
-						$localisation.attr('placeholder', cities );
-					}
-				});
-				
-				/** Récupère les titres des cases à cocher pour ajouter l'attribut title **/
-				$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
-					var input = this.getAttribute('input');
-					var titles = JSON.parse(this.getAttribute('titles'));
-					for(title in titles){
-						$form.find('input[name="' + input + '"][value="' + title + '"]').parent('label').attr('title', titles[title]);
-					}
-					$(this)
-						.addClass('dashicons dashicons-info')
-							.click(function(){
-								var msg = '';
-								for(title in titles)
-									msg += '- ' + title + ' : ' + titles[title] + '\r\n';
-								alert( msg );
-							})
-						.removeClass('hidden')
-				});
 			});
+			
+			/** Si la localisation est vide, la sélection d'une commune affecte la valeur **/
+			$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]').on('click', function(event){
+				var $localisation = $form.find('input[name="ev-localisation"]');
+				if( ! $localisation.val()){
+					var cities = '';
+					$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]:checked').each(function(e){
+						cities += (cities ? ', ' : '') + this.parentElement.innerText;
+					});
+					$localisation.attr('placeholder', cities );
+				}
+			});
+			
+			/** Récupère les titres des cases à cocher pour ajouter l'attribut title **/
+			$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
+				var input = this.getAttribute('input');
+				var titles = JSON.parse(this.getAttribute('titles'));
+				for(title in titles){
+					$form.find('input[name="' + input + '"][value="' + title + '"]').parent('label').attr('title', titles[title]);
+				}
+				$(this)
+					.addClass('dashicons dashicons-info')
+						.click(function(){
+							var msg = '';
+							for(title in titles)
+								msg += '- ' + title + ' : ' + titles[title] + '\r\n';
+							alert( msg );
+						})
+					.removeClass('hidden')
+			});
+		}
+		$( 'body' ).on('agdpevent_edit_form-init', function(){
+			$("input.agdpevent_edit_form_data").each(wpcf7_form_init_fields);
 		}).trigger('agdpevent_edit_form-init');
+		
+		$( 'body' ).on('covoiturage_edit_form-init', function(){
+			$("input.covoiturage_edit_form_data").each(wpcf7_form_init_fields);
+		}).trigger('covoiturage_edit_form-init');
 		
 		/**
 		 * A cause du reCaptcha, désactivation de la validation du formulaire par la touche Enter pour la remplacer par un Tab
@@ -131,10 +136,10 @@ jQuery( function( $ ) {
 		}
 
 		/**
-		 * Liste d'évènements
+		 * Liste d'évènements ou de covoiturages
 		 */
 		//Filtres de l'agenda
-		$(' .agdp-agdpevents-list-header form').each(function(event){
+		$('.agdp-agdpevents-list-header form, .agdp-covoiturages-list-header form').each(function(event){
 			var $form = $(this);
 			/** manage 'all' checkbox **/
 			$form.find('label:not([for]) > input[type="checkbox"]').on('click', function(event){
