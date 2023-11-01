@@ -1019,6 +1019,11 @@ class AgendaPartage_Evenement {
 				return true;
 			}
 			
+			//Utilisateur associé
+			if(	$current_user->ID == $post->post_author ){
+				return true;
+			}
+			
 			$user_email = $current_user->user_email;
 			if( ! is_email($user_email)){
 				$user_email = false;
