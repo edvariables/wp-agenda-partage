@@ -264,3 +264,51 @@ ul.newsletter-change-nl {
 ul.newsletter-change-nl p {
 	margin: 0;
 }
+
+
+.wpcf7-list-item input[type="radio"]:checked + span.wpcf7-list-item-label,
+div.labels-one-row label.radio-checked {
+	font-weight: bold;
+	text-decoration: underline;
+}
+.wpcf7-form-control.wpcf7-radio.no-label .wpcf7-list-item-label {
+	display: none;
+}
+div.labels-one-row label {
+	display: inline-block;
+}
+
+.entry-title span.cov-intention,
+.agdp-covoiturages span.cov-intention {
+	border: 1px solid;
+	padding: 0 2px 0 2px;
+}
+.entry-title span.cov-intention-1,
+.agdp-covoiturages span.cov-intention {
+	background-color: darkred;
+}
+.entry-title span.cov-intention-2,
+.agdp-covoiturages span.cov-intention-2 {
+	background-color: darkcyan;
+}
+.entry-title span.cov-intention-3,
+.agdp-covoiturages span.cov-intention-3 {
+	background-color: darkgoldenrod;
+}
+.entry-title span.cov-depart, .entry-title span.cov-arrivee,
+.agdp-covoiturages span.cov-depart, .agdp-covoiturages span.cov-arrivee {
+	font-variant-caps: small-caps;
+}
+.entry-title .title-prep,
+.agdp-covoiturages .title-prep {
+	display: inline-block;
+	width: 38px;
+}
+
+.wpcf7-form .swap-depart-arrivee {
+	float: right;
+	box-shadow: none !important;
+	text-decoration: none;
+	outline: none;
+	cursor: pointer;
+}

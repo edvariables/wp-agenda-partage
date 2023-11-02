@@ -40,10 +40,10 @@ class AgendaPartage_Admin_Covoiturage {
 		unset( $columns );
 		$columns = array(
 			'cb'     => __( 'Sélection', AGDP_TAG ),
+			'cov_intention'     => __( 'Intention', AGDP_TAG ),
 			'titre'     => __( 'Titre', AGDP_TAG ),
 			'dates'     => __( 'Date(s)', AGDP_TAG ),
 			'details'     => __( 'Détails', AGDP_TAG ),
-			'cov_category'     => __( 'Catégories', AGDP_TAG ),
 			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
 			'diffusion'      => __( 'Diffusion', AGDP_TAG ),
 			'author'        => __( 'Auteur', AGDP_TAG ),
@@ -59,6 +59,11 @@ class AgendaPartage_Admin_Covoiturage {
 				echo $post->post_title;
 				
 				break;
+			case 'cov_intention' :
+				$post = get_post( $post_id );
+				echo AgendaPartage_Covoiturage_Post_type::get_intention_label(get_post_meta( $post_id, 'cov-intention', true ));
+				
+				break;
 			case 'organisateur' :
 				$organisateur = get_post_meta( $post_id, 'cov-organisateur', true );
 				$email = get_post_meta( $post_id, 'cov-email', true );
@@ -67,9 +72,6 @@ class AgendaPartage_Admin_Covoiturage {
 				break;
 			case 'dates' :
 				echo AgendaPartage_Covoiturage::get_covoiturage_dates_text( $post_id );
-				break;
-			case 'cov_category' :
-				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
 				break;
 			case 'diffusion' :
 				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
@@ -321,7 +323,7 @@ class AgendaPartage_Admin_Covoiturage {
 				else
 					$url = AgendaPartage_Covoiturage::get_post_permalink($covoiturage);
 				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Covoiturage::get_post_title($covoiturage) );
-				the_terms( $covoiturage->ID, AgendaPartage_Covoiturage::taxonomy_cov_category, 
+				the_terms( $covoiturage->ID, AgendaPartage_Covoiturage::taxonomy_cov_intention, 
 					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
 				$the_date = get_the_date('', $covoiturage);
 				$the_modified_date = get_the_modified_date('', $covoiturage);

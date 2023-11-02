@@ -569,6 +569,8 @@ class AgendaPartage_Evenements {
 			
 			] as $search=>$replace)
 			$html = str_replace($search, $replace, $html);
+		
+		if(false) '{{';//bugg notepad++ functions list
 		foreach([
 			'/\sagdpevent="\{[^\}]*\}"/' => '',
 			'/\sid="\w*"/' => '',
@@ -625,7 +627,7 @@ class AgendaPartage_Evenements {
 				$all_selected_terms[$tax_name] = false;
 		}
 		$html = '<div class="agdp-agdpevents-list-header">'
-			. '<div id="agdp-filters" class="toggle-trigger">'
+			. sprintf('<div id="agdp-filters" class="toggle-trigger %s">', count($filters_summary) ? 'active' : '')
 			. '<table><tr><th>'. __('Filtres', AGDP_TAG).'</th>'
 			. '<td>'
 			. '<p class="agdp-title-link">'

@@ -227,7 +227,8 @@ class AgendaPartage_Covoiturages_Export {
 
 		// Add fields
 		foreach([
-			'LOCATION'=>'cov-localisation'
+			'DEPART'=>'cov-depart'
+			, 'ARRIVEE'=>'cov-arrivee'
 			, 'ORGANISATEUR'=>'cov-organisateur'
 			, 'EMAIL'=>'cov-email'
 			, 'PHONE'=>'cov-phone'
@@ -237,7 +238,7 @@ class AgendaPartage_Covoiturages_Export {
 
 		// Add terms
 		foreach([ 
-			'CATEGORIES' => AgendaPartage_Covoiturage::taxonomy_cov_category
+			'INTENTIONS' => AgendaPartage_Covoiturage::taxonomy_cov_intention
 			, 'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
 			, 'DIFFUSIONS' => AgendaPartage_Covoiturage::taxonomy_diffusion
 		] as $node_name => $tax_name){

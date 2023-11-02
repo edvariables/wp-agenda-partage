@@ -8,85 +8,108 @@ jQuery( function( $ ) {
 	 * Les valeurs des champs sont dans un input.agdpevent_edit_form_data hidden
 	 */
 	$( document ).ready(function() {
-		function wpcf7_form_init_fields(){
-			/** Complète les champs de formulaires avec les valeurs fournies **/
-			var $agdpDataInput = $(this);
-			var $form = $agdpDataInput.parents('form.wpcf7-form:first');
-			if($form.length == 0) return;
-			var fields = JSON.parse($agdpDataInput.attr("data"));
-			for(var field_name in fields){
-				var $input = $form.find(':input[name="' + field_name + '"]');
-				if($input.attr('type') == 'checkbox')
-					$input.prop('checked', !! fields[field_name]);
-				else
-					$input.val(fields[field_name]);
-			}
-			
-			/** Bloque l'effacement du formulaire **/
-			$form.on('reset', 'form.wpcf7-form', function(e) {
-				e.preventDefault();
-			});
-			
-			/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
-			document.addEventListener( 'wpcf7mailsent', function( event ) {
-				var post_url = event.detail.apiResponse['message'];
-				if(post_url && post_url.startsWith('redir:')){
-					post_url = post_url.substring('redir:'.length);
-					if(post_url){
-						event.detail.apiResponse['message'] = 'La page de l\'évènement va être rechargée. Merci de patienter.';
-						document.location = post_url;
+		$( 'body' ).on('wpcf7_form_fields-init', function(){
+			$("input.agdpevent_edit_form_data, input.covoiturage_edit_form_data").each(	function(){
+				/** Complète les champs de formulaires avec les valeurs fournies **/
+				var $agdpDataInput = $(this);
+				var $form = $agdpDataInput.parents('form.wpcf7-form:first');
+				if($form.length == 0) return;
+				var fields = JSON.parse($agdpDataInput.attr("data"));
+				for(var field_name in fields){
+					var $input = $form.find(':input[name="' + field_name + '"]');
+					if($input.attr('type') == 'checkbox')
+						$input.prop('checked', !! fields[field_name]);
+					else if($input.attr('type') == 'radio'){
+						$input.filter('[value="' + fields[field_name] + '"]')
+							.prop('checked', true)
+							.parents('label:first').addClass('radio-checked');
 					}
+					else
+						$input.val(fields[field_name]);
 				}
-			}, false );
-			/** En réponse d'enregistremement : autorise le html dans le message de réponse **/
-			['wpcf7invalid','wpcf7mailfailed', 'wpcf7submit', 'wpcf7mailsent'].forEach( function(evt) {
-					document.addEventListener( evt, function( event ) {
-					var response = event.detail.apiResponse['message'];
-					//Si le message contient du html
-					if(response && response.indexOf('<') >= 0 && response.indexOf('<script') == -1){
-						//pas jojo mais wpcf7 affecte le texte par .innerText, on préfèrerait innerHTML
-						setTimeout(function(){$form.find(".wpcf7-response-output").html(response);}, 200);
+				
+				/** Bloque l'effacement du formulaire **/
+				$form.on('reset', 'form.wpcf7-form', function(e) {
+					e.preventDefault();
+				});
+				
+				/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
+				document.addEventListener( 'wpcf7mailsent', function( event ) {
+					var post_url = event.detail.apiResponse['message'];
+					if(post_url && post_url.startsWith('redir:')){
+						post_url = post_url.substring('redir:'.length);
+						if(post_url){
+							event.detail.apiResponse['message'] = 'La page va être rechargée. Merci de patienter.';
+							document.location = post_url;
+						}
 					}
 				}, false );
+				/** En réponse d'enregistremement : autorise le html dans le message de réponse **/
+				['wpcf7invalid','wpcf7mailfailed', 'wpcf7submit', 'wpcf7mailsent'].forEach( function(evt) {
+						document.addEventListener( evt, function( event ) {
+						var response = event.detail.apiResponse['message'];
+						//Si le message contient du html
+						if(response && response.indexOf('<') >= 0 && response.indexOf('<script') == -1){
+							//pas jojo mais wpcf7 affecte le texte par .innerText, on préfèrerait innerHTML
+							setTimeout(function(){$form.find(".wpcf7-response-output").html(response);}, 200);
+						}
+					}, false );
+				});
+				
+				/** Si la localisation est vide, la sélection d'une commune affecte la valeur **/
+				$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]').on('click', function(event){
+					var $localisation = $form.find('input[name="ev-localisation"]');
+					if( ! $localisation.val()){
+						var cities = '';
+						$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]:checked').each(function(e){
+							cities += (cities ? ', ' : '') + this.parentElement.innerText;
+						});
+						$localisation.attr('placeholder', cities );
+					}
+				});
+				
+				/** Récupère les titres des cases à cocher pour ajouter l'attribut title **/
+				$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
+					var input = this.getAttribute('input');
+					var titles = JSON.parse(this.getAttribute('titles'));
+					for(title in titles){
+						$form.find('input[name="' + input + '"][value="' + title + '"]').parent('label').attr('title', titles[title]);
+					}
+					$(this)
+						.addClass('dashicons dashicons-info')
+							.click(function(){
+								var msg = '';
+								for(title in titles)
+									msg += '- ' + title + ' : ' + titles[title] + '\r\n';
+								alert( msg );
+							})
+						.removeClass('hidden')
+				});
+				
+				/** Options radio sans label **/
+				$form.find('.wpcf7-form-control.wpcf7-radio.no-label input[type="radio"]').on('change', function(event){
+					$(this).parents('label:first')
+						.siblings('label')
+							.toggleClass('radio-checked', false)
+							.end()
+						.toggleClass('radio-checked', this.checked)
+					;
+				});
+				
+				/** Covoiturage : Intervertit les lieux de départ et d'arrivée **/
+				$form.on('click', '.swap-depart-arrivee', function(e) {
+					var $arrivee = $form.find('input[name="cov-arrivee"]');
+					var arrivee = $arrivee.val();
+					var $depart = $form.find('input[name="cov-depart"]');
+					var depart = $depart.val();
+					$depart.val(arrivee);
+					$arrivee.val(depart);
+				});
+				
+				
 			});
-			
-			/** Si la localisation est vide, la sélection d'une commune affecte la valeur **/
-			$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]').on('click', function(event){
-				var $localisation = $form.find('input[name="ev-localisation"]');
-				if( ! $localisation.val()){
-					var cities = '';
-					$form.find('.wpcf7-form-control-wrap[data-name="ev-cities"] input[type="checkbox"]:checked').each(function(e){
-						cities += (cities ? ', ' : '') + this.parentElement.innerText;
-					});
-					$localisation.attr('placeholder', cities );
-				}
-			});
-			
-			/** Récupère les titres des cases à cocher pour ajouter l'attribut title **/
-			$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
-				var input = this.getAttribute('input');
-				var titles = JSON.parse(this.getAttribute('titles'));
-				for(title in titles){
-					$form.find('input[name="' + input + '"][value="' + title + '"]').parent('label').attr('title', titles[title]);
-				}
-				$(this)
-					.addClass('dashicons dashicons-info')
-						.click(function(){
-							var msg = '';
-							for(title in titles)
-								msg += '- ' + title + ' : ' + titles[title] + '\r\n';
-							alert( msg );
-						})
-					.removeClass('hidden')
-			});
-		}
-		$( 'body' ).on('agdpevent_edit_form-init', function(){
-			$("input.agdpevent_edit_form_data").each(wpcf7_form_init_fields);
-		}).trigger('agdpevent_edit_form-init');
+		}).trigger('wpcf7_form_fields-init');
 		
-		$( 'body' ).on('covoiturage_edit_form-init', function(){
-			$("input.covoiturage_edit_form_data").each(wpcf7_form_init_fields);
-		}).trigger('covoiturage_edit_form-init');
 		
 		/**
 		 * A cause du reCaptcha, désactivation de la validation du formulaire par la touche Enter pour la remplacer par un Tab
@@ -119,10 +142,10 @@ jQuery( function( $ ) {
 		 * Scroll jusqu'au #hash de la forme #eventid%d (correction de la hauteur du menu)
 		 */
 		if( window.location.hash
-		&& /eventid[0-9]+/.test(window.location.hash)) {
+		&& /(event|covoiturage)id[0-9]+/.test(window.location.hash)) {
 			$( 'body ').ready(function(){
 			 
-			var matches = window.location.hash.match(/eventid[0-9]+/);
+			var matches = window.location.hash.match(/(event|covoiturage)id[0-9]+/);
 			var $dom = $('#' + matches[0]);
 			if( $dom.length === 0)
 				return;

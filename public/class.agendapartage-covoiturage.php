@@ -15,7 +15,6 @@
 class AgendaPartage_Covoiturage {
 
 	const post_type = 'covoiturage';
-	const taxonomy_cov_category = 'cov_category';
 	const taxonomy_city = 'cov_city';
 	const taxonomy_diffusion = 'cov_diffusion';
 
@@ -200,17 +199,35 @@ class AgendaPartage_Covoiturage {
  	/**
  	 * Retourne le titre de la page
  	 */
-	public static function get_post_title( $covoiturage = null, $no_html = false) {
+	public static function get_post_title( $covoiturage = null, $no_html = false, $data = false) {
  		if( ! isset($covoiturage) || ! is_object($covoiturage)){
 			global $post;
 			$covoiturage = $post;
 		}
 		
-		$post_title = isset( $covoiturage->post_title ) ? $covoiturage->post_title : '';
+		// $post_title = isset( $covoiturage->post_title ) ? $covoiturage->post_title : '';
+		$intentionid = $data ? $data['cov-intention'] : get_post_meta($covoiturage->ID, 'cov-intention', true);
+		$intention = AgendaPartage_Covoiturage_Post_type::get_intention_label($intentionid);
+		$le = "Le";
+		$dates = self::get_covoiturage_dates_text( $covoiturage->ID, $data );
+		$de = "de";
+		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage->ID, 'cov-depart', true);
+		$vers = "à";
+		$arrivee = $data ? $data['cov-arrivee'] : get_post_meta($covoiturage->ID, 'cov-arrivee', true);
+		if( !  $no_html){
+			$intention = sprintf('<span class="cov-intention cov-intention-%s">%s</span>', $intentionid, $intention);
+			$dates = preg_replace('/^(\w+\s)([0-9]+)/', '$1<span class="cov-date-jour-num">$2</span>', $dates);
+			$depart = sprintf('<span class="cov-depart">%s</span>', htmlentities($depart));
+			$arrivee = sprintf('<span class="cov-arrivee">%s</span>', htmlentities($arrivee));
+			$le = sprintf('<span class="title-prep">%s</span>', $le);
+			$de = sprintf('<span class="title-prep">%s</span>', $de);
+			$vers = sprintf('<span class="title-prep">%s</span>', $vers);
+		}
 		$separator = $no_html ? ', ' : '<br>';
-		$html = $post_title
-			. $separator . self::get_covoiturage_dates_text( $covoiturage->ID )
-			. $separator . get_post_meta($covoiturage->ID, 'cov-localisation', true);
+		$html = $intention . $separator
+			. $le . ' ' . $dates . $separator
+			. $de . ' ' . $depart . $separator
+			. $vers . ' ' . $arrivee;
 		return $html;
 	}
 
@@ -243,12 +260,9 @@ class AgendaPartage_Covoiturage {
 
 		$codesecret = self::get_secretcode_in_request($covoiturage);
 		
-		$html = '[covoiturage-categories label="Catégories : "]
-		[covoiturage-cities label="à "]
-		[covoiturage-description]
-		[covoiturage info="organisateur" label="Organisateur : "]
-		[covoiturage info="phone" label="Téléphone : "]
-		[covoiturage info="siteweb"]';
+		$html = '[covoiturage-description]
+		[covoiturage info="organisateur" label="Initiateur : "]
+		[covoiturage info="phone" label="Téléphone : "]';
 		if( AgendaPartage_Covoiturage_Post_type::is_diffusion_managed() )
 			$html .='[covoiturage-diffusions label="Diffusion (sous réserve) : "]';
 
@@ -258,7 +272,7 @@ class AgendaPartage_Covoiturage {
 			$meta_name = 'cov-message-contact';
 			$message_contact = get_post_meta($covoiturage->ID, $meta_name, true);
 			if($message_contact){
-				$html .= sprintf('[covoiturage-message-contact toggle="Envoyez un message à l\'organisateur" no-ajax post_id="%d" %s]'
+				$html .= sprintf('[covoiturage-message-contact toggle="Envoyez un message à l\'initiateur" no-ajax post_id="%d" %s]'
 						, $covoiturage->ID
 						, $codesecret ? AGDP_SECRETCODE . '=' . $codesecret : ''
 				);
@@ -318,7 +332,7 @@ class AgendaPartage_Covoiturage {
 					$url .= '#' . AGDP_ARG_COVOITURAGEID . $covoiturage->ID;
 					$html .= sprintf('<br><br>Pour voir ce covoiturage dans la liste, <a href="%s">cliquez ici %s</a>.'
 					, $url
-					, AgendaPartage::icon('calendar-alt'));
+					, AgendaPartage::icon('car'));
 				}
 				break;
 		}
@@ -335,35 +349,6 @@ class AgendaPartage_Covoiturage {
 		}
 		return $html;
 	}
-		
- 
- 	/**
-	 * Dans le cas où WP considère le post comme inaccessible car en statut 'pending' ou 'draft'
-	 * alors que le créateur peut le modifier.
- 	 */
-	/* public static function on_covoiturage_404( $covoiturage ) {
-		global $post;
-		$post = $covoiturage;
-		//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
-		global $wp_query;
-		$wp_query->in_the_loop = true;
-		
-		get_header(); ?>
-
-<div class="wrap">
-	<div id="primary" class="content-area">
-		<main id="main" class="site-main">
-			<?php
-				get_template_part( 'template-parts/page/content', 'page' );
-			?>
-		</main><!-- #main -->
-	</div><!-- #primary -->
-</div><!-- .wrap -->
-
-<?php
-		get_footer();
-		exit();
-	} */
 	
 	/*******************
 	 * Actions via Ajax
@@ -712,17 +697,16 @@ class AgendaPartage_Covoiturage {
 		$html = '<table><tbody>';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Titre', htmlentities($post->post_title));
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Dates', self::get_covoiturage_dates_text($post_id));
-		$meta_name = 'cov-localisation';
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Lieu', htmlentities(get_post_meta($post_id, $meta_name, true)));
+		$meta_name = 'cov-depart';
+		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Départ', htmlentities(get_post_meta($post_id, $meta_name, true)));
+		$meta_name = 'cov-arrivee';
+		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Destination', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Communes', htmlentities(implode(', ', self::get_covoiturage_cities ($post_id, 'names'))));
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Catégories', htmlentities(implode(', ', self::get_covoiturage_categories ($post_id, 'names'))));
 		$html .= sprintf('<tr><td>%s : </td><td><pre>%s</pre></td></tr>', 'Description', htmlentities($post->post_content));
 		$meta_name = 'cov-organisateur';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Organisateur', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'cov-phone';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Téléphone', htmlentities(get_post_meta($post_id, $meta_name, true)));
-		$meta_name = 'cov-siteweb';
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Site web', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'cov-email';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Email', get_post_meta($post_id, $meta_name, true));
 		$meta_name = 'cov-email-show';
@@ -871,14 +855,13 @@ class AgendaPartage_Covoiturage {
 	/**
 	 * Retourne le texte des dates et heures d'un covoiturage
 	 */
-	public static function get_covoiturage_dates_text( $post_id ) {
-		if(is_object($post_id))
+	public static function get_covoiturage_dates_text( $post_id, $data = false ) {
+		if($post_id && is_object($post_id))
 			$post_id = $post_id->ID;
-		$date_debut    = get_post_meta( $post_id, 'cov-date-debut', true );
-		$date_jour_entier    = get_post_meta( $post_id, 'cov-date-journee-entiere', true );
-		$heure_debut    = get_post_meta( $post_id, 'cov-heure-debut', true );
-		$date_fin    = get_post_meta( $post_id, 'cov-date-fin', true );
-		$heure_fin    = get_post_meta( $post_id, 'cov-heure-fin', true );
+		$date_debut    = $data ? $data['cov-date-debut'] : get_post_meta( $post_id, 'cov-date-debut', true );
+		$heure_debut    = $data ? $data['cov-heure-debut'] : get_post_meta( $post_id, 'cov-heure-debut', true );
+		$date_fin    = $date_debut;
+		$heure_fin    = $data ? $data['cov-heure-fin'] : get_post_meta( $post_id, 'cov-heure-fin', true );
 		if(mysql2date( 'j', $date_debut ) === '1')
 			$format_date_debut = 'l j\e\r M Y';
 		else
@@ -890,20 +873,14 @@ class AgendaPartage_Covoiturage {
 		return mb_strtolower( trim(
 			  ($date_fin && $date_fin != $date_debut ? 'du ' : '')
 			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( $format_date_debut, $date_debut )) : '')
-			. (/* !$date_jour_entier && */ $heure_debut 
-				? ($heure_fin ? ' de ' : ' à ') . $heure_debut : '')
+			. ($heure_debut ? ' à ' . $heure_debut : '')
+			// . (/* !$date_jour_entier && */ $heure_debut 
+				// ? ($heure_fin ? ' de ' : ' à ') . $heure_debut : '')
 			. ($date_fin && $date_fin != $date_debut ? ' au ' . str_ireplace(' mar ', ' mars ', mysql2date( $format_date_fin, $date_fin )) : '')
 			. (/* !$date_jour_entier && */ $heure_fin 
-				? ($heure_debut ? ' à ' : ' jusqu\'à ')  . $heure_fin
+				? ', retour à ' . $heure_fin
 				: '')
 		));
-	}
-	
-	/**
-	 * Retourne les catégories d'un covoiturage
-	 */
-	public static function get_covoiturage_categories( $post_id, $args = 'names' ) {
-		return self::get_covoiturage_terms( self::taxonomy_cov_category, $post_id, $args);
 	}
 	/**
 	 * Retourne les communes d'un covoiturage
@@ -1099,10 +1076,8 @@ class AgendaPartage_Covoiturage {
 			return;
 		
 		/** init message **/
-		$message = sprintf("Bonjour,\r\nJe vous écris à propos de \"%s\" (%s) du %s.\r\n%s\r\n\r\n-"
+		$message = sprintf("Bonjour,\r\nJe vous écris à propos de \"%s\".\r\n%s\r\n\r\n-"
 			, $covoiturage->post_title
-			, self::get_post_meta($covoiturage, 'cov-localisation', true)
-			, self::get_covoiturage_dates_text($covoiturage)
 			, get_post_permalink($covoiturage)
 		);
 		$matches = [];

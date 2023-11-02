@@ -29,7 +29,6 @@ class AgendaPartage_Covoiturage_Shortcodes {
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_covoiturage_shortcode_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_covoiturage_shortcode_cb') );
-		add_filter('wpcf7_mail_components', array(__CLASS__, 'on_wpcf7_mail_components'), 10, 3);
 	}
 
 	/////////////////
@@ -54,62 +53,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 		add_shortcode( 'covoiturage-modifier-covoiturage', array(__CLASS__, 'shortcodes_callback') );
 		
 		add_shortcode( 'covoiturages', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'agdpstats', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'post', array(__CLASS__, 'shortcode_post_callback') );
 
-	}
-
-	/**
-	 * [post]
-	 * [post info="cov-email"]
-	 * [post info="cov-telephone"]
-	 * [post info="mailto"]
-	 * [post info="uri"] [post info="url"]
-	 * [post info="a"] [post info="link"]
-	 * [post info="post_type"]
-	 * [post info="dump"]
-	 */
-	public static function shortcode_post_callback($atts, $content = '', $shortcode = null){
-		$post = get_post();
-		if(!$post){
-			echo $content;
-			return;
-		}
-
-		if( ! is_array($atts)){
-			$atts = array();
-		}
-
-		if(! array_key_exists('info', $atts)
-		|| ! ($info = $atts['info']))
-			$info = 'post_title';
-
-		switch($info){
-			case 'uri':
-			case 'url':
-				return $_SERVER['HTTP_REFERER'];
-			case 'link':
-			case 'a':
-				return sprintf('<a href="%s">%s - %s</a>', AgendaPartage_Covoiturage::get_post_permalink($post), 'AgendaPartage', $post->post_title);
-
-			case 'mailto':
-				$email = get_post_meta( $post->ID, 'cov-email', true);
-				return sprintf('<a href="mailto:%s">%s</a>', antispambot(sanitize_email($email)), $post->post_title);//TODO anti-spam
-
-			case 'dump':
-				return sprintf('<pre>%s</pre>', 'shortcodes dump : ' . var_export($post, true));
-
-			case 'title':
-				$info = 'post_title';
-
-			default :
-				if(isset($post->$info))
-					return $post->$info;
-				return get_post_meta( $post->ID, $info, true);
-
-		}
 	}
 
 	/**
@@ -212,10 +156,6 @@ class AgendaPartage_Covoiturage_Shortcodes {
 		//De la forme [covoiturages liste] ou [covoiturages-calendrier]
 		if($shortcode == 'covoiturages' || str_starts_with($shortcode, 'covoiturages-')){
 			return self::shortcodes_covoiturages_callback($atts, $content, $shortcode);
-		}
-		//De la forme [agdpstats stat] ou [agdpstats-stat]
-		if($shortcode == 'agdpstats' || str_starts_with($shortcode, 'agdpstats-')){
-			return self::shortcodes_agdpstats_callback($atts, $content, $shortcode);
 		}
 		return self::shortcodes_covoiturage_callback($atts, $content, $shortcode);
 	}
@@ -340,25 +280,6 @@ class AgendaPartage_Covoiturage_Shortcodes {
 			case 'covoiturage-cities':
 				if(!isset($tax_name) || !$tax_name)
 					$tax_name = AgendaPartage_Covoiturage::taxonomy_city;
-			case 'covoiturage-categories':
-				if(!isset($tax_name) || !$tax_name)
-					$tax_name = AgendaPartage_Covoiturage::taxonomy_cov_category;
-				$meta_name = 'cov-' . substr($shortcode, strlen('covoiturage-')) ;
-				$terms = AgendaPartage_Covoiturage::get_covoiturage_terms( $tax_name, $post_id, 'names');
-				if($terms){
-					$val = implode(', ', $terms);
-					if($no_html)
-						$html = $val;
-					else{
-						$html = '<div class="agdp-covoiturage agdp-'. $shortcode .'">'
-							. ($label ? '<span class="label"> '.$label.'<span>' : '')
-							. htmlentities($val)
-							. '</div>';
-					}
-				}
-				return $html;
-				break;
-
 			case 'covoiturage-message-contact':
 				
 				$meta_name = 'cov-organisateur' ;
@@ -417,11 +338,6 @@ class AgendaPartage_Covoiturage_Shortcodes {
 					if($val)
 						$html .= make_mailto($val) . '</br>';
 
-				$meta_name = 'cov-siteweb';
-					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
-					if($val)
-						$html .= make_clickable(esc_html($val)) . '</br>';
-
 				$meta_name = 'cov-phone';
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
 					if($val)
@@ -461,9 +377,6 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				
 				if($val)
 					switch($meta_name){
-						case 'siteweb' :
-							$val = make_clickable(esc_html($val));
-							break;
 						case 'phone' :
 						case 'email' :
 							$val = antispambot(esc_html($val), -0.5);
@@ -562,18 +475,12 @@ class AgendaPartage_Covoiturage_Shortcodes {
 	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-stats.php');
 		if( count($atts)) {
-			if( in_array('eventscounters', $atts) )
-				return AgendaPartage_Admin_Stats::covoiturages_stats_eventscounters() . $content;
+			if( in_array('covoituragescounters', $atts) )
+				return AgendaPartage_Admin_Stats::covoiturages_stats_covoituragescounters() . $content;
 		}
 		return AgendaPartage_Admin_Stats::get_stats_result() . $content;
 	}
 	
 	// shortcodes //
 	///////////////
-	
-	// define the wpcf7_mail_components callback 
-	public static function on_wpcf7_mail_components( $components, $wpcf7_get_current_contact_form, $instance ){ 
-		$components['body'] = do_shortcode($components['body']);
-		return $components;
-	} 
 }

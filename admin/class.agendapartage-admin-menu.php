@@ -721,7 +721,7 @@ class AgendaPartage_Admin_Menu {
 		
 		// add top level menu page
 		add_menu_page(
-			__('Réglages', AGDP_TAG),
+			__('Paramètres de l\'Agenda partagé', AGDP_TAG),
 			'Agenda Partagé',
 			'manage_options',
 			AGDP_TAG,

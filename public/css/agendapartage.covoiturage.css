@@ -189,3 +189,9 @@ body.colors-dark .agdp-covoiturages-email *, body.colors-dark .aevs-email * {
 	background-color: #FFFFFF;
 	color: #000000 !important;
 }
+
+.agdp-covoiturages .cov-date-jour-num {
+	font-weight: bold;
+	font-size: larger;
+	padding: 0 3px 0 3px;
+}

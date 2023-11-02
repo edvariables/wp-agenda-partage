@@ -11,6 +11,7 @@ class AgendaPartage_Admin_Stats {
 
 		self::stats_css();
 		self::agdpevents_stats();
+		self::covoiturages_stats();
 		self::newsletter_stats();
 		self::maillog_stats();
 		
@@ -123,9 +124,17 @@ class AgendaPartage_Admin_Stats {
 	}
 
 	public static function agdpevents_stats() {
+		return self::posts_stats(AgendaPartage_Evenement::post_type);
+	}
+	public static function covoiturages_stats() {
+		return self::posts_stats(AgendaPartage_Covoiturage::post_type);
+	}
+
+	public static function posts_stats($post_type) {
+		$post_type_labels = get_post_type_labels($post_type);
 		?><ul class="agdp-stats">
 		<header class="entry-header"><?php 
-			echo sprintf('<h3 class="entry-title">Evènements</h3>');
+			echo sprintf('<h3 class="entry-title">%s</h3>', $post_type_labels['name']);
 		?></header><?php
 		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
 			
@@ -136,8 +145,8 @@ class AgendaPartage_Admin_Stats {
 			<table><tr><?php
 			
 			foreach(['publish' => 'Publié', 'pending' => 'En attente'] as $post_status => $status_name){
-				$agdpevents = new WP_Query( array( 
-					'post_type' => AgendaPartage_Evenement::post_type,
+				$posts = new WP_Query( array( 
+					'post_type' => $post_type,
 					'fields' => 'ids',
 					'post_status' => $post_status,
 					'date_query' => array(
@@ -147,12 +156,12 @@ class AgendaPartage_Admin_Stats {
 					),
 					'nopaging' => true,
 				));
-				if( ! is_a($agdpevents, 'WP_Query'))
+				if( ! is_a($posts, 'WP_Query'))
 					continue;
 				//;
-				$url = get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=agdpevent', $post_status));
+				$url = get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=%s', $post_status, $post_type));
 				echo '<td>';
-				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d évènement(s)</a>', $status_name, $url, $agdpevents->found_posts);
+				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d %s(s)</a>', $status_name, $url, $posts->found_posts, strtolower( $post_type_labels['singular_name']));
 				?></header><?php
 				echo '</td>';
 				
@@ -165,11 +174,19 @@ class AgendaPartage_Admin_Stats {
 	}
 
 	public static function agdpevents_stats_eventscounters() {
+		return self::stats_postcounters(AgendaPartage_Evenement::post_type);
+	}
+
+	public static function covoiturages_stats_covoituragescounters() {
+		return self::stats_postcounters(AgendaPartage_Covoiturage::post_type);
+	}
+
+	public static function stats_postcounters($post_type) {
 		$sCounters = '';
 		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
 			foreach(['publish' => 'Publié', 'pending' => 'En attente'] as $post_status => $status_name){
 				$agdpevents = new WP_Query( array( 
-					'post_type' => AgendaPartage_Evenement::post_type,
+					'post_type' => $post_type,
 					'fields' => 'ids',
 					'post_status' => $post_status,
 					'date_query' => array(

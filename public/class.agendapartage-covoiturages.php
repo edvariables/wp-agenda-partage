@@ -38,7 +38,7 @@ class AgendaPartage_Covoiturages {
 	 ******/
 	
 	public static function get_url(){
-		$url = get_permalink(AgendaPartage::get_option('agenda_page_id')) . '#main';
+		$url = get_permalink(AgendaPartage::get_option('covoiturages_page_id')) . '#main';
 		// $url = home_url();
 		return $url;
 	}
@@ -206,7 +206,6 @@ class AgendaPartage_Covoiturages {
 		
 		$sql_filters = self::get_filters_query(true);
 		
-		//Find this in other blog 
 		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year
 				, DATE_FORMAT(meta.meta_value, '%m') as month
 				, COUNT(post_id) as count
@@ -296,6 +295,7 @@ class AgendaPartage_Covoiturages {
 		// debug_log('get_filters_query IN ', $filters);
 		if(count($filters)){
 			$query_tax_terms = [];
+			// Taxonomies
 			foreach( AgendaPartage_Covoiturage_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 				$field = $taxonomy['filter'];
 				if(isset($filters[$field])){
@@ -313,12 +313,13 @@ class AgendaPartage_Covoiturages {
 					}
 				}
 			}
-			$sql = '';
+		
+			global $wpdb;
+			$blog_prefix = $wpdb->get_blog_prefix();
+			$sql = "SELECT post.ID"
+				. "\n FROM {$blog_prefix}posts post";
+			$sql_where = '';
 			if(count($query_tax_terms)){
-				global $wpdb;
-				$blog_prefix = $wpdb->get_blog_prefix();
-				$sql = "SELECT post.ID"
-					. "\n FROM {$blog_prefix}posts post";
 				//JOIN
 				foreach($query_tax_terms as $tax_name => $tax_data){
 					$sql .= "\n LEFT JOIN {$blog_prefix}term_relationships tax_rl_{$tax_name}"
@@ -328,12 +329,11 @@ class AgendaPartage_Covoiturages {
 					&& count($tax_data['IN'])){
 						$sql .=   "\n INNER JOIN {$blog_prefix}postmeta as localisation"
 									. "\n ON post.ID = localisation.post_id"
-									. "\n AND localisation.meta_key = 'cov-localisation'"
+									. "\n AND localisation.meta_key = 'cov-localisation'" //TODO
 						;
 					}
 				}
 				//WHERE
-				$sql_where = '';
 				foreach($query_tax_terms as $tax_name => $tax_data){
 					if(count($tax_data['IN'])){
 						$tax_sql = "\n tax_rl_{$tax_name}.term_taxonomy_id"
@@ -361,9 +361,25 @@ class AgendaPartage_Covoiturages {
 					}
 					$sql_where .= ($sql_where ? "\n AND " : "\n WHERE ") . '(' . $tax_sql . ')';
 				}
-				$sql .= $sql_where;
-				// echo "<pre>";echo($sql);echo "</pre>";
 			}
+			
+			//Intention
+			$field = 'cov-intention';
+			if(isset($filters[$field])){
+				$intentions = implode(',', array_keys( $filters[$field]));
+				$intentions .= ', 3';
+				 $sql .=   "\n INNER JOIN {$blog_prefix}postmeta as intention"
+							. "\n ON post.ID = intention.post_id"
+							. "\n AND intention.meta_key = 'cov-intention'" //TODO
+				;
+				$sql_where .= ($sql_where ? "\n AND " : "\n WHERE ")
+					. '(intention.meta_value IN (' . $intentions . '))';
+			}
+			
+			if($sql_where)
+				$sql .= $sql_where;
+			else
+				unset($sql);
 		}
 		// debug_log('get_filters_query', isset($sql) ? $sql : '', $query);
 		if($return_sql)
@@ -569,12 +585,15 @@ class AgendaPartage_Covoiturages {
 			
 			] as $search=>$replace)
 			$html = str_replace($search, $replace, $html);
-		foreach([
+		
+		if(false) '{{';//bugg notepad++ functions list
+		foreach([ 
 			'/\scovoiturage="\{[^\}]*\}"/' => '',
 			'/\sid="\w*"/' => '',
 			'/([\}\>\;]\s)\s+/m' => '$1'
 			] as $search=>$replace)
 			$html = preg_replace($search, $replace, $html);
+		
 		return $html;
 	}
 	
@@ -599,7 +618,8 @@ class AgendaPartage_Covoiturages {
 				unset($taxonomy['terms']);
 				continue;
 			}
-			if( count($taxonomy['terms']) > 1 )
+			if( isset($taxonomy['all_label'])
+			&& count($taxonomy['terms']) > 1 )
 				$taxonomy['terms'] = array_merge([ [ 'term_id' => '*', 'name' => $taxonomy['all_label']] ]
 					, $taxonomy['terms']
 					, [ [ 'term_id' => '0', 'name' => $taxonomy['none_label'] ] ]);
@@ -624,8 +644,33 @@ class AgendaPartage_Covoiturages {
 			else
 				$all_selected_terms[$tax_name] = false;
 		}
+		
+		//intention
+		$tax_name = 'cov-intention';
+		$intentions = [
+			'label' => 'Proposition et/ou recherche',
+			'filter' => $tax_name,
+			'terms' => [
+				[
+					'term_id' => '1',
+					'name' => 'Propose'
+				],
+				[
+					'term_id' => '2',
+					'name' => 'Cherche'
+				]
+			]
+		];
+		$selected_terms = isset($_GET[$intentions['filter']]) ? $_GET[$intentions['filter']] : false;
+		if(is_array($selected_terms))
+			foreach($selected_terms as $intentionid => $data)
+				$filters_summary[] = AgendaPartage_Covoiturage_Post_type::get_intention_label( $intentionid );
+		$all_selected_terms[$tax_name] = $selected_terms;
+		$taxonomies = array_merge(['cov-intention' => $intentions], $taxonomies);
+		
+		// Render
 		$html = '<div class="agdp-covoiturages-list-header">'
-			. '<div id="agdp-filters" class="toggle-trigger">'
+			. sprintf('<div id="agdp-filters" class="toggle-trigger %s">', count($filters_summary) ? 'active' : '')
 			. '<table><tr><th>'. __('Filtres', AGDP_TAG).'</th>'
 			. '<td>'
 			. '<p class="agdp-title-link">'
@@ -647,7 +692,8 @@ class AgendaPartage_Covoiturages {
 			if( empty($taxonomy['terms']))
 				continue;
 			$field = $taxonomy['filter'];
-			if( count($taxonomy['terms']) === 1 )
+			if( count($taxonomy['terms']) === 1
+			|| ! isset($taxonomy['plural']) )
 				$label = $taxonomy['label'];
 			else
 				$label = $taxonomy['plural'];
@@ -717,12 +763,12 @@ class AgendaPartage_Covoiturages {
 		return $html;
 	}
 	
-	public static function get_item_list_html($event, $requested_id, $options){
+	public static function get_item_list_html($post, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 			
-		$date_debut = get_post_meta($event->ID, 'cov-date-debut', true);
+		$date_debut = get_post_meta($post->ID, 'cov-date-debut', true);
 					
-		$url = AgendaPartage_Covoiturage::get_post_permalink( $event );
+		$url = AgendaPartage_Covoiturage::get_post_permalink( $post );
 		$html = '';
 		
 		if( ! $email_mode )
@@ -733,56 +779,34 @@ class AgendaPartage_Covoiturages {
 			);
 			
 		$html .= sprintf('<div id="%s%d" class="covoiturage toggle-trigger %s" covoiturage="%s">'
-			, AGDP_ARG_COVOITURAGEID, $event->ID
-			, $event->ID == $requested_id ? 'active' : ''
-			, esc_attr( json_encode(['id'=> $event->ID, 'date' => $date_debut]) )
+			, AGDP_ARG_COVOITURAGEID, $post->ID
+			, $post->ID == $requested_id ? 'active' : ''
+			, esc_attr( json_encode(['id'=> $post->ID, 'date' => $date_debut]) )
 		);
 		
-		$cities = AgendaPartage_Covoiturage::get_covoiturage_cities ($event, 'names');
+		$cities = AgendaPartage_Covoiturage::get_covoiturage_cities ($post, 'names');
 		
-		$value = $event->post_title;
-		$localisation = htmlentities(get_post_meta($event->ID, 'cov-localisation', true));
-		if($cities){
-			$cities = htmlentities(implode(', ', $cities));
-			if(self::cities_in_localisation( $cities, $localisation ) === false)
-				$localisation .= sprintf('<div class="covoiturage-cities" title="%s"><i>%s</i></div>', 'Communes', $cities);
-		}
-		$dates = AgendaPartage_Covoiturage::get_covoiturage_dates_text($event->ID);
-		$html .= sprintf(
-				'<div class="dates">%s</div>'
-				.'<div class="titre">%s</div>'
-				.'<div class="localisation">%s</div>'
-			.''
-			, htmlentities($dates), htmlentities($value), $localisation);
-			
-		
-		$categories = AgendaPartage_Covoiturage::get_covoiturage_categories ($event, 'names');
-		// var_dump($categories); die();
-		if($categories)
-			$html .= sprintf('<div class="covoiturage-categories" title="%s"><i>%s</i></div>', 'Catégories', htmlentities(implode(', ', $categories)));
+		$title = AgendaPartage_Covoiturage::get_post_title( $post, false );
+		// $dates = AgendaPartage_Covoiturage::get_covoiturage_dates_text($post->ID);
+		$html .= sprintf('<div class="titre">%s</div>', $title);
 		
 		$html .= '</div>';
 		
 		$html .= '<div class="toggle-container">';
 		
 		
-		$value = $event->post_content;
+		$value = $post->post_content;
 		if($value)
 			$html .= sprintf('<pre>%s</pre>', htmlentities($value) );
 		
-		$value = get_post_meta($event->ID, 'cov-organisateur', true);
+		$value = get_post_meta($post->ID, 'cov-organisateur', true);
 		if($value){
 			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
 		}
 		
-		$value = get_post_meta($event->ID, 'cov-phone', true);
+		$value = get_post_meta($post->ID, 'cov-phone', true);
 		if($value){
 			$html .= sprintf('<div class="cov-phone">Téléphone : %s</div>',  antispambot($value) );
-		}
-		
-		$value = get_post_meta($event->ID, 'cov-siteweb', true);
-		if($value){
-			$html .= sprintf('<div class="cov-siteweb">%s</div>',  make_clickable( esc_html($value) ) );
 		}
 		
 		$html .= '<div class="footer">';
@@ -795,8 +819,8 @@ class AgendaPartage_Covoiturages {
 				if(	$current_user->has_cap( 'edit_posts' ) ){
 				
 					$html .= '<td/><td>';
-					$creator = new WP_User($event->post_author);
-					$html .= 'créé par "' . $creator->get('user_nicename') . '"';
+					$creator = new WP_User($post->post_author);
+					$html .= 'créé par <a>' . $creator->get('user_nicename') . '</a>';
 					
 					$html .= '</td></tr><tr>';
 				}
@@ -807,7 +831,7 @@ class AgendaPartage_Covoiturages {
 					.AgendaPartage::icon('arrow-up-alt2')
 					.'</a></td>';
 
-			$url = AgendaPartage_Covoiturage::get_post_permalink($event);
+			$url = AgendaPartage_Covoiturage::get_post_permalink($post);
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page du covoiturage'
@@ -822,21 +846,6 @@ class AgendaPartage_Covoiturages {
 		$html .= '</div>';
 		
 		return $html;
-	}
-	
-	/**
-	 * Vérifie si la commune est déjà ennoncé dans la localisation
-	 */
-	public static function cities_in_localisation( $cities, $localisation ){
-		//$terms_like = AgendaPartage_Covoiturage_Post_type::get_terms_like($tax_name, $tax_data['IN']);
-		$cities = str_ireplace('saint', 'st'
-					, preg_replace('/\s|-/', '', $cities)
-		);
-		$localisation = str_ireplace('saint', 'st'
-					, preg_replace('/\s|-/', '', $localisation)
-		);
-		//TODO accents ?
-		return stripos( $localisation, $cities );
 	}
 
 	/**
@@ -1035,3 +1044,4 @@ class AgendaPartage_Covoiturages {
 		return 'download:' . $url;
 	}
 }
+?>

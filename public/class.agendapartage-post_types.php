@@ -46,7 +46,6 @@ class AgendaPartage_Post_Types {
 		}
 
 		AgendaPartage_Covoiturage_Post_type::register_post_type();
-		AgendaPartage_Covoiturage_Post_type::register_taxonomy_cov_category();
 		AgendaPartage_Covoiturage_Post_type::register_taxonomy_city();
 		AgendaPartage_Covoiturage_Post_type::register_taxonomy_diffusion();
 		

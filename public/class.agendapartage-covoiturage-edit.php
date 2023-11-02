@@ -21,7 +21,8 @@ class AgendaPartage_Covoiturage_Edit {
 				'cov-date-debut',
 				'cov-organisateur', 
 				'cov-email',
-				'cov-localisation',
+				'cov-depart',
+				'cov-arrivee',
 				'cov-description'
 				];
 
@@ -138,8 +139,7 @@ class AgendaPartage_Covoiturage_Edit {
 				$post_title = isset( $post->post_title ) ? $post->post_title : '';
 			
 				$html = AgendaPartage_Covoiturage::get_covoiturage_dates_text( $post_id )
-					. '<br>' . $post_title
-					. '<br>' . get_post_meta($post_id, 'cov-localisation', true);
+					. '<br>' . $post_title;
 				return $html;
 			}
 		}
@@ -186,13 +186,14 @@ class AgendaPartage_Covoiturage_Edit {
 					, 'agdp-error-light', 'div');
 			}*/
 			$attrs['cov-email'] = $email;
-			$attrs['cov-titre'] = $post->post_title;
 			$attrs['cov-description'] = $post->post_content;
 			
 			foreach(['cov-date-debut',
 					'cov-heure-debut',
 					'cov-heure-fin',
-					'cov-localisation',
+					'cov-intention',
+					'cov-depart',
+					'cov-arrivee',
 					'cov-phone',
 					'cov-organisateur',
 					'cov-message-contact'
@@ -733,12 +734,17 @@ class AgendaPartage_Covoiturage_Edit {
 		
 		$inputs = $submission->get_posted_data();
 		
+		// var_dump($inputs);
+		// die();
+		
 		if(is_object($contact_form) && is_a($contact_form, 'WPCF7_ContactForm', true)){ //contact form 7 -> wp_mail -> $args['message']
 			$form = $contact_form;
 			$data = array();
 			
 			foreach(array(
-				'post_title' => 'cov-titre',
+				'cov-intention' => 1,
+				'cov-depart' => 1,
+				'cov-arrivee' => 1,
 				'post_content' => 'cov-description',
 				'cov-date-debut' => 1,
 				'cov-heure-debut' => 1,
@@ -746,10 +752,12 @@ class AgendaPartage_Covoiturage_Edit {
 				'cov-organisateur' => 1,
 				'cov-email' => 1,
 				'cov-phone' => 1,
-				'cov-localisation' => 1,
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;
-				$data[$post_field] = trim($inputs[$input_field]);
+					if(is_array($inputs[$input_field]))
+						$data[$post_field] = trim($inputs[$input_field][0]);
+					else
+						$data[$post_field] = trim($inputs[$input_field]);
 			}
 			//checkboxes
 			foreach(array(
@@ -816,7 +824,6 @@ class AgendaPartage_Covoiturage_Edit {
 			$data[$meta_name] = AgendaPartage::get_session_id();
 		}
 		
-		// $user = wp_get_current_user()
 		if( ($user = wp_get_current_user())
 		&& $user->ID){
 		    $post_author = $user->ID;
@@ -830,8 +837,7 @@ class AgendaPartage_Covoiturage_Edit {
 			$data['activation_key'] = true;
 		}
 		
-		$post_title = $data['post_title'];
-		unset($data['post_title']);
+		$post_title = AgendaPartage_Covoiturage::get_post_title($post, true, $data);
 		$post_content = $data['post_content'];
 		unset($data['post_content']);
 		
@@ -1180,13 +1186,13 @@ class AgendaPartage_Covoiturage_Edit {
 				}
 				break;
 				
-			case 'cov-localisation' :
-				if( ! $_POST[$tag->name]
-				&& isset( $_POST['cov-cities'])
-				&& $_POST['cov-cities'] ){
-					return is_array($_POST['cov-cities']) ? implode (', ', $_POST['cov-cities']) : $_POST['cov-cities'];
-				}
-				break;
+			// case 'cov-localisation' :
+				// if( ! $_POST[$tag->name]
+				// && isset( $_POST['cov-cities'])
+				// && $_POST['cov-cities'] ){
+					// return is_array($_POST['cov-cities']) ? implode (', ', $_POST['cov-cities']) : $_POST['cov-cities'];
+				// }
+				// break;
 			default:
 				break;
 		}
@@ -1216,7 +1222,8 @@ class AgendaPartage_Covoiturage_Edit {
 		//Même lieu
 		$args['meta_query'] = [
 				[ 'key' => 'cov-date-debut', 'value' => $meta_values['cov-date-debut']],
-				[ 'key' => 'cov-localisation', 'value' => $meta_values['cov-localisation']]
+				[ 'key' => 'cov-depart', 'value' => $meta_values['cov-depart']],
+				[ 'key' => 'cov-arrivee', 'value' => $meta_values['cov-arrivee']]
 		];
 		if($meta_values['cov-heure-debut'])
 			$args['meta_query'][] = [ 'key' => 'cov-heure-debut', 'value' => $meta_values['cov-heure-debut']];

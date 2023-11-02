@@ -6,7 +6,6 @@
  * Custom user role for WordPress.
  * 
  * Définition du Post Type 'covoiturage'
- * Définition de la taxonomie 'cov_category'
  * Définition du rôle utilisateur 'covoiturage'
  * A l'affichage d'un covoiturage, le Content est remplacé par celui du covoiturage Modèle
  * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor', see AgendaPartage_Admin_Covoiturage::init_PostType_Supports
@@ -47,8 +46,7 @@ class AgendaPartage_Covoiturage_Post_type {
 			'description'           => __( 'Covoiturage de l\'agenda partagé', AGDP_TAG ),
 			'labels'                => $labels,
 			'supports'              => array( 'title', 'thumbnail', 'revisions' ),//, 'author', 'editor' see AgendaPartage_Admin_Covoiturage::init_PostType_Supports
-			'taxonomies'            => array( AgendaPartage_Covoiturage::taxonomy_cov_category
-											, AgendaPartage_Covoiturage::taxonomy_city
+			'taxonomies'            => array( AgendaPartage_Covoiturage::taxonomy_city
 											, AgendaPartage_Covoiturage::taxonomy_diffusion ),
 			'hierarchical'          => false,
 			'public'                => true,
@@ -76,55 +74,6 @@ class AgendaPartage_Covoiturage_Post_type {
 		if($post->post_type === AgendaPartage_Covoiturage::post_type)
 			return -1;
 		return $num;
-	}
-	
-	// public static function _wp_post_revision_fields( $fields, $post ) {
-		// if($post['post_type'] === AgendaPartage_Covoiturage::post_type){
-			// error_log('_wp_post_revision_fields $fields[\'meta_input\'] = \'Paramètres\'');
-			// $fields['meta_input'] = 'Paramètres';
-		// }
-		// return $fields;
-	// }
-	
-
-	/**
-	 * Register Custom Taxonomy
-	 */
-	public static function register_taxonomy_cov_category() {
-
-		$labels = array(
-			'name'                       => _x( 'Catégorie de covoiturage', 'Taxonomy General Name', AGDP_TAG ),
-			'singular_name'              => _x( 'Catégorie de covoiturage', 'Taxonomy Singular Name', AGDP_TAG ),
-			'menu_name'                  => __( 'Catégories de covoiturage', AGDP_TAG ),
-			'all_items'                  => __( 'Toutes les catégories de covoiturage', AGDP_TAG ),
-			'parent_item'                => __( 'Catégorie parente', AGDP_TAG ),
-			'parent_item_colon'          => __( 'Catégorie parente:', AGDP_TAG ),
-			'new_item_name'              => __( 'Nouvelle catégorie de covoiturage', AGDP_TAG ),
-			'add_new_item'               => __( 'Ajouter une nouvelle catégorie', AGDP_TAG ),
-			'edit_item'                  => __( 'Modifier', AGDP_TAG ),
-			'update_item'                => __( 'Mettre à jour', AGDP_TAG ),
-			'view_item'                  => __( 'Afficher', AGDP_TAG ),
-			'separate_items_with_commas' => __( 'Séparer les éléments par une virgule', AGDP_TAG ),
-			'add_or_remove_items'        => __( 'Ajouter ou supprimer des éléments', AGDP_TAG ),
-			'choose_from_most_used'      => __( 'Choisir le plus utilisé', AGDP_TAG ),
-			'popular_items'              => __( 'Catégories populaires', AGDP_TAG ),
-			'search_items'               => __( 'Rechercher', AGDP_TAG ),
-			'not_found'                  => __( 'Introuvable', AGDP_TAG ),
-			'no_terms'                   => __( 'Aucune catégorie', AGDP_TAG ),
-			'items_list'                 => __( 'Liste des catégories', AGDP_TAG ),
-			'items_list_navigation'      => __( 'Navigation parmi les catégories', AGDP_TAG ),
-		);
-		$args = array(
-			'labels'                     => $labels,
-			'hierarchical'               => false,
-			'public'                     => true,
-			'show_ui'                    => true,
-			'show_admin_column'          => true,
-			'show_in_nav_menus'          => true,
-			'show_tagcloud'              => true,
-		);
-		register_taxonomy( AgendaPartage_Covoiturage::taxonomy_cov_category, array( AgendaPartage_Covoiturage::post_type ), $args );
-
 	}
 	
 	/**
@@ -243,8 +192,11 @@ class AgendaPartage_Covoiturage_Post_type {
 	/**
 	 * Retourne tous les termes
 	 */
-	public static function get_all_types_covoiturage($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Covoiturage::taxonomy_cov_category, $array_keys_field);
+	public static function get_all_intentions($array_keys_field = 'term_id'){
+		return [
+			'1' => 'Propose',
+			'2' => 'Cherche'
+		];
 	}
 	public static function get_all_cities($array_keys_field = 'term_id'){
 		return self::get_all_terms(AgendaPartage_Covoiturage::taxonomy_city, $array_keys_field);
@@ -287,18 +239,6 @@ class AgendaPartage_Covoiturage_Post_type {
 	 */
 	public static function get_taxonomies ( $except = false ){
 		$taxonomies = [];
-		
-		$tax_name = AgendaPartage_Covoiturage::taxonomy_cov_category;
-		if( ! $except || strpos($except, $tax_name ) === false)
-			$taxonomies[$tax_name] = array(
-				'name' => $tax_name,
-				'input' => 'cov-categories',
-				'filter' => 'categories',
-				'label' => 'Catégorie',
-				'plural' => 'Catégories',
-				'all_label' => '(toutes)',
-				'none_label' => '(sans catégorie)'
-			);
 		
 		$tax_name = AgendaPartage_Covoiturage::taxonomy_city;
 		if( ! $except || strpos($except, $tax_name ) === false)
@@ -355,4 +295,22 @@ class AgendaPartage_Covoiturage_Post_type {
 		}
 		return $like;
 	}
+	
+	/**
+	 * Intention
+	 */
+	 public static function get_intention_label($intention_id){
+		 switch($intention_id){
+			case '1' :
+				$intention = 'PROPOSE';
+				break;
+			case '2' :
+				$intention = 'CHERCHE';
+				break;
+			default :
+				$intention = 'CHERCHE ou PROPOSE';
+				break;
+		}
+		return $intention;
+	 }
 }

@@ -110,7 +110,7 @@ class AgendaPartage_Covoiturages_Import {
 			$all_taxonomies = AgendaPartage_Covoiturage_Post_type::get_taxonomies();
 			$taxonomies = [];
 			foreach([ 
-				'CATEGORIES' => AgendaPartage_Covoiturage::taxonomy_cov_category
+				'INTENTIONS' => AgendaPartage_Covoiturage::taxonomy_cov_intention
 				, 'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
 				, 'DIFFUSIONS' => AgendaPartage_Covoiturage::taxonomy_diffusion
 			] as $node_name => $tax_name){
@@ -153,7 +153,7 @@ class AgendaPartage_Covoiturages_Import {
 			// terms
 			$taxonomies = [];
 			foreach([ 
-				'CATEGORIES' => AgendaPartage_Covoiturage::taxonomy_cov_category
+				'INTENTIONS' => AgendaPartage_Covoiturage::taxonomy_cov_intention
 				, 'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
 				, 'DIFFUSIONS' => AgendaPartage_Covoiturage::taxonomy_diffusion
 			] as $node_name => $term_name){

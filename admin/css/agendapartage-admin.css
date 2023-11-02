@@ -189,6 +189,10 @@ body.colors-dark .toggle-trigger a:hover {
 	margin: 0;
 }
 
+#agdp-tabs-nav + ul {
+	margin-top: 0;
+}
+
 #agdp-tabs-nav li {
 	display: inline-block;
 	list-style: none;
