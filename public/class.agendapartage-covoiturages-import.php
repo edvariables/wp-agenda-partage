@@ -26,7 +26,7 @@ class AgendaPartage_Covoiturages_Import {
 			, date_i18n('Y-m-d H:i'));
 		$log[] = sprintf('<ul><b>Source : "%s", le %s - %s</b>'
 			, empty($iCal['title']) ? '' : $iCal['title']
-			, date_i18n('d/m/Y H:i:s', strtotime($iCal['events'][0]['dtstamp']))
+			, date_i18n('d/m/Y H:i:s', strtotime($iCal['covoiturages'][0]['dtstamp']))
 			, empty($iCal['description']) ? '' : $iCal['description']);
 		
 		if(!$default_post_status)
@@ -39,10 +39,10 @@ class AgendaPartage_Covoiturages_Import {
 		else {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
-		debug_log("\r\nimport_ics events", $iCal['events'], "\r\n\r\n\r\n\r\n");
-		foreach($iCal['events'] as $event){
+		debug_log("\r\nimport_ics covoiturages", $iCal['covoiturages'], "\r\n\r\n\r\n\r\n");
+		foreach($iCal['covoiturages'] as $covoiturage){
 			
-			switch(strtoupper($event['status'])){
+			switch(strtoupper($covoiturage['status'])){
 				case 'CONFIRMED':
 				case 'TENTATIVE':
 					$post_status = $default_post_status;
@@ -54,14 +54,14 @@ class AgendaPartage_Covoiturages_Import {
 					$post_status = 'trash';//TODO signaler
 					break;
 				default: 
-					debug_log('[UNKNOWN]$event->status = ' . $event['status']);
+					debug_log('[UNKNOWN]$covoiturage->status = ' . $covoiturage['status']);
 					$ignoreCounter++;
 					continue 2;
 			}
 			// if(($successCounter + $ignoreCounter) > 5) break;//debug
 			
-			$dateStart = $event['dtstart'];
-			$dateEnd = empty($event['dtend']) ? '' : $event['dtend'];
+			$dateStart = $covoiturage['dtstart'];
+			$dateEnd = empty($covoiturage['dtend']) ? '' : $covoiturage['dtend'];
 			$timeStart = substr($dateStart, 11, 5);//TODO
 			$timeEnd = substr($dateEnd, 11, 5);//TODO 
 			if($timeStart == '00:00')
@@ -81,18 +81,18 @@ class AgendaPartage_Covoiturages_Import {
 				'cov-date-fin' => $dateEnd,
 				'cov-heure-debut' =>$timeStart,
 				'cov-heure-fin' => $timeEnd,
-				'cov-localisation' => empty($event['location']) ? '' : trim($event['location']),
-				'cov-organisateur' => empty($event['organisateur']) ? '' : trim($event['organisateur']),
-				'cov-email' => empty($event['email']) ? '' : trim($event['email']),
-				'cov-phone' => empty($event['phone']) ? '' : trim($event['phone']),
-				'cov-import-uid' => empty($event['uid']) ? '' : $event['uid'],
+				'cov-localisation' => empty($covoiturage['location']) ? '' : trim($covoiturage['location']),
+				'cov-organisateur' => empty($covoiturage['organisateur']) ? '' : trim($covoiturage['organisateur']),
+				'cov-email' => empty($covoiturage['email']) ? '' : trim($covoiturage['email']),
+				'cov-phone' => empty($covoiturage['phone']) ? '' : trim($covoiturage['phone']),
+				'cov-import-uid' => empty($covoiturage['uid']) ? '' : $covoiturage['uid'],
 				'cov-date-journee-entiere' => $timeStart ? '' : '1',
 				'cov-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source
 			);
 						
-			$post_title = $event['summary'];
-			$post_content = empty($event['description']) ? '' : trim($event['description']);
+			$post_title = $covoiturage['summary'];
+			$post_content = empty($covoiturage['description']) ? '' : trim($covoiturage['description']);
 			if ($post_content === null) $post_content = '';
 			
 			//Check doublon
@@ -115,13 +115,13 @@ class AgendaPartage_Covoiturages_Import {
 				, 'DIFFUSIONS' => AgendaPartage_Covoiturage::taxonomy_diffusion
 			] as $node_name => $tax_name){
 				$node_name = strtolower($node_name);
-				if( empty($event[$node_name]))
+				if( empty($covoiturage[$node_name]))
 					continue;
-				if( is_string($event[$node_name]))
-					$event[$node_name] = explode(',', $event[$node_name]);
+				if( is_string($covoiturage[$node_name]))
+					$covoiturage[$node_name] = explode(',', $covoiturage[$node_name]);
 				$taxonomies[$tax_name] = [];
 				$all_terms = AgendaPartage_Covoiturage_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
-				foreach($event[$node_name] as $term_name){
+				foreach($covoiturage[$node_name] as $term_name){
 					if( ! array_key_exists($term_name, $all_terms)){
 						$data = [
 							'post_type'=>AgendaPartage_Covoiturage::post_type,
@@ -157,8 +157,8 @@ class AgendaPartage_Covoiturages_Import {
 				, 'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
 				, 'DIFFUSIONS' => AgendaPartage_Covoiturage::taxonomy_diffusion
 			] as $node_name => $term_name){
-				if( ! empty($event[strtolower($node_name)]))
-					$taxonomies[$term_name] = $event[strtolower($node_name)];
+				if( ! empty($covoiturage[strtolower($node_name)]))
+					$taxonomies[$term_name] = $covoiturage[strtolower($node_name)];
 			}
 			
 			#DEBUG
@@ -180,7 +180,7 @@ class AgendaPartage_Covoiturages_Import {
 					debug_log('[INSERT ERROR+]$post_id = ' . var_export($post_id, true));
 					$log[] = sprintf('<pre>%s</pre>', var_export($post_id, true));
 				}
-				$log[] = sprintf('<pre>%s</pre>', var_export($event, true));
+				$log[] = sprintf('<pre>%s</pre>', var_export($covoiturage, true));
 				$log[] = sprintf('<pre>%s</pre>', var_export($postarr, true));
 			}
 			else{
@@ -302,7 +302,7 @@ class AgendaPartage_Covoiturages_Import {
 			}
 		}
 		
-		$vcalendar['events'] = $vevents;
+		$vcalendar['covoiturages'] = $vevents;
 		// debug_log($vcalendar);
 		return $vcalendar;
 	}

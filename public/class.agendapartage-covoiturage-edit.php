@@ -195,8 +195,8 @@ class AgendaPartage_Covoiturage_Edit {
 					'cov-depart',
 					'cov-arrivee',
 					'cov-phone',
-					'cov-organisateur',
-					'cov-message-contact'
+					'cov-phone-show',
+					'cov-organisateur'
 			] as $meta_name){
 				$attrs[$meta_name] = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
 			}
@@ -213,6 +213,8 @@ class AgendaPartage_Covoiturage_Edit {
 				$meta_name = 'cov-email';
 				$attrs[$meta_name] = $user->user_email;
 			}
+			$meta_name = 'cov-phone-show';
+			$attrs[$meta_name] = true;
 		}
 		//Les catégories, communes et diffusions sont traitées dans wpcf7_form_init_tags_cb
 		
@@ -762,7 +764,8 @@ class AgendaPartage_Covoiturage_Edit {
 			//checkboxes
 			foreach(array(
 				// 'cov-date-journee-entiere',
-				'cov-message-contact'
+				// 'cov-message-contact'
+				'cov-phone-show'
 				) as $field){
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) )

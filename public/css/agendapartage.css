@@ -312,3 +312,11 @@ div.labels-one-row label {
 	outline: none;
 	cursor: pointer;
 }
+
+.wpcf7-form .labels-one-row.cov-phone-show {
+	position: relative;
+	top: -2em;
+}
+.wpcf7-form .labels-one-row.cov-phone-show > p {
+	margin-bottom: 0;
+}

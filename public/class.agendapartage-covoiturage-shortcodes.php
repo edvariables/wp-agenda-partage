@@ -193,7 +193,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 		if($shortcode == 'covoiturage'
 		&& count($atts) > 0){
 			
-			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-covoiturage', 'details', 'categories'];
+			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-covoiturage', 'details'];
 			if(array_key_exists('info', $atts)
 			&& in_array($atts['info'], $specificInfos))
 				$shortcode .= '-' . $atts['info'];
@@ -301,7 +301,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 						, 'Un formulaire de message aux organisteurs du covoiturage n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
 				}
 
-				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisteur du covoiturage ***"]', $form_id);
+				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisateur du covoiturage ***"]', $form_id);
 				return '<div class="agdp-covoiturage agdp-'. $shortcode .'">'
 					. do_shortcode( $val)
 					. '</div>';
@@ -328,20 +328,21 @@ class AgendaPartage_Covoiturage_Shortcodes {
 					if($val)
 						$html .= esc_html($val) . '</br>';
 
-				$meta_name = 'cov-localisation';
-					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
-					if($val)
-						$html .= esc_html($val) . '</br>';
-
 				$meta_name = 'cov-email';
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= make_mailto($val) . '</br>';
 
+				$meta_name = 'cov-phone-show';
+					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
+					$show_email = !! $val;
+
 				$meta_name = 'cov-phone';
+				if( $show_email ){ //TODO sans contrainte si envoyé à l'auteur
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
 					if($val)
 						$html .= antispambot($val) . '</br>';
+				}
 				
 				if(! $html )
 					return '';
@@ -378,6 +379,15 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				if($val)
 					switch($meta_name){
 						case 'phone' :
+							if( /*! is_user_logged_in()
+							&&*/ ! get_post_meta($post_id, 'cov-phone-show', true)){
+								$val = sprintf('<span class="covoiturage-tool">%s</span>'
+									, AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'send_phone_number', true));
+							}
+							else
+								$val = antispambot(esc_html($val), -0.5);
+							
+							break;
 						case 'email' :
 							$val = antispambot(esc_html($val), -0.5);
 							break;
@@ -385,7 +395,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				if($val || $content){
 					return '<div class="agdp-covoiturage">'
 						. ($label ? '<span class="label"> '.$label.'<span>' : '')
-						. do_shortcode( wp_kses_post($val . $content))
+						. do_shortcode( $val . wp_kses_post($content))
 						. '</div>';
 				}
 				break;

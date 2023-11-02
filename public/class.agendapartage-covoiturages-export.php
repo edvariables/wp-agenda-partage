@@ -75,8 +75,10 @@ class AgendaPartage_Covoiturages_Export {
 				$txt[] = implode(', ', $value);
 			if( $value = AgendaPartage_Covoiturage::get_covoiturage_categories($post->ID))
 				$txt[] = implode(', ', $value);
+			$phone_show = get_post_meta($post->ID, 'cov-phone-show', true);
 			foreach(['cov-organisateur', 'cov-email', 'cov-phone', 'cov-siteweb'] as $meta_key)
-				if( $value = get_post_meta($post->ID, $meta_key, true) )
+				if( $value = get_post_meta($post->ID, $meta_key, true)
+				&& ( ($meta_key != 'cov-phone') || $phone_show)
 					$txt[] = $value;
 			$txt[] = $post->post_content;
 			$txt[] = '';
@@ -94,18 +96,7 @@ class AgendaPartage_Covoiturages_Export {
 
 		$txt = [];
 		foreach($posts as $post){
-			if( $cities = AgendaPartage_Covoiturage::get_covoiturage_cities($post->ID))
-				$cities = ' - ' . implode(', ', $cities);
-			else
-				$cities = '';
-			$txt[] = $post->post_title . $cities;
-			
-			$localisation = get_post_meta($post->ID, 'cov-localisation', true);
-			if($localisation)
-				$localisation = ' - ' . $localisation;
-			$dates = AgendaPartage_Covoiturage::get_covoiturage_dates_text( $post->ID );
-			$dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
-			$txt[] = $dates . $localisation;
+			$txt[] = $post->post_title;
 			
 			$txt[] = $post->post_content;
 			
@@ -114,21 +105,17 @@ class AgendaPartage_Covoiturages_Export {
 				$txt[] = sprintf('Organisé par : %s', $value);
 				
 			$infos = '';
-			$meta_key = 'cov-phone';
-			if( $value = get_post_meta($post->ID, $meta_key, true) )
-				$infos = $value;
-				
+			$meta_key = 'cov-phone-show';
+			if( get_post_meta($post->ID, $meta_key, true) ){
+				$meta_key = 'cov-phone';
+				if( $value = get_post_meta($post->ID, $meta_key, true) )
+					$infos = $value;
+			}
+			
 			$meta_key = 'cov-email';
 			if( $value = get_post_meta($post->ID, $meta_key, true) )
 				if($infos)
 					$infos .= '/';
-				$infos .= $value;
-				
-			$meta_key = 'cov-siteweb';
-			if( $value = get_post_meta($post->ID, $meta_key, true) )
-				$value = str_replace( [ 'http://', 'https://' ], '', $value);
-				if($infos)
-					$infos .= ' / ';
 				$infos .= $value;
 				
 			$txt[] = 'Infos : ' . $infos;
@@ -233,14 +220,13 @@ class AgendaPartage_Covoiturages_Export {
 			, 'EMAIL'=>'cov-email'
 			, 'PHONE'=>'cov-phone'
 		] as $node_name => $meta_key)
-			if( ! empty( $metas[$meta_key]))
+			if( ! empty( $metas[$meta_key])
+			&& (($meta_key != 'cov-phone') || (! empty($metas['cov-phone-show']) && $metas['cov-phone-show'])))
 				$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $metas[$meta_key])));
 
 		// Add terms
 		foreach([ 
-			'INTENTIONS' => AgendaPartage_Covoiturage::taxonomy_cov_intention
-			, 'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
-			, 'DIFFUSIONS' => AgendaPartage_Covoiturage::taxonomy_diffusion
+			'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
 		] as $node_name => $tax_name){
 			$terms = AgendaPartage_Covoiturage::get_covoiturage_terms ($tax_name, $post->ID, 'names');
 			if($terms){

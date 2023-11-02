@@ -78,21 +78,14 @@ class AgendaPartage_Admin_Covoiturage {
 				break;
 			case 'details' :
 				$post = get_post( $post_id );
-				$localisation = get_post_meta( $post_id, 'cov-localisation', true );
-				if(strlen($localisation)>20)
-						$localisation = trim(substr($localisation, 0, 20)) . '...';
-				// $organisateur = get_post_meta( $post_id, 'cov-organisateur', true );
 				$description = $post->post_content;
 				if(strlen($description)>20)
 						$description = trim(substr($description, 0, 20)) . '...';
-				$siteweb    = get_post_meta( $post_id, 'cov-siteweb', true );
-				$phone    = get_post_meta( $post_id, 'cov-phone', true );
+				$phone      = get_post_meta( $post_id, 'cov-phone', true );
+				$phone_show = get_post_meta( $post_id, 'cov-phone-show', true );
 				echo trim(
-					  ($localisation ? $localisation . ' - ' : '')
-					// . ($organisateur ? $organisateur . ' - ' : '')
-					. ($description ? $description . ' - ' : '')
-					. ($siteweb ? make_clickable( esc_html($siteweb) ) . ' - ' : '')
-					. ($phone ? antispambot($phone) : '')
+					  ($description ? $description . ' - ' : '')
+					. ($phone && $phone_show ? antispambot($phone) : '')
 				);
 				break;
 			default:

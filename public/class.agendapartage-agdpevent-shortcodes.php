@@ -380,7 +380,7 @@ class AgendaPartage_Evenement_Shortcodes {
 						, 'Un formulaire de message aux organisteurs d\'évènement n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
 				}
 
-				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisteur d\'évènement ***"]', $form_id);
+				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisateur d\'évènement ***"]', $form_id);
 				return '<div class="agdp-agdpevent agdp-'. $shortcode .'">'
 					. do_shortcode( $val)
 					. '</div>';

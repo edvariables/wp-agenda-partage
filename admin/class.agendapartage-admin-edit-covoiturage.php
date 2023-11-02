@@ -254,7 +254,8 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 			),
 			array('name' => 'cov-phone',
 				'label' => __('Téléphone', AGDP_TAG),
-				'type' => 'text'
+				'type' => 'text',
+				'fields' => array($field_show)
 			),
 			array('name' => 'cov-email',
 				'label' => __('Email', AGDP_TAG),
@@ -292,13 +293,13 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 	public static function get_metabox_general_fields(){
 		$fields = array();
 
-		$fields[] =
-			array('name' => 'cov-message-contact',
-				'label' => __('Les visiteurs peuvent envoyer un e-mail.', AGDP_TAG),
-				'type' => 'bool',
-				'default' => 'checked'
-			)
-		;
+		// $fields[] =
+			// array('name' => 'cov-message-contact',
+				// 'label' => __('Les visiteurs peuvent envoyer un e-mail.', AGDP_TAG),
+				// 'type' => 'bool',
+				// 'default' => 'checked'
+			// )
+		// ;
 		return $fields;
 	}
 

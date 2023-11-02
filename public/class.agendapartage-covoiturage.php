@@ -268,17 +268,7 @@ class AgendaPartage_Covoiturage {
 
 		$meta_name = 'cov-email' ;
 		$email = get_post_meta($covoiturage->ID, $meta_name, true);
-		if(is_email($email)){
-			$meta_name = 'cov-message-contact';
-			$message_contact = get_post_meta($covoiturage->ID, $meta_name, true);
-			if($message_contact){
-				$html .= sprintf('[covoiturage-message-contact toggle="Envoyez un message à l\'initiateur" no-ajax post_id="%d" %s]'
-						, $covoiturage->ID
-						, $codesecret ? AGDP_SECRETCODE . '=' . $codesecret : ''
-				);
-			}
-		}
-		else
+		if( ! is_email($email))
 			$email = false;
 		
 		$html .= sprintf('[covoiturage-modifier-covoiturage toggle="Modifier ce covoiturage" no-ajax post_id="%d" %s]'
@@ -409,6 +399,16 @@ class AgendaPartage_Covoiturage {
 					$icon = 'visibility';
 				if($confirmation === null || $confirmation === true)
 					$confirmation = 'Confirmez-vous de rendre visible le covoiturage ?';
+				
+				break;
+			case 'send_phone_number':
+				$need_can_user_change = false;
+				if($caption === null)
+					$caption = __('Obtenir le n° de téléphone', AGDP_TAG);
+				if($icon === true)
+					$icon = 'phone';
+				if($confirmation === null || $confirmation === true)
+					$confirmation = 'Confirmez-vous l\'envoi d\'un email à votre adresse ?';
 				
 				break;
 			case 'send_email':
@@ -707,13 +707,10 @@ class AgendaPartage_Covoiturage {
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Organisateur', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'cov-phone';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Téléphone', htmlentities(get_post_meta($post_id, $meta_name, true)));
+		$meta_name = 'cov-phone-show';
+		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Afficher le n° de téléphone', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
 		$meta_name = 'cov-email';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Email', get_post_meta($post_id, $meta_name, true));
-		$meta_name = 'cov-email-show';
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Afficher l\'e-mail', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
-		$meta_name = 'cov-message-contact';
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Recevoir des messages', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Diffusion (sous réserve)', htmlentities(implode(', ', self::get_covoiturage_diffusions ($post_id, 'names'))));
 		
 		$html .= '</tbody></table>';
 		return $html;
