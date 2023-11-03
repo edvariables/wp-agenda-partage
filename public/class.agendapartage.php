@@ -236,6 +236,10 @@ class AgendaPartage {
 				return __( 'Page "Ajouter un covoiturage"', AGDP_TAG );
 			case 'covoiturages_page_id':
 				return __( 'Page contenant les covoiturages', AGDP_TAG );
+			case 'agdpevent_need_validation':
+				return __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
+			case 'covoiturage_need_validation':
+				return __( 'Les nouveaux covoiturages doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}

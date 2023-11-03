@@ -815,7 +815,7 @@ class AgendaPartage_Covoiturage_Edit {
 		else {
 			$data = $contact_form;
 		}
-
+		
 		$data['cov-organisateur-show'] = 1;//TODO
 		$data['cov-email-show'] = 0;//TODO
 		
@@ -842,8 +842,9 @@ class AgendaPartage_Covoiturage_Edit {
 		}
 		
 		//Nouveau covoiturage et pas d'utilisateur connected, activation nécessaire par email
+		$new_post_need_validation = AgendaPartage::get_option('covoiturage_need_validation', false);
 		if( ! $post && ! $post_author ){
-			$data['activation_key'] = true;
+			$data['activation_key'] = $new_post_need_validation;
 		}
 		
 		$post_title = AgendaPartage_Covoiturage::get_post_title($post, true, $data);
@@ -868,12 +869,12 @@ class AgendaPartage_Covoiturage_Edit {
 			
 			if( $post_is_new = ! $post){
 					
-				if(is_user_logged_in()){
+				if( is_user_logged_in() ){
 					$postarr['post_status'] = 'publish';
 					AgendaPartage::$skip_mail = true;
 				}
 				else {
-					$postarr['post_status'] = 'pending';
+					$postarr['post_status'] = $new_post_need_validation ? 'pending' : 'publish';
 					AgendaPartage::$skip_mail = false;
 				}
 		

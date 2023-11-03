@@ -244,6 +244,26 @@ class AgendaPartage_Admin_Menu {
 					'taxonomy' => AgendaPartage_Evenement::taxonomy_diffusion
 				]
 			);
+
+			// 
+			$field_id = 'agdpevent_need_validation';
+			add_settings_field(
+				$field_id, 
+				__( 'Statut des nouveaux évènements', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_agdpevents',
+				[
+					'label_for' => $field_id,
+					'label' => AgendaPartage::get_option_label($field_id),
+					'learn-more' => [__( 'Si l\'utilisateur est connecté, l\'évènement est toujours publié.', AGDP_TAG )
+									, __( 'Si vous cochez cette option, la saise des évènements va se complexifier pour les utilisateurs.', AGDP_TAG )
+									, __( 'Même si vous cochez cette option, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
+									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
 			
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
@@ -298,6 +318,28 @@ class AgendaPartage_Admin_Menu {
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
+
+			// 
+			$field_id = 'covoiturage_need_validation';
+			add_settings_field(
+				$field_id, 
+				__( 'Statut des nouveaux covoiturages', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'label' => AgendaPartage::get_option_label($field_id),
+					'learn-more' => [__( 'Si l\'utilisateur est connecté, le covoiturage est toujours publié.', AGDP_TAG )
+									, __( 'Si vous cochez cette option, la saise des covoiturages va se complexifier pour les utilisateurs.', AGDP_TAG )
+									, __( 'Même si vous cochez cette option, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
+									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
+			
+			
 			//////////////////////////////////////////
 
 		// register a new section in the "agendapartage" page

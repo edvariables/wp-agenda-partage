@@ -833,8 +833,9 @@ class AgendaPartage_Evenement_Edit {
 		}
 		
 		//Nouvel évènement et pas d'utilisateur connected, activation nécessaire par email
+		$new_post_need_validation = AgendaPartage::get_option('agdpevent_need_validation', false);
 		if( ! $post && ! $post_author ){
-			$data['activation_key'] = true;
+			$data['activation_key'] = $new_post_need_validation;
 		}
 		
 		$post_title = $data['post_title'];
@@ -865,7 +866,7 @@ class AgendaPartage_Evenement_Edit {
 					AgendaPartage::$skip_mail = true;
 				}
 				else {
-					$postarr['post_status'] = 'pending';
+					$postarr['post_status'] = $new_post_need_validation ? 'pending' : 'publish';
 					AgendaPartage::$skip_mail = false;
 				}
 		
