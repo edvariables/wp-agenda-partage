@@ -104,7 +104,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
 				unset($atts[$key]);
 			}
-			$key = AGDP_SECRETCODE ;
+			$key = AGDP_COVOIT_SECRETCODE ;
 			if(array_key_exists($key, $atts)){
 				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
 				unset($atts[$key]);
@@ -379,14 +379,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				if($val)
 					switch($meta_name){
 						case 'phone' :
-							if( /*! is_user_logged_in()
-							&&*/ ! get_post_meta($post_id, 'cov-phone-show', true)){
-								$val = sprintf('<span class="covoiturage-tool">%s</span>'
-									, AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'send_phone_number', true));
-							}
-							else
-								$val = antispambot(esc_html($val), -0.5);
-							
+							$val = AgendaPartage_Covoiturage::get_phone_html($post_id);
 							break;
 						case 'email' :
 							$val = antispambot(esc_html($val), -0.5);

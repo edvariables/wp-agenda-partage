@@ -270,14 +270,14 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 			)*/
 		);
 		//codesecret
-		$field = array('name' => 'cov-'.AGDP_SECRETCODE ,
+		$field = array('name' => 'cov-'.AGDP_COVOIT_SECRETCODE ,
 			'label' => 'Code secret pour ce covoiturage',
 			'type' => 'input' ,
 			'readonly' => true ,
 			'class' => 'readonly' 
 		);
 		if(self::$the_post_is_new)
-			$field['value'] = AgendaPartage::get_secret_code(6);
+			$field['value'] = AgendaPartage::get_secret_code(4, 'num');
 		$fields[] = $field;
   
 		// sessionid

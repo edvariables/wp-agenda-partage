@@ -320,3 +320,26 @@ div.labels-one-row label {
 .wpcf7-form .labels-one-row.cov-phone-show > p {
 	margin-bottom: 0;
 }
+
+.wpcf7-form input[name="cov-covsecret"]{
+	width: 8em;
+}
+
+#email4phone-title {
+	box-shadow: none !important;
+	text-decoration: none;
+	outline: none;
+	cursor: pointer;
+}
+#email4phone-form {
+	display: none;
+}
+#email4phone-title.active + #email4phone-form {
+	display: block;
+	margin-left: 3em;
+	padding: 6px;
+	border: 2px inset;
+}
+#email4phone-form form {
+	display: inline-flex;
+}

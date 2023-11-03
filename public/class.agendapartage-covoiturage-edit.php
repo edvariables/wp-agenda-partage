@@ -58,8 +58,8 @@ class AgendaPartage_Covoiturage_Edit {
 		//Fenêtre de réinitialisation de mot de passe
 		add_action( 'resetpass_form', array(__CLASS__, 'resetpass_form' ));
 		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_SECRETCODE, array(__CLASS__, 'on_wp_ajax_covoiturage_code_secret_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_SECRETCODE, array(__CLASS__, 'on_wp_ajax_covoiturage_code_secret_cb') );
+		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_COVOIT_SECRETCODE, array(__CLASS__, 'on_wp_ajax_covoiturage_code_secret_cb') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_COVOIT_SECRETCODE, array(__CLASS__, 'on_wp_ajax_covoiturage_code_secret_cb') );
 	}
  	/////////////
 	
@@ -118,7 +118,7 @@ class AgendaPartage_Covoiturage_Edit {
 	*
 	*/
 	public static function check_nonce() {
-		foreach([AGDP_TAG . '-' . AGDP_SECRETCODE,
+		foreach([AGDP_TAG . '-' . AGDP_COVOIT_SECRETCODE,
 				AGDP_TAG . '-send-email'] as $nonce){
 			if ( isset( $_POST[$nonce] ) 
 				&& ! wp_verify_nonce( $_POST[$nonce], $nonce ) 
@@ -196,6 +196,7 @@ class AgendaPartage_Covoiturage_Edit {
 					'cov-arrivee',
 					'cov-phone',
 					'cov-phone-show',
+					'cov-' . AGDP_COVOIT_SECRETCODE,
 					'cov-organisateur'
 			] as $meta_name){
 				$attrs[$meta_name] = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
@@ -215,6 +216,8 @@ class AgendaPartage_Covoiturage_Edit {
 			}
 			$meta_name = 'cov-phone-show';
 			$attrs[$meta_name] = true;
+			$meta_name = 'cov-' . AGDP_COVOIT_SECRETCODE;
+			$attrs[$meta_name] = AgendaPartage::get_secret_code(4, 'num');
 		}
 		//Les catégories, communes et diffusions sont traitées dans wpcf7_form_init_tags_cb
 		
@@ -233,7 +236,7 @@ class AgendaPartage_Covoiturage_Edit {
 		$input = sprintf('<input type="hidden" class="covoiturage_edit_form_data" data="%s"/>', $attrs);
 		if($duplicate_from_id){
 			$title = AgendaPartage_Covoiturage::get_post_title($post, true);
-			$url = AgendaPartage_Covoiturage::get_post_permalink( $post_id, AGDP_SECRETCODE);
+			$url = AgendaPartage_Covoiturage::get_post_permalink( $post_id, AGDP_COVOIT_SECRETCODE);
 			$html = sprintf('<p class="info"> Duplication de covoiturage <a href="%s">%s</a></p>'
 					, $url, $title)
 				. $html;
@@ -246,7 +249,7 @@ class AgendaPartage_Covoiturage_Edit {
 			//Maintient la transmission du code secret
 			$ekey = AgendaPartage_Covoiturage::get_secretcode_in_request($post_id);		
 			if($ekey){
-				$input .= sprintf('<input type="hidden" name="%s" value="%s"/>', AGDP_SECRETCODE, $ekey);
+				$input .= sprintf('<input type="hidden" name="%s" value="%s"/>', AGDP_COVOIT_SECRETCODE, $ekey);
 			}
 		}
 		$html = str_ireplace('</form>', $input.'</form>', $html);
@@ -402,12 +405,12 @@ class AgendaPartage_Covoiturage_Edit {
 			$url = AgendaPartage_Covoiturage::get_post_permalink( $post );
 			$query = [
 				'post_id' => $post_id,
-				'action' => AGDP_TAG . '_' . AGDP_SECRETCODE
+				'action' => AGDP_TAG . '_' . AGDP_COVOIT_SECRETCODE
 			];
 			$html .= sprintf('<br>Vous connaissez le code secret de ce covoiturage :&nbsp;'
 				. '<form class="agdp-ajax-action" data="%s">'
-				. wp_nonce_field(AGDP_TAG . '-' . AGDP_SECRETCODE, AGDP_TAG . '-' . AGDP_SECRETCODE, true, false)
-				.'<input type="text" placeholder="ici le code" name="'.AGDP_SECRETCODE.'" size="7"/>
+				. wp_nonce_field(AGDP_TAG . '-' . AGDP_COVOIT_SECRETCODE, AGDP_TAG . '-' . AGDP_COVOIT_SECRETCODE, true, false)
+				.'<input type="text" placeholder="ici le code" name="'.AGDP_COVOIT_SECRETCODE.'" size="7"/>
 				<input type="submit" value="Valider" /></form>'
 					, esc_attr(json_encode($query)));
 			$html .= '</li>';
@@ -452,11 +455,13 @@ class AgendaPartage_Covoiturage_Edit {
 		$ajax_response = '0';
 		if(array_key_exists("post_id", $_POST)){
 			$post = get_post($_POST['post_id']);
-			$input = $_POST['codesecret'];
-			$codesecret = AgendaPartage_Covoiturage::get_post_meta($post, 'cov-' . AGDP_SECRETCODE, true);
+			if($post->post_type != AgendaPartage_Covoiturage::post_type)
+				return;
+			$input = $_POST[AGDP_COVOIT_SECRETCODE];
+			$codesecret = AgendaPartage_Covoiturage::get_post_meta($post, 'cov-' . AGDP_COVOIT_SECRETCODE, true);
 			if(strcasecmp( $codesecret, $input) == 0){
 				//TODO : transient plutot que dans l'url
-				$url = AgendaPartage_Covoiturage::get_post_permalink($post, AGDP_SECRETCODE . '=' . $codesecret);
+				$url = AgendaPartage_Covoiturage::get_post_permalink($post, AGDP_COVOIT_SECRETCODE . '=' . $codesecret);
 				$ajax_response = sprintf('redir:%s', $url);
 			}
 			else{
@@ -754,6 +759,7 @@ class AgendaPartage_Covoiturage_Edit {
 				'cov-organisateur' => 1,
 				'cov-email' => 1,
 				'cov-phone' => 1,
+				'cov-'.AGDP_COVOIT_SECRETCODE => 1
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;
 					if(is_array($inputs[$input_field]))
@@ -813,12 +819,12 @@ class AgendaPartage_Covoiturage_Edit {
 		$data['cov-organisateur-show'] = 1;//TODO
 		$data['cov-email-show'] = 0;//TODO
 		
-		$meta_name = 'cov-'.AGDP_SECRETCODE;
-		if( $post && get_post_meta($post->ID, $meta_name, true))
-			unset($data[$meta_name]);
-		else {
-			$data[$meta_name] = AgendaPartage::get_secret_code(6);
-		}
+		// $meta_name = 'cov-'.AGDP_COVOIT_SECRETCODE;
+		// if( $post && get_post_meta($post->ID, $meta_name, true))
+			// unset($data[$meta_name]);
+		// else {
+			// $data[$meta_name] = AgendaPartage::get_secret_code(6);
+		// }
 		
 		$meta_name = 'cov-sessionid';
 		if( $post && get_post_meta($post->ID, $meta_name, true))
@@ -960,12 +966,12 @@ class AgendaPartage_Covoiturage_Edit {
 				set_transient(AGDP_TAG . '_email_sent_' . $post_id, $post_id, 20);
 		}
 		
-		$url = AgendaPartage_Covoiturage::get_post_permalink($post_id, AGDP_SECRETCODE);
+		$url = AgendaPartage_Covoiturage::get_post_permalink($post_id, AGDP_COVOIT_SECRETCODE);
 		
 		$messages = ($contact_form->get_properties())['messages'];
 	
 		$messages['mail_sent_ok'] = sprintf('redir:%s', $url);
-		$messages['mail_sent_ng'] = sprintf('%s<br>Le covoiturage a bien été enregistré mais l\'e-mail n\'a pas pu être envoyé.<br><a href="%s">Afficher la page de l\'covoiturage</a>'
+		$messages['mail_sent_ng'] = sprintf('%s<br>Le covoiturage a bien été enregistré mais l\'e-mail n\'a pas pu être envoyé.<br><a href="%s">Afficher la page de le covoiturage</a>'
 			, $messages['mail_sent_ng'], $url);
 			
 		$contact_form->set_properties(array('messages' => $messages));

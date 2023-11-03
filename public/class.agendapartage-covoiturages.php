@@ -807,12 +807,7 @@ class AgendaPartage_Covoiturages {
 		$show_email = /*! is_user_logged_in() &&*/ get_post_meta($post->ID, 'cov-phone-show', true);
 		$value = get_post_meta($post->ID, 'cov-phone', true);
 		if($value){
-			if($show_email)
-				$value = antispambot($value);
-			else
-				$value = sprintf('<span class="covoiturage-tool">%s</span>'
-							, AgendaPartage_Covoiturage::get_covoiturage_action_link($post->ID, 'send_phone_number', true));
-								
+			$value = AgendaPartage_Covoiturage::get_phone_html($post->ID);
 			$html .= sprintf('<div class="cov-phone">Téléphone : %s</div>',  $value);
 		}
 		

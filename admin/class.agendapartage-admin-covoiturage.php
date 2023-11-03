@@ -98,7 +98,6 @@ class AgendaPartage_Admin_Covoiturage {
 		$columns['author']    = 'author';
 		$columns['dates'] = 'dates';
 		$columns['details'] = 'details';
-		$columns['diffusion'] = 'diffusion';
 		$columns['organisateur'] = 'organisateur';
 		return $columns;
 	}

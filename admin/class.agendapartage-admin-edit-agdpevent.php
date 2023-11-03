@@ -277,7 +277,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			)*/
 		);
 		//codesecret
-		$field = array('name' => 'ev-'.AGDP_SECRETCODE ,
+		$field = array('name' => 'ev-'.AGDP_EVENT_SECRETCODE ,
 			'label' => 'Code secret pour cet évènement',
 			'type' => 'input' ,
 			'readonly' => true ,

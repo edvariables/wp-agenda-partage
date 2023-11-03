@@ -46,6 +46,9 @@ class AgendaPartage_Covoiturage {
 		add_action( 'wp_ajax_nopriv_covoiturage_action', array(__CLASS__, 'on_wp_ajax_covoiturage_action_cb') );
 		
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
+
+		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_EMAIL4PHONE, array(__CLASS__, 'on_wp_ajax_covoiturage_email4phone_cb') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_EMAIL4PHONE, array(__CLASS__, 'on_wp_ajax_covoiturage_email4phone_cb') );
 	}
 	
 	/**
@@ -236,11 +239,11 @@ class AgendaPartage_Covoiturage {
 	 */
 	public static function get_secretcode_in_request( $covoiturage ) {
 		// Ajax : code secret
-		if(array_key_exists(AGDP_SECRETCODE, $_REQUEST)){
-			$meta_name = 'cov-'.AGDP_SECRETCODE;
+		if(array_key_exists(AGDP_COVOIT_SECRETCODE, $_REQUEST)){
+			$meta_name = 'cov-'.AGDP_COVOIT_SECRETCODE;
 			$codesecret = self::get_post_meta($covoiturage, $meta_name, true);		
 			if($codesecret
-			&& (strcasecmp( $codesecret, $_REQUEST[AGDP_SECRETCODE]) !== 0)){
+			&& (strcasecmp( $codesecret, $_REQUEST[AGDP_COVOIT_SECRETCODE]) !== 0)){
 				$codesecret = '';
 			}
 		}
@@ -273,7 +276,7 @@ class AgendaPartage_Covoiturage {
 		
 		$html .= sprintf('[covoiturage-modifier-covoiturage toggle="Modifier ce covoiturage" no-ajax post_id="%d" %s]'
 			, $covoiturage->ID
-			, $codesecret ? AGDP_SECRETCODE . '=' . $codesecret : ''
+			, $codesecret ? AGDP_COVOIT_SECRETCODE . '=' . $codesecret : ''
 		);
 		
 		if( $email && current_user_can('manage_options') ){
@@ -299,7 +302,7 @@ class AgendaPartage_Covoiturage {
 				elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $covoiturage->ID)){
 					delete_transient(AGDP_TAG . '_no_email_' . $covoiturage->ID);
 					if(empty($codesecret))
-						$secretcode = get_post_meta($post->ID, 'cov-'.AGDP_SECRETCODE, true);
+						$secretcode = get_post_meta($post->ID, 'cov-'.AGDP_COVOIT_SECRETCODE, true);
 				}
 				
 				$alerte = sprintf('<p class="alerte">Ce covoiturage est <b>en attente de validation</b>, il a le statut "%s".'
@@ -317,7 +320,7 @@ class AgendaPartage_Covoiturage {
 			case 'publish': 
 				$page_id = AgendaPartage::get_option('covoiturages_page_id');
 				if($page_id){
-					$url = self::get_post_permalink($page_id, AGDP_SECRETCODE);
+					$url = self::get_post_permalink($page_id, AGDP_COVOIT_SECRETCODE);
 					$url = add_query_arg( AGDP_ARG_COVOITURAGEID, $covoiturage->ID, $url);
 					$url .= '#' . AGDP_ARG_COVOITURAGEID . $covoiturage->ID;
 					$html .= sprintf('<br><br>Pour voir ce covoiturage dans la liste, <a href="%s">cliquez ici %s</a>.'
@@ -351,7 +354,7 @@ class AgendaPartage_Covoiturage {
 		$meta_name = 'cov-email' ;
 		$email = self::get_post_meta($post, $meta_name, true);
 		if(!$email){
-			$html .= '<p class="alerte">Cet covoiturage n\'a pas d\'adresse e-mail associée.</p>';
+			$html .= '<p class="alerte">Ce covoiturage n\'a pas d\'adresse e-mail associée.</p>';
 		}
 		else {
 			if(current_user_can('manage_options'))
@@ -455,7 +458,7 @@ class AgendaPartage_Covoiturage {
 			//Maintient la transmission du code secret
 			$ekey = self::get_secretcode_in_request($post_id);
 			if($ekey)
-				$query[AGDP_SECRETCODE] = $ekey;
+				$query[AGDP_COVOIT_SECRETCODE] = $ekey;
 
 			if($confirmation){
 				$query['confirm'] = $confirmation;
@@ -536,7 +539,7 @@ class AgendaPartage_Covoiturage {
 	public static function covoiturage_action_unpublish($post_id) {
 		$post_status = 'pending';
 		if( self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, true, AGDP_SECRETCODE, 'etat=en-attente');
+			return 'redir:' . self::get_post_permalink($post_id, true, AGDP_COVOIT_SECRETCODE, 'etat=en-attente');
 		return 'Impossible de modifier ce covoiturage.';
 	}
 	/**
@@ -547,7 +550,7 @@ class AgendaPartage_Covoiturage {
 		if( (! self::waiting_for_activation($post_id)
 			|| current_user_can('manage_options') )
 		&& self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, AGDP_SECRETCODE);
+			return 'redir:' . self::get_post_permalink($post_id, AGDP_COVOIT_SECRETCODE);
 		return 'Impossible de modifier le statut.<br>Ceci peut être effectué depuis l\'e-mail de validation.';
 	}
 	/**
@@ -605,7 +608,7 @@ class AgendaPartage_Covoiturage {
 		if(!$post_id)
 			return false;
 		
-		$codesecret = self::get_post_meta($post, 'cov-' . AGDP_SECRETCODE, true);
+		$codesecret = self::get_post_meta($post, 'cov-' . AGDP_COVOIT_SECRETCODE, true);
 		
 		$meta_name = 'cov-email' ;
 		$email = self::get_post_meta($post, $meta_name, true);
@@ -619,7 +622,7 @@ class AgendaPartage_Covoiturage {
 		$attachments = array();
 		
 		if( ! $message){
-			$message = sprintf('Bonjour,<br>Vous recevez ce message suite la création du covoiturage ci-dessous ou à une demande depuis le site et parce que votre e-mail est associé à l\'covoiturage.');
+			$message = sprintf('Bonjour,<br>Vous recevez ce message suite la création du covoiturage ci-dessous ou à une demande depuis le site et parce que votre e-mail est associé au covoiturage.');
 
 		}
 		else
@@ -632,10 +635,10 @@ class AgendaPartage_Covoiturage {
 				$status = 'En attente de relecture';
 			case 'draft':
 				if(!$status) $status = 'Brouillon';
-				$message .= sprintf('<br><br>Cet covoiturage n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
+				$message .= sprintf('<br><br>Ce covoiturage n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
 				
 				if( self::waiting_for_activation($post) ){
-					$activation_url = add_query_arg(AGDP_SECRETCODE, $codesecret, $url);
+					$activation_url = add_query_arg(AGDP_COVOIT_SECRETCODE, $codesecret, $url);
 					$activation_url = add_query_arg('action', 'activation', $activation_url);
 					$activation_url = add_query_arg('ak', self::get_activation_key($post), $activation_url);
 					$activation_url = add_query_arg('etat', 'en-attente', $activation_url);
@@ -644,14 +647,14 @@ class AgendaPartage_Covoiturage {
 				$message .= sprintf('<br><br><a href="%s"><b>Cliquez ici pour rendre ce covoiturage public dans l\'agenda</b></a>.<br>', $activation_url);
 				break;
 			case 'trash':
-				$message .= sprintf('<br><br>Cet covoiturage a été SUPPRIMÉ.');
+				$message .= sprintf('<br><br>Ce covoiturage a été SUPPRIMÉ.');
 				break;
 		}
 		
 		$message .= sprintf('<br><br>Le code secret de ce covoiturage est : %s', $codesecret);
-		// $args = AGDP_SECRETCODE .'='. $codesecret;
+		// $args = AGDP_COVOIT_SECRETCODE .'='. $codesecret;
 		// $codesecret_url = $url . (strpos($url,'?')>0 || strpos($args,'?') ? '&' : '?') . $args;			
-		$codesecret_url = add_query_arg(AGDP_SECRETCODE, $codesecret, $url);
+		$codesecret_url = add_query_arg(AGDP_COVOIT_SECRETCODE, $codesecret, $url);
 		$message .= sprintf('<br><br>Pour modifier ce covoiturage, <a href="%s">cliquez ici</a>', $codesecret_url);
 		
 		$url = self::get_post_permalink($post);
@@ -678,7 +681,7 @@ class AgendaPartage_Covoiturage {
 			$html = sprintf('<div class="email-send alerte">L\'e-mail n\'a pas pu être envoyé.</div>');
 		}
 		if($return_html_result){
-			if($return_html_result == 'bool')
+			if($return_html_result === 'bool')
 				return $success;
 			else
 				return $html;
@@ -689,7 +692,7 @@ class AgendaPartage_Covoiturage {
 	/**
 	 * Détails du covoiturage pour insertion dans un email
 	 */
-	public static function get_post_details_for_email($post){
+	public static function get_post_details_for_email($post, $to_author = true){
 		if(is_numeric($post)){
 			$post = get_post($post);
 		}
@@ -701,14 +704,15 @@ class AgendaPartage_Covoiturage {
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Départ', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'cov-arrivee';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Destination', htmlentities(get_post_meta($post_id, $meta_name, true)));
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Communes', htmlentities(implode(', ', self::get_covoiturage_cities ($post_id, 'names'))));
 		$html .= sprintf('<tr><td>%s : </td><td><pre>%s</pre></td></tr>', 'Description', htmlentities($post->post_content));
 		$meta_name = 'cov-organisateur';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Organisateur', htmlentities(get_post_meta($post_id, $meta_name, true)));
 		$meta_name = 'cov-phone';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Téléphone', htmlentities(get_post_meta($post_id, $meta_name, true)));
-		$meta_name = 'cov-phone-show';
-		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Afficher le n° de téléphone', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
+		if($to_author) {
+			$meta_name = 'cov-phone-show';
+			$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Afficher publiquement le n° de téléphone', get_post_meta($post_id, $meta_name, true) ? 'oui' : 'non');
+		}
 		$meta_name = 'cov-email';
 		$html .= sprintf('<tr><td>%s : </td><td>%s</td></tr>', 'Email', get_post_meta($post_id, $meta_name, true));
 		
@@ -913,7 +917,7 @@ class AgendaPartage_Covoiturage {
 	/**
 	 * get_post_permalink
 	 * Si le premier argument === true, $leave_name = true
-	 * Si un argument === AGDP_SECRETCODE, ajoute AGDP_SECRETCODE=codesecret si on le connait
+	 * Si un argument === AGDP_COVOIT_SECRETCODE, ajoute AGDP_COVOIT_SECRETCODE=codesecret si on le connait
 	 * 
 	 */
 	public static function get_post_permalink( $post, ...$url_args){
@@ -941,11 +945,11 @@ class AgendaPartage_Covoiturage {
 			if($args){
 				if(is_array($args))
 					$args = add_query_arg($args);
-				elseif($args == AGDP_SECRETCODE){			
+				elseif($args == AGDP_COVOIT_SECRETCODE){			
 					//Maintient la transmission du code secret
 					$ekey = self::get_secretcode_in_request($post->ID);		
 					if($ekey){
-						$args = AGDP_SECRETCODE . '=' . $ekey;
+						$args = AGDP_COVOIT_SECRETCODE . '=' . $ekey;
 					}
 					else 
 						continue;
@@ -1037,7 +1041,7 @@ class AgendaPartage_Covoiturage {
 			return true;
 		}
 		if($verbose){
-			echo sprintf('<p>Code secret : %s != %s</p>', $ekey, $_REQUEST[AGDP_SECRETCODE]);
+			echo sprintf('<p>Code secret : %s != %s</p>', $ekey, $_REQUEST[AGDP_COVOIT_SECRETCODE]);
 		}
 		
 		return false;
@@ -1117,5 +1121,160 @@ class AgendaPartage_Covoiturage {
 		$mail_data['recipient'] = self::get_post_meta($covoiturage, $meta_name, true);
 		
 		$contact_form->set_properties(array('mail'=>$mail_data));
+	}
+	
+	/**
+	* Retourne le numéro de téléphone ou le formulaire pour l'obtenir par email.
+	**/
+	public static function get_phone_html($post_id){
+		$meta_name = 'cov-phone';
+		$val = self::get_post_meta($post_id, $meta_name, true, false);
+		if( /*! is_user_logged_in()
+		&&*/ ! get_post_meta($post_id, 'cov-phone-show', true)){
+			// $val = sprintf('<span class="covoiturage-tool">%s</span>'
+				// , self::get_covoiturage_action_link($post_id, 'send_phone_number', true));
+				//Formulaire de saisie du code secret
+			$url = self::get_post_permalink( $post_id );
+			$query = [
+				'post_id' => $post_id,
+				'action' => AGDP_TAG . '_' . AGDP_EMAIL4PHONE
+			];
+			$html = '<a id="email4phone-title">' 
+					. AgendaPartage::icon('phone') . ' masqué > cliquez ici'
+				. '</a>'
+				. '<div id="email4phone-form">'
+					. 'La personne ayant déposé l\'annonce a souhaité restreindre la lecture de son numéro de téléphone.'
+					. ' Vous pouvez le recevoir par email.'
+					. '<br>Veuillez saisir votre adresse email :&nbsp;'
+					. sprintf('<form class="agdp-ajax-action" data="%s">', esc_attr(json_encode($query)))
+					. wp_nonce_field(AGDP_TAG . '-' . AGDP_EMAIL4PHONE, AGDP_TAG . '-' . AGDP_EMAIL4PHONE, true, false)
+					.'<input type="text" placeholder="ici votre email" name="'.AGDP_EMAIL4PHONE.'" size="20"/>
+					<input type="submit" value="Envoyer" /></form>'
+				. '</div>'
+			;
+			return $html;
+		}
+		return antispambot(esc_html($val), -0.5);
+	}
+
+	
+	/**
+	 * Send email with phone number from Ajax query
+	 */
+	public static function on_wp_ajax_covoiturage_email4phone_cb() {
+		$ajax_response = '0';
+		if(array_key_exists("post_id", $_POST)){
+			$post = get_post($_POST['post_id']);
+			if($post->post_type != self::post_type)
+				return;
+			$email = sanitize_email($_POST[AGDP_EMAIL4PHONE]);
+			if( ! $email ){
+				$ajax_response = sprintf('<div class="email-send alerte">L\'adresse "%s" n\'est pas valide. Vérifiez votre saisie.</div>', $_POST[AGDP_EMAIL4PHONE]);
+			}
+			else {
+				$result = self::send_email4phone($post, $email);
+				if( $result === true ){
+					$ajax_response = sprintf('<div class="info">Le numéro de téléphone vous a été envoyé par email à l\'adresse %s.</div>', $email);
+				}
+				elseif( $result === false ){
+					$ajax_response = sprintf('<div class="email-send alerte">Désolé, l\'e-mail n\'a pas pu être envoyé à l\'adresse "%s".</div>', $email);
+				}
+				else
+					$ajax_response = $result;
+			}
+		}
+		
+		// Make your array as json
+		wp_send_json($ajax_response);
+	 
+		// Don't forget to stop execution afterward.
+		wp_die();
+	}
+	
+	/**
+	 * Envoi d'un email contenant les coordonnées associées au covoiturage
+	 */
+	private static function send_email4phone($post, $dest_email, $return_html_result = true){
+		if(is_numeric($post)){
+			$post_id = $post;
+			$post = get_post($post_id);
+		}
+		else
+			$post_id = $post->ID;
+		
+		if(!$post_id)
+			return false;
+		
+		$meta_name = 'cov-organisateur' ;
+		$organisateur = self::get_post_meta($post, $meta_name, true);
+		$meta_name = 'cov-email' ;
+		$email = self::get_post_meta($post, $meta_name, true);
+		$meta_name = 'cov-phone' ;
+		$phone = self::get_post_meta($post, $meta_name, true);
+		
+		$site = get_bloginfo( 'name' );
+		
+		$subject = sprintf('[%s][Coordonnées] %s', $site, $post->post_title);
+		
+		$headers = array();
+		$attachments = array();
+		
+		$message = sprintf('Bonjour,<br>Vous avez demandé à recevoir les coordonnées associées au covoiturage ci-dessous.');
+		$message .= sprintf('<br>Initiateur : %s', $organisateur);
+		$message .= sprintf('<br>Téléphone : %s', $phone);
+		$message .= sprintf('<br>Email : %s', $email);
+		
+		$url = self::get_post_permalink($post, true);
+		
+		switch($post->post_status){
+			case 'pending':
+				$status = 'En attente de relecture';
+			case 'draft':
+				if(empty($status)) $status = 'Brouillon';
+				$message .= sprintf('<br><br>Ce covoiturage n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
+				break;
+			case 'trash':
+				$message .= sprintf('<br><br>Ce covoiturage a été SUPPRIMÉ.');
+				break;
+		}
+		
+		
+		$url = self::get_post_permalink($post);
+		$message .= sprintf('<br><br>La page de ce covoiturage est : <a href="%s">%s</a>', $url, $url);
+
+		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';
+		
+		$message .= '<br>'.str_repeat('-', 20);
+		$message .= sprintf('<br><br>Détails du covoiturage :<br><code>%s</code>', self::get_post_details_for_email($post, false));
+		
+		$message = quoted_printable_encode(str_replace('\n', '<br>', $message));
+
+		$headers[] = 'MIME-Version: 1.0';
+		$headers[] = 'Content-type: text/html; charset=utf-8';
+		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+
+		if($success = wp_mail( $dest_email
+			, '=?UTF-8?B?' . base64_encode($subject). '?='
+			, $message
+			, $headers, $attachments )){
+			$html = sprintf('<div class="info email-send">L\'e-mail a été envoyé à l\'adresse "%s".</div>', $dest_email);
+		}
+		else{
+			$html = sprintf('<div class="email-send alerte">L\'e-mail n\'a pas pu être envoyé à l\'adresse "%s".</div>', $dest_email);
+		}
+		
+		debug_log($return_html_result, $success, $html
+			, $dest_email
+			, '=?UTF-8?B?' . base64_encode($subject). '?='
+			, $message
+			, $headers, $attachments );
+		
+		if($return_html_result){
+			if($return_html_result === 'bool')
+				return $success;
+			else
+				return $html;
+		}
+		echo $html;
 	}
 }

@@ -160,7 +160,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
 				unset($atts[$key]);
 			}
-			$key = AGDP_SECRETCODE ;
+			$key = AGDP_EVENT_SECRETCODE ;
 			if(array_key_exists($key, $atts)){
 				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
 				unset($atts[$key]);

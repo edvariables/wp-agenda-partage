@@ -94,7 +94,10 @@ jQuery( function( $ ) {
 							.end()
 						.toggleClass('radio-checked', this.checked)
 					;
-				});
+				})
+					//Init
+					.filter(':checked').trigger('change')
+				;
 				
 				/** Covoiturage : Intervertit les lieux de départ et d'arrivée **/
 				$form.on('click', '.swap-depart-arrivee', function(e) {
@@ -270,5 +273,12 @@ jQuery( function( $ ) {
 			if($spinner.length == 0)
 				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
 		}); 
+	
+	
+		
+		// Covoiture : obtention du n° de téléphone masqué
+		$( 'body' ).on('click', '#email4phone-title', function(e) {
+			$(this).toggleClass('active');
+		});
 	});
 });

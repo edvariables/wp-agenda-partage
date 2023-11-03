@@ -20,10 +20,10 @@ class AgendaPartage_Post_Types {
 			if(!class_exists('AgendaPartage_Maillog'))
 				require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog-post_type.php' );
+		}
 		if(!class_exists('AgendaPartage_Covoiturage'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-post_type.php' );
-		}
 	}
 
 	/**

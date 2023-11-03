@@ -219,11 +219,11 @@ class AgendaPartage_Evenement {
 	 */
 	public static function get_secretcode_in_request( $agdpevent ) {
 		// Ajax : code secret
-		if(array_key_exists(AGDP_SECRETCODE, $_REQUEST)){
-			$meta_name = 'ev-'.AGDP_SECRETCODE;
+		if(array_key_exists(AGDP_EVENT_SECRETCODE, $_REQUEST)){
+			$meta_name = 'ev-'.AGDP_EVENT_SECRETCODE;
 			$codesecret = self::get_post_meta($agdpevent, $meta_name, true);		
 			if($codesecret
-			&& (strcasecmp( $codesecret, $_REQUEST[AGDP_SECRETCODE]) !== 0)){
+			&& (strcasecmp( $codesecret, $_REQUEST[AGDP_EVENT_SECRETCODE]) !== 0)){
 				$codesecret = '';
 			}
 		}
@@ -260,7 +260,7 @@ class AgendaPartage_Evenement {
 			if($message_contact){
 				$html .= sprintf('[agdpevent-message-contact toggle="Envoyez un message à l\'organisateur" no-ajax post_id="%d" %s]'
 						, $agdpevent->ID
-						, $codesecret ? AGDP_SECRETCODE . '=' . $codesecret : ''
+						, $codesecret ? AGDP_EVENT_SECRETCODE . '=' . $codesecret : ''
 				);
 			}
 		}
@@ -269,7 +269,7 @@ class AgendaPartage_Evenement {
 		
 		$html .= sprintf('[agdpevent-modifier-evenement toggle="Modifier cet évènement" no-ajax post_id="%d" %s]'
 			, $agdpevent->ID
-			, $codesecret ? AGDP_SECRETCODE . '=' . $codesecret : ''
+			, $codesecret ? AGDP_EVENT_SECRETCODE . '=' . $codesecret : ''
 		);
 		
 		if( $email && current_user_can('manage_options') ){
@@ -295,7 +295,7 @@ class AgendaPartage_Evenement {
 				elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID)){
 					delete_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID);
 					if(empty($codesecret))
-						$secretcode = get_post_meta($post->ID, 'ev-'.AGDP_SECRETCODE, true);
+						$secretcode = get_post_meta($post->ID, 'ev-'.AGDP_EVENT_SECRETCODE, true);
 				}
 				
 				$alerte = sprintf('<p class="alerte">Cet évènement est <b>en attente de validation</b>, il a le statut "%s".'
@@ -313,7 +313,7 @@ class AgendaPartage_Evenement {
 			case 'publish': 
 				$page_id = AgendaPartage::get_option('agenda_page_id');
 				if($page_id){
-					$url = self::get_post_permalink($page_id, AGDP_SECRETCODE);
+					$url = self::get_post_permalink($page_id, AGDP_EVENT_SECRETCODE);
 					$url = add_query_arg( AGDP_ARG_EVENTID, $agdpevent->ID, $url);
 					$url .= '#' . AGDP_ARG_EVENTID . $agdpevent->ID;
 					$html .= sprintf('<br><br>Pour voir cet évènement dans l\'agenda, <a href="%s">cliquez ici %s</a>.'
@@ -470,7 +470,7 @@ class AgendaPartage_Evenement {
 			//Maintient la transmission du code secret
 			$ekey = self::get_secretcode_in_request($post_id);
 			if($ekey)
-				$query[AGDP_SECRETCODE] = $ekey;
+				$query[AGDP_EVENT_SECRETCODE] = $ekey;
 
 			if($confirmation){
 				$query['confirm'] = $confirmation;
@@ -551,7 +551,7 @@ class AgendaPartage_Evenement {
 	public static function agdpevent_action_unpublish($post_id) {
 		$post_status = 'pending';
 		if( self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, true, AGDP_SECRETCODE, 'etat=en-attente');
+			return 'redir:' . self::get_post_permalink($post_id, true, AGDP_EVENT_SECRETCODE, 'etat=en-attente');
 		return 'Impossible de modifier cet évènement.';
 	}
 	/**
@@ -562,7 +562,7 @@ class AgendaPartage_Evenement {
 		if( (! self::waiting_for_activation($post_id)
 			|| current_user_can('manage_options') )
 		&& self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, AGDP_SECRETCODE);
+			return 'redir:' . self::get_post_permalink($post_id, AGDP_EVENT_SECRETCODE);
 		return 'Impossible de modifier le statut.<br>Ceci peut être effectué depuis l\'e-mail de validation.';
 	}
 	/**
@@ -620,7 +620,7 @@ class AgendaPartage_Evenement {
 		if(!$post_id)
 			return false;
 		
-		$codesecret = self::get_post_meta($post, 'ev-' . AGDP_SECRETCODE, true);
+		$codesecret = self::get_post_meta($post, 'ev-' . AGDP_EVENT_SECRETCODE, true);
 		
 		$meta_name = 'ev-email' ;
 		$email = self::get_post_meta($post, $meta_name, true);
@@ -650,7 +650,7 @@ class AgendaPartage_Evenement {
 				$message .= sprintf('<br><br>Cet évènement n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
 				
 				if( self::waiting_for_activation($post) ){
-					$activation_url = add_query_arg(AGDP_SECRETCODE, $codesecret, $url);
+					$activation_url = add_query_arg(AGDP_EVENT_SECRETCODE, $codesecret, $url);
 					$activation_url = add_query_arg('action', 'activation', $activation_url);
 					$activation_url = add_query_arg('ak', self::get_activation_key($post), $activation_url);
 					$activation_url = add_query_arg('etat', 'en-attente', $activation_url);
@@ -664,9 +664,9 @@ class AgendaPartage_Evenement {
 		}
 		
 		$message .= sprintf('<br><br>Le code secret de cet évènement est : %s', $codesecret);
-		// $args = AGDP_SECRETCODE .'='. $codesecret;
+		// $args = AGDP_EVENT_SECRETCODE .'='. $codesecret;
 		// $codesecret_url = $url . (strpos($url,'?')>0 || strpos($args,'?') ? '&' : '?') . $args;			
-		$codesecret_url = add_query_arg(AGDP_SECRETCODE, $codesecret, $url);
+		$codesecret_url = add_query_arg(AGDP_EVENT_SECRETCODE, $codesecret, $url);
 		$message .= sprintf('<br><br>Pour modifier cet évènement, <a href="%s">cliquez ici</a>', $codesecret_url);
 		
 		$url = self::get_post_permalink($post);
@@ -693,7 +693,7 @@ class AgendaPartage_Evenement {
 			$html = sprintf('<div class="email-send alerte">L\'e-mail n\'a pas pu être envoyé.</div>');
 		}
 		if($return_html_result){
-			if($return_html_result == 'bool')
+			if($return_html_result === 'bool')
 				return $success;
 			else
 				return $html;
@@ -939,7 +939,7 @@ class AgendaPartage_Evenement {
 	/**
 	 * get_post_permalink
 	 * Si le premier argument === true, $leave_name = true
-	 * Si un argument === AGDP_SECRETCODE, ajoute AGDP_SECRETCODE=codesecret si on le connait
+	 * Si un argument === AGDP_EVENT_SECRETCODE, ajoute AGDP_EVENT_SECRETCODE=codesecret si on le connait
 	 * 
 	 */
 	public static function get_post_permalink( $post, ...$url_args){
@@ -967,11 +967,11 @@ class AgendaPartage_Evenement {
 			if($args){
 				if(is_array($args))
 					$args = add_query_arg($args);
-				elseif($args == AGDP_SECRETCODE){			
+				elseif($args == AGDP_EVENT_SECRETCODE){			
 					//Maintient la transmission du code secret
 					$ekey = self::get_secretcode_in_request($post->ID);		
 					if($ekey){
-						$args = AGDP_SECRETCODE . '=' . $ekey;
+						$args = AGDP_EVENT_SECRETCODE . '=' . $ekey;
 					}
 					else 
 						continue;
@@ -1063,7 +1063,7 @@ class AgendaPartage_Evenement {
 			return true;
 		}
 		if($verbose){
-			echo sprintf('<p>Code secret : %s != %s</p>', $ekey, $_REQUEST[AGDP_SECRETCODE]);
+			echo sprintf('<p>Code secret : %s != %s</p>', $ekey, $_REQUEST[AGDP_EVENT_SECRETCODE]);
 		}
 		
 		return false;
