@@ -243,22 +243,6 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				return $html;
 				break;
 				
-			case 'covoiturage-localisation':
-
-				$meta_name = 'cov-' . substr($shortcode, strlen('covoiturage-')) ;
-				$val = get_post_meta($post_id, $meta_name, true);
-				if($val || $content){
-					$val = do_shortcode( wp_kses_post($val . $content));
-					if($no_html)
-						$html = $val;
-					else
-						$html = '<div class="agdp-covoiturage agdp-'. $shortcode .'">'
-							. $val
-							. '</div>';
-				}
-				return $html;
-				break;
-				
 			case 'covoiturage-dates':
 
 				$meta_name = 'cov-' . substr($shortcode, strlen('covoiturage-')) ;

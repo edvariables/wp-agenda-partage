@@ -45,23 +45,27 @@ article.type-agdpevent ~ nav.post-navigation {
 	font-weight : bold;
 }
 
-.entry-content .agdp-agdpevent {
+.entry-content .agdp-agdpevent,
+.entry-content .agdp-covoiturage {
 	white-space: pre-line;
 	margin-bottom: 1.5em;
 }
-.entry-content .agdp-agdpevent .nowrap, .entry-content .agdp-agdpevent ul {
-	white-space: normal;
-}
-/* Stripe payments plugin */
-.entry-content .agdp-agdpevent .asp_product_item {
-	white-space: normal;
-}
-
-.entry-content .agdp-agdpevent-message-contact {
+.entry-content .agdp-agdpevent .nowrap
+, .entry-content .agdp-agdpevent ul,
+.entry-content .agdp-covoiturage .nowrap
+, .entry-content .agdp-covoiturage ul {
 	white-space: normal;
 }
 
-.entry-content .agdp-agdpevent-description, .entry-content .agdp-agdpevent-details {
+.entry-content .agdp-agdpevent-message-contact,
+.entry-content .agdp-covoiturage-message-contact {
+	white-space: normal;
+}
+
+.entry-content .agdp-agdpevent-description
+, .entry-content .agdp-agdpevent-details
+, .entry-content .agdp-covoiturage-description
+, .entry-content .agdp-covoiturage-details {
 	background-color: #f7f7f7;
 	border-color: #9fa4a6;
 	border-style: solid;
@@ -72,12 +76,16 @@ article.type-agdpevent ~ nav.post-navigation {
 	-webkit-border-radius: 3px;
 	padding: 1em;	
 }
-body.colors-dark .entry-content .agdp-agdpevent-description, .entry-content .agdp-agdpevent-details {
+body.colors-dark .entry-content .agdp-agdpevent-description,
+.entry-content .agdp-agdpevent-details,
+body.colors-dark .entry-content .agdp-covoiturage-description,
+.entry-content .agdp-covoiturage-details {
 	background-color: #272727;
 	color: rgb(238, 238, 238);
 }
 
-.entry-content .agdp-agdpevent-details .entry-date {
+.entry-content .agdp-agdpevent-details .entry-date,
+.entry-content .agdp-covoiturage-details .entry-date {
 	font-size: small;
 	font-style: italic;
 	white-space: normal;
@@ -285,7 +293,7 @@ div.labels-one-row label {
 }
 .entry-title span.cov-intention-1,
 .agdp-covoiturages span.cov-intention {
-	background-color: darkred;
+	background-color: indianred;
 }
 .entry-title span.cov-intention-2,
 .agdp-covoiturages span.cov-intention-2 {
@@ -338,7 +346,7 @@ div.labels-one-row label {
 	display: block;
 	margin-left: 3em;
 	padding: 6px;
-	border: 2px inset;
+	border: 2px solid gray;
 }
 #email4phone-form form {
 	display: inline-flex;
