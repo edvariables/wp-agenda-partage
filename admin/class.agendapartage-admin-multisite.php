@@ -116,6 +116,9 @@ class AgendaPartage_Admin_Multisite {
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'
+		, 'covoiturage_edit_form_id' => 'WPCF7_Contact_Form'
+		, 'new_covoiturage_page_id' => 'page'
+		, 'covoiturages_page_id' => 'page'
 		]
 		as $option_name => $post_type){
 			$option_label = AgendaPartage::get_option_label($option_name);

@@ -65,6 +65,9 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 		$post_id = empty($postarr['post_ID']) ? $postarr['ID'] : $postarr['post_ID'];
 		AgendaPartage_Covoiturage_Edit::save_post_revision($post_id, $postarr, true);
 		
+		$post_title = AgendaPartage_Covoiturage::get_post_title($post_id, true, $postarr);
+		$data['post_title'] = $post_title;
+		
 		return $data;
 	}
 	
@@ -128,10 +131,11 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 	 * Register Meta Boxes (boite en édition de covoiturage)
 	 */
 	public static function register_covoiturage_metaboxes($post){
-		add_meta_box('agdp_covoiturage-dates', __('Date du covoiturage', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
-		add_meta_box('agdp_covoiturage-description', __('Description', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
-		add_meta_box('agdp_covoiturage-organisateur', __('Organisateur du covoiturage', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
 		add_meta_box('agdp_covoiturage-general', __('Informations générales', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
+		add_meta_box('agdp_covoiturage-dates', __('Date et heures du covoiturage', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
+		add_meta_box('agdp_covoiturage-trajet', __('Trajet', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
+		add_meta_box('agdp_covoiturage-description', __('Description', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
+		add_meta_box('agdp_covoiturage-organisateur', __('Initiateur du covoiturage', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Covoiturage::post_type, 'normal', 'high');
 				
 		if( current_user_can('manage_options') ){
 			self::register_metabox_admin();
@@ -159,6 +163,10 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 				parent::metabox_html( self::get_metabox_dates_fields(), $post, $metabox );
 				break;
 			
+			case 'agdp_covoiturage-trajet':
+				parent::metabox_html( self::get_metabox_trajet_fields(), $post, $metabox );
+				break;
+			
 			case 'agdp_covoiturage-description':
 				parent::metabox_html( self::get_metabox_description_fields(), $post, $metabox );
 				break;
@@ -183,11 +191,11 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 
 	public static function get_metabox_all_fields(){
 		return array_merge(
-			// self::get_metabox_titre_fields(),
+			self::get_metabox_general_fields(),
 			self::get_metabox_dates_fields(),
+			self::get_metabox_trajet_fields(),
 			self::get_metabox_description_fields(),
 			self::get_metabox_organisateur_fields(),
-			self::get_metabox_general_fields()
 		);
 	}	
 
@@ -201,25 +209,39 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 	public static function get_metabox_dates_fields(){
 		return array(
 			array('name' => 'cov-date-debut',
-				'label' => __('Date de début', AGDP_TAG),
+				'label' => __('Date', AGDP_TAG),
 				'input' => 'date',
-				'fields' => array(array(
-					'name' => 'cov-date-journee-entiere',
-					'label' => __('toute la journée', AGDP_TAG),
-					'type' => 'checkbox',
-					'default' => '0'
-				))
+				// 'fields' => array(array(
+					// 'name' => 'cov-date-journee-entiere',
+					// 'label' => __('toute la journée', AGDP_TAG),
+					// 'type' => 'checkbox',
+					// 'default' => '0'
+				// ))
 			),
 			array('name' => 'cov-heure-debut',
-				'label' => __('Heure de début', AGDP_TAG),
+				'label' => __('Heure de départ', AGDP_TAG),
 				'input' => 'time'
 			),
 			array('name' => 'cov-heure-fin',
-				'label' => __('Heure de fin', AGDP_TAG),
+				'label' => __('Heure de retour éventuel', AGDP_TAG),
 				'input' => 'time'
 			)
 		);
 	}
+
+	public static function get_metabox_trajet_fields(){
+		
+		return array(
+			array('name' => 'cov-depart',
+				'label' => __('Départ du covoiturage', AGDP_TAG),
+				'input' => 'text'
+			),
+			array('name' => 'cov-arrivee',
+				'label' => __('Destination', AGDP_TAG),
+				'input' => 'text'
+			)
+		);
+	}	
 
 	public static function get_metabox_description_fields(){
 		
@@ -230,10 +252,6 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 				'settings' => array (
 					'textarea_rows' => 7
 				)
-			),
-			array('name' => 'cov-localisation',
-				'label' => __('Lieu du covoiturage', AGDP_TAG),
-				'input' => 'text'
 			)
 		);
 	}	
@@ -250,7 +268,7 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 		$fields = array(
 			array('name' => 'cov-organisateur',
 				'label' => __('Organisateur', AGDP_TAG),
-				'fields' => array($field_show)
+				// 'fields' => array($field_show)
 			),
 			array('name' => 'cov-phone',
 				'label' => __('Téléphone', AGDP_TAG),
@@ -260,7 +278,7 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 			array('name' => 'cov-email',
 				'label' => __('Email', AGDP_TAG),
 				'type' => 'email',
-				'fields' => array($field_show)
+				// 'fields' => array($field_show)
 			),
 			/*,
 			array('name' => 'cov-gps',
@@ -271,7 +289,7 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 		);
 		//codesecret
 		$field = array('name' => 'cov-'.AGDP_COVOIT_SECRETCODE ,
-			'label' => 'Code secret pour ce covoiturage',
+			'label' => 'Code secret',
 			'type' => 'input' ,
 			'readonly' => true ,
 			'class' => 'readonly' 
@@ -293,13 +311,16 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 	public static function get_metabox_general_fields(){
 		$fields = array();
 
-		// $fields[] =
-			// array('name' => 'cov-message-contact',
-				// 'label' => __('Les visiteurs peuvent envoyer un e-mail.', AGDP_TAG),
-				// 'type' => 'bool',
-				// 'default' => 'checked'
-			// )
-		// ;
+		$fields[] = array(
+			'name' => 'cov-intention',
+			'label' => 'Propose ou cherche',
+			'input' => 'select',
+			'values' => array(
+				'1' => __('Je propose ma voiture', AGDP_TAG),
+				'2' => __('Je cherche une place', AGDP_TAG),
+				'3' => __('L\'un ou l\'autre', AGDP_TAG),
+			)
+		);
 		return $fields;
 	}
 

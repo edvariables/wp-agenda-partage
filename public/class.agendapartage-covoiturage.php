@@ -215,7 +215,7 @@ class AgendaPartage_Covoiturage {
 		$dates = self::get_covoiturage_dates_text( $covoiturage->ID, $data );
 		$de = "de";
 		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage->ID, 'cov-depart', true);
-		$vers = "à";
+		$vers = "vers";
 		$arrivee = $data ? $data['cov-arrivee'] : get_post_meta($covoiturage->ID, 'cov-arrivee', true);
 		if( !  $no_html){
 			$intention = sprintf('<span class="cov-intention cov-intention-%s">%s</span>', $intentionid, $intention);
