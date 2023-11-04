@@ -131,10 +131,11 @@ class AgendaPartage_Admin_Stats {
 	}
 
 	public static function posts_stats($post_type) {
-		$post_type_labels = get_post_type_labels($post_type);
+		$post_type_object = get_post_type_object($post_type);
+		$post_type_labels = $post_type_object->labels;
 		?><ul class="agdp-stats">
 		<header class="entry-header"><?php 
-			echo sprintf('<h3 class="entry-title">%s</h3>', $post_type_labels['name']);
+			echo sprintf('<h3 class="entry-title">%s</h3>', $post_type_labels->name);
 		?></header><?php
 		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
 			
@@ -161,7 +162,7 @@ class AgendaPartage_Admin_Stats {
 				//;
 				$url = get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=%s', $post_status, $post_type));
 				echo '<td>';
-				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d %s(s)</a>', $status_name, $url, $posts->found_posts, strtolower( $post_type_labels['singular_name']));
+				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d %s(s)</a>', $status_name, $url, $posts->found_posts, strtolower( $post_type_labels->singular_name));
 				?></header><?php
 				echo '</td>';
 				
@@ -173,14 +174,21 @@ class AgendaPartage_Admin_Stats {
 		<?php
 	}
 
-	public static function agdpevents_stats_eventscounters() {
+	public static function posts_stats_counters() {
+		return self::stats_postcounters( [ AgendaPartage_Evenement::post_type, AgendaPartage_Covoiturage::post_type ] );
+	}
+
+	public static function agdpevents_stats_counters() {
 		return self::stats_postcounters(AgendaPartage_Evenement::post_type);
 	}
 
-	public static function covoiturages_stats_covoituragescounters() {
+	public static function covoiturages_stats_counters() {
 		return self::stats_postcounters(AgendaPartage_Covoiturage::post_type);
 	}
 
+	/**
+	* Compteurs sur un ou plusieurs types de post
+	**/
 	public static function stats_postcounters($post_type) {
 		$sCounters = '';
 		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){

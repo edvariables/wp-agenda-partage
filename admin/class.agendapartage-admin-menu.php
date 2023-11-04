@@ -88,7 +88,7 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
-			$field_id = 'newsletter_events_register_form_id';
+			$field_id = 'newsletter_subscribe_form_id';
 			add_settings_field(
 				$field_id, 
 				__( 'Formulaire d\'inscription à la lettre-info', AGDP_TAG ),
@@ -99,21 +99,6 @@ class AgendaPartage_Admin_Menu {
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
 					'post_type' => WPCF7_ContactForm::post_type
-				]
-			);
-
-			// 
-			$field_id = 'newsletter_post_id';
-			add_settings_field(
-				$field_id, 
-				__( 'Lettre-info à diffuser', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
-				AGDP_TAG,
-				'agendapartage_section_pages',
-				[
-					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
-					'post_type' => AgendaPartage_Newsletter::post_type
 				]
 			);
 
@@ -144,6 +129,21 @@ class AgendaPartage_Admin_Menu {
 					'label_for' => $field_id,
 					'class' => 'agendapartage_row',
 					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+
+			// 
+			$field_id = 'admin_nl_post_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_pages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => AgendaPartage_Newsletter::post_type
 				]
 			);
 
@@ -231,6 +231,21 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
+			$field_id = 'events_nl_post_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_agdpevents',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => AgendaPartage_Newsletter::post_type
+				]
+			);
+
+			// 
 			$field_id = 'newsletter_diffusion_term_id';
 			add_settings_field(
 				$field_id, 
@@ -258,7 +273,7 @@ class AgendaPartage_Admin_Menu {
 					'label' => AgendaPartage::get_option_label($field_id),
 					'learn-more' => [__( 'Si l\'utilisateur est connecté, l\'évènement est toujours publié.', AGDP_TAG )
 									, __( 'Si vous cochez cette option, la saise des évènements va se complexifier pour les utilisateurs.', AGDP_TAG )
-									, __( 'Même si vous cochez cette option, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
+									, __( 'Même si cette option n\'est pas cochée, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
 									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
 					'class' => 'agendapartage_row',
 					'input_type' => 'checkbox'
@@ -320,6 +335,21 @@ class AgendaPartage_Admin_Menu {
 			);
 
 			// 
+			$field_id = 'covoiturages_nl_post_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => AgendaPartage_Newsletter::post_type
+				]
+			);
+
+			// 
 			$field_id = 'covoiturage_need_validation';
 			add_settings_field(
 				$field_id, 
@@ -332,7 +362,7 @@ class AgendaPartage_Admin_Menu {
 					'label' => AgendaPartage::get_option_label($field_id),
 					'learn-more' => [__( 'Si l\'utilisateur est connecté, le covoiturage est toujours publié.', AGDP_TAG )
 									, __( 'Si vous cochez cette option, la saise des covoiturages va se complexifier pour les utilisateurs.', AGDP_TAG )
-									, __( 'Même si vous cochez cette option, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
+									, __( 'Même si cette option n\'est pas cochée, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
 									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
 					'class' => 'agendapartage_row',
 					'input_type' => 'checkbox'
@@ -851,8 +881,8 @@ class AgendaPartage_Admin_Menu {
 	    $logs = [];
 		foreach([
 		  'admin_message_contact_form_id' => 'WPCF7_Contact_Form'
-		, 'newsletter_events_register_form_id' => 'WPCF7_Contact_Form'
-		, 'newsletter_post_id' => 'agdpnl'
+		, 'newsletter_subscribe_form_id' => 'WPCF7_Contact_Form'
+		, 'events_nl_post_id' => 'agdpnl'
 		, 'newsletter_subscribe_page_id' => 'page'
 		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
 		, 'contact_page_id' => 'page'

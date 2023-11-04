@@ -701,7 +701,7 @@ class AgendaPartage_Evenements {
 			}
 			else {
 				foreach($events as $event){
-					$html .= '<li>' . self::get_item_list_html($event, $requested_id, $options) . '</li>';
+					$html .= '<li>' . self::get_list_item_html($event, $requested_id, $options) . '</li>';
 				}
 				
 				//Ce n'est plus nécessaire, les mois sont chargés complètement
@@ -719,7 +719,7 @@ class AgendaPartage_Evenements {
 		return $html;
 	}
 	
-	public static function get_item_list_html($event, $requested_id, $options){
+	public static function get_list_item_html($event, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 			
 		$date_debut = get_post_meta($event->ID, 'ev-date-debut', true);
@@ -809,7 +809,6 @@ class AgendaPartage_Evenements {
 					.AgendaPartage::icon('arrow-up-alt2')
 					.'</a></td>';
 
-			$url = AgendaPartage_Evenement::get_post_permalink($event);
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page de l\'évènement'

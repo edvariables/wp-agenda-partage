@@ -745,7 +745,7 @@ class AgendaPartage_Covoiturages {
 			}
 			else {
 				foreach($events as $event){
-					$html .= '<li>' . self::get_item_list_html($event, $requested_id, $options) . '</li>';
+					$html .= '<li>' . self::get_list_item_html($event, $requested_id, $options) . '</li>';
 				}
 				
 				//Ce n'est plus nécessaire, les mois sont chargés complètement
@@ -763,7 +763,7 @@ class AgendaPartage_Covoiturages {
 		return $html;
 	}
 	
-	public static function get_item_list_html($post, $requested_id, $options){
+	public static function get_list_item_html($post, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 			
 		$date_debut = get_post_meta($post->ID, 'cov-date-debut', true);
@@ -804,10 +804,13 @@ class AgendaPartage_Covoiturages {
 			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
 		}
 		
-		$show_email = /*! is_user_logged_in() &&*/ get_post_meta($post->ID, 'cov-phone-show', true);
+		$show_phone = /*! is_user_logged_in() &&*/ get_post_meta($post->ID, 'cov-phone-show', true);
 		$value = get_post_meta($post->ID, 'cov-phone', true);
 		if($value){
-			$value = AgendaPartage_Covoiturage::get_phone_html($post->ID);
+			if( $email_mode && ! $show_phone)
+				$value = sprintf('<a href="%s">(masqué)</a>', $url);
+			else
+				$value = AgendaPartage_Covoiturage::get_phone_html($post->ID);
 			$html .= sprintf('<div class="cov-phone">Téléphone : %s</div>',  $value);
 		}
 		
@@ -833,7 +836,6 @@ class AgendaPartage_Covoiturages {
 					.AgendaPartage::icon('arrow-up-alt2')
 					.'</a></td>';
 
-			$url = AgendaPartage_Covoiturage::get_post_permalink($post);
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page du covoiturage'

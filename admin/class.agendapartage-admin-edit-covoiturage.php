@@ -316,7 +316,7 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 			'label' => 'Propose ou cherche',
 			'input' => 'select',
 			'values' => array(
-				'1' => __('Je propose ma voiture', AGDP_TAG),
+				'1' => __('Je propose dans ma voiture', AGDP_TAG),
 				'2' => __('Je cherche une place', AGDP_TAG),
 				'3' => __('L\'un ou l\'autre', AGDP_TAG),
 			)

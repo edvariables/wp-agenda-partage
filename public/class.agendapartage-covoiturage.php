@@ -74,12 +74,12 @@ class AgendaPartage_Covoiturage {
 	public static function on_pre_handle_404_cb($preempt, $query){
 		if( ! have_posts()){
 			//var_dump($query);
-			//Dans le cas où l'agenda est la page d'accueil, l'url de base avec des arguments ne fonctionne pas
+			//Dans le cas où la liste des covoiturages est la page d'accueil, l'url de base avec des arguments ne fonctionne pas
 			if(is_home()){
 				if( (! isset($query->query_vars['post_type'])
 					|| $query->query_vars['post_type'] === '')
 				&& isset($query->query[AGDP_ARG_COVOITURAGEID])){
-					$page = AgendaPartage::get_option('agenda_page_id');
+					$page = AgendaPartage::get_option('covoiturages_page_id');
 					$query->query_vars['post_type'] = 'page';
 					$query->query_vars['page_id'] = $page;
 					global $wp_query;
@@ -124,6 +124,7 @@ class AgendaPartage_Covoiturage {
 	 * Interception des redirections "post_type=covoiturage&p=1837" vers "/covoiturage/nom-de-l-covoiturage" si il a un post_status != 'publish'
 	 */
 	public static function on_redirect_canonical_cb ( $redirect_url, $requested_url ){
+
 		$query = parse_url($requested_url, PHP_URL_QUERY);
 		parse_str($query, $query);
 		//var_dump($query, $redirect_url, $requested_url);

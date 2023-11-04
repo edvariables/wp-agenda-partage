@@ -48,7 +48,7 @@ class AgendaPartage_WPCF7 {
 	// define the wpcf7_skip_mail callback 
 	public static function wpcf7_skip_mail( $skip_mail, $contact_form ){ 
 		if($skip_mail
-		|| $contact_form->id() == AgendaPartage::get_option('newsletter_events_register_form_id'))
+		|| $contact_form->id() == AgendaPartage::get_option('newsletter_subscribe_form_id'))
 			return true;
 		return $skip_mail || AgendaPartage::$skip_mail;
 	} 
@@ -126,7 +126,7 @@ class AgendaPartage_WPCF7 {
 		$form_id = $contact_form->id();
 
 		switch($form_id){
-			case AgendaPartage::get_option('newsletter_events_register_form_id') :
+			case AgendaPartage::get_option('newsletter_subscribe_form_id') :
 			case AgendaPartage::get_option('agdpevent_edit_form_id') :
 			case AgendaPartage::get_option('covoiturage_edit_form_id') :
 				break;
@@ -145,7 +145,7 @@ class AgendaPartage_WPCF7 {
 			case AgendaPartage::get_option('agdpevent_edit_form_id') :
 				AgendaPartage_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
 				break;
-			case AgendaPartage::get_option('newsletter_events_register_form_id') :
+			case AgendaPartage::get_option('newsletter_subscribe_form_id') :
 				AgendaPartage_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
 				break;
 			case AgendaPartage::get_option('covoiturage_edit_form_id') :

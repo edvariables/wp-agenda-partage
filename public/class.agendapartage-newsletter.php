@@ -47,10 +47,20 @@ class AgendaPartage_Newsletter {
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
+		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
+		add_action('wp_head', array(__CLASS__, 'init_js_sections_tabs'));
+		
 		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
 	}
 	/*
 	 **/
+
+	/**
+	 * Registers js files.
+	 */
+	public static function register_plugin_js() {
+		wp_enqueue_script("jquery-ui-tabs");
+	}
 	
 	
 	/***********
@@ -319,6 +329,35 @@ class AgendaPartage_Newsletter {
 				return null;
 		}
 	}
+	
+	/**
+	 * Initialisation javascript des onglets
+	 */
+	public static function init_js_sections_tabs() {
+		?><script type="text/javascript">
+	jQuery(document).ready(function(){
+		jQuery('form div.agdp-tabs-wrap:first').each(function(){
+			var id = 'agdp-tabs';
+			var tabs_counter = 0;
+			var $tabs_contents = [];
+			var $tabs = jQuery('<div id="' + id + '"/>');
+			var $nav = jQuery('<ul id="' + id + '-nav"/>').appendTo($tabs);
+			var $contents = jQuery('<ul/>').appendTo($tabs);
+			
+			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
+				tabs_counter++;
+				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
+				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
+				jQuery(this).parent().children().appendTo($content);
+				$contents.append($content);
+			});
+			jQuery(this)
+				.html( $tabs.tabs() )
+			;
+		});
+	});</script>
+		<?php
+	}
 
 	/**
 	 * Interception du formulaire avant que les shortcodes ne soient analysés.
@@ -327,7 +366,7 @@ class AgendaPartage_Newsletter {
  	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
 		$form = WPCF7_ContactForm::get_current();
 		switch($form->id()){
-			case AgendaPartage::get_option('newsletter_events_register_form_id') :
+			case AgendaPartage::get_option('newsletter_subscribe_form_id') :
 				self::wpcf7_newsletter_form_init_tags( $form );
 				$form_class .= ' preventdefault-reset events_newsletter_register';
 				break;
@@ -338,51 +377,75 @@ class AgendaPartage_Newsletter {
 	}
 	
  	private static function wpcf7_newsletter_form_init_tags( $form ) { 
-		$current_nl = self::get_newsletter();
-		$current_nl_id = $current_nl ? $current_nl->ID : 0;
+		// $current_nl = self::get_newsletter();
+		// $current_nl_id = $current_nl ? $current_nl->ID : 0;
 		
 		$form = WPCF7_ContactForm::get_current();
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		
 		$email = self::get_email();
 		
-		/** périodicité de l'abonnement **/
-		$input_name = 'nl-period';
-		$subscription_periods = self::subscription_periods(true);
-		if(isset($_REQUEST['action']))
-			switch($_REQUEST['action']){
-				case 'unsubscribe':
-				case 'desinscription':
-					$user_subscription = 'none';
-					$subscription_periods[$user_subscription] = 'Désinscription à valider';
-					break;
-				default:
-					break;
-			}
-		if( ! isset($user_subscription))
-			$user_subscription = self::get_subscription($email);
-		if( ! $user_subscription)
-			$user_subscription = 'none';
+		$newsletters = self::get_newsletters();
 		
-		$checkboxes = '';
-		$selected = '';
-		$index = 0;
-		foreach( $subscription_periods as $subscribe_code => $label){
-			$checkboxes .= sprintf(' "%s|%s"', $label, $subscribe_code);
-			if($user_subscription == $subscribe_code){
-				$selected = sprintf('default:%d', $index+1);
-			}
-			$index++;
-		} 
-		/** nl_id **/
-		$html .= "<input class='hidden' name='".AGDP_ARG_NEWSLETTERID."' value='{$current_nl_id}'/>";
+		// foreach newsletter type (events, covoiturage, admin)
+		foreach($newsletters as $newsletter_option => $newsletter){
+			
+			$user_subscription = null;
+			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
+			
+			/** périodicité de l'abonnement **/
+			$input_name = 'nl-period-' . $field_extension;
+			$subscription_periods = self::subscription_periods($newsletter);
+			
+			if(isset($_REQUEST['action']))
+				switch($_REQUEST['action']){
+					case 'unsubscribe':
+					case 'desinscription':
+						$user_subscription = 'none';
+						$subscription_periods[$user_subscription] = 'Désinscription à valider';
+						break;
+					default:
+						break;
+				}
+			if( $user_subscription === null)
+				$user_subscription = self::get_subscription($email, $newsletter);
+			if( ! $user_subscription)
+				$user_subscription = 'none';
+			
+			$checkboxes = '';
+			$selected = '';
+			$index = 0;
+			foreach( $subscription_periods as $subscribe_code => $label){
+				$checkboxes .= sprintf(' "%s|%s"', $label, $subscribe_code);
+				if($user_subscription == $subscribe_code){
+					$selected = sprintf('default:%d', $index+1);
+				}
+				$index++;
+			} 
+			/** nl_id **/
+			// $html .= "<input class='hidden' name='".AGDP_ARG_NEWSLETTERID."' value='{$current_nl_id}'/>";
 		
 		
-		$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
-							, sprintf('[$1 %s use_label_element %s]'
-								, $selected
-								, $checkboxes)
-							, $html);
+			$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
+								, sprintf('[$1 %s use_label_element %s]'
+									, $selected
+									, $checkboxes)
+								, $html);
+		}
+		
+		$option_id = 'admin_nl_post_id';
+		if( ! isset($newsletters[$option_id]) ){
+			//clear form
+			// $field_extension = 'admin';
+			// $input_name = 'nl-period-' . $field_extension;
+			// $html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
+					// , ''
+					// , $html);
+			//TODO tout à fait abusif...
+			$html = preg_replace('/\<div\s*class="\w*admin-user-only[\s\S]+\<\/div\>/'
+					, ''
+					, $html);
+		}
 		
 		/** email **/
 		$input_name = 'nl-email';
@@ -409,26 +472,26 @@ class AgendaPartage_Newsletter {
 		}
 		
 		/** admin **/
-		if( current_user_can('manage_options')){
-			$urls = [];
-			$nls = self::get_newsletters_names();
-			$basic_url = get_post_permalink();
+		// if( current_user_can('manage_options')){
+			// $urls = [];
+			// $nls = self::get_newsletters_names();
+			// $basic_url = get_post_permalink();
 					
-			if( count($nls) > 1){
-				$html .= '<ul class="newsletter-change-nl">';
-				foreach($nls as $nl_id=>$nl_name)
-					if($nl_id === $current_nl_id){
-						$html .= "<li>Administratriceur, vous êtes sur la page de la lettre-info \"{$nl_name}\".</li>";
-						break;
-					}
-				foreach($nls as $nl_id=>$nl_name)
-					if($nl_id !== $current_nl_id){
-						$url = add_query_arg( AGDP_ARG_NEWSLETTERID, $nl_id, $basic_url);
-						$html .= sprintf("<li>Basculer vers la lettre-info \"<a href=\"%s\">%s</a>\".</li>", esc_attr($url), $nl_name);
-					}				
-				$html .= '</ul>';
-			}
-		}
+			// if( count($nls) > 1){
+				// $html .= '<ul class="newsletter-change-nl">';
+				// foreach($nls as $nl_id=>$nl_name)
+					// if($nl_id === $current_nl_id){
+						// $html .= "<li>Administratriceur, vous êtes sur la page de la lettre-info \"{$nl_name}\".</li>";
+						// break;
+					// }
+				// foreach($nls as $nl_id=>$nl_name)
+					// if($nl_id !== $current_nl_id){
+						// $url = add_query_arg( AGDP_ARG_NEWSLETTERID, $nl_id, $basic_url);
+						// $html .= sprintf("<li>Basculer vers la lettre-info \"<a href=\"%s\">%s</a>\".</li>", esc_attr($url), $nl_name);
+					// }				
+				// $html .= '</ul>';
+			// }
+		// }
 		$form->set_properties(array('form'=>$html));
 				
 	}
@@ -464,7 +527,7 @@ class AgendaPartage_Newsletter {
 	public static function get_newsletter($newsletter = false){
 		if( ! $newsletter || $newsletter === true){
 			if( empty($_REQUEST[AGDP_ARG_NEWSLETTERID]))
-				$newsletter = AgendaPartage::get_option('newsletter_post_id');
+				$newsletter = AgendaPartage::get_option('events_nl_post_id');
 			else
 				$newsletter = $_REQUEST[AGDP_ARG_NEWSLETTERID];
 		}
@@ -473,6 +536,50 @@ class AgendaPartage_Newsletter {
 		&& $newsletter->post_type == AgendaPartage_Newsletter::post_type)
 			return $newsletter;
 		return false;
+	}
+	
+	/**
+	 * Les champs du formulaire contiennent une extension correspondant au type de posts associés à la lettre-info ('-admin', '-agdpevent', '-covoiturage')
+	 */
+	public static function get_form_newsletter_field_extension($newsletter_option){
+		if(is_a($newsletter_option, 'WP_Post')){
+			$newsletter = $newsletter_option;
+			$newsletter_option = false;
+			foreach(['events_nl_post_id', 'covoiturages_nl_post_id', 'admin_nl_post_id'] as $option)
+				if( $newsletter->ID == AgendaPartage::get_option($option) ){
+					$newsletter_option = $option;
+					break;
+				}
+			if( ! $newsletter_option)
+				throw new Exception('L\'argument $newsletter_option contient une référence inconnue : ' . var_export($newsletter_option, true));
+		}
+		switch($newsletter_option){
+			case 'admin_nl_post_id' :
+				return 'admin';
+			case 'events_nl_post_id' :
+				return AgendaPartage_Evenement::post_type;
+			case 'covoiturages_nl_post_id' :
+				return AgendaPartage_Covoiturage::post_type;
+			default:
+				throw new Exception('La variable $newsletter_option contient une valeur inconnue : ' . var_export($newsletter_option, true));
+		}
+	}
+	
+	public static function get_newsletters(){
+		$newsletters = array();
+		
+		$option_id = 'events_nl_post_id';
+		$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
+		
+		$option_id = 'covoiturages_nl_post_id';
+		$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
+		
+		/** admin **/
+		if( current_user_can('manage_options')){
+			$option_id = 'admin_nl_post_id';
+			$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
+		}
+		return $newsletters;
 	}
 	
 	/**
@@ -564,13 +671,18 @@ class AgendaPartage_Newsletter {
 			wp_die();
 		
 		$ajax_response = '0';
-		if(array_key_exists("post_id", $_POST)
-		&& array_key_exists("email", $_POST)){
-			$subscription = self::get_subscription($_POST['email'], $_POST['post_id']);
-			if($subscription === false)
-				$ajax_response = [];
-			else
-				$ajax_response = ['subscription' => $subscription, 'subscription_name' => self::subscription_period_name($subscription)];
+		if(array_key_exists("email", $_POST)){
+			$subscriptions = array();
+			foreach( self::get_newsletters() as $newsletter_option => $newsletter){
+				$subscription = self::get_subscription($_POST['email'], $newsletter);
+				if($subscription !== false)
+					$subscriptions[$newsletter_option] = [
+						'subscription' => $subscription
+						, 'subscription_name' => self::subscription_period_name($subscription)
+						, 'field_extension' => self::get_form_newsletter_field_extension($newsletter_option)
+					];
+			}
+			$ajax_response = $subscriptions;
 			if( email_exists($_POST['email']))
 				$ajax_response['is_user'] = true;
 		}
@@ -632,17 +744,15 @@ class AgendaPartage_Newsletter {
 	/***********************************************************/
 
 	/**
-	 * Mise à jour ou création d'un abonnement à la newsletter
+	 * Mise à jour ou création des abonnements aux newsletters
 	 */
 	public static function submit_subscription_form($contact_form, &$abort, $submission){
 		$error_message = false;
 		
 		$inputs = $submission->get_posted_data();
-		// nl-email, nl-period, nl-create-user, nl-user-name
+		// nl-email, nl-period-{newsletter_option}, nl-create-user, nl-user-name
 				
-		$newsletter = self::get_newsletter();
-		
-		$subscription_periods = self::subscription_periods($newsletter);
+		$newsletters = self::get_newsletters();
 		
 		$email = sanitize_email( $inputs['nl-email'] );
 		if(! is_email($email)){
@@ -652,20 +762,6 @@ class AgendaPartage_Newsletter {
 			return false;
 		}
 		
-		$period = $inputs['nl-period'];
-		
-		if(is_array($period))
-			$period = count($period) && $period[0] ? $period[0] : 'none';//wpcf7 is strange with first radio option
-		
-		if( ! ($found = is_numeric($period)))
-			foreach($subscription_periods as $key=>$label)
-				if( $found = ($label === $period) ){
-					$period = $key;
-					break;
-				}
-		if( ! $found)
-			$period = 'none';
-
 		/** create user */
 		$user_is_new = false;
 		$create_user = isset($inputs['nl-create-user'])
@@ -689,42 +785,73 @@ class AgendaPartage_Newsletter {
 		
 		$messages = ($contact_form->get_properties())['messages'];
 		$messages['mail_sent_ng'] = sprintf("%s\r\nDésolé, une erreur est survenue, la modification de votre inscription n'a pas fonctionné.", $messages['mail_sent_ng']);
+		if($user_is_new)
+			$messages['mail_sent_ok'] = sprintf("Votre compte %s a été créé, vous allez recevoir un e-mail de connexion.\r\nVous n'avez aucun abonnement à la lettre-info.", $email);
+		elseif( $create_user )
+			$messages['mail_sent_ok'] = sprintf("Un compte existe déjà avec cette adresse %s. Vous pouvez vous connecter.\r\nDemandez un nouveau mot de passe si vous l'avez oublié.", $email);
+		else
+			$messages['mail_sent_ok'] = '';
 		
-		if($period === 'none'){
-			if( ! self::remove_subscription( $email, $newsletter) ) {
-				$abort = true;
-				$error_message = sprintf('Désolé, une erreur est survenue, la suppression de votre abonnement n\'a pas été enregistrée.');
-				$submission->set_response($error_message);
-				return false;
+		// foreach newsletter type (events, covoiturage, admin)
+		foreach($newsletters as $newsletter_option => $newsletter){
+			
+			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
+			
+			if( empty($inputs['nl-period-' . $field_extension]) )
+				continue;
+			
+			$period = $inputs['nl-period-' . $field_extension];
+			
+			if(is_array($period))
+				$period = count($period) && $period[0] ? $period[0] : 'none';//wpcf7 is strange with first radio option
+			
+			$subscription_periods = self::subscription_periods($newsletter);
+			
+			if( ! ($found = is_numeric($period)))
+				foreach($subscription_periods as $key=>$label)
+					if( $found = ($label === $period) ){
+						$period = $key;
+						break;
+					}
+			if( ! $found)
+				$period = 'none';
+			
+			$newsletter_name = AgendaPartage::get_option_label($newsletter_option);
+			
+			$user_subscription = self::get_subscription( $email, $newsletter );
+			if( ! $user_subscription )
+				$user_subscription = 'none';
+			
+			if( $user_subscription !== $period ){
 				
+				if($period === 'none'){
+					if( ! self::remove_subscription( $email, $newsletter) ) {
+						$abort = true;
+						$error_message = sprintf('Désolé, une erreur est survenue, la suppression de votre abonnement à "%s" n\'a pas été enregistrée.', $newsletter_name);
+						$submission->set_response($error_message);
+						return false;
+					}
+					$messages['mail_sent_ok'] .= "\r\n".sprintf('L\'adresse %s n\'est plus inscrite à "%s". Bonne continuation.', $email, $newsletter_name);
+				}
+				else {
+					if( ! self::update_subscription( $email, $period, $newsletter ) ) {
+						$abort = true;
+						$error_message = sprintf('Désolé, une erreur est survenue, la modification de votre inscription n\'a pas été enregistrée pour "%s".', $newsletter_name);
+						$submission->set_response($error_message);
+						return false;
+					}
+					$messages['mail_sent_ok'] .= "\r\n".sprintf('L\'adresse %s est désormais inscrite à "%s", %s.', $email, $newsletter_name, $subscription_periods[$period]);
+				}
 			}
-			if($user_is_new)
-				$messages['mail_sent_ok'] = sprintf("Votre compte %s a été créé, vous allez recevoir un e-mail de connexion.\r\nVous n'avez aucun abonnement à la lettre-info.", $email);
-			elseif( $create_user )
-				$messages['mail_sent_ok'] = sprintf("Un compte existe déjà avec cette adresse %s. Vous pouvez vous connecter.\r\nDemandez un nouveau mot de passe si vous l'avez oublié.", $email);
-			else
-				$messages['mail_sent_ok'] = sprintf('L\'adresse %s n\'est plus inscrite à la lettre-info. Bonne continuation.', $email);
-		}
-		else {
-			if( ! self::update_subscription( $email, $period, $newsletter ) ) {
-				$abort = true;
-				$error_message = sprintf('Désolé, une erreur est survenue, la modification de votre inscription n\'a pas été enregistrée.');
-				$submission->set_response($error_message);
-				return false;
+			
+			$field_name = 'nl-send_newsletter-now-' . $field_extension;
+			$send_newsletter_now = isset($inputs[$field_name]) && $inputs[$field_name][0];
+			if($send_newsletter_now){
+				if(self::send_email($newsletter, $email))
+					$messages['mail_sent_ok'] .= sprintf("\r\n\"%s\" a été envoyée à %s.", $newsletter_name, $email);
+				else
+					$messages['mail_sent_ok'] .= sprintf("\r\nDésolé, \"%s\" n'a pas pu être envoyée à %s.", $newsletter_name, $email);
 			}
-			$messages['mail_sent_ok'] = sprintf('L\'adresse %s est désormais inscrite à la lettre-info "%s".', $email, $subscription_periods[$period]);
-			if($user_is_new)
-				$messages['mail_sent_ok'] .= sprintf("\r\nVotre compte %s a été créé, vous allez recevoir un e-mail de connexion. Bienvenue.", $email);
-			elseif( $create_user )
-				$messages['mail_sent_ok'] .= sprintf("\r\nUn compte existe déjà avec cette adresse %s. Vous pouvez vous connecter.\r\nDemandez un nouveau mot de passe si vous l'avez oublié.", $email);
-		}
-		
-		$send_newsletter_now = isset($inputs['nl-send_newsletter-now']) && $inputs['nl-send_newsletter-now'][0];
-		if($send_newsletter_now){
-			if(self::send_email($newsletter, $email))
-				$messages['mail_sent_ok'] .= sprintf("\r\nLa lettre-info a été envoyée.", $email);
-			else
-				$messages['mail_sent_ok'] .= sprintf("\r\nDésolé, la lettre-info n'a pas pu être envoyée.", $email);
 		}
 		
 		$contact_form->set_properties(array('messages' => $messages));

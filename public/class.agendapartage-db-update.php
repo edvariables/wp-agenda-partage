@@ -4,6 +4,23 @@ class AgendaPartage_DB_Update {
 
 	/**
 	*/
+	public static function update_db_1_1_1(){
+		
+		if( ! AgendaPartage::get_option('events_nl_post_id')){
+			AgendaPartage::update_option('events_nl_post_id', AgendaPartage::get_option('newsletter_post_id'));
+			AgendaPartage::update_option('newsletter_post_id', null);
+		}
+		
+		if( ! AgendaPartage::get_option('newsletter_subscribe_form_id')){
+			AgendaPartage::update_option('newsletter_subscribe_form_id', AgendaPartage::get_option('newsletter_events_register_form_id'));
+			AgendaPartage::update_option('newsletter_events_register_form_id', null);
+		}
+		
+		return true;
+	}
+
+	/**
+	*/
 	public static function update_db_1_0_23(){
 		
 		if( ! AgendaPartage::get_option('agdpevent_message_contact_form_id')){

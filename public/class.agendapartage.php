@@ -149,6 +149,8 @@ class AgendaPartage {
 	public static function register_plugin_styles() {
 	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/public/css/agendapartage.css' ), array(), AGDP_VERSION , 'all' );
 	    wp_enqueue_style( AGDP_TAG);
+	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION , 'all' );
+	    wp_enqueue_style( AGDP_TAG . '_ui');
 	    wp_register_style( AGDP_TAG . '_cal', plugins_url( 'agenda-partage/public/css/agendapartage.calendrier.css' ), array(), AGDP_VERSION , 'all' );
 	    wp_enqueue_style( AGDP_TAG . '_cal');
 		wp_register_style( AGDP_TAG . '_cov', plugins_url( 'agenda-partage/public/css/agendapartage.covoiturage.css' ), array(), AGDP_VERSION , 'all' );
@@ -205,10 +207,13 @@ class AgendaPartage {
 		switch($name){
 			case 'admin_message_contact_form_id':
 				return __( 'Message de la part de l\'administrateur', AGDP_TAG );
-			case 'newsletter_events_register_form_id':
+			case 'admin_nl_post_id':
+				return __( 'Lettre-info des statistiques d\'administration', AGDP_TAG );
+				
+			case 'newsletter_subscribe_form_id':
 				return __( 'Formulaire de lettre-info', AGDP_TAG );
-			case 'newsletter_post_id':
-				return __( 'Lettre-info à diffuser', AGDP_TAG );
+			case 'events_nl_post_id':
+				return __( 'Lettre-info des évènements à diffuser', AGDP_TAG );
 			case 'newsletter_subscribe_page_id':
 				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
 			case 'agdpevent_edit_form_id':
@@ -236,6 +241,9 @@ class AgendaPartage {
 				return __( 'Page "Ajouter un covoiturage"', AGDP_TAG );
 			case 'covoiturages_page_id':
 				return __( 'Page contenant les covoiturages', AGDP_TAG );
+			case 'covoiturages_nl_post_id':
+				return __( 'Lettre-info des covoiturages à diffuser', AGDP_TAG );
+				
 			case 'agdpevent_need_validation':
 				return __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
 			case 'covoiturage_need_validation':
@@ -585,6 +593,7 @@ class AgendaPartage {
 		$current_version = self::get_db_version();
 		foreach([ '1.0.22'
 				, '1.0.23'
+				, '1.1.1'
 			] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
 				continue;

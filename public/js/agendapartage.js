@@ -250,8 +250,11 @@ jQuery( function( $ ) {
 					if(response){
 						var is_user = false;
 						if(typeof response === 'object'){
-							if( response.subscription_name ){
-								var $radio = $form.find('input[name="nl-period"][value="' + response.subscription_name + '"]');
+							for(const nloption in response){
+								var subscription = response[nloption];
+								if( ! subscription.subscription_name)
+									continue;
+								var $radio = $form.find('input[name="nl-period-' + subscription.field_extension + '"][value="' + subscription.subscription_name + '"]');
 								$radio.prop("checked", true);
 							}
 							is_user = response.is_user;

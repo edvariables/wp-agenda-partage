@@ -77,6 +77,8 @@ class AgendaPartage_Admin {
 	public static function register_plugin_styles() {
 	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/admin/css/agendapartage-admin.css' ), array(), AGDP_VERSION , 'all'  );
 	    wp_enqueue_style( AGDP_TAG);
+	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION , 'all' );
+	    wp_enqueue_style( AGDP_TAG . '_ui');
 	}
 
 	/**
@@ -224,7 +226,7 @@ class AgendaPartage_Admin {
 				, 'admin_message_contact_form_id'
 				, 'agdpevent_message_contact_form_id'
 				, 'contact_form_id'
-				, 'newsletter_events_register_form_id'] as $option){
+				, 'newsletter_subscribe_form_id'] as $option){
 			if($contact_form->id() == AgendaPartage::get_option($option)){
 				$label = AgendaPartage::get_option_label($option);
 				break;

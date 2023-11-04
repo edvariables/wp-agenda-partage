@@ -26,7 +26,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AGDP_VERSION', '1.1.0' );
+define( 'AGDP_VERSION', '1.1.1' );
 define( 'AGDP_MINIMUM_WP_VERSION', '5.0' );
 
 define( 'AGDP_PLUGIN', __FILE__ );
