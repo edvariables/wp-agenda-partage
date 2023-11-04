@@ -78,7 +78,7 @@ class AgendaPartage_Covoiturages_Export {
 			$phone_show = get_post_meta($post->ID, 'cov-phone-show', true);
 			foreach(['cov-organisateur', 'cov-email', 'cov-phone', 'cov-siteweb'] as $meta_key)
 				if( $value = get_post_meta($post->ID, $meta_key, true)
-				&& ( ($meta_key != 'cov-phone') || $phone_show)
+				&& ( ($meta_key != 'cov-phone') || $phone_show ) )
 					$txt[] = $value;
 			$txt[] = $post->post_content;
 			$txt[] = '';
