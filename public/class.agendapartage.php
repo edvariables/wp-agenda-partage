@@ -87,6 +87,9 @@ class AgendaPartage {
 		
 		//Définit les paramètres d'url autorisés
 		add_filter( 'query_vars', array(__CLASS__, 'on_query_var_cb' ), 10, 1 );
+		
+		
+		add_filter( 'wp_nav_menu_items', array(__CLASS__, 'register_custom_menus' ), 10, 2 );
 	}
  	
 	/**
@@ -613,5 +616,31 @@ class AgendaPartage {
 			return false;
 		update_option(self::get_db_version_option_name(), $version);
 		return $version;
+	}
+	
+	
+	/**
+	 * Custom menus
+	 * - Menu Se connecter / Se déconnecter
+	 */
+	public static function register_custom_menus( $items, $args ){
+		if ( $args->theme_location == 'top' ) {
+			
+			if( self::get_option(AGDP_CONNECT_MENU_ENABLE) ){
+				if(is_user_logged_in()){
+					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+					$url = '/wp-login.php?action=logout&redirect_to=' . sanitize_url($url);
+					$label = 'Se déconnecter';
+				}
+				else{
+					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+					$url = '/wp-login.php?redirect_to=' . sanitize_url($url);
+					$label = 'Se connecter';
+				}
+				
+				$items .= sprintf('<li><a href="%s">%s</a></li>', $url, $label);
+			}
+		}
+		return $items;
 	}
 }

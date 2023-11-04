@@ -375,10 +375,26 @@ class AgendaPartage_Admin_Menu {
 		// register a new section in the "agendapartage" page
 		add_settings_section(
 			'agendapartage_section_security',
-			__( 'Contrôles de sécurité', AGDP_TAG ),
+			__( 'Divers', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
 		);
+
+			// 
+			$field_id = AGDP_CONNECT_MENU_ENABLE;
+			add_settings_field(
+				$field_id, 
+				__( 'Affichage du menu "Se connecter"', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_security',
+				[
+					'label_for' => $field_id,
+					'label' => __( 'Afficher', AGDP_TAG ),
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
 
 			// 
 			$field_id = AGDP_MAILLOG_ENABLE;

@@ -39,6 +39,7 @@ define( 'AGDP_TAG', strtolower(AGDP_PLUGIN_NAME) ); //agendapartage
 define( 'AGDP_EMAIL_DOMAIN', AGDP_TAG . '.net' ); //agendapartage.net //TODO sic
 define( 'AGDP_MAILLOG_ENABLE', 'maillog_enable');
 define( 'AGDP_DEBUGLOG_ENABLE', 'debuglog_enable');
+define( 'AGDP_CONNECT_MENU_ENABLE', 'connect_menu_enable');
 			
 //argument de requête pour modification d'évènement. code généré par AgendaPartage::get_secret_code()
 define( 'AGDP_EVENT_SECRETCODE', 'codesecret' ); 
