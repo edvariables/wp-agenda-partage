@@ -81,6 +81,10 @@ body.colors-dark #agdp-tabs-nav li a:hover {
 	display: none;
 }
 
+.wpcf7-form #agdp-tabs .agdp-panel h2 {
+	display: none;
+}
+
 #agdp-tabs .agdp-panel h2 {
 	font-size: 18px;
 	font-weight: 400;
