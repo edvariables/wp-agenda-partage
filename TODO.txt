@@ -27,7 +27,8 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - Liste : griser les évènements passés
 - Filtre (sans commune) : (autre commune)
 - Show more months without ajax to 30 events limit
-
+- CHECK un event du 30/08 au 2/09 est-il bien visible aussi dans septembre ?
+	par contre, "du dimanche 31 déc 2023 de 19h au lundi 1er jan 2024 à 5h" ne doit rien afficher en janvier
 
 * Newsletter
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing

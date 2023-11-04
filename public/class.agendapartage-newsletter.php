@@ -442,7 +442,7 @@ class AgendaPartage_Newsletter {
 					// , ''
 					// , $html);
 			//TODO tout à fait abusif...
-			$html = preg_replace('/\<div\s*class="\w*admin-user-only[\s\S]+\<\/div\>/'
+			$html = preg_replace('/\<div\s*class="\w*admin-user-only(?!<\/div\>)+\<\/div\>/'
 					, ''
 					, $html);
 		}
