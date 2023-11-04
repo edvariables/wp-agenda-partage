@@ -11,6 +11,11 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * $(recaptcha).init après ajax sur androïd
 
+* Remplacer var id = 'agdp-tabs'; par var class_name = 'agdp-tabs'; + .css
+
+* Menu Se connecter n'apparait pas sur //agendapartage.fr
+	cf "top" menu qui n'est pas "top"
+
 * Event 
 - avec image
 	- load on toggle

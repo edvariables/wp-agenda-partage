@@ -460,7 +460,7 @@ class AgendaPartage_Evenements {
 				, $month
 			);
 			if(!$ajax && $month_events_count){
-				$html .= self::get_month_events_list_html( $month, $requested_id, $options );
+				$html .= self::get_month_posts_list_html( $month, $requested_id, $options );
 			}
 		
 			$html .= '</ul></li>';
@@ -687,7 +687,7 @@ class AgendaPartage_Evenements {
 	/**
 	* Rendu Html des évènements d'un mois sous forme de liste
 	*/
-	public static function get_month_events_list_html($month, $requested_id = false, $options = false){
+	public static function get_month_posts_list_html($month, $requested_id = false, $options = false){
 		
 		$events = self::get_month_posts($month);
 		
@@ -850,7 +850,7 @@ class AgendaPartage_Evenements {
 		else {
 			$data = $_POST['data'];
 			if( array_key_exists("month", $data)){
-				$ajax_response = self::get_month_events_list_html($data['month']);
+				$ajax_response = self::get_month_posts_list_html($data['month']);
 			}
 		}
 		
