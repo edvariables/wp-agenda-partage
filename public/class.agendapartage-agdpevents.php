@@ -755,12 +755,13 @@ class AgendaPartage_Evenements {
 				.'<div class="localisation">%s</div>'
 			.''
 			, htmlentities($dates), htmlentities($value), $localisation);
-			
 		
 		$categories = AgendaPartage_Evenement::get_event_categories ($event, 'names');
 		// var_dump($categories); die();
 		if($categories)
 			$html .= sprintf('<div class="agdpevent-categories" title="%s"><i>%s</i></div>', 'Catégories', htmlentities(implode(', ', $categories)));
+		
+		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
 		
 		$html .= '</div>';
 		

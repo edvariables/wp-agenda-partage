@@ -94,7 +94,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		$codesecret = self::get_secretcode_in_request($covoiturage);
 		
 		$html = '[covoiturage-description]
-		[covoiturage info="organisateur" label="Initiateur : "]
+		[covoiturage info="organisateur" label="Initiateur : "][covoiturage-cree-depuis][/covoiturage]
 		[covoiturage info="phone" label="Téléphone : "]';
 		if( AgendaPartage_Covoiturage_Post_type::is_diffusion_managed() )
 			$html .='[covoiturage-diffusions label="Diffusion (sous réserve) : "]';

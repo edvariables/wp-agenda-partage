@@ -50,6 +50,7 @@ class AgendaPartage_Evenement_Shortcodes {
 		add_shortcode( 'agdpevent-message-contact', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-avec-email', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'agdpevent-cree-depuis', array(__CLASS__, 'shortcodes_callback') );
 		
 		add_shortcode( 'agdpevent-modifier-evenement', array(__CLASS__, 'shortcodes_callback') );
 		
@@ -323,6 +324,22 @@ class AgendaPartage_Evenement_Shortcodes {
 
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
 				$val = AgendaPartage_Evenement::get_event_dates_text( $post_id );
+				if($val || $content){
+					$val = do_shortcode( wp_kses_post($val . $content));
+					if($no_html)
+						$html = $val;
+					else
+						$html = '<div class="agdp-agdpevent agdp-'. $shortcode .'">'
+							. $val
+							. '</div>';
+				}
+				return $html;
+				break;
+				
+			case 'agdpevent-cree-depuis':
+
+				$val = date_diff_text($post->post_date);
+				
 				if($val || $content){
 					$val = do_shortcode( wp_kses_post($val . $content));
 					if($no_html)

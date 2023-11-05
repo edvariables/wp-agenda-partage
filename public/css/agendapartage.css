@@ -92,6 +92,13 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
 	text-align: right;
 }
 
+.entry-content .agdp-agdpevent-cree-depuis,
+.entry-content .agdp-covoiturage-cree-depuis {
+  float: right;
+  font-style: italic;
+  font-size: smaller;
+}
+
 /*toggle shortcode*/
 .toggle-trigger {
 	margin: 0px !important;

@@ -92,6 +92,13 @@ body.colors-dark .agdp-agdpevents-list .toggle-trigger {
 .agdp-agdpevents-list > ul > li .ev-siteweb a {
 	text-decoration: underline;
 }
+.agdp-agdpevents-list > ul > li .created-since {
+	float: right;
+	font-style: italic;
+	font-size: smaller;
+	position: relative;
+	top: -1em;
+}
 
 .agdp-agdpevents-list .show-more {
 	font-style: italic;

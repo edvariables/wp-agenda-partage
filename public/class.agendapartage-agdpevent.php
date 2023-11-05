@@ -76,7 +76,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		$html = '[agdpevent-categories label="Catégories : "]
 		[agdpevent-cities label="à "]
 		[agdpevent-description]
-		[agdpevent info="organisateur" label="Organisateur : "]
+		[agdpevent info="organisateur" label="Organisateur : "][agdpevent-cree-depuis][/agdpevent]
 		[agdpevent info="phone" label="Téléphone : "]
 		[agdpevent info="siteweb"]';
 		if( AgendaPartage_Evenement_Post_type::is_diffusion_managed() )
@@ -128,7 +128,6 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				if(empty($status)) $status = 'Pour le futur';
 			case 'draft':
 				if(empty($status)) $status = 'Brouillon';
-				debug_log('get_transient', $email_sent, $no_email);
 				$alerte = sprintf('<p class="alerte">Cet évènement est <b>en attente de validation</b>, il a le statut "%s".'
 					.'<br>Il n\'est <b>pas visible</b> dans l\'agenda.'
 					. '</p>'

@@ -89,8 +89,15 @@ body.colors-dark .agdp-covoiturages-list .toggle-trigger {
 .agdp-covoiturages-list > ul > li pre {
 	white-space: pre-wrap;
 }
-.agdp-covoiturages-list > ul > li .ev-siteweb a {
+.agdp-covoiturages-list > ul > li .cov-siteweb a {
 	text-decoration: underline;
+}
+.agdp-covoiturages-list > ul > li .created-since {
+	float: right;
+	font-style: italic;
+	font-size: smaller;
+	position: relative;
+	top: -1em;
 }
 
 .agdp-covoiturages-list .show-more {

@@ -118,3 +118,51 @@ function rrmdir($src) {
     closedir($dir);
     rmdir($src);
 }
+
+/**
+ * Retourne les intervals entre deux dates
+ */
+function dateDiff($date1, $date2){
+	$diff = abs($date1 - $date2); // abs pour avoir la valeur absolute, ainsi éviter d'avoir une différence négative
+	$retour = array();
+ 
+	$tmp = $diff;
+	$retour['second'] = $tmp % 60;
+ 
+	$tmp = floor( ($tmp - $retour['second']) /60 );
+	$retour['minute'] = $tmp % 60;
+ 
+	$tmp = floor( ($tmp - $retour['minute'])/60 );
+	$retour['hour'] = $tmp % 24;
+ 
+	$tmp = floor( ($tmp - $retour['hour'])  /24 );
+	$retour['day'] = $tmp;
+ 
+	return $retour;
+}
+
+/**
+ * Retourne le texte littéral de l'intervals entre deux dates
+ */
+ function date_diff_text ($old_date, $intro = true, $before = '', $after = ''){
+	if( is_string($old_date))	
+		$old_date = strtotime($old_date);
+	$now   = time();
+	
+	if( $intro === true)
+		$intro = 'il y a ';
+	
+	$laps = dateDiff($now, $old_date);
+	if( $laps['day'] )
+		$val = sprintf('%s%d jour%s', $intro, $laps['day'], $laps['day'] == 1 ? '' : 's' );
+	elseif( $laps['hour'] )
+		$val = sprintf('%s%d heure%s', $intro, $laps['hour'], $laps['hour'] == 1 ? '' : 's' );
+	elseif( $laps['minute'] )
+		$val = sprintf('%s%d minute%s', $intro, $laps['minute'], $laps['minute'] == 1 ? '' : 's' );
+	elseif( $laps['second'] )
+		$val = sprintf('%s%d seconde%s', $intro, $laps['second'], $laps['second'] == 1 ? '' : 's' );
+	else
+		$val = 'à l\'instant';
+	// $val .= var_export($laps, true);
+	return sprintf('%s%s%s', $before, $val, $after);
+ }

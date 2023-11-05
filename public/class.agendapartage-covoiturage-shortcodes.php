@@ -49,6 +49,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 		add_shortcode( 'covoiturage-message-contact', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'covoiturage', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'covoiturage-avec-email', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'covoiturage-cree-depuis', array(__CLASS__, 'shortcodes_callback') );
 		
 		add_shortcode( 'covoiturage-modifier-covoiturage', array(__CLASS__, 'shortcodes_callback') );
 		
@@ -161,7 +162,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 	}
 	
 	/**
-	* [covoiturage info=titre|description|dates|localisation|details|message-contact|modifier-covoiturage]
+	* [covoiturage info=titre|description|dates|localisation|details|message-contact|modifier-covoiturage|created_since]
 	* [covoiturage-titre]
 	* [covoiturage-description]
 	* [covoiturage-dates]
@@ -170,6 +171,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 	* [covoiturage-message-contact]
 	* [covoiturage-avec-email]
 	* [covoiturage-modifier-covoiturage]
+	* [covoiturage-cree-depuis]
 	*/
 	private static function shortcodes_covoiturage_callback($atts, $content = '', $shortcode = null){
 		
@@ -247,6 +249,22 @@ class AgendaPartage_Covoiturage_Shortcodes {
 
 				$meta_name = 'cov-' . substr($shortcode, strlen('covoiturage-')) ;
 				$val = AgendaPartage_Covoiturage::get_covoiturage_dates_text( $post_id );
+				if($val || $content){
+					$val = do_shortcode( wp_kses_post($val . $content));
+					if($no_html)
+						$html = $val;
+					else
+						$html = '<div class="agdp-covoiturage agdp-'. $shortcode .'">'
+							. $val
+							. '</div>';
+				}
+				return $html;
+				break;
+				
+			case 'covoiturage-cree-depuis':
+
+				$val = date_diff_text($post->post_date);
+				
 				if($val || $content){
 					$val = do_shortcode( wp_kses_post($val . $content));
 					if($no_html)
