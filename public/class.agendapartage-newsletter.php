@@ -345,6 +345,8 @@ class AgendaPartage_Newsletter {
 			var $contents = jQuery('<ul/>').appendTo($tabs);
 			
 			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
+				if( jQuery(this).parents('.hidden:first').length )
+					return;
 				tabs_counter++;
 				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
@@ -435,15 +437,9 @@ class AgendaPartage_Newsletter {
 		
 		$option_id = 'admin_nl_post_id';
 		if( ! isset($newsletters[$option_id]) ){
-			//clear form
-			// $field_extension = 'admin';
-			// $input_name = 'nl-period-' . $field_extension;
-			// $html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
-					// , ''
-					// , $html);
-			//TODO tout à fait abusif...
-			$html = preg_replace('/\<div\s*class="\w*admin-user-only(?!<\/div\>)+\<\/div\>/'
-					, ''
+			//Hide tab
+			$html = preg_replace('/\<div\s*class="\w*admin-user-only/'
+					, '$0 hidden'
 					, $html);
 		}
 		
