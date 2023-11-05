@@ -281,10 +281,11 @@ abstract class AgendaPartage_Post_Abstract {
 	 * Cherche le code secret dans la requête et le compare à celui du post
 	 */
 	public static function get_secretcode_in_request( $post ) {
+		
 		// Ajax : code secret
 		if(array_key_exists(static::secretcode_argument, $_REQUEST)){
-			$meta_name = 'ev-'.static::secretcode_argument;
-			$codesecret = static::get_post_meta($post, $meta_name, true);		
+			$meta_name = static::field_prefix . static::secretcode_argument;
+			$codesecret = static::get_post_meta($post, $meta_name, true);	
 			if($codesecret
 			&& (strcasecmp( $codesecret, $_REQUEST[static::secretcode_argument]) !== 0)){
 				$codesecret = '';
