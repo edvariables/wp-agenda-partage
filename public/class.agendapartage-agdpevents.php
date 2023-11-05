@@ -545,6 +545,10 @@ class AgendaPartage_Evenements {
 .agdp-agdpevents-email i {
 	font-style: normal;
 }
+.created-since {
+	font-size: smaller;
+	font-style: italic;
+}
 .footer {
 	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
@@ -761,8 +765,6 @@ class AgendaPartage_Evenements {
 		if($categories)
 			$html .= sprintf('<div class="agdpevent-categories" title="%s"><i>%s</i></div>', 'Catégories', htmlentities(implode(', ', $categories)));
 		
-		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
-		
 		$html .= '</div>';
 		
 		$html .= '<div class="toggle-container">';
@@ -786,6 +788,8 @@ class AgendaPartage_Evenements {
 		if($value){
 			$html .= sprintf('<div class="ev-siteweb">%s</div>',  make_clickable( esc_html($value) ) );
 		}
+		
+		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
 		
 		$html .= '<div class="footer">';
 				

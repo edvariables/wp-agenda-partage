@@ -565,6 +565,10 @@ class AgendaPartage_Covoiturages {
 .agdp-covoiturages-email i {
 	font-style: normal;
 }
+.created-since {
+	font-size: smaller;
+	font-style: italic;
+}
 .footer {
 	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
