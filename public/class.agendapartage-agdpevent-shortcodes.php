@@ -338,7 +338,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				
 			case 'agdpevent-cree-depuis':
 
-				$val = date_diff_text($post->post_date);
+				$val = date_diff_text($post->post_date_gmt);
 				
 				if($val || $content){
 					$val = do_shortcode( wp_kses_post($val . $content));
