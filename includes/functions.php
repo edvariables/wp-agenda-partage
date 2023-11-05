@@ -164,7 +164,7 @@ function dateDiff($date1, $date2){
 	else
 		$val = 'à l\'instant';
 	// $val .= var_export($laps, true);
-	$val .= ", " . wp_date("d H:i:s", $old_date);
-	$val .= ", " . wp_date("d H:i:s", $now);
+	// $val .= ", " . wp_date("d H:i:s", $old_date);
+	// $val .= ", " . wp_date("d H:i:s", $now);
 	return sprintf('%s%s%s', $before, $val, $after);
  }
