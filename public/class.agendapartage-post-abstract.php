@@ -38,21 +38,19 @@ abstract class AgendaPartage_Post_Abstract {
 
 		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
 		add_filter( 'the_content', array(__CLASS__, 'the_content'), 10, 1 );
+		
+		add_filter( 'pre_handle_404', array(static::class, 'on_pre_handle_404_cb'), 10, 2 );
+		add_filter( 'redirect_canonical', array(static::class, 'on_redirect_canonical_cb'), 10, 2);
 	}
 
 	/**
 	 * Hooks pour les classes enfants (static::post_type !== false)
+	 *	Les hooks sont appelés 2 fois (par AgendaPartage_Evenement et AgendaPartage_Covoiturage)
 	 */
 	public static function init_hooks() {
 		// debug_log(static::post_type . ' init_hooks', AgendaPartage::get_current_post_type());
-
-		// add_filter( 'the_title', array(static::class, 'the_title'), 10, 2 );
-		// add_filter( 'the_content', array(static::class, 'the_content'), 10, 1 );
 		
 		add_filter( 'navigation_markup_template', array(static::class, 'on_navigation_markup_template_cb'), 10, 2 );
-		
-		add_filter( 'pre_handle_404', array(static::class, 'on_pre_handle_404_cb'), 10, 2 );
-		add_filter( 'redirect_canonical', array(static::class, 'on_redirect_canonical_cb'), 10, 2);
 		
 		add_filter( 'wpcf7_form_class_attr', array(static::class, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 	}
@@ -94,7 +92,7 @@ abstract class AgendaPartage_Post_Abstract {
 	 */
  	public static function the_content( $content ) {
  		global $post;
-		debug_log('the_content', $post->post_type, self::$post_types );
+		// debug_log('the_content', $post->post_type, self::$post_types );
 		if( ! $post
  		// || $post->post_type != static::post_type
 		|| ! in_array( $post->post_type, self::$post_types )
@@ -160,9 +158,9 @@ abstract class AgendaPartage_Post_Abstract {
 			// var_dump($template, $class);
 			global $post;
 			if( $post
-			 && $post->post_type === static::post_type){
-					$template = '<!-- no nav -->';
-				};
+			&& in_array( $post->post_type, self::$post_types )){
+				$template = '<!-- no nav -->';
+			};
 		}
 		return $template;
 	}
@@ -173,11 +171,12 @@ abstract class AgendaPartage_Post_Abstract {
 	 */
 	public static function on_pre_handle_404_cb($preempt, $query){
 		if( ! have_posts()){
-			//var_dump($query);
-			//Dans le cas où l'agenda est la page d'accueil, l'url de base avec des arguments ne fonctionne pas
+			// var_dump($query);
+			//Dans le cas où l'agenda est la page d'accueil, l'url de base avec des arguments ne fonctionne pas.
 			if(is_home()){
-				$query_field = static::postid_argument;
-				$page_id_name = static::posts_page_option;
+				//TODO et si AgendaPartage_Covoiturage en page d'accueil, hein ?
+				$query_field = AgendaPartage_Evenement::postid_argument;
+				$page_id_name = AgendaPartage_Evenement::posts_page_option;
 				if( (! isset($query->query_vars['post_type'])
 					|| $query->query_vars['post_type'] === '')
 				&& isset($query->query[$query_field])){
@@ -191,7 +190,7 @@ abstract class AgendaPartage_Post_Abstract {
 				}
 			}
 			
-			//Dans le cas d'une visualisation d'un évènement non publié, pour le créateur non connecté
+			//Dans le cas d'une visualisation d'un post non publié, pour le créateur non connecté
 			if(isset($query->query['post_type'])
 			&& $query->query['post_type'] == static::post_type){
 				foreach(['p', 'post', 'post_id', static::post_type] as $key){
@@ -202,6 +201,7 @@ abstract class AgendaPartage_Post_Abstract {
 							//Ne fonctionne pas en 'pending', il faut l'id
 							$post = get_page_by_path(static::post_type . '/' . $query->query[$key]);
 						}
+						debug_log('$post', $post , $query->query);
 						if(!$post)
 							return false;
 		
@@ -607,15 +607,16 @@ abstract class AgendaPartage_Post_Abstract {
 		return $form_class;
 	}
 	
- 	// public static function change_email_recipient($contact_form){
-		// $mail_data = $contact_form->prop('mail');
+	public static function change_email_recipient($contact_form){
+		$mail_data = $contact_form->prop('mail');
 		
-		// $requested_id = isset($_REQUEST[AGDP_ARG_EVENTID]) ? $_REQUEST[AGDP_ARG_EVENTID] : false;
-		// $agdpevent = AgendaPartage_Evenement_Edit::get_agdpevent_post($requested_id);
+		$requested_id = isset($_REQUEST[static::postid_argument]) ? $_REQUEST[static::postid_argument] : false;
+		if( ! ($post = self::get_post($requested_id)))
+			return;
 		
-		// $meta_name = 'ev-email' ;
-		// $mail_data['recipient'] = static::get_post_meta($agdpevent, $meta_name, true);
+		$meta_name = static::field_prefix . 'email' ;
+		$mail_data['recipient'] = self::get_post_meta($post, $meta_name, true);
 		
-		// $contact_form->set_properties(array('mail'=>$mail_data));
-	// }
+		$contact_form->set_properties(array('mail'=>$mail_data));
+	}
 }

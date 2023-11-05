@@ -66,39 +66,8 @@ class AgendaPartage_Evenement_Edit {
 	* Retourne le post actuel si c'est bien du type agdpevent
 	*
 	*/
-	public static function get_agdpevent_post($agdpevent_id = false) {
+	public static function get_post($agdpevent_id = false) {
 		return AgendaPartage_Evenement::get_post($agdpevent_id);
-		// if($agdpevent_id){
-			// $post = get_post($agdpevent_id);
-			// if( ! $post
-			// || $post->post_type !== AgendaPartage_Evenement::post_type)
-				// return null;
-			// return $post;
-		// }
-			
-		// global $post;
- 		// if( $post
- 		// && $post->post_type === AgendaPartage_Evenement::post_type)
- 			// return $post;
-
-		// foreach([$_POST, $_GET] as $request){
-			// foreach(['_wpcf7_container_post', 'post_id', 'post', 'p'] as $field_name){
-				// if(array_key_exists($field_name, $request) && $request[$field_name]){
-					// $post = get_post($request[$field_name]);
-					// if( $post ){
-						// if($post->post_type === AgendaPartage_Evenement::post_type){
-							// // Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
-							// global $wp_query;
-							// $wp_query->in_the_loop = true;
-							// return $post;
-						// }
-						// return false;
-					// }
-				// }
-			// }
-		// }
-		
-		// return false;
 	}
 	
  	/**
@@ -107,7 +76,7 @@ class AgendaPartage_Evenement_Edit {
 	*/
 	public static function is_new_post() {
 		global $post;
- 		if( ! ($post = self::get_agdpevent_post()))
+ 		if( ! ($post = self::get_post()))
  			return true;
 		
 		return ! $post->ID;
@@ -133,7 +102,7 @@ class AgendaPartage_Evenement_Edit {
  	 * Retourne le titre de la page
  	 */
 	public static function get_post_title( ) {
- 		if( $post = self::get_agdpevent_post()){
+ 		if( $post = self::get_post()){
 			$post_id = $post->ID;
 			if($post_id){
 				$post_title = isset( $post->post_title ) ? $post->post_title : '';
@@ -160,7 +129,7 @@ class AgendaPartage_Evenement_Edit {
 		}
 		
 		$attrs = [];
-		$post = self::get_agdpevent_post();
+		$post = self::get_post();
 		
 		//Action
 		$duplicate_from_id = false;
@@ -258,6 +227,9 @@ class AgendaPartage_Evenement_Edit {
 		return $html;
 	}
 	
+	/**
+	 * Html du bas de la zone de modification : dupliquer, supprimer, ...
+	 */
 	public static function get_edit_toolbar($post){
 		$post_id = $post->ID;
 		
@@ -516,7 +488,7 @@ class AgendaPartage_Evenement_Edit {
 	 * Le email2, email de copie, ne subit pas la redirection.
 	 */
 	private static function wp_mail_emails_fields($args){
-		if( ! ($post = self::get_agdpevent_post()))
+		if( ! ($post = self::get_post()))
 			return $args;
 		$to_emails = parse_emails($args['to']);
 		$headers_emails = parse_emails($args['headers']);
@@ -722,7 +694,7 @@ class AgendaPartage_Evenement_Edit {
 		$error_message = false;
 		
 		if( ! array_key_exists('agdpevent_duplicated_from', $_POST)){
-			$post = self::get_agdpevent_post();
+			$post = self::get_post();
 			if( ! is_object($post)){
 				$post = false;
 			}
@@ -946,6 +918,7 @@ class AgendaPartage_Evenement_Edit {
 			} else {
 				//Aucun email saisi
 				set_transient(AGDP_TAG . '_no_email_' . $post_id, $post_id, 20);
+				debug_log('set_transient(AGDP_TAG . _no_email_' . $post_id);
 			}
 		}
 		// Modification d'un post en attente et qui n'avait pas d'e-mail associé

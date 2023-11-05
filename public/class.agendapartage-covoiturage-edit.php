@@ -67,39 +67,8 @@ class AgendaPartage_Covoiturage_Edit {
 	* Retourne le post actuel si c'est bien du type covoiturage
 	*
 	*/
-	public static function get_covoiturage_post($covoiturage_id = false) {
+	public static function get_post($covoiturage_id = false) {
 		return AgendaPartage_Covoiturage::get_post($covoiturage_id);
-		// if($covoiturage_id){
-			// $post = get_post($covoiturage_id);
-			// if( ! $post
-			// || $post->post_type !== AgendaPartage_Covoiturage::post_type)
-				// return null;
-			// return $post;
-		// }
-			
-		// global $post;
- 		// if( $post
- 		// && $post->post_type === AgendaPartage_Covoiturage::post_type)
- 			// return $post;
-
-		// foreach([$_POST, $_GET] as $request){
-			// foreach(['_wpcf7_container_post', 'post_id', 'post', 'p'] as $field_name){
-				// if(array_key_exists($field_name, $request) && $request[$field_name]){
-					// $post = get_post($request[$field_name]);
-					// if( $post ){
-						// if($post->post_type === AgendaPartage_Covoiturage::post_type){
-							// // Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
-							// global $wp_query;
-							// $wp_query->in_the_loop = true;
-							// return $post;
-						// }
-						// return false;
-					// }
-				// }
-			// }
-		// }
-		
-		// return false;
 	}
 	
  	/**
@@ -108,7 +77,7 @@ class AgendaPartage_Covoiturage_Edit {
 	*/
 	public static function is_new_post() {
 		global $post;
- 		if( ! ($post = self::get_covoiturage_post()))
+ 		if( ! ($post = self::get_post()))
  			return true;
 		
 		return ! $post->ID;
@@ -134,7 +103,7 @@ class AgendaPartage_Covoiturage_Edit {
  	 * Retourne le titre de la page
  	 */
 	public static function get_post_title( ) {
- 		if( $post = self::get_covoiturage_post()){
+ 		if( $post = self::get_post()){
 			$post_id = $post->ID;
 			if($post_id){
 				$post_title = isset( $post->post_title ) ? $post->post_title : '';
@@ -160,7 +129,7 @@ class AgendaPartage_Covoiturage_Edit {
 		}
 		
 		$attrs = [];
-		$post = self::get_covoiturage_post();
+		$post = self::get_post();
 		
 		//Action
 		$duplicate_from_id = false;
@@ -261,6 +230,9 @@ class AgendaPartage_Covoiturage_Edit {
 		return $html;
 	}
 	
+	/**
+	 * Html du bas de la zone de modification : dupliquer, supprimer, ...
+	 */
 	public static function get_edit_toolbar($post){
 		$post_id = $post->ID;
 		
@@ -283,7 +255,8 @@ class AgendaPartage_Covoiturage_Edit {
 			$html .= sprintf('<span class="covoiturage-tool">%s</span>', AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'publish', true));
 		}
 		if(current_user_can('manage_options')
-		|| current_user_can('covoiturage'))
+		|| current_user_can('covoiturage')
+		|| AgendaPartage_Covoiturage::user_can_change_post($post_id))
 			$html .= sprintf('<span class="covoiturage-tool">%s</span>', AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'duplicate', true));
 		$html .= sprintf('<span class="covoiturage-tool">%s</span>', AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'remove', true));
 		$html .= sprintf('<span class="covoiturage-tool">%s</span>', AgendaPartage_Covoiturage::get_covoiturage_contact_email_link($post_id, true));
@@ -519,7 +492,7 @@ class AgendaPartage_Covoiturage_Edit {
 	 * Le email2, email de copie, ne subit pas la redirection.
 	 */
 	private static function wp_mail_emails_fields($args){
-		if( ! ($post = self::get_covoiturage_post()))
+		if( ! ($post = self::get_post()))
 			return $args;
 		$to_emails = parse_emails($args['to']);
 		$headers_emails = parse_emails($args['headers']);
@@ -725,7 +698,7 @@ class AgendaPartage_Covoiturage_Edit {
 		$error_message = false;
 		
 		if( ! array_key_exists('covoiturage_duplicated_from', $_POST)){
-			$post = self::get_covoiturage_post();
+			$post = self::get_post();
 			if( ! is_object($post)){
 				$post = false;
 			}

@@ -233,7 +233,7 @@ class AgendaPartage_Evenement_Shortcodes {
 	*/
 	private static function shortcodes_agdpevent_callback($atts, $content = '', $shortcode = null){
 		
-		$post = AgendaPartage_Evenement_Edit::get_agdpevent_post();
+		$post = AgendaPartage_Evenement::get_post();
 		
 		if($post)
 			$post_id = $post->ID;

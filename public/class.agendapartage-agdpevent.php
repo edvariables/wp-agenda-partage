@@ -111,23 +111,24 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			$html .= sprintf('[toggle title="Message de l\'administrateur (%s) à l\'organisateur de l\'évènement" no-ajax] [contact-form-7 id="%s"] [/toggle]'
 				, $user->display_name, $form_id);
 		}
+				
+		if($email_sent = get_transient(AGDP_TAG . '_email_sent_' . $agdpevent->ID)){
+			delete_transient(AGDP_TAG . '_email_sent_' . $agdpevent->ID);
+		}
+		elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID)){
+			delete_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID);
+			if(empty($codesecret))
+				$secretcode = get_post_meta($post->ID, self::field_prefix.self::secretcode_argument, true);
+		}
+		
 		switch($post->post_status){
 			case 'pending':
 				$status = 'En attente de relecture';
 			case 'future':
-				if(!$status) $status = 'Pour le futur';
+				if(empty($status)) $status = 'Pour le futur';
 			case 'draft':
-				if(!$status) $status = 'Brouillon';
-				
-				if($email_sent = get_transient(AGDP_TAG . '_email_sent_' . $agdpevent->ID)){
-					delete_transient(AGDP_TAG . '_email_sent_' . $agdpevent->ID);
-				}
-				elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID)){
-					delete_transient(AGDP_TAG . '_no_email_' . $agdpevent->ID);
-					if(empty($codesecret))
-						$secretcode = get_post_meta($post->ID, self::field_prefix.self::secretcode_argument, true);
-				}
-				
+				if(empty($status)) $status = 'Brouillon';
+				debug_log('get_transient', $email_sent, $no_email);
 				$alerte = sprintf('<p class="alerte">Cet évènement est <b>en attente de validation</b>, il a le statut "%s".'
 					.'<br>Il n\'est <b>pas visible</b> dans l\'agenda.'
 					. '</p>'
@@ -140,7 +141,19 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 					, $status);
 				$html = $alerte . $html;
 				break;
+				
 			case 'publish': 
+				if(isset($email_sent) && $email_sent){
+					$info = '<div class="info">Cet évènement est désormais publique.'
+							. '<br>Un e-mail a été envoyé pour mémoire. Vérifiez votre boîte mails, la rubrique spam aussi.'
+						.'</div>';
+					$html = $info . $html;
+				}
+				elseif( isset($no_email) && $no_email) {
+					$info = '<div class="alerte">Cet évènement est désormais publique.</div>';
+					$html = $info . $html;
+				}
+				
 				$page_id = AgendaPartage::get_option('agenda_page_id');
 				if($page_id){
 					$url = self::get_post_permalink($page_id, self::secretcode_argument);
@@ -640,17 +653,5 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		/** set **/
 		$form->set_properties(array('form'=>$html));
 		
-	}
-	
-	public static function change_email_recipient($contact_form){
-		$mail_data = $contact_form->prop('mail');
-		
-		$requested_id = isset($_REQUEST[self::postid_argument]) ? $_REQUEST[self::postid_argument] : false;
-		$agdpevent = AgendaPartage_Evenement_Edit::get_agdpevent_post($requested_id);
-		
-		$meta_name = 'ev-email' ;
-		$mail_data['recipient'] = self::get_post_meta($agdpevent, $meta_name, true);
-		
-		$contact_form->set_properties(array('mail'=>$mail_data));
 	}
 }
