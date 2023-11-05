@@ -93,11 +93,9 @@ body.colors-dark .agdp-covoiturages-list .toggle-trigger {
 	text-decoration: underline;
 }
 .agdp-covoiturages-list > ul > li .created-since {
-	float: right;
+	text-align: right;
 	font-style: italic;
 	font-size: smaller;
-	position: relative;
-	top: -1em;
 }
 
 .agdp-covoiturages-list .show-more {

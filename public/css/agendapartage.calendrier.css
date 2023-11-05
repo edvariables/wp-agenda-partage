@@ -93,11 +93,9 @@ body.colors-dark .agdp-agdpevents-list .toggle-trigger {
 	text-decoration: underline;
 }
 .agdp-agdpevents-list > ul > li .created-since {
-	float: right;
+	text-align: right;
 	font-style: italic;
 	font-size: smaller;
-	position: relative;
-	top: -1em;
 }
 
 .agdp-agdpevents-list .show-more {
