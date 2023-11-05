@@ -68,37 +68,38 @@ class AgendaPartage_Covoiturage_Edit {
 	*
 	*/
 	public static function get_covoiturage_post($covoiturage_id = false) {
-		if($covoiturage_id){
-			$post = get_post($covoiturage_id);
-			if( ! $post
-			|| $post->post_type !== AgendaPartage_Covoiturage::post_type)
-				return null;
-			return $post;
-		}
+		return AgendaPartage_Covoiturage::get_post($covoiturage_id);
+		// if($covoiturage_id){
+			// $post = get_post($covoiturage_id);
+			// if( ! $post
+			// || $post->post_type !== AgendaPartage_Covoiturage::post_type)
+				// return null;
+			// return $post;
+		// }
 			
-		global $post;
- 		if( $post
- 		&& $post->post_type == AgendaPartage_Covoiturage::post_type)
- 			return $post;
+		// global $post;
+ 		// if( $post
+ 		// && $post->post_type === AgendaPartage_Covoiturage::post_type)
+ 			// return $post;
 
-		foreach([$_POST, $_GET] as $request){
-			foreach(['_wpcf7_container_post', 'post_id', 'post', 'p'] as $field_name){
-				if(array_key_exists($field_name, $request) && $request[$field_name]){
-					$post = get_post($request[$field_name]);
-					if( $post ){
-						if($post->post_type == AgendaPartage_Covoiturage::post_type){
-							//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
-							global $wp_query;
-							$wp_query->in_the_loop = true;
-							return $post;
-						}
-						return false;
-					}
-				}
-			}
-		}
+		// foreach([$_POST, $_GET] as $request){
+			// foreach(['_wpcf7_container_post', 'post_id', 'post', 'p'] as $field_name){
+				// if(array_key_exists($field_name, $request) && $request[$field_name]){
+					// $post = get_post($request[$field_name]);
+					// if( $post ){
+						// if($post->post_type === AgendaPartage_Covoiturage::post_type){
+							// // Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
+							// global $wp_query;
+							// $wp_query->in_the_loop = true;
+							// return $post;
+						// }
+						// return false;
+					// }
+				// }
+			// }
+		// }
 		
-		return false;
+		// return false;
 	}
 	
  	/**
@@ -107,10 +108,10 @@ class AgendaPartage_Covoiturage_Edit {
 	*/
 	public static function is_new_post() {
 		global $post;
- 		if( ! ($post == self::get_covoiturage_post()))
+ 		if( ! ($post = self::get_covoiturage_post()))
  			return true;
 		
-		return !$post->ID;
+		return ! $post->ID;
 	}
 
 	/**
@@ -173,7 +174,7 @@ class AgendaPartage_Covoiturage_Edit {
 		
  		if( $post ){
  			$post_id = $post->ID;
-			if( ! AgendaPartage_Covoiturage::user_can_change_covoiturage($post)){
+			if( ! AgendaPartage_Covoiturage::user_can_change_post($post)){
 				return self::get_covoiturage_edit_content_forbidden( $post );
 			}
 			$covoiturage_exists = ! $duplicate_from_id;
@@ -278,7 +279,7 @@ class AgendaPartage_Covoiturage_Edit {
 			$html .= sprintf('<span class="covoiturage-tool">%s</span>', AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'unpublish', true));
 		elseif( current_user_can('manage_options')
 		|| (! AgendaPartage_Covoiturage::waiting_for_activation($post_id)
-			&& AgendaPartage_Covoiturage::user_can_change_covoiturage($post_id))){
+			&& AgendaPartage_Covoiturage::user_can_change_post($post_id))){
 			$html .= sprintf('<span class="covoiturage-tool">%s</span>', AgendaPartage_Covoiturage::get_covoiturage_action_link($post_id, 'publish', true));
 		}
 		if(current_user_can('manage_options')
@@ -518,8 +519,8 @@ class AgendaPartage_Covoiturage_Edit {
 	 * Le email2, email de copie, ne subit pas la redirection.
 	 */
 	private static function wp_mail_emails_fields($args){
-		//TODO all
-		$post = self::get_covoiturage_post();
+		if( ! ($post = self::get_covoiturage_post()))
+			return $args;
 		$to_emails = parse_emails($args['to']);
 		$headers_emails = parse_emails($args['headers']);
 		$emails = array();
@@ -728,7 +729,7 @@ class AgendaPartage_Covoiturage_Edit {
 			if( ! is_object($post)){
 				$post = false;
 			}
-			elseif( ! AgendaPartage_Covoiturage::user_can_change_covoiturage($post)){
+			elseif( ! AgendaPartage_Covoiturage::user_can_change_post($post)){
 				$abort = true;
 				$error_message = sprintf('Vous n\'êtes pas autorisé à modifier ce covoiturage.');
 				$submission->set_response($error_message);
@@ -895,6 +896,8 @@ class AgendaPartage_Covoiturage_Edit {
 					//Création du post
 					$post_id = wp_insert_post( $postarr, true );
 				}
+				else
+					$post_id = false;
 			}
 			else{
 				

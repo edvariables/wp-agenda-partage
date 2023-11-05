@@ -581,12 +581,11 @@ class AgendaPartage_Evenements {
 	}
 	
 	/**
-	* Rendu Html des évènements sous forme d'arborescence par mois
+	* Rendu Html des filtres en tête de liste
 	*
 	* Optimal sous la forme https://.../agenda-local/?eventid=1207#eventid1207
 	*/
 	public static function get_list_header($requested_month = false, $options = false){
-		//TODO header('Location:index.php#main');
 		
 		$filters_summary = [];
 		$all_selected_terms = [];

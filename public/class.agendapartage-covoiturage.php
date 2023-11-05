@@ -12,18 +12,22 @@
  *
  * Voir aussi AgendaPartage_Admin_Covoiturage
  */
-class AgendaPartage_Covoiturage {
+class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 
 	const post_type = 'covoiturage';
 	const taxonomy_city = 'cov_city';
 	const taxonomy_diffusion = 'cov_diffusion';
 
-	const user_role = 'author';
+	const secretcode_argument = AGDP_COVOIT_SECRETCODE;
+	const field_prefix = 'cov-';
 
-	private static $initiated = false;
+	const postid_argument = AGDP_ARG_COVOITURAGEID;
+	const posts_page_option = 'covoiturages_page_id';
 
+	protected static $initiated = false;
 	public static function init() {
 		if ( ! self::$initiated ) {
+			parent::init();
 			self::$initiated = true;
 
 			self::init_hooks();
@@ -34,170 +38,13 @@ class AgendaPartage_Covoiturage {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		self::init_hooks_for_search();
-		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
-		add_filter( 'the_content', array(__CLASS__, 'the_content'), 10, 1 );
-		add_filter( 'navigation_markup_template', array(__CLASS__, 'on_navigation_markup_template_cb'), 10, 2 );
-		
-		add_filter( 'pre_handle_404', array(__CLASS__, 'on_pre_handle_404_cb'), 10, 2 );
-		add_filter( 'redirect_canonical', array(__CLASS__, 'on_redirect_canonical_cb'), 10, 2);
+		parent::init_hooks();
 		
 		add_action( 'wp_ajax_covoiturage_action', array(__CLASS__, 'on_wp_ajax_covoiturage_action_cb') );
 		add_action( 'wp_ajax_nopriv_covoiturage_action', array(__CLASS__, 'on_wp_ajax_covoiturage_action_cb') );
 		
-		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
-
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_EMAIL4PHONE, array(__CLASS__, 'on_wp_ajax_covoiturage_email4phone_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_EMAIL4PHONE, array(__CLASS__, 'on_wp_ajax_covoiturage_email4phone_cb') );
-	}
-	
-	/**
-	 * Hook navigation template
-	 * Supprime la navigation dans les posts de covoiturages
-	 */
-	public static function on_navigation_markup_template_cb( $template, $class){
-		if($class == 'post-navigation'){
-			// var_dump($template, $class);
-			global $post;
-			if( $post
-			 && $post->post_type == self::post_type){
-					$template = '<!-- no nav -->';
-				};
-		}
-		return $template;
-	}
-	
-	/**
-	 * Hook d'une page introuvable.
-	 * Il peut s'agir d'un covoiturage qui vient d'être créé et que seul son créateur peut voir.
-	 */
-	public static function on_pre_handle_404_cb($preempt, $query){
-		if( ! have_posts()){
-			//var_dump($query);
-			//Dans le cas où la liste des covoiturages est la page d'accueil, l'url de base avec des arguments ne fonctionne pas
-			if(is_home()){
-				if( (! isset($query->query_vars['post_type'])
-					|| $query->query_vars['post_type'] === '')
-				&& isset($query->query[AGDP_ARG_COVOITURAGEID])){
-					$page = AgendaPartage::get_option('covoiturages_page_id');
-					$query->query_vars['post_type'] = 'page';
-					$query->query_vars['page_id'] = $page;
-					global $wp_query;
-					$wp_query = new WP_Query($query->query_vars);
-					return false;
-						
-				}
-			}
-			
-			//Dans le cas d'une visualisation d'un covoiturage non publié, pour le créateur non connecté
-			if(isset($query->query['post_type'])
-			&& $query->query['post_type'] == self::post_type){
-				foreach(['p', 'post', 'post_id', self::post_type] as $key){
-					if( array_key_exists($key, $query->query)){
-						if(is_numeric($query->query[$key]))
-							$post = get_post($query->query[$key]);
-						else{
-							//Ne fonctionne pas en 'pending', il faut l'id
-							$post = get_page_by_path(self::post_type . '/' . $query->query[$key]);
-						}
-						if(!$post)
-							return false;
-		
-						if(in_array($post->post_status, ['draft','pending','future'])){
-							
-							$query->query_vars['post_status'] = $post->post_status;
-							global $wp_query;
-							$wp_query = new WP_Query($query->query_vars);
-							return false;
-							
-							// self::on_covoiturage_404( $post ); // call exit() inside
-						
-						}
-						return true;
-					}
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Interception des redirections "post_type=covoiturage&p=1837" vers "/covoiturage/nom-de-l-covoiturage" si il a un post_status != 'publish'
-	 */
-	public static function on_redirect_canonical_cb ( $redirect_url, $requested_url ){
-
-		$query = parse_url($requested_url, PHP_URL_QUERY);
-		parse_str($query, $query);
-		//var_dump($query, $redirect_url, $requested_url);
-		if(isset($query['post_type']) && $query['post_type'] == self::post_type
-		&& isset($query['p']) && $query['p']){
-			$post = get_post($query['p']);
-			if($post){
-				if($post->post_status != 'publish'){
-					// die();
-					return false;
-				}
-				else{
-					$redirect_url = str_replace('&etat=en-attente', '', $redirect_url);
-				}
-				//TODO nocache_headers();
-			}
-		}
-		return $redirect_url;
-	}
-	
-	
-	/***************
-	 * the_title()
-	 */
- 	public static function the_title( $title, $post_id ) {
- 		global $post;
- 		if( ! $post
- 		|| $post->ID != $post_id
- 		|| $post->post_type != self::post_type){
- 			return $title;
-		}
-	    return self::get_post_title( $post );
-	}
-
-	/**
-	 * Hook
-	 */
- 	public static function the_content( $content ) {
- 		global $post;
- 		if( ! $post
- 		|| $post->post_type != self::post_type){
- 			return $content;
-		}
-			
-		if(isset($_GET['action']) && $_GET['action'] == 'activation'){
-			$post = self::do_post_activation($post);
-		}
-		
-	    return self::get_post_content( $post );
-	}
-	
-	/**
-	 * Returns, par exemple, le meta cov-siteweb. Mais si $check_show_field, on teste si le meta cov-siteweb-show est vrai.
-	 */
-	public static function get_post_meta($post_id, $meta_name, $single = false, $check_show_field = null){
-		if(is_a($post_id, 'WP_Post'))
-			$post_id = $post_id->ID;
-		if($check_show_field){
-			if(is_bool($check_show_field))
-				$check_show_field = '-show';
-			if( ! get_post_meta($post_id, $meta_name . $check_show_field, true))
-				return;
-		}
-		return get_post_meta($post_id, $meta_name, true);
-
-	}
- 
- 	/**
- 	 * Retourne l'ID du post servant de message
- 	 */
-	public static function get_covoiturage_message_contact_form_id( ) {
-		$option_id = 'covoiturage_message_contact_form_id';
-		return AgendaPartage::get_option($option_id);
 	}
  
  	/**
@@ -208,16 +55,16 @@ class AgendaPartage_Covoiturage {
 			global $post;
 			$covoiturage = $post;
 		}
-		
+		$covoiturage_id = is_object($covoiturage) ? $covoiturage->ID : false;
 		// $post_title = isset( $covoiturage->post_title ) ? $covoiturage->post_title : '';
-		$intentionid = $data ? $data['cov-intention'] : get_post_meta($covoiturage->ID, 'cov-intention', true);
+		$intentionid = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-intention', true);
 		$intention = AgendaPartage_Covoiturage_Post_type::get_intention_label($intentionid);
 		$le = "Le";
-		$dates = self::get_covoiturage_dates_text( $covoiturage->ID, $data );
+		$dates = self::get_covoiturage_dates_text( $covoiturage_id, $data );
 		$de = "de";
-		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage->ID, 'cov-depart', true);
+		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage_id, 'cov-depart', true);
 		$vers = "vers";
-		$arrivee = $data ? $data['cov-arrivee'] : get_post_meta($covoiturage->ID, 'cov-arrivee', true);
+		$arrivee = $data ? $data['cov-arrivee'] : get_post_meta($covoiturage_id, 'cov-arrivee', true);
 		if( !  $no_html){
 			$intention = sprintf('<span class="cov-intention cov-intention-%s">%s</span>', $intentionid, $intention);
 			$dates = preg_replace('/^(\w+\s)([0-9]+)/', '$1<span class="cov-date-jour-num">$2</span>', $dates);
@@ -233,24 +80,6 @@ class AgendaPartage_Covoiturage {
 			. $de . ' ' . $depart . $separator
 			. $vers . ' ' . $arrivee;
 		return $html;
-	}
-
-	/**
-	 * Cherche le code secret dans la requête et le compare à celui du post
-	 */
-	public static function get_secretcode_in_request( $covoiturage ) {
-		// Ajax : code secret
-		if(array_key_exists(AGDP_COVOIT_SECRETCODE, $_REQUEST)){
-			$meta_name = 'cov-'.AGDP_COVOIT_SECRETCODE;
-			$codesecret = self::get_post_meta($covoiturage, $meta_name, true);		
-			if($codesecret
-			&& (strcasecmp( $codesecret, $_REQUEST[AGDP_COVOIT_SECRETCODE]) !== 0)){
-				$codesecret = '';
-			}
-		}
-		else 
-			$codesecret = false;
-		return $codesecret;
 	}
 	
  	/**
@@ -277,7 +106,7 @@ class AgendaPartage_Covoiturage {
 		
 		$html .= sprintf('[covoiturage-modifier-covoiturage toggle="Modifier ce covoiturage" no-ajax post_id="%d" %s]'
 			, $covoiturage->ID
-			, $codesecret ? AGDP_COVOIT_SECRETCODE . '=' . $codesecret : ''
+			, $codesecret ? self::secretcode_argument . '=' . $codesecret : ''
 		);
 		
 		if( $email && current_user_can('manage_options') ){
@@ -303,7 +132,7 @@ class AgendaPartage_Covoiturage {
 				elseif($no_email = get_transient(AGDP_TAG . '_no_email_' . $covoiturage->ID)){
 					delete_transient(AGDP_TAG . '_no_email_' . $covoiturage->ID);
 					if(empty($codesecret))
-						$secretcode = get_post_meta($post->ID, 'cov-'.AGDP_COVOIT_SECRETCODE, true);
+						$secretcode = get_post_meta($post->ID, self::field_prefix . self::secretcode_argument, true);
 				}
 				
 				$alerte = sprintf('<p class="alerte">Ce covoiturage est <b>en attente de validation</b>, il a le statut "%s".'
@@ -319,11 +148,11 @@ class AgendaPartage_Covoiturage {
 				$html = $alerte . $html;
 				break;
 			case 'publish': 
-				$page_id = AgendaPartage::get_option('covoiturages_page_id');
+				$page_id = AgendaPartage::get_option(self::posts_page_option);
 				if($page_id){
-					$url = self::get_post_permalink($page_id, AGDP_COVOIT_SECRETCODE);
-					$url = add_query_arg( AGDP_ARG_COVOITURAGEID, $covoiturage->ID, $url);
-					$url .= '#' . AGDP_ARG_COVOITURAGEID . $covoiturage->ID;
+					$url = self::get_post_permalink($page_id, self::secretcode_argument);
+					$url = add_query_arg( self::postid_argument, $covoiturage->ID, $url);
+					$url .= '#' . self::postid_argument . $covoiturage->ID;
 					$html .= sprintf('<br><br>Pour voir ce covoiturage dans la liste, <a href="%s">cliquez ici %s</a>.'
 					, $url
 					, AgendaPartage::icon('car'));
@@ -442,7 +271,7 @@ class AgendaPartage_Covoiturage {
 		if($icon === true)
 			$icon = $method;
 		$html = '';
-		if($need_can_user_change && ! self::user_can_change_covoiturage($post)){
+		if($need_can_user_change && ! self::user_can_change_post($post)){
 			$html .= '<p class="alerte">Ce covoiturage ne peut pas être modifié par vos soins.</p>';
 		}
 		else {
@@ -459,7 +288,7 @@ class AgendaPartage_Covoiturage {
 			//Maintient la transmission du code secret
 			$ekey = self::get_secretcode_in_request($post_id);
 			if($ekey)
-				$query[AGDP_COVOIT_SECRETCODE] = $ekey;
+				$query[self::secretcode_argument] = $ekey;
 
 			if($confirmation){
 				$query['confirm'] = $confirmation;
@@ -524,10 +353,10 @@ class AgendaPartage_Covoiturage {
 	 * Duplicate event
 	 */
 	public static function covoiturage_action_duplicate($post_id) {
-		if ( self::user_can_change_covoiturage($post_id) )
+		if ( self::user_can_change_post($post_id) )
 			return 'redir:' . add_query_arg(
 				'action', 'duplicate'
-				, add_query_arg(AGDP_ARG_COVOITURAGEID, $post_id
+				, add_query_arg(self::postid_argument, $post_id
 					, get_page_link(AgendaPartage::get_option('new_covoiturage_page_id'))
 				)
 			);
@@ -540,7 +369,7 @@ class AgendaPartage_Covoiturage {
 	public static function covoiturage_action_unpublish($post_id) {
 		$post_status = 'pending';
 		if( self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, true, AGDP_COVOIT_SECRETCODE, 'etat=en-attente');
+			return 'redir:' . self::get_post_permalink($post_id, true, self::secretcode_argument, 'etat=en-attente');
 		return 'Impossible de modifier ce covoiturage.';
 	}
 	/**
@@ -551,7 +380,7 @@ class AgendaPartage_Covoiturage {
 		if( (! self::waiting_for_activation($post_id)
 			|| current_user_can('manage_options') )
 		&& self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, AGDP_COVOIT_SECRETCODE);
+			return 'redir:' . self::get_post_permalink($post_id, self::secretcode_argument);
 		return 'Impossible de modifier le statut.<br>Ceci peut être effectué depuis l\'e-mail de validation.';
 	}
 	/**
@@ -569,29 +398,12 @@ class AgendaPartage_Covoiturage {
 	 * Remove event
 	 */
 	public static function do_remove($post_id) {
-		if(self::user_can_change_covoiturage($post_id)){
+		if(self::user_can_change_post($post_id)){
 			// $post = wp_delete_post($post_id);
 			$post = self::change_post_status($post_id, 'trash');
 			return ! is_a($post, 'WP_Error');
 		}
-		// echo self::user_can_change_covoiturage($post_id, false, true);
-		return false;
-	}
-	
-	/**
-	 * Change post status
-	 */
-	public static function change_post_status($post_id, $post_status) {
-		if($post_status == 'publish')
-			$ignore = 'sessionid';
-		else
-			$ignore = false;
-		if(self::user_can_change_covoiturage($post_id, $ignore)){
-			$postarr = ['ID' => $post_id, 'post_status' => $post_status];
-			$post = wp_update_post($postarr, true);
-			return ! is_a($post, 'WP_Error');
-		}
-		// echo self::user_can_change_covoiturage($post_id, $ignore, true);
+		// echo self::user_can_change_post($post_id, false, true);
 		return false;
 	}
 	
@@ -609,7 +421,7 @@ class AgendaPartage_Covoiturage {
 		if(!$post_id)
 			return false;
 		
-		$codesecret = self::get_post_meta($post, 'cov-' . AGDP_COVOIT_SECRETCODE, true);
+		$codesecret = self::get_post_meta($post, self::field_prefix . self::secretcode_argument, true);
 		
 		$meta_name = 'cov-email' ;
 		$email = self::get_post_meta($post, $meta_name, true);
@@ -639,7 +451,7 @@ class AgendaPartage_Covoiturage {
 				$message .= sprintf('<br><br>Ce covoiturage n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
 				
 				if( self::waiting_for_activation($post) ){
-					$activation_url = add_query_arg(AGDP_COVOIT_SECRETCODE, $codesecret, $url);
+					$activation_url = add_query_arg(self::secretcode_argument, $codesecret, $url);
 					$activation_url = add_query_arg('action', 'activation', $activation_url);
 					$activation_url = add_query_arg('ak', self::get_activation_key($post), $activation_url);
 					$activation_url = add_query_arg('etat', 'en-attente', $activation_url);
@@ -653,9 +465,9 @@ class AgendaPartage_Covoiturage {
 		}
 		
 		$message .= sprintf('<br><br>Le code secret de ce covoiturage est : %s', $codesecret);
-		// $args = AGDP_COVOIT_SECRETCODE .'='. $codesecret;
+		// $args = self::secretcode_argument .'='. $codesecret;
 		// $codesecret_url = $url . (strpos($url,'?')>0 || strpos($args,'?') ? '&' : '?') . $args;			
-		$codesecret_url = add_query_arg(AGDP_COVOIT_SECRETCODE, $codesecret, $url);
+		$codesecret_url = add_query_arg(self::secretcode_argument, $codesecret, $url);
 		$message .= sprintf('<br><br>Pour modifier ce covoiturage, <a href="%s">cliquez ici</a>', $codesecret_url);
 		
 		$url = self::get_post_permalink($post);
@@ -721,138 +533,7 @@ class AgendaPartage_Covoiturage {
 		return $html;
 		
 	}
-	/**
-	 * Clé d'activation depuis le mail pour basculer en 'publish'
-	 */
-	public static function get_activation_key($post, $force_new = false){
-		if(is_numeric($post)){
-			$post = get_post($post);
-		}
-		$post_id = $post->ID;
-		$meta_name = 'activation_key';
-		
-		$value = get_post_meta($post_id, $meta_name, true);
-		if($value && $value != 1 && ! $force_new)
-			return $value;
-		
-		$guid = uniqid();
-		
-		$value = crypt($guid, AGDP_TAG . '-' . $meta_name);
-		
-		update_post_meta($post_id, $meta_name, $value);
-		
-		return $value;
-		
-	}
-	/**
-	 * Indique que l'activation depuis le mail n'a pas été effectuée
-	 */
-	public static function waiting_for_activation($post_id){
-		if(is_a($post_id, 'WP_Post'))
-			$post_id = $post_id->ID;
-		$meta_name = 'activation_key';
-		$value = get_post_meta($post_id, $meta_name, true);
-		return !! $value;
-		
-	}
 	
-	/**
-	 * Contrôle de la clé d'activation 
-	 */
-	public static function check_activation_key($post, $value){
-		if(is_numeric($post)){
-			$post = get_post($post);
-		}
-		$post_id = $post->ID;
-		$meta_name = 'activation_key';
-		$meta_value = get_post_meta($post_id, $meta_name, true);
-		return hash_equals($value, $meta_value);
-	}
-	
-	/**
-	 * Effectue l'activation du post
-	 */
-	public static function do_post_activation($post){
-		if(is_numeric($post)){
-			$post_id = $post;
-			$post = get_post($post);
-		}
-		else
-			$post_id = $post->ID;
-		if(isset($_GET['ak']) 
-		&& (! self::waiting_for_activation($post_id)
-			|| self::check_activation_key($post, $_GET['ak']))){
-			if($post->post_status != 'publish'){
-				$result = wp_update_post(array('ID' => $post->ID, 'post_status' => 'publish'));
-				$post->post_status = 'publish';
-				if(is_wp_error($result)){
-					var_dump($result);
-				}
-				echo '<p class="info">Le covoiturage est désormais activé et visible dans l\'agenda</p>';
-			}
-			$meta_name = 'activation_key';
-			delete_post_meta($post->ID, $meta_name);
-		}
-		return $post;
-	}
- 	
-	/***********************************************************/
-	/**
-	 * Extend WordPress search to include custom fields
-	 *
-	 * https://adambalee.com
-	 */
-	private static function init_hooks_for_search(){
-		add_filter('posts_join', array(__CLASS__, 'cf_search_join' ));
-		add_filter( 'posts_where', array(__CLASS__, 'cf_search_where' ));
-		add_filter( 'posts_distinct', array(__CLASS__, 'cf_search_distinct' ));
-	}
-	/**
-	 * Join posts and postmeta tables
-	 *
-	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_join
-	 */
-	public static function cf_search_join( $join ) {
-	    global $wpdb;
-
-	    if ( is_search() ) {    
-	        $join .=' LEFT JOIN '.$wpdb->postmeta. ' ON '. $wpdb->posts . '.ID = ' . $wpdb->postmeta . '.post_id ';
-	    }
-
-	    return $join;
-	}
-
-	/**
-	 * Modify the search query with posts_where
-	 *
-	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
-	 */
-	public static function cf_search_where( $where ) {
-	    global $pagenow, $wpdb;
-
-	    if ( is_search() ) {
-	        $where = preg_replace(
-	            "/\(\s*".$wpdb->posts.".post_title\s+LIKE\s*(\'[^\']+\')\s*\)/",
-	            "(".$wpdb->posts.".post_title LIKE $1) OR (".$wpdb->postmeta.".meta_value LIKE $1)", $where );
-	    }
-
-	    return $where;
-	}
-
-	/**
-	 * Prevent duplicates
-	 *
-	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_distinct
-	 */
-	public static function cf_search_distinct( $where ) {
-	    global $wpdb;
-
-	    if ( is_search() ) {
-	        return "DISTINCT";
-	    }
-
-	    return $where;
-	}
 	
 	/**
 	 * Retourne le texte des dates et heures d'un covoiturage
@@ -888,192 +569,19 @@ class AgendaPartage_Covoiturage {
 	 * Retourne les communes d'un covoiturage
 	 */
 	public static function get_covoiturage_cities( $post_id, $args = 'names' ) {
-		return self::get_covoiturage_terms( self::taxonomy_city, $post_id, $args);
+		return self::get_post_terms( self::taxonomy_city, $post_id, $args);
 	}
 	/**
 	 * Retourne les diffusions possibles d'un covoiturage
 	 */
 	public static function get_covoiturage_diffusions( $post_id, $args = 'names' ) {
-		return self::get_covoiturage_terms( self::taxonomy_diffusion, $post_id, $args);
+		return self::get_post_terms( self::taxonomy_diffusion, $post_id, $args);
 	}
 	
-	/**
-	 * Retourne les éléments d'une taxonomy d'un covoiturage
-	 */
-	public static function get_covoiturage_terms( $tax_name, $post_id, $args = 'names' ) {
-		if(is_object($post_id))
-			$post_id = $post_id->ID;
-		if( ! is_array($args)){
-			if(is_string($args))
-				$args = array( 'fields' => $args );
-			else
-				$args = array();
-		}
-		if(!$post_id){
-			throw new ArgumentException('get_covoiturage_terms : $post_id ne peut être null;');
-		}
-		return wp_get_post_terms($post_id, $tax_name, $args);
-	}
-	
-	/**
-	 * get_post_permalink
-	 * Si le premier argument === true, $leave_name = true
-	 * Si un argument === AGDP_COVOIT_SECRETCODE, ajoute AGDP_COVOIT_SECRETCODE=codesecret si on le connait
-	 * 
-	 */
-	public static function get_post_permalink( $post, ...$url_args){
-		if(is_numeric($post))
-			$post = get_post($post);
-		$post_status = $post->post_status;
-		$leave_name = (count($url_args) && $url_args[0] === true);
-		if( ! $leave_name
-		&& $post->post_status == 'publish' ){
-			$url = get_post_permalink( $post->ID);
-			
-		}
-		else {
-			if(count($url_args) && $url_args[0] === true)
-				$url_args = array_slice($url_args, 1);
-			$post_link = add_query_arg(
-				array(
-					'post_type' => $post->post_type,
-					'p'         => $post->ID
-				), ''
-			);
-			$url = home_url( $post_link );
-		}
-		foreach($url_args as $args){
-			if($args){
-				if(is_array($args))
-					$args = add_query_arg($args);
-				elseif($args == AGDP_COVOIT_SECRETCODE){			
-					//Maintient la transmission du code secret
-					$ekey = self::get_secretcode_in_request($post->ID);		
-					if($ekey){
-						$args = AGDP_COVOIT_SECRETCODE . '=' . $ekey;
-					}
-					else 
-						continue;
-				}
-				if($args
-				&& strpos($url, $args) === false)
-					$url .= (strpos($url,'?')>0 || strpos($args,'?') ? '&' : '?') . $args;
-			}
-		}
-		return $url;
-	}
-
-
-	
-	/**
-	* Définit si l'utilsateur courant peut modifier le covoiturage
-	*/
-	public static function user_can_change_covoiturage($post, $ignore = false, $verbose = false){
-		if(!$post)
-			return false;
-		if(is_numeric($post))
-			$post = get_post($post);
-		
-		if($post->post_status == 'trash'){
-			return false;
-		}
-		$post_id = $post->ID;
-		
-		//Admin : ok 
-		//TODO check is_admin === interface ou user
-		//TODO user can edit only his own events
-		if( is_admin() && !wp_doing_ajax()){
-			die("is_admin");
-			return true;
-		}		
-		
-		//Session id de création du post identique à la session en cours
-		
-		if($ignore !== 'sessionid'){
-			$meta_name = 'cov-sessionid' ;
-			$sessionid = self::get_post_meta($post_id, $meta_name, true, false);
-
-			if($sessionid
-			&& $sessionid == AgendaPartage::get_session_id()){
-				return true;
-			}
-			if($verbose){
-				echo sprintf('<p>Session : %s != %s</p>', $sessionid, AgendaPartage::get_session_id());
-			}
-		}
-		
-		if(is_user_logged_in()){
-			global $current_user;
-			//Rôle autorisé
-			if(	$current_user->has_cap( 'edit_posts' ) ){
-				return true;
-			}
-			
-			//Utilisateur associé
-			if(	$current_user->ID == $post->post_author ){
-				return true;
-			}
-			
-			$user_email = $current_user->user_email;
-			if( ! is_email($user_email)){
-				$user_email = false;
-			}
-		}
-		else {
-			$user_email = false;
-			if($verbose)
-				echo sprintf('<p>Non connecté</p>');
-		}
-		
-		$meta_name = 'cov-email' ;
-		$email = get_post_meta($post_id, $meta_name, true);
-		//Le mail de l'utilisateur est le même que celui du covoiturage
-		if($email
-		&& $user_email == $email){
-			return true;
-		}
-		if($verbose){
-			echo sprintf('<p>Email : %s != %s</p>', $email, $user_email);
-		}
-
-		//Requête avec clé de déblocage
-		$ekey = self::get_secretcode_in_request($post_id);
-		if($ekey){
-			return true;
-		}
-		if($verbose){
-			echo sprintf('<p>Code secret : %s != %s</p>', $ekey, $_REQUEST[AGDP_COVOIT_SECRETCODE]);
-		}
-		
-		return false;
-		
-	}
-	
-	/**
-	 * Interception du formulaire avant que les shortcodes ne soient analysés.
-	 * Affectation des valeurs par défaut.
-	 */
- 	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
-			
-		$form = WPCF7_ContactForm::get_current();
-		
-		switch($form->id()){
-			case AgendaPartage::get_option('contact_form_id') :
-			case AgendaPartage::get_option('admin_message_contact_form_id') :
-			case AgendaPartage::get_option('covoiturage_message_contact_form_id') :
-				self::wpcf7_contact_form_init_tags( $form );
-				$form_class .= ' preventdefault-reset';
-				break;
-			default:
-				break;
-		}
-		return $form_class;
-	}
-	
- 	private static function wpcf7_contact_form_init_tags( $form ) { 
+ 	protected static function wpcf7_contact_form_init_tags( $form ) { 
 		$html = $form->prop('form');//avec shortcodes du wpcf7
-		$requested_id = isset($_REQUEST[AGDP_ARG_COVOITURAGEID]) ? $_REQUEST[AGDP_ARG_COVOITURAGEID] : false;
-		$covoiturage = AgendaPartage_Covoiturage_Edit::get_covoiturage_post($requested_id);
+		$requested_id = isset($_REQUEST[self::postid_argument]) ? $_REQUEST[self::postid_argument] : false;
+		$covoiturage = self::get_post($requested_id);
 		if( ! $covoiturage)
 			return;
 		
@@ -1115,8 +623,9 @@ class AgendaPartage_Covoiturage {
 	public static function change_email_recipient($contact_form){
 		$mail_data = $contact_form->prop('mail');
 		
-		$requested_id = isset($_REQUEST[AGDP_ARG_COVOITURAGEID]) ? $_REQUEST[AGDP_ARG_COVOITURAGEID] : false;
-		$covoiturage = AgendaPartage_Covoiturage_Edit::get_covoiturage_post($requested_id);
+		$requested_id = isset($_REQUEST[self::postid_argument]) ? $_REQUEST[self::postid_argument] : false;
+		if( ! ($covoiturage = self::get_post($requested_id)))
+			return;
 		
 		$meta_name = 'cov-email' ;
 		$mail_data['recipient'] = self::get_post_meta($covoiturage, $meta_name, true);

@@ -198,7 +198,7 @@ class AgendaPartage_Covoiturages {
 
 	/**
 	 * Recherche de tous les mois contenant des covoiturages mais aussi les mois sans.
-	 * Return array($month => $count)
+	 * Return array($year-$month => $count)
 	 */
 	public static function get_posts_months(){
 		global $wpdb;
@@ -465,14 +465,18 @@ class AgendaPartage_Covoiturages {
 				);
 			} else
 				$ajax = false;
+			
+			$month_summary = '';
+			
 			$html .= sprintf(
-				'<li><div class="month-title toggle-trigger %s %s" %s>%s <span class="nb-items">(%d)</span></div>
+				'<li><div class="month-title toggle-trigger %s %s" %s>%s <span class="nb-items">(%d)</span>%s</div>
 				<ul id="month-%s" class="covoiturages-month toggle-container">'
 				, $month_events_count === 0 ? 'no-items' : ''
 				, !$ajax && $month_events_count ? 'active' : ''
 				, $ajax ? $ajax : ''
 				, wp_date('F Y', mktime(0,0,0, substr($month, 5,2), 1, substr($month, 0,4)))
 				, $month_events_count
+				, $month_summary
 				, $month
 			);
 			if(!$ajax && $month_events_count){
@@ -598,12 +602,11 @@ class AgendaPartage_Covoiturages {
 	}
 	
 	/**
-	* Rendu Html des covoiturages sous forme d'arborescence par mois
+	* Rendu Html des filtres en tête de liste
 	*
 	* Optimal sous la forme https://.../agenda-local/?eventid=1207#eventid1207
 	*/
 	public static function get_list_header($requested_month = false, $options = false){
-		//TODO header('Location:index.php#main');
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
@@ -784,7 +787,7 @@ class AgendaPartage_Covoiturages {
 			, esc_attr( json_encode(['id'=> $post->ID, 'date' => $date_debut]) )
 		);
 		
-		$cities = AgendaPartage_Covoiturage::get_covoiturage_cities ($post, 'names');
+		//$cities = AgendaPartage_Covoiturage::get_covoiturage_cities ($post, 'names');
 		
 		$title = AgendaPartage_Covoiturage::get_post_title( $post, false );
 		// $dates = AgendaPartage_Covoiturage::get_covoiturage_dates_text($post->ID);

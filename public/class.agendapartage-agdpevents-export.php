@@ -241,7 +241,7 @@ class AgendaPartage_Evenements_Export {
 			, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
 			, 'DIFFUSIONS' => AgendaPartage_Evenement::taxonomy_diffusion
 		] as $node_name => $tax_name){
-			$terms = AgendaPartage_Evenement::get_event_terms ($tax_name, $post->ID, 'names');
+			$terms = AgendaPartage_Evenement::get_post_terms ($tax_name, $post->ID, 'names');
 			if($terms){
 				//$terms = array_map(function($tax_name){ return str_replace(',','-', $tax_name);}, $terms);//escape ','
 				foreach($terms as $term_name)

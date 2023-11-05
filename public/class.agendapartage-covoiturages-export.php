@@ -228,7 +228,7 @@ class AgendaPartage_Covoiturages_Export {
 		foreach([ 
 			'CITIES' => AgendaPartage_Covoiturage::taxonomy_city
 		] as $node_name => $tax_name){
-			$terms = AgendaPartage_Covoiturage::get_covoiturage_terms ($tax_name, $post->ID, 'names');
+			$terms = AgendaPartage_Covoiturage::get_post_terms ($tax_name, $post->ID, 'names');
 			if($terms){
 				//$terms = array_map(function($tax_name){ return str_replace(',','-', $tax_name);}, $terms);//escape ','
 				foreach($terms as $term_name)

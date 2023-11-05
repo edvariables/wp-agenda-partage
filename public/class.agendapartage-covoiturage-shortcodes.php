@@ -173,7 +173,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 	*/
 	private static function shortcodes_covoiturage_callback($atts, $content = '', $shortcode = null){
 		
-		$post = AgendaPartage_Covoiturage_Edit::get_covoiturage_post();
+		$post = AgendaPartage_Covoiturage::get_post();
 		
 		if($post)
 			$post_id = $post->ID;

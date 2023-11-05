@@ -67,37 +67,38 @@ class AgendaPartage_Evenement_Edit {
 	*
 	*/
 	public static function get_agdpevent_post($agdpevent_id = false) {
-		if($agdpevent_id){
-			$post = get_post($agdpevent_id);
-			if( ! $post
-			|| $post->post_type !== AgendaPartage_Evenement::post_type)
-				return null;
-			return $post;
-		}
+		return AgendaPartage_Evenement::get_post($agdpevent_id);
+		// if($agdpevent_id){
+			// $post = get_post($agdpevent_id);
+			// if( ! $post
+			// || $post->post_type !== AgendaPartage_Evenement::post_type)
+				// return null;
+			// return $post;
+		// }
 			
-		global $post;
- 		if( $post
- 		&& $post->post_type == AgendaPartage_Evenement::post_type)
- 			return $post;
+		// global $post;
+ 		// if( $post
+ 		// && $post->post_type === AgendaPartage_Evenement::post_type)
+ 			// return $post;
 
-		foreach([$_POST, $_GET] as $request){
-			foreach(['_wpcf7_container_post', 'post_id', 'post', 'p'] as $field_name){
-				if(array_key_exists($field_name, $request) && $request[$field_name]){
-					$post = get_post($request[$field_name]);
-					if( $post ){
-						if($post->post_type == AgendaPartage_Evenement::post_type){
-							//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
-							global $wp_query;
-							$wp_query->in_the_loop = true;
-							return $post;
-						}
-						return false;
-					}
-				}
-			}
-		}
+		// foreach([$_POST, $_GET] as $request){
+			// foreach(['_wpcf7_container_post', 'post_id', 'post', 'p'] as $field_name){
+				// if(array_key_exists($field_name, $request) && $request[$field_name]){
+					// $post = get_post($request[$field_name]);
+					// if( $post ){
+						// if($post->post_type === AgendaPartage_Evenement::post_type){
+							// // Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
+							// global $wp_query;
+							// $wp_query->in_the_loop = true;
+							// return $post;
+						// }
+						// return false;
+					// }
+				// }
+			// }
+		// }
 		
-		return false;
+		// return false;
 	}
 	
  	/**
@@ -106,10 +107,10 @@ class AgendaPartage_Evenement_Edit {
 	*/
 	public static function is_new_post() {
 		global $post;
- 		if( ! ($post == self::get_agdpevent_post()))
+ 		if( ! ($post = self::get_agdpevent_post()))
  			return true;
 		
-		return !$post->ID;
+		return ! $post->ID;
 	}
 
 	/**
@@ -173,7 +174,7 @@ class AgendaPartage_Evenement_Edit {
 		
  		if( $post ){
  			$post_id = $post->ID;
-			if( ! AgendaPartage_Evenement::user_can_change_agdpevent($post)){
+			if( ! AgendaPartage_Evenement::user_can_change_post($post)){
 				return self::get_agdpevent_edit_content_forbidden( $post );
 			}
 			$agdpevent_exists = ! $duplicate_from_id;
@@ -275,7 +276,7 @@ class AgendaPartage_Evenement_Edit {
 			$html .= sprintf('<span class="agdpevent-tool">%s</span>', AgendaPartage_Evenement::get_agdpevent_action_link($post_id, 'unpublish', true));
 		elseif( current_user_can('manage_options')
 		|| (! AgendaPartage_Evenement::waiting_for_activation($post_id)
-			&& AgendaPartage_Evenement::user_can_change_agdpevent($post_id))){
+			&& AgendaPartage_Evenement::user_can_change_post($post_id))){
 			$html .= sprintf('<span class="agdpevent-tool">%s</span>', AgendaPartage_Evenement::get_agdpevent_action_link($post_id, 'publish', true));
 		}
 		if(current_user_can('manage_options')
@@ -515,8 +516,8 @@ class AgendaPartage_Evenement_Edit {
 	 * Le email2, email de copie, ne subit pas la redirection.
 	 */
 	private static function wp_mail_emails_fields($args){
-		//TODO all
-		$post = self::get_agdpevent_post();
+		if( ! ($post = self::get_agdpevent_post()))
+			return $args;
 		$to_emails = parse_emails($args['to']);
 		$headers_emails = parse_emails($args['headers']);
 		$emails = array();
@@ -725,7 +726,7 @@ class AgendaPartage_Evenement_Edit {
 			if( ! is_object($post)){
 				$post = false;
 			}
-			elseif( ! AgendaPartage_Evenement::user_can_change_agdpevent($post)){
+			elseif( ! AgendaPartage_Evenement::user_can_change_post($post)){
 				$abort = true;
 				$error_message = sprintf('Vous n\'êtes pas autorisé à modifier cet évènement.');
 				$submission->set_response($error_message);

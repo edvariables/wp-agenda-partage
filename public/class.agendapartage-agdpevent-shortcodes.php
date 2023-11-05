@@ -344,7 +344,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				if(!isset($tax_name) || !$tax_name)
 					$tax_name = AgendaPartage_Evenement::taxonomy_ev_category;
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
-				$terms = AgendaPartage_Evenement::get_event_terms( $tax_name, $post_id, 'names');
+				$terms = AgendaPartage_Evenement::get_post_terms( $tax_name, $post_id, 'names');
 				if($terms){
 					$val = implode(', ', $terms);
 					if($no_html)

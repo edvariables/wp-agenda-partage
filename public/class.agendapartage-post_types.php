@@ -10,6 +10,8 @@ class AgendaPartage_Post_Types {
 	}
 
 	public static function init_includes() {
+		if(!class_exists('AgendaPartage_Post_Abstract'))
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
 		if(!class_exists('AgendaPartage_Evenement'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-post_type.php' );

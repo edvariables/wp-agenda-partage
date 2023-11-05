@@ -38,6 +38,8 @@ class AgendaPartage {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-user.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_User', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
+
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement', 'init' ) );
 
@@ -219,6 +221,7 @@ class AgendaPartage {
 				return __( 'Lettre-info des évènements à diffuser', AGDP_TAG );
 			case 'newsletter_subscribe_page_id':
 				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
+			
 			case 'agdpevent_edit_form_id':
 				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
 			case 'contact_page_id':
@@ -642,5 +645,35 @@ class AgendaPartage {
 			}
 		}
 		return $items;
+	}
+	
+	/**
+	 * Get current post type
+	 */
+	public static function get_current_post_type(){
+		global $post;
+		if( $post )
+			return $post->post_type;
+		if(isset($_REQUEST['post_type']))
+			return $_REQUEST['post_type'];
+		
+		if(function_exists('get_current_sreen'))
+			return get_current_sreen()->post_type;
+		
+		$page = get_queried_object_id();
+		if( ! $page )
+			if( $page = get_page_by_path($_SERVER['REQUEST_URI']))
+				$page = $page->ID;
+		
+		if( $page )
+		switch($page){
+			case self::get_option('new_agdpevent_page_id'):
+				return AgendaPartage_Evenement::post_type;
+			case self::get_option('new_covoiturage_page_id'):
+				return AgendaPartage_Covoiturage::post_type;
+			default:
+				break;
+		}
+		return false;
 	}
 }
