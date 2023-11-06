@@ -797,7 +797,7 @@ class AgendaPartage_Covoiturages {
 		// $dates = AgendaPartage_Covoiturage::get_covoiturage_dates_text($post->ID);
 		$html .= sprintf('<div class="titre">%s</div>', $title);
 		
-		$html .= date_diff_text($post->post_date_gmt, true, '<div class="created-since">', '</div>');
+		$html .= date_diff_text($post->post_date, true, '<div class="created-since">', '</div>');
 		
 		$html .= '</div>';
 		

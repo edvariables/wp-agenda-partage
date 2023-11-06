@@ -23,6 +23,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 
 	const postid_argument = AGDP_ARG_COVOITURAGEID;
 	const posts_page_option = 'covoiturages_page_id';
+	const newsletter_option = 'covoiturages_nl_post_id'; 
 
 	protected static $initiated = false;
 	public static function init() {

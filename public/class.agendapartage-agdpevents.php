@@ -789,7 +789,7 @@ class AgendaPartage_Evenements {
 			$html .= sprintf('<div class="ev-siteweb">%s</div>',  make_clickable( esc_html($value) ) );
 		}
 		
-		$html .= date_diff_text($event->post_date_gmt, true, '<div class="created-since">', '</div>');
+		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
 		
 		$html .= '<div class="footer">';
 				

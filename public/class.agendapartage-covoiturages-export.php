@@ -182,7 +182,7 @@ class AgendaPartage_Covoiturages_Export {
 		$vevent = new ZCiCalNode("VEVENT", $ical->curnode);
 
 		// add start date
-		$vevent->addNode(new ZCiCalDataNode("CREATED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_date_gmt)));
+		$vevent->addNode(new ZCiCalDataNode("CREATED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_date)));
 
 		// DTSTAMP is a required item in VEVENT
 		$vevent->addNode(new ZCiCalDataNode("DTSTAMP;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime()));

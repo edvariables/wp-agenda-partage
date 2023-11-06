@@ -16,6 +16,7 @@ abstract class AgendaPartage_Post_Abstract {
 
 	const postid_argument = false; //Must override
 	const posts_page_option = false; //Must override
+	const newsletter_option = false; //Must override
 	
 	private static $post_types = [];
 

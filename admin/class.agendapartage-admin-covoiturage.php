@@ -214,12 +214,9 @@ class AgendaPartage_Admin_Covoiturage {
 			. "\n INNER JOIN {$blog_prefix}postmeta post_date_debut"
 			. "\n ON post_date_debut.post_id = post.ID"
 			. "\n AND post_date_debut.meta_key = 'cov-date-debut'"
-			. "\n INNER JOIN {$blog_prefix}postmeta post_date_fin"
-			. "\n ON post_date_fin.post_id = post.ID"
-			. "\n AND post_date_fin.meta_key = 'cov-date-fin'"
 			. "\n WHERE post.post_type = '".AgendaPartage_Covoiturage::post_type."'"
 			. "\n AND post.post_status IN ('publish', 'pending', 'draft')"
-			. "\n AND GREATEST(post_date_debut.meta_value, post_date_fin.meta_value) >= CURRENT_DATE()"
+			. "\n AND post_date_debut.meta_value >= CURRENT_DATE()"
 			. "\n AND post.post_author = {$user_id}"
 			. "\n AND ( post.post_author = {$user_id}"
 				. "\n OR post_email.meta_value = '{$user_email}')"
@@ -248,19 +245,6 @@ class AgendaPartage_Admin_Covoiturage {
 				'normal',
 				'high',
 				array('covoiturages' => $covoiturages) );
-		}
-
-	    if( WP_DEBUG || is_multisite()){
-			$blogs = AgendaPartage_Admin_Multisite::get_other_blogs_of_user();
-			if( $blogs && count($blogs) ) {
-				add_meta_box( 'dashboard_my_blogs',
-					__('Mes autres sites AgendaPartage', AGDP_TAG),
-					array(__CLASS__, 'dashboard_my_blogs_cb'),
-					'dashboard',
-					'normal',
-					'high',
-					array('blogs' => $blogs) );
-			}
 		}
 		
 		if(current_user_can('manage_options')
@@ -315,11 +299,9 @@ class AgendaPartage_Admin_Covoiturage {
 				else
 					$url = AgendaPartage_Covoiturage::get_post_permalink($covoiturage);
 				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, AgendaPartage_Covoiturage::get_post_title($covoiturage) );
-				the_terms( $covoiturage->ID, AgendaPartage_Covoiturage::taxonomy_cov_intention, 
-					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
 				$the_date = get_the_date('', $covoiturage);
 				$the_modified_date = get_the_modified_date('', $covoiturage);
-				$html = sprintf('<span>ajouté le %s</span>', $the_date) ;
+				$html = sprintf('<span>publié le %s</span>', $the_date) ;
 				if($the_date != $the_modified_date)
 					$html .= sprintf('<span>, mis à jour le %s</span>', $the_modified_date) ;
 				if($covoiturage->post_status != 'publish')

@@ -407,6 +407,15 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 					);
 			echo '</ul>';
 		}
+	
+		if( $post_type = AgendaPartage_Newsletter::get_newsletter_posts_post_type($newsletter) )
+			if( $date = AgendaPartage_Newsletter::get_newsletter_posts_last_change($newsletter) ) 
+				echo sprintf('<li><h3>Date du dernier changement parmi les %s : %s (%s)</h3></li>'
+					, mb_strtolower( get_post_type_object( $post_type )->labels->name )
+					, date_diff_text($date, true)
+					, $date
+				);
+
 		echo '</ul>';
 	}
 	

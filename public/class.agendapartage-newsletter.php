@@ -122,13 +122,13 @@ class AgendaPartage_Newsletter {
 	 */
 	public static function subscription_periods($newsletter = false){
 		if($newsletter === false){
-			$terms = get_terms( array( 'taxonomy' => AgendaPartage_Newsletter::taxonomy_period, 'hide_empty' => false) );
+			$terms = get_terms( array( 'taxonomy' => self::taxonomy_period, 'hide_empty' => false) );
 		} else {
 			$newsletter = self::get_newsletter($newsletter);
-			$terms = wp_get_post_terms($newsletter->ID, AgendaPartage_Newsletter::taxonomy_period);
+			$terms = wp_get_post_terms($newsletter->ID, self::taxonomy_period);
 		
 			if( ! $terms || count($terms) === 0)
-				$terms = get_terms( array( 'taxonomy' => AgendaPartage_Newsletter::taxonomy_period,'hide_empty' => false) );
+				$terms = get_terms( array( 'taxonomy' => self::taxonomy_period,'hide_empty' => false) );
 		
 		}
 		$periods = [];
@@ -180,7 +180,7 @@ class AgendaPartage_Newsletter {
 	 public static function get_newsletters_names(){
 		$newsletters = [];
 		foreach( get_posts([
-			'post_type' => AgendaPartage_Newsletter::post_type
+			'post_type' => self::post_type
 			, 'fields' => 'post_title'
 			]) as $post)
 			$newsletters[ $post->ID . '' ] = $post->post_title;
@@ -193,7 +193,7 @@ class AgendaPartage_Newsletter {
 	 public static function get_active_newsletters(){
 		$posts = [];
 		foreach( get_posts([
-			'post_type' => AgendaPartage_Newsletter::post_type
+			'post_type' => self::post_type
 			, 'post_status' => 'publish'
 			, 'meta_key' => 'mailing-enable'
 			, 'meta_value' => '1'
@@ -201,6 +201,42 @@ class AgendaPartage_Newsletter {
 			]) as $post)
 			$posts[$post->ID . ''] = $post;
 		return $posts;
+	}
+	
+	/**
+	 * Retourne le type de posts concernés par la newsletter
+	 */
+	 public static function get_newsletter_posts_post_type($newsletter){
+		switch($newsletter->ID){
+			case AgendaPartage::get_option(AgendaPartage_Evenement::newsletter_option) :
+				return AgendaPartage_Evenement::post_type;
+			case AgendaPartage::get_option(AgendaPartage_Covoiturage::newsletter_option) :
+				return AgendaPartage_Covoiturage::post_type;
+			default:
+				return false;
+		}
+	 }
+	/**
+	 * Retourne la date du dernier post concerné par la newsletter
+	 */
+	 public static function get_newsletter_posts_last_change($newsletter){
+		if( ! ($post_type = self::get_newsletter_posts_post_type($newsletter)) )
+			return false;
+		
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$sql = "SELECT MAX(posts.post_date) as post_date_max
+				FROM {$blog_prefix}posts posts
+				WHERE posts.post_status IN('publish', 'prepend')
+					AND posts.post_type = '". $post_type ."'
+		";
+		
+		$result = $wpdb->get_results($sql);
+		if( is_a($result,'WP_Error') )
+			throw new Exception(var_export($result, true));
+		if(count($result))
+			return $result[0]->post_date_max;
+		return false;
 	}
 	
 	/**
@@ -437,7 +473,7 @@ class AgendaPartage_Newsletter {
 		
 		$option_id = 'admin_nl_post_id';
 		if( ! isset($newsletters[$option_id]) ){
-			//Hide tab
+			//Hide tab (js skips hidden elements)
 			$html = preg_replace('/\<div\s*class="\w*admin-user-only/'
 					, '$0 hidden'
 					, $html);
@@ -529,7 +565,7 @@ class AgendaPartage_Newsletter {
 		}
 		$newsletter = get_post($newsletter);
 		if(is_a($newsletter, 'WP_Post')
-		&& $newsletter->post_type == AgendaPartage_Newsletter::post_type)
+		&& $newsletter->post_type == self::post_type)
 			return $newsletter;
 		return false;
 	}
@@ -630,8 +666,7 @@ class AgendaPartage_Newsletter {
 			return true;
 		
 		$meta_name = self::get_subscription_meta_key($newsletter);
-		delete_user_meta($user_id, $meta_name, true);
-		
+		delete_user_meta($user_id, $meta_name, null);
 		//TODO remove user si jamais connecté
 		
 		return true;
@@ -850,8 +885,10 @@ class AgendaPartage_Newsletter {
 			}
 		}
 		
-		$contact_form->set_properties(array('messages' => $messages));
+		if( empty($messages['mail_sent_ok']) )
+			$messages['mail_sent_ok'] = 'Aucun changement. Bonne continuation.';
 		
+		$contact_form->set_properties(array('messages' => $messages));
 		
 		return true;
 	}
@@ -971,7 +1008,7 @@ class AgendaPartage_Newsletter {
 				];
 			}
 			if( ! $subscribers ) {
-				$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
+				$periods = self::subscription_periods($newsletter);
 				foreach($periods as $period => $period_name){
 					if($period === 'none')
 						continue;
@@ -1030,7 +1067,7 @@ class AgendaPartage_Newsletter {
 				
 				foreach($user_emails as $user_email => $subscriber){
 					if( ! $simulate ){
-						update_user_meta($subscriber->ID, $mailing_meta_name, date('Y-m-d'));
+						update_user_meta($subscriber->ID, $mailing_meta_name, date('Y-m-d H:i:s'));
 					}
 					$subscribers_done[] = $subscriber->ID;
 				}
@@ -1082,7 +1119,7 @@ class AgendaPartage_Newsletter {
 	}
 	
 	/**
-	 * Send email
+	 * Send newsletter email
 	 */
 	public static function send_email($newsletter, $emails){
 		$newsletter = self::get_newsletter($newsletter);
@@ -1188,9 +1225,10 @@ white-space: pre;
 		if( ! $today )
 			$today = strtotime(wp_date('Y-m-d'));
 		$newsletter = self::get_newsletter($newsletter);
+		
 		$periods = [];
 		$periods_in = '';
-		foreach(AgendaPartage_Newsletter::subscription_periods($newsletter) as $period => $period_name){
+		foreach(self::subscription_periods($newsletter) as $period => $period_name){
 			if( $period === 'none'
 			|| self::get_next_date($period, $newsletter) > $today )
 				continue;
@@ -1204,8 +1242,13 @@ white-space: pre;
 			return false;
 		
 		$newsletter_id = $newsletter->ID;
-		$subscription_meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter);
-		$mailing_meta_key = AgendaPartage_Newsletter::get_mailing_meta_key($newsletter);
+		$subscription_meta_key = self::get_subscription_meta_key($newsletter);
+		$mailing_meta_key = self::get_mailing_meta_key($newsletter);
+		
+		if( $today === strtotime(wp_date('Y-m-d')) )
+			$posts_last_change = self::get_newsletter_posts_last_change($newsletter);
+		else
+			$posts_last_change = false;
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
@@ -1232,7 +1275,9 @@ white-space: pre;
 			. "\n LEFT JOIN {$user_prefix}usermeta mailing"
 				. "\n ON user.ID = mailing.user_id"
 				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"
-				. "\n AND mailing.meta_value = '{$today_mysql}'"
+				. "\n AND (DATE_FORMAT(mailing.meta_value, '%Y-%m-%d') = '{$today_mysql}'"
+				. ( $posts_last_change ? "\n OR mailing.meta_value > '{$posts_last_change}'" : '')
+				. ')'
 			. "\n WHERE mailing.meta_key IS NULL"
 			. "\n ORDER BY user.user_email";
 // debug_log($sql);
