@@ -343,7 +343,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 					echo sprintf('<li>Prochain envoi : <input type="date" name="%s" value="%s"/></li>'
 							, $meta_name, wp_date('Y-m-d', $next_date));
 				// } else {
-					// $now = strtotime(wp_date('Y-m-d H:i:s'));
+					// $now = time();
 					// foreach($data['mailing'] as $mailing){
 						// $mailing_date = strtotime($mailing->mailing_date);
 						// if($mailing_date > $now)

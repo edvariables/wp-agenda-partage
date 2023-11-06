@@ -318,7 +318,10 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		$fields = array();
 		if( ! self::$the_post_is_new ){
 			$user_info = get_userdata($post->post_author);
-			$user_email = $user_info->user_email;
+			if( is_object($user_info) )
+				$user_email = $user_info->user_email;
+			else
+				$user_email = false;
 		}
  		if(self::$the_post_is_new
 		|| $user_email != get_post_meta($post->ID, 'ev-email', true) ) {

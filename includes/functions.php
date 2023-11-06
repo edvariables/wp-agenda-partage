@@ -145,9 +145,11 @@ function dateDiff($date1, $date2){
  * Retourne le texte littéral de l'intervals entre deux dates
  */
  function date_diff_text ($old_date, $intro = true, $before = '', $after = ''){
-	if( is_string($old_date))	
-		$old_date = strtotime($old_date);
-	$now   = time();
+	if( is_string($old_date_str = $old_date)){
+		$datetime = date_create_immutable_from_format( 'Y-m-d H:i:s', $old_date, wp_timezone() );
+		$old_date = $datetime->getTimestamp();
+	}
+	$now = time();
 	
 	if( $intro === true)
 		$intro = 'il y a ';
@@ -164,7 +166,10 @@ function dateDiff($date1, $date2){
 	else
 		$val = 'à l\'instant';
 	// $val .= var_export($laps, true);
+	// $val .= ", ($old_date_str) ";
+	// $val .= date_default_timezone_get();
+	// $val .= date("d H:i:s", $old_date);
 	// $val .= ", " . wp_date("d H:i:s", $old_date);
-	// $val .= ", " . wp_date("d H:i:s", $now);
+	// $val .= ", now " . wp_date("d H:i:s", $now);
 	return sprintf('%s%s%s', $before, $val, $after);
  }

@@ -332,7 +332,12 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 		$fields = array();
 		if( ! self::$the_post_is_new ){
 			$user_info = get_userdata($post->post_author);
-			$user_email = $user_info->user_email;
+			if( ! is_object($user_info) ){
+				debug_log(__CLASS__ . '::get_metabox_admin_fields', $user_info);
+				$user_email = false;
+			}
+			else
+				$user_email = $user_info->user_email;
 		}
  		if(self::$the_post_is_new
 		|| $user_email != get_post_meta($post->ID, 'cov-email', true) ) {
