@@ -263,6 +263,13 @@ jQuery( function( $ ) {
 							$form.find('.if-not-connected').hide().prop("checked", false);
 						else
 							$form.find('.if-not-connected').show();
+						
+						if(typeof response === 'string'){
+							var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+							.click(function(){$msg.remove()});
+							$actionElnt.after($msg);
+							$msg.get(0).scrollIntoView();
+						}
 					}
 					$spinner.remove();
 				},

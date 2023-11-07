@@ -703,6 +703,13 @@ class AgendaPartage_Newsletter {
 		
 		$ajax_response = '0';
 		if(array_key_exists("email", $_POST)){
+			if( email_exists($_POST['email'])){
+				if( ! self::current_user_can_change_subscription($_POST['email']) ){
+					wp_send_json('Vous n\'avez pas l\'autorisation de modifier cet utilisateur. Veuillez vous connecter avec cette adresse email.');
+					wp_die();
+				}
+				$is_user = true;
+			}
 			$subscriptions = array();
 			foreach( self::get_newsletters() as $newsletter_option => $newsletter){
 				$subscription = self::get_subscription($_POST['email'], $newsletter);
@@ -714,8 +721,7 @@ class AgendaPartage_Newsletter {
 					];
 			}
 			$ajax_response = $subscriptions;
-			if( email_exists($_POST['email']))
-				$ajax_response['is_user'] = true;
+			$ajax_response['is_user'] = $is_user;
 		}
 		
 		wp_send_json($ajax_response);
@@ -1376,5 +1382,35 @@ white-space: pre;
 		self::on_wp_mail_action('wp_mail_failed', array_merge(self::$sending_email_data, $mail_data));
 		return $error;
 	}
+	 
+	 
+	/**
+	 * current_user_can_change_subscription
+	 */
+	public static function current_user_can_change_subscription( $subscription_email ){
+		
+		if(is_user_logged_in()){
+			$current_user = wp_get_current_user();
+
+			if( $subscription_email === $current_user->user_email){
+				return true;
+			}
+			if(	array_key_exists('administrator', $current_user->caps) ){
+				return true;
+			}
+		}
+		//Not connected or is a simple subscriber
+		//Depends of email user capabilities
+		if( ! ($subscriber = get_user_by('email', $subscription_email)))
+			return true;
+		$roles = get_user_meta($subscriber->ID, 'roles', true);
+		if( ! $roles
+		|| count($roles) === 0
+		|| array_key_exists('subscriber', $roles) )
+			return true;
+		return false;
+	}
+	
+	
 }
 ?>

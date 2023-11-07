@@ -208,6 +208,7 @@ class AgendaPartage_Covoiturages {
 		
 		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year
 				, DATE_FORMAT(meta.meta_value, '%m') as month
+				/*, DATE_FORMAT(meta.meta_value, '%u') as week*/
 				, COUNT(post_id) as count
 				FROM {$blog_prefix}posts posts
 				INNER JOIN {$blog_prefix}postmeta meta
