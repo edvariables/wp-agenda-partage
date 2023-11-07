@@ -79,6 +79,9 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			$de = sprintf('<span class="title-prep">%s</span>', $de);
 			$vers = sprintf('<span class="title-prep">%s</span>', $vers);
 		}
+		else {
+			$nb_places = sprintf(' %s place%s', $nb_places, $nb_places > 1 ? 's' : '');
+		}
 		$separator = $no_html ? ', ' : '<br>';
 		$html = $intention . $nb_places . $separator
 			. $le . ' ' . $dates . $separator

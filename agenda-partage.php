@@ -7,7 +7,8 @@
  * Plugin URI: https://github.com/edvariables/wp-agenda-partage
  * Text Domain: agenda-partage
  * Description: Agenda partagé tout intégré et facile pour les visiteurs et rédacteurs d'évènements.
- Inclus l'envoi de lettres-info contenant la liste des évènements à venir.
+ Un module de covoiturage a été ajouté.
+ Inclus l'envoi de lettres-info contenant la liste des évènements ou covoiturages à venir.
  Visitiable et testable : https://agendapartage.fr
  Only in french language...
  - Plugins obligatoires :
@@ -16,17 +17,17 @@
 	- Akismet Anti-Spam
 	- ReCaptcha v2 for Contact Form 7
 	- WP Mail Smtp - SMTP7
- * Author: Emmanuel Durand
+ * Author: Emmanuel Durand, edid@free.fr
  * Author URI: https://agendapartage.fr
  * Tags: 
  * License: GPLv3
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
- * Version: 1.1.2
+ * Version: 1.1.3
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AGDP_VERSION', '1.1.2' );
+define( 'AGDP_VERSION', '1.1.3' );
 define( 'AGDP_MINIMUM_WP_VERSION', '5.0' );
 
 define( 'AGDP_PLUGIN', __FILE__ );
