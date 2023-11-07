@@ -562,6 +562,9 @@ class AgendaPartage_Covoiturages {
 .agdp-covoiturages-email div.titre, .agdp-covoiturages-email div.localisation, .agdp-covoiturages-email div.cov-cities {
 	font-weight: bold;
 }
+.agdp-covoiturages-email span.cov-nb-places {
+	padding-left: 1em;
+}
 .agdp-covoiturages-email i {
 	font-style: normal;
 }

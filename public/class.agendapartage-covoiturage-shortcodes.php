@@ -324,6 +324,11 @@ class AgendaPartage_Covoiturage_Shortcodes {
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= esc_html($val) . '</br>';
+					
+				$meta_name = 'cov-nb-places'; 
+					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
+					if($val)
+						$html .= esc_html($val) . '</br>';
 
 				$meta_name = 'cov-organisateur'; 
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);

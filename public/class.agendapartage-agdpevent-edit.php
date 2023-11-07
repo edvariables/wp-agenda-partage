@@ -117,6 +117,28 @@ class AgendaPartage_Evenement_Edit {
 	}
  
  	/**
+ 	 * Retourne la valeur part défaut d'un champ
+ 	 */
+	public static function get_default_value( $field_name ) {
+ 		
+		switch($field_name){
+			case 'ev-organisateur':			
+				if(($user = wp_get_current_user())
+				&& $user->ID !== 0)
+					return $user->user_nicename;
+				return '';
+			case 'ev-email' :
+				if(($user = wp_get_current_user())
+				&& $user->ID !== 0)
+					return $user->user_email;
+				return '';
+			default:
+				throw new Exception( sprintf('L\'argument "%s" n\'est pas reconnu.', $field_name));
+		}
+		
+	}
+ 
+ 	/**
  	 * Initialise les champs du formulaire
  	 */
 	public static function get_agdpevent_edit_content( ) {
@@ -185,6 +207,12 @@ class AgendaPartage_Evenement_Edit {
 				$meta_name = 'ev-email';
 				$attrs[$meta_name] = $user->user_email;
 			}
+			
+			foreach( [
+				'ev-organisateur',
+				'ev-email'
+			] as $meta_name)
+				$attrs[$meta_name] = self::get_default_value($meta_name);
 		}
 		//Les catégories, communes et diffusions sont traitées dans wpcf7_form_init_tags_cb
 		

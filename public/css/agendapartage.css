@@ -19,6 +19,9 @@ p.info, div.info {
 	padding: 5px;
 	border-radius: 2px;
 }
+.align-right {
+	text-align: right;
+}
 
 /* ED200318 "Fièrement propulsé par Word Press" */
 .site-info > a
@@ -219,6 +222,10 @@ input.wpcf7-form-control[name^="ev-heure-"],
 input.wpcf7-form-control[name^="cov-heure-"] {
 	width: 5em;
 }
+input.wpcf7-form-control[name="cov-nb-places"] {
+	width: 11em;
+}
+
 .wpcf7-form table {
 	margin-bottom: 0px;
 }
@@ -318,6 +325,11 @@ div.labels-one-row label {
 .agdp-covoiturages .title-prep {
 	display: inline-block;
 	width: 2em;
+}
+
+.entry-title span.cov-nb-places,
+.agdp-covoiturages span.cov-nb-places {
+	padding-left: 1.5em;
 }
 
 .wpcf7-form .swap-depart-arrivee {

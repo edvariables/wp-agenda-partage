@@ -117,6 +117,37 @@ class AgendaPartage_Covoiturage_Edit {
 	}
  
  	/**
+ 	 * Retourne la valeur part défaut d'un champ
+ 	 */
+	public static function get_default_value( $field_name ) {
+ 		
+		switch($field_name){
+			case 'cov-phone-show' :
+				return 0;
+				
+			case 'cov-nb-places' :
+				return 1;
+				
+			case 'cov-' . AGDP_COVOIT_SECRETCODE :
+				return AgendaPartage::get_secret_code(4, 'num');
+			
+			case 'cov-organisateur':			
+				if(($user = wp_get_current_user())
+				&& $user->ID !== 0)
+					return $user->user_nicename;
+				return '';
+			case 'cov-email' :
+				if(($user = wp_get_current_user())
+				&& $user->ID !== 0)
+					return $user->user_email;
+				return '';
+			default:
+				throw new Exception( sprintf('L\'argument "%s" n\'est pas reconnu.', $field_name));
+		}
+		
+	}
+ 
+ 	/**
  	 * Initialise les champs du formulaire
  	 */
 	public static function get_covoiturage_edit_content( ) {
@@ -167,7 +198,8 @@ class AgendaPartage_Covoiturage_Edit {
 					'cov-phone',
 					'cov-phone-show',
 					'cov-' . AGDP_COVOIT_SECRETCODE,
-					'cov-organisateur'
+					'cov-organisateur',
+					'cov-nb-places'
 			] as $meta_name){
 				$attrs[$meta_name] = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
 			}
@@ -176,18 +208,14 @@ class AgendaPartage_Covoiturage_Edit {
 			$covoiturage_exists = false;
 			$post_id = 0;
 			
-			if(($user = wp_get_current_user())
-			&& $user->ID !== 0){
-				// var_dump($user);
-				$meta_name = 'cov-organisateur';
-				$attrs[$meta_name] = $user->user_nicename;
-				$meta_name = 'cov-email';
-				$attrs[$meta_name] = $user->user_email;
-			}
-			$meta_name = 'cov-phone-show';
-			$attrs[$meta_name] = true;
-			$meta_name = 'cov-' . AGDP_COVOIT_SECRETCODE;
-			$attrs[$meta_name] = AgendaPartage::get_secret_code(4, 'num');
+			foreach( [
+				'cov-organisateur',
+				'cov-email',
+				'cov-nb-places',
+				'cov-phone-show',
+				'cov-' . AGDP_COVOIT_SECRETCODE
+			] as $meta_name)
+				$attrs[$meta_name] = self::get_default_value($meta_name);
 		}
 		//Les catégories, communes et diffusions sont traitées dans wpcf7_form_init_tags_cb
 		
@@ -733,6 +761,7 @@ class AgendaPartage_Covoiturage_Edit {
 				'cov-organisateur' => 1,
 				'cov-email' => 1,
 				'cov-phone' => 1,
+				'cov-nb-places' => 1,
 				'cov-'.AGDP_COVOIT_SECRETCODE => 1
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;

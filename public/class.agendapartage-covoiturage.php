@@ -66,8 +66,12 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage_id, 'cov-depart', true);
 		$vers = "vers";
 		$arrivee = $data ? $data['cov-arrivee'] : get_post_meta($covoiturage_id, 'cov-arrivee', true);
+		
+		$nb_places = $data ? $data['cov-nb-places'] : get_post_meta($covoiturage_id, 'cov-nb-places', true);
+		
 		if( !  $no_html){
 			$intention = sprintf('<span class="cov-intention cov-intention-%s">%s</span>', $intentionid, $intention);
+			$nb_places = sprintf(' <span class="cov-nb-places">%s place%s</span>', $nb_places, $nb_places > 1 ? 's' : '');
 			$dates = preg_replace('/^(\w+\s)([0-9]+)/', '$1<span class="cov-date-jour-num">$2</span>', $dates);
 			$depart = sprintf('<span class="cov-depart">%s</span>', htmlentities($depart));
 			$arrivee = sprintf('<span class="cov-arrivee">%s</span>', htmlentities($arrivee));
@@ -76,7 +80,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			$vers = sprintf('<span class="title-prep">%s</span>', $vers);
 		}
 		$separator = $no_html ? ', ' : '<br>';
-		$html = $intention . $separator
+		$html = $intention . $nb_places . $separator
 			. $le . ' ' . $dates . $separator
 			. $de . ' ' . $depart . $separator
 			. $vers . ' ' . $arrivee;
@@ -94,7 +98,8 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 
 		$codesecret = self::get_secretcode_in_request($covoiturage);
 		
-		$html = '[covoiturage-description]
+		$html = '[covoiturage info="nb-places" label="Nombre de places : "]
+		[covoiturage-description]
 		[covoiturage info="organisateur" label="Initiateur : "][covoiturage-cree-depuis][/covoiturage]
 		[covoiturage info="phone" label="Téléphone : "]';
 		if( AgendaPartage_Covoiturage_Post_type::is_diffusion_managed() )
