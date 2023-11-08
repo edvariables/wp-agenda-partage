@@ -528,7 +528,7 @@ class AgendaPartage_Covoiturages {
 		$options = array_merge(
 			array(
 				'ajax' => false,
-				'months' => date('d') < 10 ? 1 : 2, //à partir du 10, on met le mois suivant aussi
+				'months' => 3, //weeks
 				'mode' => 'email'
 			), $options);
 		
