@@ -1143,7 +1143,10 @@ class AgendaPartage_Newsletter {
 		
 		$subject = do_shortcode( $subject );
 		
-		$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
+		if( $newsletter->ID == AgendaPartage::get_option( AgendaPartage_Covoiturage::newsletter_option ))
+			$subject = sprintf('[%s]', $subject);
+		else
+			$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
 		
 		$message = do_shortcode( get_the_content(false, false, $newsletter) );
 		
