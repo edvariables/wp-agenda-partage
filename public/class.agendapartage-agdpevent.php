@@ -144,13 +144,13 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				
 			case 'publish': 
 				if(isset($email_sent) && $email_sent){
-					$info = '<div class="info">Cet évènement est désormais publique.'
+					$info = '<div class="info">Cet évènement est désormais public.'
 							. '<br>Un e-mail a été envoyé pour mémoire. Vérifiez votre boîte mails, la rubrique spam aussi.'
 						.'</div>';
 					$html = $info . $html;
 				}
 				elseif( isset($no_email) && $no_email) {
-					$info = '<div class="alerte">Cet évènement est désormais publique.</div>';
+					$info = '<div class="alerte">Cet évènement est désormais public.</div>';
 					$html = $info . $html;
 				}
 				

@@ -161,14 +161,14 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			case 'publish': 
 			
 				if(isset($email_sent) && $email_sent){
-					$info = '<div class="info">Ce covoiturage est désormais publique.'
+					$info = '<div class="info">Ce covoiturage est désormais public.'
 							. '<br>Un e-mail a été envoyé pour mémoire. Vérifiez votre boîte mails, la rubrique spam aussi.'
 							. '<br>Le code secret de ce covoiturage est : <b>'.$secretcode.'</b>'
 						.'</div>';
 					$html = $info . $html;
 				}
 				elseif( isset($no_email) && $no_email) {
-					$info = '<div class="alerte">Ce covoiturage est désormais publique.</div>'
+					$info = '<div class="alerte">Ce covoiturage est désormais public.</div>'
 							. '<br>Le code secret de ce covoiturage est : <b>'.$secretcode.'</b>';
 					$html = $info . $html;
 				}
