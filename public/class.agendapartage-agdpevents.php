@@ -28,8 +28,8 @@ class AgendaPartage_Evenements {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		add_action( 'wp_ajax_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
+		add_action( 'wp_ajax_'.AgendaPartage_Evenement::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
+		add_action( 'wp_ajax_nopriv_'.AgendaPartage_Evenement::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
 		add_action( 'wp_ajax_'.AGDP_TAG.'_agdpevents_action', array(__CLASS__, 'on_wp_ajax_agdpevents') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_agdpevents_action', array(__CLASS__, 'on_wp_ajax_agdpevents') );
 	}
@@ -443,7 +443,7 @@ class AgendaPartage_Evenements {
 					$data['filters'] = $filters;
 				$ajax = sprintf('ajax="once" data="%s"',
 					esc_attr( json_encode ( array(
-						'action' => AGDP_TAG.'_show_more',
+						'action' => AgendaPartage_Evenement::post_type . '_show_more',
 						'data' => $data
 					)))
 				);

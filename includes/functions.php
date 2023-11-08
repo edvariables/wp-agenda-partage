@@ -173,3 +173,21 @@ function dateDiff($date1, $date2){
 	// $val .= ", now " . wp_date("d H:i:s", $now);
 	return sprintf('%s%s%s', $before, $val, $after);
  }
+ 
+ /**
+  * Retourne le numéro de la dernière semaine de l'année
+  */
+ function get_last_week($year) {
+	$dt = new DateTime($year . '-12-28');
+	return (int)$dt->format('W');
+}
+ 
+ /**
+  * Retourne les dates de début et fin d'une semaine de l'année
+  */
+ function get_week_dates($year, $week) {
+  $dto = new DateTime();
+  $ret['start'] = $dto->setISODate($year, $week)->format('Y-m-d');
+  $ret['end'] = $dto->modify('+6 days')->format('Y-m-d');
+  return $ret;
+}

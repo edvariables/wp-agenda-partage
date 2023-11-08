@@ -28,8 +28,8 @@ class AgendaPartage_Covoiturages {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		add_action( 'wp_ajax_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_covoiturages_show_more_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_show_more', array(__CLASS__, 'on_wp_ajax_covoiturages_show_more_cb') );
+		add_action( 'wp_ajax_'.AgendaPartage_Covoiturage::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_covoiturages_show_more_cb') );
+		add_action( 'wp_ajax_nopriv_'.AgendaPartage_Covoiturage::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_covoiturages_show_more_cb') );
 		add_action( 'wp_ajax_'.AGDP_TAG.'_covoiturages_action', array(__CLASS__, 'on_wp_ajax_covoiturages') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_covoiturages_action', array(__CLASS__, 'on_wp_ajax_covoiturages') );
 	}
@@ -118,16 +118,16 @@ class AgendaPartage_Covoiturages {
 	}
 	
 	/**
-	 * Recherche des covoiturages d'un mois
+	 * Recherche des covoiturages d'une semaine
+	 * $year_week : yyyy-ww
 	 */
-	public static function get_month_posts($month){
-		$today_month = date('Y-m');
-		if(!$month) $month = $today_month;
-		$date_min = substr($month, 0,4) . '-' . substr($month, 5,2) . '-' . ($month === $today_month ? date('d') : '01');
-		if(substr($month, 5,2) === '12')
-			$date_max = ((int)substr($month, 0,4) + 1) . '-01-01';
-		else
-			$date_max = substr($month, 0,4) . '-' . sprintf('%02d', ((int)substr($month, 5,2) + 1 )) . '-01';
+	public static function get_month_posts($year_week){
+		if( ! $year_week) $year_week = date('Y-w');
+		
+		$dates = get_week_dates(substr($year_week, 0,4), substr($year_week, 5,2));
+		$date_min = $dates['start'];
+		$date_max = $dates['end'];
+		
 		$query = array(
 			'meta_query' => [
 				'relation' => 'AND',
@@ -140,7 +140,7 @@ class AgendaPartage_Covoiturages {
 				'cov-date-debut' => [
 					'key' => 'cov-date-debut',
 					'value' => $date_max,
-					'compare' => '<',
+					'compare' => '<=',
 					'type' => 'DATE',
 				] ]
 			],
@@ -207,8 +207,8 @@ class AgendaPartage_Covoiturages {
 		$sql_filters = self::get_filters_query(true);
 		
 		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year
-				, DATE_FORMAT(meta.meta_value, '%m') as month
-				/*, DATE_FORMAT(meta.meta_value, '%u') as week*/
+				/*, DATE_FORMAT(meta.meta_value, '%m') as month*/
+				, DATE_FORMAT(meta.meta_value, '%u') as week
 				, COUNT(post_id) as count
 				FROM {$blog_prefix}posts posts
 				INNER JOIN {$blog_prefix}postmeta meta
@@ -221,28 +221,30 @@ class AgendaPartage_Covoiturages {
 		if($sql_filters)
 			$sql .= " AND posts.ID IN ({$sql_filters})";
 		
-		$sql .= "GROUP BY year, month
-				ORDER BY year, month
+		$sql .= "GROUP BY year, week
+				ORDER BY year, week
 				";
 		$result = $wpdb->get_results($sql);
 		// debug_log('get_posts_months', $sql);
 		$months = [];
 		$prev_row = false;
 		foreach($result as $row){
-			if($prev_row)
+			if($prev_row){
 				if($prev_row->year === $row->year){
-					for($m = (int)$prev_row->month + 1; $m < (int)$row->month; $m++)
+					for($m = (int)$prev_row->week + 1; $m < (int)$row->week; $m++)
 						$months[$prev_row->year . '-' . sprintf("%02d",$m)] = 0;
 				}
 				elseif((int)$prev_row->year === (int)$row->year - 1){
-					for($m = (int)$prev_row->month + 1; $m <= 12; $m++)
+					$max_year_week = get_last_week($prev_row->year);
+					for($m = (int)$prev_row->week + 1; $m <= $max_year_week; $m++)
 						$months[$prev_row->year . '-' . $m] = 0;
-					for($m = 1; $m < (int)$row->month; $m++)
+					for($m = 1; $m < (int)$row->week; $m++)
 						$months[$row->year . '-' . sprintf("%02d",$m)] = 0;
 				}
 				elseif((int)$prev_row->year < (int)$row->year - 1)
 					break;
-			$months[$row->year . '-' . $row->month] = (int)$row->count;
+			}
+			$months[$row->year . '-' . $row->week] = (int)$row->count;
 			$prev_row = $row;
 		}
 		return $months;
@@ -391,7 +393,7 @@ class AgendaPartage_Covoiturages {
 	}
 	
 	/**
-	* Rendu Html des covoiturages sous forme d'arborescence par mois
+	* Rendu Html des covoiturages sous forme d'arborescence par semaine
 	*
 	* Optimal sous la forme https://.../agenda-local/?eventid=1207#eventid1207
 	*/
@@ -450,17 +452,17 @@ class AgendaPartage_Covoiturages {
 			$filters = self::get_filters();
 		
 		$html .= '<ul>';
-		foreach($months as $month => $month_events_count) {
+		foreach($months as $week => $month_events_count) {
 			if( $option_ajax
 			&& ($not_empty_month_index >= $options['start_ajax_at_month_index'])
 			&& $month_events_count > 0
-			&& $month !== $requested_month) {
-				$data = [ 'month' => $month ];
+			&& $week !== $requested_month) {
+				$data = [ 'month' => $week ];
 				if($filters && count($filters))
 					$data['filters'] = $filters;
 				$ajax = sprintf('ajax="once" data="%s"',
 					esc_attr( json_encode ( array(
-						'action' => AGDP_TAG.'_show_more',
+						'action' => AgendaPartage_Covoiturage::post_type.'_show_more',
 						'data' => $data
 					)))
 				);
@@ -469,19 +471,35 @@ class AgendaPartage_Covoiturages {
 			
 			$month_summary = '';
 			
+			$week_dates = get_week_dates(substr($week, 0,4), substr($week, 5,2));
+			if( substr($week_dates['start'], 5,2) === substr($week_dates['end'], 5,2)){
+				$week_dates['start'] = wp_date('j', strtotime($week_dates['start']));
+				$week_dates['end'] = wp_date('j F Y', strtotime($week_dates['end']));
+			}
+			else {
+				$week_dates['start'] = wp_date('j F', strtotime($week_dates['start']));
+				$week_dates['end'] = wp_date('j F Y', strtotime($week_dates['end']));
+			}
+			if(trim(substr($week_dates['start'], 0,2)) == '1')
+				$week_dates['start'] = '1er ' . substr($week_dates['start'],3);
+			if(trim(substr($week_dates['end'], 0,2)) == '1')
+				$week_dates['end'] = '1er ' . substr($week_dates['end'],3);
+			
+			$week_label = sprintf('du %s au %s', $week_dates['start'], $week_dates['end']);
+			
 			$html .= sprintf(
 				'<li><div class="month-title toggle-trigger %s %s" %s>%s <span class="nb-items">(%d)</span>%s</div>
 				<ul id="month-%s" class="covoiturages-month toggle-container">'
 				, $month_events_count === 0 ? 'no-items' : ''
 				, !$ajax && $month_events_count ? 'active' : ''
 				, $ajax ? $ajax : ''
-				, wp_date('F Y', mktime(0,0,0, substr($month, 5,2), 1, substr($month, 0,4)))
+				, $week_label
 				, $month_events_count
 				, $month_summary
-				, $month
+				, $week
 			);
 			if(!$ajax && $month_events_count){
-				$html .= self::get_month_posts_list_html( $month, $requested_id, $options );
+				$html .= self::get_month_posts_list_html( $week, $requested_id, $options );
 			}
 		
 			$html .= '</ul></li>';
