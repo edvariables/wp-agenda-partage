@@ -62,6 +62,9 @@ class AgendaPartage {
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-newsletter.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Newsletter', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum', 'init' ) );
 
 		if(self::maillog_enable()){
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
@@ -76,6 +79,9 @@ class AgendaPartage {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Covoiturage_Shortcodes', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum_Shortcodes', 'init' ) );
 		
 	}
 
@@ -442,6 +448,10 @@ class AgendaPartage {
 				case 'AgendaPartage_Covoiturage_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-post_type.php';
 					break;
+
+				case 'AgendaPartage_Forum_Post_type':
+		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum-post_type.php';
+					break;
 				
 				default:
 					var_dump($class_name);//show calls stack
@@ -463,6 +473,8 @@ class AgendaPartage {
 		AgendaPartage_Newsletter_Post_type::register_user_role();
 		self::include_and_init('AgendaPartage_Covoiturage_Post_type');
 		AgendaPartage_Covoiturage_Post_type::register_user_role();
+		self::include_and_init('AgendaPartage_Forum_Post_type');
+		AgendaPartage_Forum_Post_type::register_user_role();
 	}
 
 	/**

@@ -105,7 +105,7 @@ class AgendaPartage_Newsletter {
 	 * Retourne l'adresse à laquelle on envoie les mails groupés avec destinataires en 'bcc'
 	 */
 	public static function get_bcc_mail_sender(){
-		$email = self::get_mail_sender();
+		$email = 'ne-pas-repondre.' . self::get_mail_sender();
 		return $email;
 	}
 	 
@@ -1212,7 +1212,7 @@ white-space: pre;
 		}
 		else{
 			if(class_exists('AgendaPartage_Admin', false))
-				AgendaPartage_Admin::add_admin_notice(sprintf("L\'e-mail n\'a pas pu être envoyé"), 'error');
+				AgendaPartage_Admin::add_admin_notice(sprintf("L'e-mail n'a pas pu être envoyé"), 'error');
 		}
 		
 		self::$sending_email = false;

@@ -256,7 +256,8 @@ class AgendaPartage_Admin_Evenement {
 				array('agdpevents' => $agdpevents) );
 		}
 
-	    if( WP_DEBUG || is_multisite()){
+	    if( class_exists('AgendaPartage_Admin_Multisite')
+		&& (WP_DEBUG || is_multisite())){
 			$blogs = AgendaPartage_Admin_Multisite::get_other_blogs_of_user();
 			if( $blogs && count($blogs) ) {
 				add_meta_box( 'dashboard_my_blogs',
