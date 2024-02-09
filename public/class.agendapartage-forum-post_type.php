@@ -50,7 +50,7 @@ class AgendaPartage_Forum_Post_type {
 			'show_ui'               => true,
 			'show_in_menu'          => true,
 			'menu_icon'				=> 'dashicons-buddicons-forums',
-			'menu_position'         => 25,
+			'menu_position'         => 26,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
 			'can_export'            => true,

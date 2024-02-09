@@ -50,7 +50,7 @@ class AgendaPartage_Maillog_Post_type {
 			'show_ui'               => true,
 			'show_in_menu'          => true,
 			'menu_icon'				=> 'dashicons-database',
-			'menu_position'         => 25,
+			'menu_position'         => 35,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
 			'can_export'            => true,

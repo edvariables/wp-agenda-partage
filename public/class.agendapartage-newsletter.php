@@ -105,12 +105,12 @@ class AgendaPartage_Newsletter {
 	 * Retourne l'adresse à laquelle on envoie les mails groupés avec destinataires en 'bcc'
 	 */
 	public static function get_bcc_mail_sender(){
-		$email = 'ne-pas-repondre.' . self::get_mail_sender();
+		$email = '';// self::get_mail_sender();
 		return $email;
 	}
 	 
 	/**
-	 * Retourne l'adresse de réponse à laquelle on envoie les mails groupés avec destinataires en 'bcc'
+	 * Retourne l'adresse de réponse à laquelle on envoie les mails 
 	 */
 	public static function get_replyto_mail_sender(){
 		$email = self::get_mail_sender();
@@ -1172,11 +1172,12 @@ white-space: pre;
 				. sprintf('<body style="white-space: pre-line;">%s</body>', $message)
 				. '</html>'
 		;
-			
+		$emails_separator = ',';
+		
 		if(is_array($emails))
-			$to = implode(', ', $emails);
+			$to = implode($emails_separator, $emails);
 		else
-			if( ! ($to = sanitize_email($emails)) )
+			if( ! ($to = str_replace(';', $emails_separator , sanitize_email($emails))) )
 				return false;
 		
 		if( strpos( $to, ',' ) !== false
@@ -1197,7 +1198,9 @@ white-space: pre;
 		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
 		
 		if( $bcc ){
-			$headers[] = sprintf('Bcc: %s', $bcc);
+			foreach( explode($emails_separator, $bcc) as $email )
+				$headers[] = sprintf('Bcc: %s', trim($email));
+			//$headers[] = sprintf('Bcc: %s', $bcc);
 		}
 		
 		$headers[] = sprintf('From: %s', self::get_mail_sender());

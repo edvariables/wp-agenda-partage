@@ -191,3 +191,21 @@ function dateDiff($date1, $date2){
   $ret['end'] = $dto->modify('+6 days')->format('Y-m-d');
   return $ret;
 }
+
+/**
+ * Décode le champ -SPAMCAUSE contenu dans les en-têtes de mail.
+ */
+function decode_spamcause($msg){
+	$text = "";
+	for ($i = 0; $i < strlen($msg); $i+=2)
+		$text .= decode_spamcause_unrot(substr($msg, $i, 2), floor($i / 2));                    # add position as extra parameter
+	return $text;
+}
+function decode_spamcause_unrot($pair, $pos, $key = false){
+	if( $key === false )
+		$key = ord('x');
+	if ($pos % 2 == 0)                                           # "even" position => 2nd char is offset
+		$pair = $pair[1] . $pair[0];                               # swap letters in pair
+	$offset = (ord('g') - ord($pair[0])) * 16;                     # treat 1st char as offset
+	return chr(ord($pair[0]) + ord($pair[1]) - $key - $offset);        # map to original character
+}

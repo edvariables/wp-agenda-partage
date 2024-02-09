@@ -370,7 +370,7 @@ class AgendaPartage_Admin_Menu {
 			);
 			
 			
-			//////////////////////////////////////////
+		//////////////////////////////////////////
 
 		// register a new section in the "agendapartage" page
 		add_settings_section(

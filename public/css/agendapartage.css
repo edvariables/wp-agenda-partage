@@ -371,5 +371,11 @@ div.labels-one-row label {
 	display: inline-flex;
 }
 
-
+/**
+ * Forum
+ */
+ /* TODO type-page => forum */
+article.type-page + #comments > h2.comments-title {
+	display: none;
+}
 

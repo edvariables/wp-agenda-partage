@@ -111,24 +111,27 @@ class AgendaPartage_Admin_Forum {
 			if($key === 'title')
 				break;
 		}
-		$new_columns['mailing-enable'] = __( 'Active', AGDP_TAG );
+		$new_columns['associated-page'] = __( 'Page associée', AGDP_TAG );
+		$new_columns['imap'] = __( 'Compte email', AGDP_TAG );
 		return array_merge($new_columns, $columns);
 	}
 	/**
 	*/
 	public static function manage_custom_columns( $column, $post_id ) {
 		switch ( $column ) {
-			case 'mailing-enable' :
-				if( AgendaPartage_Forum::is_active($post_id))
-					_e('active', AGDP_TAG);
-				else{
-					//Evite la confusion avec AgendaPartage_Evenement::the_title
-					$post = get_post( $post_id );
-					if($post->post_status != 'publish')
-						echo 'non, statut "' . __($post->post_status) . '"';
-					else
-						_e('non', AGDP_TAG);
-				}
+			case 'associated-page' :
+				//TODO
+				$post = get_post( $post_id );
+				if($post->post_status != 'publish')
+					echo 'non, statut "' . __($post->post_status) . '"';
+				else
+					_e('non', AGDP_TAG);
+				break;
+			case 'imap' :
+				//TODO
+				$imap_server = get_post_meta($post_id, 'imap_server', true);
+				$imap_email = get_post_meta($post_id, 'imap_email', true);
+				echo sprintf('%s@%s', $imap_email, $imap_server);
 				break;
 			default:
 				break;
@@ -143,8 +146,8 @@ class AgendaPartage_Admin_Forum {
 	 * Init
 	 */
 	public static function add_dashboard_widgets() {
-	    global $wp_meta_boxes;
-		$current_user = wp_get_current_user();
+	    // global $wp_meta_boxes;
+		// $current_user = wp_get_current_user();
 	}
 }
 ?>

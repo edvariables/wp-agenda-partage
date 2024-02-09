@@ -38,11 +38,9 @@ class AgendaPartage_Forum_Shortcodes {
  	 */
 	public static function init_shortcodes(){
 
+		add_shortcode( 'forum', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'forum-titre', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'forum-description', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'forum', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'forum-messages', array(__CLASS__, 'shortcodes_callback') );
 
 	}
 
@@ -147,10 +145,10 @@ class AgendaPartage_Forum_Shortcodes {
 	}
 	
 	/**
+	* [forum "Nom du forum"]
 	* [forum info=titre|description]
 	* [forum-titre]
 	* [forum-description]
-	* [forum-messages]
 	*/
 	private static function shortcodes_forum_callback($atts, $content = '', $shortcode = null){
 		
@@ -225,6 +223,25 @@ class AgendaPartage_Forum_Shortcodes {
 				break;
 								
 			case 'forum':
+				if( ! isset($atts['info']) ){
+					foreach($atts as $forum_name => $value){
+						//Cherche un forum d'après son nom
+						$forum = AgendaPartage_Forum::get_forum_by_name($forum_name);
+						if( ! $forum ){
+							$label = sprintf('Impossible de trouver le forum "%s".', $forum_name);
+							return '<div class="agdp-forum">'
+								. '<span class="label error"> '.$label.'<span>'
+								. do_shortcode(wp_kses_post($content))
+								. '</div>';
+						}
+						$val = '';//print_r($forum, true);
+						AgendaPartage_Forum::init_page($forum);
+						return '<div class="agdp-forum">'
+							. do_shortcode(wp_kses_post($val . $content))
+							. '</div>';
+					}
+					break;
+				}
 				$meta_name = $atts['info'] ;
 				if(!$meta_name)
 					return '<div class="error">Le paramètre info="'.$meta_name.'" du shortcode "forum" est inconnu.</div>';
@@ -245,39 +262,7 @@ class AgendaPartage_Forum_Shortcodes {
 						. do_shortcode( $val . wp_kses_post($content))
 						. '</div>';
 				}
-				break;
-								
-			case 'forum-messages':
-				$messages = AgendaPartage_Forum::get_messages($post_id);
-				if (is_a($messages, 'Exception'))
-					$val = $message->description;
-				else {
-					$val = '<ul class="forum-msg">';
-					foreach($messages as $message){
-						$val .= sprintf('<li><h3>%s</h3>'
-							. '<div class="fmsg-date">%s</div>'
-							. '<div class="fmsg-from">de <a href="mailto:%s">%s</a></div>'
-							. '<pre>%s</pre>'
-							. '</li>'
-							, $message['subject']
-							, date('\l\e d/m/Y \à H:i:s', $message['udate'])
-							, $message['from']->email
-							, empty($message['from']->name) ? $message['from']->email : $message['from']->name
-							, empty($message['text_plain']) 
-								? preg_replace('/^.*\<html.*\>([\s\S]*)\<\/html\>.*$/i', '$1', $message['text_html'])
-								: $message['text_plain']
-						);
-					}
-					$val .= '</ul>';
-				}
-				if($val || $content){
-					return '<div class="agdp-forum"><pre>'
-						. ($label ? '<span class="label"> '.$label.'<span>' : '')
-						. do_shortcode( $val . wp_kses_post($content))
-						. '</pre></div>';
-				}
-				break;
-				
+				break;				
 
 			default:
 			

@@ -53,7 +53,7 @@ class AgendaPartage_Covoiturage_Post_type {
 			'show_ui'               => true,
 			'show_in_menu'          => true,
 			'menu_icon'				=> 'dashicons-car',
-			'menu_position'         => 27,
+			'menu_position'         => 26,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
 			'can_export'            => true,

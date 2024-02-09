@@ -65,7 +65,7 @@ class AgendaPartage {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum', 'init' ) );
-
+		
 		if(self::maillog_enable()){
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-maillog.php' );
 			add_action( 'agendapartage-init', array( 'AgendaPartage_Maillog', 'init' ) );
