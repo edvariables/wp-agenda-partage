@@ -375,7 +375,7 @@ div.labels-one-row label {
  * Forum
  */
 div.agdp-forum-description {
-	white-space: pre;
+	white-space: pre-wrap;
 }
 article.use-agdpforum + #comments > h2.comments-title {
 	display: none;

@@ -45,8 +45,19 @@ class AgendaPartage_Forum {
 		if ( $forum ){
 			$classes[] = 'use-' . self::post_type;
 			$classes[] = self::post_type . '-' . $forum->ID;
-			debug_log(__CLASS__.'::on_post_class_cb', $classes);
-			self::init_page($forum, $post_id);
+			
+			// Initialise la page et importe les nouveaux messages
+			$messages = self::init_page($forum, $post_id);
+				debug_log($messages);
+			if( is_wp_error($messages)  )
+				$error = $messages->get_error_message();
+			elseif (is_a($messages, 'Exception'))
+				$error = $messages->getMessage();
+			else
+				$error = false;
+			if($error){
+				echo sprintf('<code class="error"><h3>%s</h3>%s</code>', 'Synchronisation du forum', $error);
+			}
 		}
 		return $classes;
 	}
@@ -74,12 +85,12 @@ class AgendaPartage_Forum {
 		add_filter('comment_text', array(__CLASS__, 'on_comment_text'), 10, 3 );
 		add_filter('get_comment_author', array(__CLASS__, 'on_get_comment_author'), 10, 3 );
 		
-		$messages = self::import_imap_messages($forum, $page);
-		if( is_a($messages, 'WP_Error') )
-			return $messages->description;
-		if (is_a($messages, 'Exception'))
-			return $messages->description;
-		return $messages;
+		try {
+			return self::import_imap_messages($forum, $page);
+		}
+		catch(Exception $exception){
+			return $exception;
+		}
 	}
 	
 	/**
@@ -199,6 +210,8 @@ class AgendaPartage_Forum {
 	}
 	
 	/********************************************/
+	/****************  IMAP  ********************/
+	/********************************************/
 	/**
 	 * Get messages from linked email via imap
 	 */
@@ -310,6 +323,7 @@ class AgendaPartage_Forum {
 				'text_html' => $email->text_html
 			];
 		}
+		
 		return $messages;
 	}
 	
@@ -322,7 +336,6 @@ class AgendaPartage_Forum {
 		$password = get_post_meta($forum_id, 'imap_password', true);
 		$mark_as_read = get_post_meta($forum_id, 'imap_mark_as_read', true);
 		
-		// $mark_as_read = true;//DEBUG
 		$encoding = 'UTF-8';
 		
 		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, AGDP_FORUM_ATTACHMENT_PATH, $mark_as_read, $encoding);
