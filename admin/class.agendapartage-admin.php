@@ -149,6 +149,36 @@ class AgendaPartage_Admin {
 		delete_transient(self::admin_notices_tag());
 	}
 	
+	
+	/**
+	 * Affiche une notification dans l'administration
+	 * Gère avec ou sans block-editor.
+	 */
+	public static function add_admin_notice_now($message, $attrs){
+		$current_screen = get_current_screen();
+		$is_block_editor = method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor();
+		if($is_block_editor){
+?><script>( function( wp ) {
+    wp.data.dispatch('core/notices').createNotice(
+        '<?php echo $attrs['type']?>',
+        "<?php echo esc_attr(strip_tags($message))?>",
+		{
+            isDismissible: true
+            <?php if(isset($attrs['actions'])){
+			?>, actions: [
+                {
+                    url: '<?php echo $attrs['actions']['url']?>',
+                    label: '<?php echo (empty($attrs['actions']['label']) ? 'Afficher' : $attrs['actions']['label'])?>'
+                }
+            ]<?php }?>
+        }
+    );
+} )( window.wp );
+</script><?php
+		}
+		else
+			wp_admin_notice($message, $attrs);
+	}
 	/**
 	* Hook de mise à jour d'option
 	*/

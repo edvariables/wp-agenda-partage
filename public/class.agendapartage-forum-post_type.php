@@ -25,8 +25,8 @@ class AgendaPartage_Forum_Post_type {
 			'archives'              => __( 'Forums', AGDP_TAG ),
 			'attributes'            => __( 'Attributs', AGDP_TAG ),
 			'parent_item_colon'     => __( 'Forum parent:', AGDP_TAG ),
-			'all_items'             => __( 'Toutes les forums', AGDP_TAG ),
-			'add_new_item'          => __( 'Ajouter une forum', AGDP_TAG ),
+			'all_items'             => __( 'Tous les forums', AGDP_TAG ),
+			'add_new_item'          => __( 'Ajouter un forum', AGDP_TAG ),
 			'add_new'               => __( 'Ajouter', AGDP_TAG ),
 			'new_item'              => __( 'Nouveau forum', AGDP_TAG ),
 			'edit_item'             => __( 'Modifier', AGDP_TAG ),
@@ -41,7 +41,7 @@ class AgendaPartage_Forum_Post_type {
 		$capabilities = self::post_type_capabilities();
 		$args = array(
 			'label'                 => __( 'Forum', AGDP_TAG ),
-			'description'           => __( 'Forum de l\'agenda partagé', AGDP_TAG ),
+			'description'           => __( 'Forum dans l\'agenda partagé', AGDP_TAG ),
 			'labels'                => $labels,
 			'supports'              => array( 'title', 'editor', 'thumbnail', 'revisions' ),//, 'author', 'editor' see AgendaPartage_Admin_Forum::init_PostType_Supports
 			'taxonomies'            => array(  ),

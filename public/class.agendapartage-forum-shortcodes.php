@@ -145,14 +145,13 @@ class AgendaPartage_Forum_Shortcodes {
 	}
 	
 	/**
-	* [forum "Nom du forum"]
 	* [forum info=titre|description]
 	* [forum-titre]
 	* [forum-description]
 	*/
 	private static function shortcodes_forum_callback($atts, $content = '', $shortcode = null){
-		
-		$post = AgendaPartage_Forum::get_forum();
+		if( ! ( $post = AgendaPartage_Forum::get_forum_of_page(get_post()) ) )
+			return $content;
 		
 		if($post)
 			$post_id = $post->ID;
@@ -192,7 +191,6 @@ class AgendaPartage_Forum_Shortcodes {
 		switch($shortcode){
 			case 'forum-titre':
 
-				$meta_name = 'cov-' . substr($shortcode, strlen('forum-')) ;
 				$val = isset( $post->post_title ) ? $post->post_title : '';
 				if($val || $content){
 					$val = do_shortcode( wp_kses_post($val . $content));
@@ -208,7 +206,6 @@ class AgendaPartage_Forum_Shortcodes {
 				
 			case 'forum-description':
 
-				$meta_name = 'cov-' . substr($shortcode, strlen('forum-')) ;
 				$val = isset( $post->post_content ) ? $post->post_content : '';
 				if($val || $content){
 					$val = do_shortcode( wp_kses_post($val . $content));
@@ -223,25 +220,7 @@ class AgendaPartage_Forum_Shortcodes {
 				break;
 								
 			case 'forum':
-				if( ! isset($atts['info']) ){
-					foreach($atts as $forum_name => $value){
-						//Cherche un forum d'après son nom
-						$forum = AgendaPartage_Forum::get_forum_by_name($forum_name);
-						if( ! $forum ){
-							$label = sprintf('Impossible de trouver le forum "%s".', $forum_name);
-							return '<div class="agdp-forum">'
-								. '<span class="label error"> '.$label.'<span>'
-								. do_shortcode(wp_kses_post($content))
-								. '</div>';
-						}
-						$val = '';//print_r($forum, true);
-						AgendaPartage_Forum::init_page($forum);
-						return '<div class="agdp-forum">'
-							. do_shortcode(wp_kses_post($val . $content))
-							. '</div>';
-					}
-					break;
-				}
+			
 				$meta_name = $atts['info'] ;
 				if(!$meta_name)
 					return '<div class="error">Le paramètre info="'.$meta_name.'" du shortcode "forum" est inconnu.</div>';

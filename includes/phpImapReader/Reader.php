@@ -1149,19 +1149,19 @@ class Reader
         }
 
         switch ($part->encoding) {
-            case 1:
+            case ENC8BIT:
                 $data = imap_utf8($data);
                 break;
 
-            case 2:
+            case ENCBINARY:
                 $data = imap_binary($data);
                 break;
 
-            case 3:
+            case ENCBASE64:
                 $data = imap_base64($data);
                 break;
 
-            case 4:
+            case ENCQUOTEDPRINTABLE:
                 $data = quoted_printable_decode($data);
                 break;
         }
@@ -1240,9 +1240,11 @@ class Reader
                 $email->addAttachment($attachment);
             }
         } else {
+			// $data_before = '($data_before)';
             // if the charset is set, convert to our encoding UTF-8
             if (!empty($params['charset'])) {
-                $data = $this->convertEncoding($data, $params['charset']);
+                // $data_before = $data;
+				$data = $this->convertEncoding($data, $params['charset']);
             }
 
             // part->type = 0 is TEXT or TYPETEXT
@@ -1250,6 +1252,7 @@ class Reader
                 if ($part->type == 0) {
                     // subpart is either plain text or html version
                     if (strtoupper($part->subtype) == 'PLAIN') {
+// debug_log($data_before, $params, $part, $data);
                         $email->setPlain($data);
                     } else {
                         $email->setHTML($data);

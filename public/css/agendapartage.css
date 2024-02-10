@@ -374,8 +374,32 @@ div.labels-one-row label {
 /**
  * Forum
  */
- /* TODO type-page => forum */
-article.type-page + #comments > h2.comments-title {
+div.agdp-forum-description {
+	white-space: pre;
+}
+article.use-agdpforum + #comments > h2.comments-title {
 	display: none;
 }
+article.use-agdpforum + #comments li.comment article {
+	border: #d1cde1 solid 5px;
+	margin-bottom: 1em;
+	padding: 5px;
+}
+body.colors-dark article.use-agdpforum + #comments li.comment article {
+	border-color: #331440;
+}
+article.use-agdpforum + #comments li.comment article .comment-content h3 {
+	font-weight: bold;
+	background-color: #d1cde1;
+	padding: 5px;
+}
+body.colors-dark article.use-agdpforum + #comments li.comment article .comment-content h3 {
+	background-color: #331440;
+}
 
+article.use-agdpforum + #comments li.comment article .comment-content > p {
+	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+}
+article.use-agdpforum + #comments li.comment article .reply {
+	padding-left: 3em;
+}

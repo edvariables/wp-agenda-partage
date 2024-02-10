@@ -254,7 +254,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 		foreach ($fields as $field) {
 			if(!isset($field['type']) || $field['type'] != 'label'){
 				$name = $field['name'];
-				if($parent_field !== null)
+				if($parent_field !== null && isset($parent_field['name']))
 					$name = sprintf($name, $parent_field['name']);//TODO check
 				// remember : a checkbox unchecked does not return any value
 				if( array_key_exists($name, $_POST)){

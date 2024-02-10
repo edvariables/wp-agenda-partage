@@ -8,6 +8,9 @@
  * Mise en forme du formulaire Forum
  *
  * Voir aussi AgendaPartage_Admin_Forum
+ *
+ * Un forum est associé à une page qui doit afficher ses commentaires.
+ * Le forum gère l'importation d'emails en tant que commentaires de la page.
  */
 class AgendaPartage_Forum {
 
@@ -28,10 +31,25 @@ class AgendaPartage_Forum {
 	/**
 	 * Hook
 	 */
-	public static function init_hooks() {		
+	public static function init_hooks() {
+		
+		add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
 	}
 	/*
 	 **/
+	
+	/**
+	*/
+	public static function on_post_class_cb( $classes, $css_class, $post_id ){
+		$forum = self::get_forum_of_page($post_id);
+		if ( $forum ){
+			$classes[] = 'use-' . self::post_type;
+			$classes[] = self::post_type . '-' . $forum->ID;
+			debug_log(__CLASS__.'::on_post_class_cb', $classes);
+			self::init_page($forum, $post_id);
+		}
+		return $classes;
+	}
 	
 	/**
 	 * Associe le forum et les commentaires de la page.
@@ -41,8 +59,12 @@ class AgendaPartage_Forum {
 		if( ! $page ){
 			global $post;
 			if (!($page = $post))
-				return;
+				return false;
 		}
+		elseif( is_int( $page ))
+			if (!($page = get_post($page)))
+				return false;
+		
 		
 		$forum = self::get_forum($forum);
 		
@@ -56,8 +78,8 @@ class AgendaPartage_Forum {
 		if( is_a($messages, 'WP_Error') )
 			return $messages->description;
 		if (is_a($messages, 'Exception'))
-			$val = $message->description;
-		
+			return $messages->description;
+		return $messages;
 	}
 	
 	/**
@@ -82,6 +104,20 @@ class AgendaPartage_Forum {
 		if(is_a($forum, 'WP_Post')
 		&& $forum->post_type == self::post_type)
 			return $forum;
+		return false;
+	}
+	
+	/**
+	 * Retourne le forum associé à une page.
+	 */
+	public static function get_forum_of_page($page_id){
+		if( is_a($page_id, 'WP_Post') ){
+			if($page_id->post_type != 'page')
+				return false;
+			$page_id = $page_id->ID;
+		}
+		if($forum_id = get_post_meta( $page_id, AGDP_PAGE_META_FORUM, true))
+			return self::get_forum($forum_id);
 		return false;
 	}
 	
@@ -284,8 +320,9 @@ class AgendaPartage_Forum {
 		$server = get_post_meta($forum_id, 'imap_server', true);
 		$email = get_post_meta($forum_id, 'imap_email', true);
 		$password = get_post_meta($forum_id, 'imap_password', true);
+		$mark_as_read = get_post_meta($forum_id, 'imap_mark_as_read', true);
 		
-		$mark_as_read = true;//DEBUG
+		// $mark_as_read = true;//DEBUG
 		$encoding = 'UTF-8';
 		
 		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, AGDP_FORUM_ATTACHMENT_PATH, $mark_as_read, $encoding);
@@ -303,10 +340,11 @@ class AgendaPartage_Forum {
 		
 		if( $clear_signature = get_post_meta($forum_id, 'clear_signature', true)){
 			if ( ($pos = strpos( $content, $clear_signature) ) > 0)
-				$content = substr( $content, 0, $pos - 1);
+				$content = substr( $content, 0, $pos);
 		}
 		
-		if( $clear_raw = get_post_meta($forum_id, 'clear_raw', true)){
+		$clear_raws = get_post_meta($forum_id, 'clear_raw', true);
+		foreach( explode('|', $clear_raws) as $clear_raw ){
 			$raw_start = -1;
 			$raw_end = -1;
 			$offset = 0;
