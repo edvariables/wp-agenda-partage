@@ -42,28 +42,37 @@ jQuery( function( $ ) {
 						if(typeof response === 'string' || response instanceof String){
 							if(response.endsWith('null'))
 								response = substr(response, 0, response.length-4);
-							if(response.startsWith('redir:')){
-								$msg = $('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
-								$spinner.after($msg);
+							var action = response.split(':')[0];
+							switch(action){
+								case 'redir' :
+									response = response.substring(action.length + 1);
+									$msg = $('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
+									$spinner.after($msg);
+									// $msg.get(0).scrollIntoView();
+									response = response.substring('redir:'.length);
+									document.location = response;
+									return;
+								case 'js' :
+									response = response.substring(action.length + 1);
+									eval('(function(){'+response+';})').apply($actionElnt);
+									return;
+								case 'replace' :
+									response = response.substring(action.length + 1);
+									$actionElnt.replaceWith(response);
+									response = false;
+									break;
+								case 'download' :
+									var url = response.substring(action.length + 1);
+									response = 'Le téléchargement est lancé. Consultez vos téléchargements.';
+									window.location.href = url;
+									break;
+							}
+							if(response) {
+								var $msg = $('<div class="ajax_action-response"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+									.click(function(){$msg.remove()});
+								$actionElnt.after($msg);
 								// $msg.get(0).scrollIntoView();
-								response = response.substring('redir:'.length);
-								document.location = response;
-								return;
 							}
-							if(response.startsWith('js:')){
-								response = response.substring('js:'.length);
-								eval('(function(){'+response+';})').apply($actionElnt);
-								return;
-							}
-							if(response.startsWith('download:')){
-								var url = response.substring('download:'.length);
-								response = 'Le téléchargement est lancé. Consultez vos téléchargements.';
-								window.location.href = url;
-							}
-							var $msg = $('<div class="ajax_action-response"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
-								.click(function(){$msg.remove()});
-							$actionElnt.after($msg);
-							// $msg.get(0).scrollIntoView();
 						}
 					}
 					$spinner.remove();

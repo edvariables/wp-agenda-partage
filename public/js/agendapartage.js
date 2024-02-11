@@ -294,5 +294,44 @@ jQuery( function( $ ) {
 		$( 'body' ).on('click', '#email4phone-title', function(e) {
 			$(this).toggleClass('active');
 		});
+		
+		// Forum, commentaire
+		$( 'body' ).on('click', 'a.agdp-ajax-mark_as_ended', function(e) {
+			var $actionElnt = $(this);
+			//rétablit une précédente annulation par le même clic
+			if( $actionElnt.attr('data_cancel_ajax')){
+				$actionElnt.attr('data', $actionElnt.attr('data_cancel_ajax'));
+				$actionElnt.removeAttr('data_cancel_ajax');
+			}
+			var cancel_ajax;
+			var data = $actionElnt.attr('data');
+			if( data )
+				data = JSON.parse(data);
+			if( data )
+				data = data.data;
+			if( ! data){
+				alert("Désolé, vous ne pouvez pas agir sur ce message. Tentez de recharger cette page internet.");
+				cancel_ajax = true;
+			}
+			else {
+				var msg;
+				if( data.status == 'ended')
+					msg = "Ce message est marqué comme n'étant plus d'actualité."
+						+ "\nEn cliquant sur 'Ok', vous rétablirez ce message comme étant toujours d'actualité.";
+				else
+					msg = "En cliquant sur 'Ok', vous marquerez ce message comme n'étant plus d'actualité."
+						+ "\nÊtes-vous sûr de celà ?";
+				
+				if( ! confirm( msg )){
+					cancel_ajax = true;
+				}
+			}
+			if (cancel_ajax){
+				$actionElnt.attr('data_cancel_ajax', $actionElnt.attr('data'));
+				$actionElnt.removeAttr('data');
+				e.preventDefault();
+				return false;
+			}
+		});
 	});
 });

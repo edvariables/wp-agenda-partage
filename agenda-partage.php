@@ -79,3 +79,6 @@ function agendapartage_admin_menu(){
 add_action( 'init', array( 'AgendaPartage', 'init' ) );
 add_action( 'admin_init', array( 'AgendaPartage', 'admin_init' ) );
 
+//forbidden xmlrpc
+//TODO option to be clear
+add_filter( 'xmlrpc_enabled', '__return_false' );

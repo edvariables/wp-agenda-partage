@@ -1165,7 +1165,7 @@ class Reader
                 $data = quoted_printable_decode($data);
                 break;
         }
-
+// debug_log('part', $part_number, $part, $data);
         $params = array();
         if (isset($part->parameters)) {
             foreach ($part->parameters as $param) {

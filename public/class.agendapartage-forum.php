@@ -34,6 +34,10 @@ class AgendaPartage_Forum {
 	public static function init_hooks() {
 		
 		add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
+		
+		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
+
 	}
 	/*
 	 **/
@@ -48,7 +52,6 @@ class AgendaPartage_Forum {
 			
 			// Initialise la page et importe les nouveaux messages
 			$messages = self::init_page($forum, $post_id);
-				debug_log($messages);
 			if( is_wp_error($messages)  )
 				$error = $messages->get_error_message();
 			elseif (is_a($messages, 'Exception'))
@@ -83,10 +86,13 @@ class AgendaPartage_Forum {
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
 		add_filter('comment_text', array(__CLASS__, 'on_comment_text'), 10, 3 );
-		add_filter('get_comment_author', array(__CLASS__, 'on_get_comment_author'), 10, 3 );
+		add_filter('comment_reply_link', array(__CLASS__, 'on_comment_reply_link'), 10, 4 );
+		// add_filter('comment_reply_link_args', array(__CLASS__, 'on_comment_reply_link_args'), 10, 3 );
+		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
 		
 		try {
-			return self::import_imap_messages($forum, $page);
+			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-forum-imap.php");
+			return AgendaPartage_Forum_IMAP::import_imap_messages($forum, $page);
 		}
 		catch(Exception $exception){
 			return $exception;
@@ -144,6 +150,51 @@ class AgendaPartage_Forum {
 			$posts[$post->ID . ''] = $post;
 		return $posts;
 	}
+	
+	/**
+	 * Teste l'autorisation de modifier un commentaire selon l'utilisateur connecté
+	 */
+	public static function user_can_change_comment($comment){
+		if(!$comment)
+			return false;
+		if(is_numeric($comment))
+			$comment = get_comment($comment);
+		
+		if($comment->comment_approved == 'trash'){
+			return false;
+		}
+		
+		//Admin : ok 
+		//TODO check is_admin === interface ou user
+		//TODO user can edit only his own posts
+		if( is_admin() && !wp_doing_ajax()){
+			return true;
+		}		
+		
+		if(is_user_logged_in()){
+			global $current_user;
+			//Rôle autorisé
+			if(	$current_user->has_cap( 'edit_posts' ) ){
+				return true;
+			}
+			
+			//Utilisateur associé
+			if(	$current_user->ID == $comment->comment_author ){
+				return true;
+			}
+			
+			$user_email = $current_user->user_email;
+			if( is_email($user_email)
+			 && $user_email == $comment->comment_author_email ){
+				return true;
+			}
+			
+		// debug_log( $current_user->has_cap( 'edit_posts' ), $user_email, $comment->comment_author, $comment->comment_author_email );
+		}
+		
+		return false;
+	}
+	
 	/********************************************/
 		 
 	/**
@@ -163,6 +214,7 @@ class AgendaPartage_Forum {
 	public static function on_comment_form_fields($fields){		
 		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></textarea></p>';
 		$fields['comment'] = $title_field . $fields['comment'];
+		unset($fields['url']);
 		return $fields;
 	}
 	
@@ -199,180 +251,153 @@ class AgendaPartage_Forum {
 		
 		return $comment_text;
 	}
+	/**
+	 * Affichage du commentaire, lien "Répondre"
+	 */
+	public static function on_comment_reply_link($comment_reply_link, $args, $comment, $post ){
+		$user_can_change_comment = self::user_can_change_comment($comment);
+		 
+		//Statut du message (mark_as_ended). 
+		$comment_actions = self::get_comment_mark_as_ended_link($comment->comment_ID);
+		
+		if( $user_can_change_comment ){
+			$comment_actions .= self::get_comment_delete_link($comment->comment_ID);
+		}
+		
+		$comment_actions = sprintf('<span class="comment-agdp-actions">%s</span>', $comment_actions);
+		$comment_reply_link = preg_replace('/(\<\/div>)$/', $comment_actions . '$1', $comment_reply_link);
+		// debug_log('on_comment_reply_link', $comment_reply_link, $args, $comment);
+		
+		return $comment_reply_link;
+	}
+	/**
+	 * Retourne le html d'action pour marqué un message comme étant terminé
+	 */
+	private static function get_comment_mark_as_ended_link($comment_id){
+		
+		$data = [
+			'comment_id' => $comment_id
+		];
+		
+		$status = get_comment_meta($comment_id, 'status', true);
+		$status_class = $status == 'ended' ? 'comment-mark_as_ended' : 'comment-not-mark_as_ended';
+		$comment_actions = sprintf('<a href="#mark_as_ended" class="comment-agdp-action comment-agdp-action-mark_as_ended %s comment-reply-link">%s</a>'
+			, $status_class
+			, "Toujours d'actualité ?");
+			
+		switch($status){
+			case 'ended' :
+				$caption = '<span class="mark_as_ended">N\'est plus d\'actualité</span>';
+				$title = "Vous pouvez rétablir ce message comme étant toujours d'actualité";
+				$icon = 'dismiss';
+				break;
+			default:
+				$caption = "Toujours d'actualité ?";
+				$title = "Vous pouvez indiquer si ce message n'est plus d'actualité";
+				$icon = 'info-outline';
+		}
+		if ( $status )
+			$data['status'] = $status;
+		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_mark_as_ended
+		return AgendaPartage::get_ajax_action_link(false, ['comment','mark_as_ended'], $icon, $caption, $title, false, $data);
+	}
+	/**
+	 * Retourne le html d'action pour supprimer un message 
+	 */
+	private static function get_comment_delete_link($comment_id){
+		
+		$data = [
+			'comment_id' => $comment_id
+		];
+			
+		$caption = "Supprimer";
+		$title = "Vous pouvez supprimer définitivement ce message";
+		$icon = 'trash';
+
+		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
+		return AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, true, $data);
+	}
+	
+	// /**
+	 // * Affichage du commentaire, lien "Répondre"
+	 // */
+	// public static function on_comment_reply_link_args($args, $comment, $post ){
+		
+		// debug_log('on_comment_reply_link_args', $args, $comment);
+		
+		// return $args;
+	// }
 	
 	/**
 	 * Affichage de l'auteur du commentaire
 	 */
-	public static function on_get_comment_author($comment_author, $comment_id, $comment ){
+	public static function on_get_comment_author_link( $comment_author_link, $comment_author, $comment_id ){
+		
+		// debug_log('on_get_comment_author_link', $comment_author_link, $comment_author);
+		if( strpos( $comment_author_link, ' href=' ) 
+		 || strpos( $comment_author_link, '@' ) )
+			return $comment_author_link;
+			
+		$comment = get_comment($comment_id);
 		if( $comment->comment_author_email )
 			return sprintf('<a href="mailto:%s">%s</a>', $comment->comment_author_email, $comment_author);
-		return $comment_author;
-	}
-	
-	/********************************************/
-	/****************  IMAP  ********************/
-	/********************************************/
-	/**
-	 * Get messages from linked email via imap
-	 */
-	public static function import_imap_messages($forum, $page){
-		$forum = self::get_forum($forum);
-		if( ! $forum )
-			return false;
-		
-		if( ! ($messages = self::get_imap_messages($forum)))
-			return false;
-		if( is_a($messages, 'WP_ERROR') )
-			return false;
-		if( count($messages) === 0 )
-			return false;
-		
-		$imap_server = get_post_meta($forum->ID, 'imap_server', true);
-		$imap_email = get_post_meta($forum->ID, 'imap_email', true);
-		
-		add_filter('pre_comment_approved', array(__CLASS__, 'on_imap_pre_comment_approved'), 10, 2 );
-		
-		foreach( $messages as $message ){
-			if( ($comment = self::get_existing_comment( $forum, $message )) ){
-			}
-			else {
-				
-				$comment_parent = 0;
-				$user_id = 0;
-				// var_dump($message);
-				$user_email = $message['reply_to'][0]->email;
-				$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
-				$comment_approved = true;
-				
-				$commentdata = [
-					'comment_post_ID' => $page->ID,
-					'comment_author' => $user_name,
-					'comment_author_url' => 'mailto:' . $user_email,
-					'comment_author_email' => $user_email,
-					'comment_content' => self::get_imap_message_content($forum->ID, $message),
-					'comment_date' => date(DATE_ATOM, $message['udate']),
-					'comment_parent' => $comment_parent,
-					'comment_agent' => $imap_email . '@' . $imap_server,
-					'comment_approved' => $comment_approved,
-					'user_id' => $user_id,
-					'comment_meta' => [
-						'source' => 'imap',
-						'source_server' => $imap_server,
-						'source_email' => $imap_email,
-						'source_id' => $message['id'],
-						'source_no' => $message['msgno'],
-						'from' => $message['from']->email,
-						'title' => $message['subject'],
-						'attachments' => $message['attachments'],
-					]
-				];
-				// var_dump($commentdata);
-				$comment = wp_new_comment($commentdata, true);
-				if( is_a($comment, 'WP_ERROR') ){
-					continue;
-				}
-			}
-		}
-		remove_filter('pre_comment_approved', array(__CLASS__, 'on_imap_pre_comment_approved'), 10);
-		
-		return $messages;
-	}
-	//Force l'approbation du commentaire pendant la boucle d'importation
-	public static function on_imap_pre_comment_approved($approved, $commentdata){
-		return true;
-	}
-	//Cherche un message déjà importé
-	private static function get_existing_comment( $forum, $message ){
-	}
-	/**
-	 * Récupère les messages non lus depuis un serveur imap
-	 */
-	public static function get_imap_messages($forum){
-		
-		
-		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/Reader.php");
-		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/Email.php");
-		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/EmailAttachment.php");
-		$imap = self::get_ImapReader($forum->ID);
-		
-		$search = date("j F Y", strtotime("-1 days"));
-		$imap
-			// ->limit(1) //DEBUG
-			//->sinceDate($search)
-			->orderASC()
-			->unseen()
-			->get();
-			
-		$messages = [];
-		foreach($imap->emails() as $email){
-			foreach($email->custom_headers as $header => $header_content){
-				if( preg_match('/-SPAMCAUSE$/', $header) )
-					$email->custom_headers[$header] = decode_spamcause( $header_content );
-			}
-			$messages[] = [
-				'id' => $email->id,
-				'msgno' => $email->msgno,
-				'date' => $email->date,
-				'udate' => $email->udate,
-				'subject' => $email->subject,
-				'to' => $email->to,
-				'from' => $email->from,
-				'reply_to' => $email->reply_to,
-				'attachments' => $email->attachments,
-				'text_plain' => $email->text_plain,
-				'text_html' => $email->text_html
-			];
-		}
-		
-		return $messages;
+		return $comment_author_link;
 	}
 	
 	/**
-	 * Retourne une instance du lecteur IMAP.
+	 * Requête Ajax sur les commentaires
 	 */
-	private static function get_ImapReader($forum_id){
-		$server = get_post_meta($forum_id, 'imap_server', true);
-		$email = get_post_meta($forum_id, 'imap_email', true);
-		$password = get_post_meta($forum_id, 'imap_password', true);
-		$mark_as_read = get_post_meta($forum_id, 'imap_mark_as_read', true);
+	public static function on_wp_ajax_comment() {
+		if( ! AgendaPartage::check_nonce()
+		|| empty($_POST['method']))
+			wp_die();
 		
-		$encoding = 'UTF-8';
+		$ajax_response = '';
 		
-		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, AGDP_FORUM_ATTACHMENT_PATH, $mark_as_read, $encoding);
+		$method = $_POST['method'];
+		$data = $_POST['data'];
+		
+		try{
+			//cherche une fonction du nom "on_ajax_action_{method}"
+			$function = array(__CLASS__, sprintf('on_ajax_action_%s', $method));
+			$ajax_response = call_user_func( $function, $data);
+		}
+		catch( Exception $e ){
+			$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
+		}
+		
+		// Make your array as json
+		wp_send_json($ajax_response);
+	 
+		// Don't forget to stop execution afterward.
+		wp_die();
+	}
 
-		return $imap;
+	/**
+	 * Requête Ajax de changement d'état du commentaire
+	 */
+	public static function on_ajax_action_mark_as_ended($data) {
+		if( isset($data['status']) )
+			$status = $data['status'] === 'ended' ? 'open' : 'ended';
+		else
+			$status = 'ended';
+		if (update_comment_meta($data['comment_id'], 'status', $status))
+			return 'replace:' . self::get_comment_mark_as_ended_link($data['comment_id']);
+		return false;
+	}
+	/**
+	 * Requête Ajax de suppression du commentaire
+	 */
+	public static function on_ajax_action_delete($data) {
+		update_comment_meta($data['comment_id'], 'deleted', wp_date(DATE_ATOM));
+		
+		$args = ['comment_ID' => $data['comment_id'], 'comment_approved' => 'trash'];
+		$comment = wp_update_comment($args, true);
+		if ( ! is_a($comment, 'WP_Error') )
+			return 'js:$actionElnt.parents(\'.comment:first\').remove();';
+		return $comment->get_error_message();
 	}
 	
-	/**
-	 * Retourne le contenu expurgé depuis un email.
-	 */
-	private static function get_imap_message_content($forum_id, $message){
-		$content = empty($message['text_plain']) 
-				? preg_replace('/^.*\<html.*\>([\s\S]*)\<\/html\>.*$/i', '$1', $message['text_html'])
-				: $message['text_plain'];
-		
-		if( $clear_signature = get_post_meta($forum_id, 'clear_signature', true)){
-			if ( ($pos = strpos( $content, $clear_signature) ) > 0)
-				$content = substr( $content, 0, $pos);
-		}
-		
-		$clear_raws = get_post_meta($forum_id, 'clear_raw', true);
-		foreach( explode('|', $clear_raws) as $clear_raw ){
-			$raw_start = -1;
-			$raw_end = -1;
-			$offset = 0;
-			while ( $offset < strlen($content)
-			&& ( $raw_start = strpos( $content, $clear_raw, $offset) ) >= 0
-			&& $raw_start !== false)
-			{
-				if ( ($raw_end = strpos( $content, "\n", $raw_start + strlen($clear_raw)-1)) == false)
-					$raw_end = strlen($content)-1;
-				$offset = $raw_start;
-				$content = substr( $content, 0, $raw_start) . substr( $content, $raw_end + 1);
-			}
-		}
-		return trim($content);
-	}
 	
 }
 ?>

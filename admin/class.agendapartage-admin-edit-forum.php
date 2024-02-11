@@ -211,12 +211,18 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			[	'name' => 'clear_signature',
 				'label' => __('Effacer la signature', AGDP_TAG),
 				'type' => 'text',
-				'learn-more' => "Entrez ici le début du texte de la signature"
+				'input' => 'textarea',
+				'learn-more' => "Entrez ici les débuts des textes de signatures à reconnaitre."
+							. "\nCeci tronque le message depuis la signature jusqu'à la fin."
+							. "\nMettre ci-dessous une recherche par ligne."
 			],
 			[	'name' => 'clear_raw',
 				'label' => __('Effacer des lignes inutiles', AGDP_TAG),
 				'type' => 'text',
-				'learn-more' => "Entrez ici le début du texte (par exemple \"Envoyé à partir de\".)"
+				'input' => 'textarea',
+				'learn-more' => "Entrez ici les débuts des textes (par exemple \"Envoyé à partir de\".)"
+							. "\nCeci tronque le message d'une seule ligne."
+							. "\nMettre ci-dessous une recherche par ligne."
 			],
 		];
 		return $fields;

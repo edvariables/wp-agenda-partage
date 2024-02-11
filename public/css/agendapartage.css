@@ -19,6 +19,7 @@ p.info, div.info {
 	padding: 5px;
 	border-radius: 2px;
 }
+
 .align-right {
 	text-align: right;
 }
@@ -402,4 +403,52 @@ article.use-agdpforum + #comments li.comment article .comment-content > p {
 }
 article.use-agdpforum + #comments li.comment article .reply {
 	padding-left: 3em;
+}
+
+article.use-agdpforum + #comments .comment-list .children {
+	margin-left: 1.5em;
+}
+
+article.use-agdpforum + #comments .comment-list + #respond {
+	margin-top: 2em;
+	padding-top: 0.5em;
+	border-top: 1px solid gray;
+}
+article.use-agdpforum + #comments article + #respond {
+	margin-bottom: 3em;  
+	margin-left: 4em;
+}
+article.use-agdpforum + #comments #respond {
+	margin-top: 1em;
+}
+#commentform > .logged-in-as, #commentform > .comment-notes {
+	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+}
+#commentform > .logged-in-as a {
+	color: rgb(51, 51, 115);
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+}
+body.colors-dark #commentform > .logged-in-as a {
+	color: lightblue;
+}
+
+#comments #reply-title a {
+	margin-left: 1em;
+	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+	color: rgb(51, 51, 115);
+}
+body.colors-dark #comments #reply-title a {
+	color: lightblue;
+}
+
+#comments .comment-agdp-actions {
+	margin-left: 1em;
+}
+#comments .comment-agdp-actions a {
+	margin-left: 1em;
+}
+#comments .comment-agdp-actions .mark_as_ended {
+	font-weight: bold;
+	color: red;
 }
