@@ -41,6 +41,7 @@ class AgendaPartage_Forum_Shortcodes {
 		add_shortcode( 'forum', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'forum-titre', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'forum-description', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'agdpforum-messages', array(__CLASS__, 'shortcodes_callback') );
 
 	}
 
@@ -139,6 +140,11 @@ class AgendaPartage_Forum_Shortcodes {
 				, $guid
 			));
 			return str_replace($guid, $html, $toogler);
+		}
+
+		//De la forme [agdpevents liste] ou [agdpevents-calendrier]
+		if($shortcode == 'agdpforum-messages' || str_starts_with($shortcode, 'agdpforum-messages-')){
+			return self::shortcodes_messages_callback($atts, $content, $shortcode);
 		}
 
 		return self::shortcodes_forum_callback($atts, $content, $shortcode);
@@ -241,7 +247,7 @@ class AgendaPartage_Forum_Shortcodes {
 						. do_shortcode( $val . wp_kses_post($content))
 						. '</div>';
 				}
-				break;				
+				break;
 
 			default:
 			
@@ -269,6 +275,57 @@ class AgendaPartage_Forum_Shortcodes {
 		wp_die();
 	}
 	
+	
+	
+	/**
+	* [agdpforum-messages "nom du forum"]
+	* [agdpforum-messages mode:liste|list|email forum:"nom du forum"]
+	*/
+	public static function shortcodes_messages_callback($atts, $content = '', $shortcode = null){
+		
+		$forum = false;
+		foreach($atts as $att_key=>$att_value){
+			if( $att_key === ' forum' ){
+				$forum = AgendaPartage_Forum::get_forum_by_name($att_key);
+				break;
+			}
+		}
+		if( ! $forum ){
+			foreach($atts as $att_key=>$att_value){
+				if( $att_value == 1 ){
+					$forum = AgendaPartage_Forum::get_forum_by_name($att_key);
+					break;
+				}
+			}
+		}
+		if( ! $forum ){
+			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).'] inconnu.</div>';
+		}
+		
+		if($shortcode == 'agdpforum-messages'
+		&& count($atts) > 0){
+			if(array_key_exists('mode', $atts))
+				$shortcode .= '-' . $atts['mode'];
+			elseif(array_key_exists('0', $atts))
+				$shortcode .= '-' . $atts['0'];
+		}
+
+		switch($shortcode){
+			case 'agdpforum-messages-liste':
+				$shortcode = 'agdpevents-list';
+			case 'agdpforum-messages-list':
+				
+				return AgendaPartage_Forum_Messages::get_list_html( $forum, $content );
+				
+			case 'agdpforum-messages-email':
+				
+				$html = AgendaPartage_Forum_Messages::get_list_for_email( $forum, $content );
+				return $html;
+
+			default:
+				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';
+		}
+	}
 	
 	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-stats.php');

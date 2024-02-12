@@ -317,10 +317,10 @@ jQuery( function( $ ) {
 				var msg;
 				if( data.status == 'ended')
 					msg = "Ce message est marqué comme n'étant plus d'actualité."
-						+ "\nEn cliquant sur 'Ok', vous rétablirez ce message comme étant toujours d'actualité.";
+						+ "\n\nEn cliquant sur 'Ok', vous rétablirez ce message comme étant toujours d'actualité.";
 				else
-					msg = "En cliquant sur 'Ok', vous marquerez ce message comme n'étant plus d'actualité."
-						+ "\nÊtes-vous sûr de celà ?";
+					msg = "En cliquant sur 'Ok', vous indiquerez que ce message n'est plus d'actualité."
+						+ "\n\nÊtes-vous sûr de vouloir marquer ce message ?";
 				
 				if( ! confirm( msg )){
 					cancel_ajax = true;

@@ -139,6 +139,20 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
+	 * Retourne la page associée à un forum.
+	 */
+	public static function get_page_of_forum($forum_id){
+		if( is_a($forum_id, 'WP_Post') ){
+			if($forum_id->post_type != self::post_type)
+				return false;
+			$forum_id = $forum_id->ID;
+		}
+		if($page_id = get_post_meta( $forum_id, AGDP_FORUM_META_PAGE, true))
+			return get_post($page_id);
+		return false;
+	}
+	
+	/**
 	 * Returns posts where post_status == 'publish'
 	 */
 	 public static function get_forums(){

@@ -197,8 +197,8 @@ class AgendaPartage_Covoiturages {
 	}
 
 	/**
-	 * Recherche de tous les mois contenant des covoiturages mais aussi les mois sans.
-	 * Return array($year-$month => $count)
+	 * Recherche de toutes les semaines contenant des covoiturages mais aussi les semaines sans.
+	 * Return array($year-$semaine => $count)
 	 */
 	public static function get_posts_months(){
 		global $wpdb;
