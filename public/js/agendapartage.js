@@ -252,7 +252,7 @@ jQuery( function( $ ) {
 						if(typeof response === 'object'){
 							for(const nloption in response){
 								var subscription = response[nloption];
-								if( ! subscription.subscription_name)
+								if( ! subscription || ! subscription.subscription_name)
 									continue;
 								var $radio = $form.find('input[name="nl-period-' + subscription.field_extension + '"][value="' + subscription.subscription_name + '"]');
 								$radio.prop("checked", true);
