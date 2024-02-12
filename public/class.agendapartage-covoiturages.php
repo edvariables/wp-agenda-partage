@@ -432,6 +432,8 @@ class AgendaPartage_Covoiturages {
 				break;
 			}
 		}
+		if( $events_count === 0)
+			return false;
 		
 		$requested_id = array_key_exists(AGDP_ARG_COVOITURAGEID, $_GET) ? $_GET[AGDP_ARG_COVOITURAGEID] : false;
 		$requested_month = false;
@@ -598,6 +600,13 @@ class AgendaPartage_Covoiturages {
 '
 			. '</style>';
 		$html = self::get_list_html($content, $options );
+		
+		if( ! $html ){
+			if ( AgendaPartage_Newsletter::is_sending_email() )
+				AgendaPartage_Newsletter::content_is_empty( true );
+			return false;
+		}
+		
 		$html = $css . $html;
 
 		foreach([

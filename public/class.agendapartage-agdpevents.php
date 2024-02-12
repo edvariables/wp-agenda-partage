@@ -414,6 +414,9 @@ class AgendaPartage_Evenements {
 			}
 		}
 		
+		if( $events_count === 0)
+			return false;
+		
 		$requested_id = array_key_exists(AGDP_ARG_EVENTID, $_GET) ? $_GET[AGDP_ARG_EVENTID] : false;
 		$requested_month = false;
 		if($requested_id){
@@ -556,6 +559,13 @@ class AgendaPartage_Evenements {
 '
 			. '</style>';
 		$html = self::get_list_html($content, $options );
+		
+		if( ! $html ){
+			if ( AgendaPartage_Newsletter::is_sending_email() )
+				AgendaPartage_Newsletter::content_is_empty( true );
+			return false;
+		}
+		
 		$html = $css . $html;
 
 		foreach([

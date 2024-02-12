@@ -23,6 +23,7 @@ class AgendaPartage_Newsletter {
 	private static $initiated = false;
 	private static $sending_email = false;
 	private static $sending_email_data = false;
+	private static $content_is_empty = false;
 
 	public static $cron_state = false;
 
@@ -886,6 +887,10 @@ class AgendaPartage_Newsletter {
 			if($send_newsletter_now){
 				if(self::send_email($newsletter, $email))
 					$messages['mail_sent_ok'] .= sprintf("\r\n\"%s\" a été envoyée à %s.", $newsletter_name, $email);
+				elseif( self::content_is_empty() ) {
+					$post_type_obj = get_post_type_object( self::get_newsletter_posts_post_type( $newsletter ) );					
+					$messages['mail_sent_ok'] .= sprintf("\r\nLe message n'a pas été envoyé car la liste des \"%s\" est vide.", $post_type_obj->labels->name);
+				}
 				else
 					$messages['mail_sent_ok'] .= sprintf("\r\nDésolé, \"%s\" n'a pas pu être envoyée à %s.", $newsletter_name, $email);
 			}
@@ -1068,7 +1073,9 @@ class AgendaPartage_Newsletter {
 				
 				if( ! $simulate){
 					self::set_user_mailing_status($newsletter, $subscriber->ID, 'prepared');
-					self::send_email($newsletter, array_keys( $user_emails ));
+					$success = self::send_email($newsletter, array_keys( $user_emails ));
+					if( ! $success && self::content_is_empty() )
+						$success = true;
 				}
 				
 				foreach($user_emails as $user_email => $subscriber){
@@ -1150,72 +1157,80 @@ class AgendaPartage_Newsletter {
 		
 		$message = do_shortcode( get_the_content(false, false, $newsletter) );
 		
-		$message = '<!DOCTYPE html><html>'
-				. '<head>'
-					. '<meta name="viewport" content="width=device-width">'
-					. '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
-/* 					. '<style>body {
-font-family: \'Segoe UI\', Arial;
-font-size: 14px;
-height: 100% !important;
-line-height: 1.5;
--ms-text-size-adjust: 100%;
--webkit-text-size-adjust: 100%;
-width: 100% !important;
-background-color: #fff;
-margin: 0;
-padding: 0;
-white-space: pre;
-						}</style>' */
-				. '</head>'
-				//TODO white-space does'nt work with my android mailbox
-				. sprintf('<body style="white-space: pre-line;">%s</body>', $message)
-				. '</html>'
-		;
-		$emails_separator = ',';
-		
-		if(is_array($emails))
-			$to = implode($emails_separator, $emails);
-		else
-			if( ! ($to = str_replace(';', $emails_separator , sanitize_email($emails))) )
-				return false;
-		
-		if( strpos( $to, ',' ) !== false
-		|| strpos( $to, ';' ) !== false
-		){
-			$bcc = $to;
-			$to = self::get_bcc_mail_sender();
+		if( ! self::content_is_empty() ) {
+			
+			$message = '<!DOCTYPE html><html>'
+					. '<head>'
+						. '<meta name="viewport" content="width=device-width">'
+						. '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+	/* 					. '<style>body {
+	font-family: \'Segoe UI\', Arial;
+	font-size: 14px;
+	height: 100% !important;
+	line-height: 1.5;
+	-ms-text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
+	width: 100% !important;
+	background-color: #fff;
+	margin: 0;
+	padding: 0;
+	white-space: pre;
+							}</style>' */
+					. '</head>'
+					//TODO white-space does'nt work with my android mailbox
+					. sprintf('<body style="white-space: pre-line;">%s</body>', $message)
+					. '</html>'
+			;
+			$emails_separator = ',';
+			
+			if(is_array($emails))
+				$to = implode($emails_separator, $emails);
+			else
+				if( ! ($to = str_replace(';', $emails_separator , sanitize_email($emails))) )
+					return false;
+			
+			if( strpos( $to, ',' ) !== false
+			|| strpos( $to, ';' ) !== false
+			){
+				$bcc = $to;
+				$to = self::get_bcc_mail_sender();
+			}
+			else
+				$bcc = false;
+			
+			
+			$headers = array();
+			$attachments = array();
+			
+			$headers[] = 'MIME-Version: 1.0';
+			$headers[] = 'Content-type: text/html; charset=utf-8';
+			$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+			
+			if( $bcc ){
+				foreach( explode($emails_separator, $bcc) as $email )
+					$headers[] = sprintf('Bcc: %s', trim($email));
+				//$headers[] = sprintf('Bcc: %s', $bcc);
+			}
+			
+			$headers[] = sprintf('From: %s', self::get_mail_sender());
+			$headers[] = sprintf('Reply-to: %s', self::get_replyto_mail_sender());
+			
+			if($success = wp_mail( $to
+				, '=?UTF-8?B?' . base64_encode($subject). '?='
+				, $message
+				, $headers, $attachments )){
+				if(class_exists('AgendaPartage_Admin', false))
+					AgendaPartage_Admin::add_admin_notice(sprintf("La lettre-info a été envoyé à %d destinataire(s).", count($emails)), 'info');
+			}
+			else{
+				if(class_exists('AgendaPartage_Admin', false))
+					AgendaPartage_Admin::add_admin_notice(sprintf("L'e-mail n'a pas pu être envoyé"), 'error');
+			}
 		}
-		else
-			$bcc = false;
-		
-		
-		$headers = array();
-		$attachments = array();
-		
-		$headers[] = 'MIME-Version: 1.0';
-		$headers[] = 'Content-type: text/html; charset=utf-8';
-		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
-		
-		if( $bcc ){
-			foreach( explode($emails_separator, $bcc) as $email )
-				$headers[] = sprintf('Bcc: %s', trim($email));
-			//$headers[] = sprintf('Bcc: %s', $bcc);
-		}
-		
-		$headers[] = sprintf('From: %s', self::get_mail_sender());
-		$headers[] = sprintf('Reply-to: %s', self::get_replyto_mail_sender());
-		
-		if($success = wp_mail( $to
-			, '=?UTF-8?B?' . base64_encode($subject). '?='
-			, $message
-			, $headers, $attachments )){
+		else {
+			$success = false;
 			if(class_exists('AgendaPartage_Admin', false))
-				AgendaPartage_Admin::add_admin_notice(sprintf("La lettre-info a été envoyé à %d destinataire(s).", count($emails)), 'info');
-		}
-		else{
-			if(class_exists('AgendaPartage_Admin', false))
-				AgendaPartage_Admin::add_admin_notice(sprintf("L'e-mail n'a pas pu être envoyé"), 'error');
+				AgendaPartage_Admin::add_admin_notice(sprintf("Le contenu est vide (aucun élément). Le mail n'a pas été envoyé."), 'warning');
 		}
 		
 		self::$sending_email = false;
@@ -1223,10 +1238,15 @@ white-space: pre;
 		return $success;
 	 }
 	 /**
-	  *
+	  * Retourne la newsletter en cours d'envoi d'email
 	  */
 	 public static function is_sending_email(){
 		 return self::$sending_email;
+	 }
+	 public static function content_is_empty($empty = null){
+		 if( $empty !== null)
+			self::$content_is_empty = $empty;
+		return self::$content_is_empty;
 	 }
 	 
 	 
