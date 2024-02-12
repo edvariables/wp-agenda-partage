@@ -18,10 +18,12 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	}
 	
 	public static function init_hooks() {
-
-		add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
-		add_action( 'save_post_' . AgendaPartage_Forum::post_type, array(__CLASS__, 'save_post_forum_cb'), 10, 3 );
-		add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
+		global $pagenow;
+		if ( $pagenow === 'post.php' ) {
+			add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
+			add_action( 'save_post_' . AgendaPartage_Forum::post_type, array(__CLASS__, 'save_post_forum_cb'), 10, 3 );
+			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
+		}
 	}
 	/****************/
 		

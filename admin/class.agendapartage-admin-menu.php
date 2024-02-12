@@ -815,7 +815,7 @@ class AgendaPartage_Admin_Menu {
 			AGDP_TAG,
 			array(__CLASS__, 'agendapartage_options_page_html'),
 			'dashicons-lightbulb',
-			35
+			25
 		);
 
 		if(! current_user_can('manage_options')){
@@ -826,6 +826,41 @@ class AgendaPartage_Admin_Menu {
 				remove_menu_page('posts');//TODO
 				remove_menu_page('wpcf7');
 			}
+		}
+		else {
+			$capability = 'manage_options';
+			
+			$option = 'admin_nl_post_id';
+			if ( $post_id = AgendaPartage::get_option($option) ){
+				$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Newsletter::post_type) ;
+				$page_title =  AgendaPartage::get_option_label($option);
+				$menu_slug = sprintf('post.php?post=%s&action=edit', $post_id);
+				add_submenu_page( $parent_slug, $page_title, 'Administrateurices', $capability, $menu_slug);
+			}
+			$option = 'events_nl_post_id';
+			if ( $post_id = AgendaPartage::get_option($option) ){
+				$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Newsletter::post_type) ;
+				$page_title =  AgendaPartage::get_option_label($option);
+				$menu_slug = sprintf('post.php?post=%s&action=edit', $post_id);
+				add_submenu_page( $parent_slug, $page_title, 'Evènements à venir', $capability, $menu_slug);
+			}
+			$option = 'covoiturages_nl_post_id';
+			if ( $post_id = AgendaPartage::get_option($option) ){
+				$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Newsletter::post_type) ;
+				$page_title =  AgendaPartage::get_option_label($option);
+				$menu_slug = sprintf('post.php?post=%s&action=edit', $post_id);
+				add_submenu_page( $parent_slug, $page_title, 'Covoiturages à venir', $capability, $menu_slug);
+			}
+			
+			$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Evenement::post_type) ;
+			$page_title =  'Evènements en attente de validation';
+			$menu_slug = $parent_slug . '&post_status=pending';
+			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
+			
+			$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Covoiturage::post_type) ;
+			$page_title =  'Covoiturages en attente de validation';
+			$menu_slug = $parent_slug . '&post_status=pending';
+			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 		}
 	}
 

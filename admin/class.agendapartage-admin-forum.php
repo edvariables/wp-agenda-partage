@@ -35,7 +35,7 @@ class AgendaPartage_Admin_Forum {
 		global $post;
 		if( current_user_can('manage_options') ){
 			if(is_archive()){
-				add_post_type_support( 'agdpforum', 'author' );
+				add_post_type_support( AgendaPartage_Forum::post_type, 'author' );
 			}
 		}
 	}

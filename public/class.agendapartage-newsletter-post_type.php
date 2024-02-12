@@ -50,7 +50,7 @@ class AgendaPartage_Newsletter_Post_type {
 			'show_ui'               => true,
 			'show_in_menu'          => true,
 			'menu_icon'				=> 'dashicons-email-alt',
-			'menu_position'         => 35,
+			'menu_position'         => 29,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
 			'can_export'            => true,

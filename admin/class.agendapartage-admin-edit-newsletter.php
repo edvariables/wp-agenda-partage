@@ -159,7 +159,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				'label' => __('Exécution maintenant d\'une boucle de traitement', AGDP_TAG) ,
 				'input' => 'checkbox',
 				'value' => 'unchecked', //keep unchecked
-				'readonly' => ! WP_DEBUG,
+				'readonly' => ! current_user_can('manage_options'),
 				'learn-more' => $cron_exec_comment
 			],
 			[	'name' => '',
