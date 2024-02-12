@@ -315,6 +315,8 @@ class AgendaPartage_Forum_Messages {
 	*
 	*/
 	public static function get_list_for_email($forum, $content = '', $options = false){
+		AgendaPartage_Forum::init_page($forum);
+		
 		if(!isset($options) || !is_array($options))
 			$options = array();
 		$options = array_merge(
