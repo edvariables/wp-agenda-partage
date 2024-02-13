@@ -103,18 +103,11 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 	public static function get_metabox_mailing_fields(){
 		$newsletters = AgendaPartage_Newsletter::get_active_newsletters();
 		$newsletter = get_post();
-		$newsletter_is_active = AgendaPartage_Newsletter::is_active($newsletter);
-		if( (count($newsletters) > 1 && $newsletter_is_active)
-		|| (count($newsletters) >= 1 && ! $newsletter_is_active) ){
-			$many_active = 'Une autre lettre-info est active pour l\'envoi automatique.';
-			foreach($newsletters as $post)
-				if($newsletter->ID != $post->ID)
-					$many_active .= sprintf(' <a href="%s">%s</a>', get_post_permalink( $post->ID),  $post->post_title);
-		}
-		else
-			$many_active = false;
+		
 		if($newsletter->post_status != 'publish')
-			$many_active .= ($many_active ? '<br>' : '') . 'Cet lettre-info n\'est pas enregistrée comme étant "Publiée", elle ne peut donc pas être automatisée.';
+			$warning = 'Cette lettre-info n\'est pas enregistrée comme étant "Publiée", elle ne peut donc pas être automatisée.';
+		else
+			$warning = false;
 		
 		$cron_exec = get_post_meta($newsletter->ID, 'cron_exec', true);
 		if($cron_exec){
@@ -142,7 +135,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				'name' => 'mailing-enable',
 				'label' => __('Activer l\'envoi automatique', AGDP_TAG),
 				'input' => 'checkbox',
-				'warning' => $many_active
+				'warning' => $warning
 			],
 			// [	'name' => 'sep',
 				// 'input' => 'label'

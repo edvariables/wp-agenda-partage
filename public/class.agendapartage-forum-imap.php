@@ -65,6 +65,7 @@ class AgendaPartage_Forum_IMAP {
 						'from' => $message['from']->email,
 						'title' => trim($message['subject']),
 						'attachments' => $message['attachments'],
+						'import_date' => date(DATE_ATOM),
 					]
 				];
 				// var_dump($commentdata);

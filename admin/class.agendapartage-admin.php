@@ -54,6 +54,9 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-forum.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Forum', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-forum-comment.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Forum_Comment', 'init' ) );
+
 		if(AgendaPartage::maillog_enable()){
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-maillog.php' );
 			add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Maillog', 'init' ) );

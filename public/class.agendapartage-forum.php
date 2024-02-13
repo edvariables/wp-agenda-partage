@@ -71,8 +71,7 @@ class AgendaPartage_Forum {
 	 */
 	public static function init_page($forum, $page = false){
 		if( ! $page ){
-			global $post;
-			if (!($page = $post))
+			if (!($page = self::get_page_of_forum( $forum )))
 				return false;
 		}
 		elseif( is_int( $page ))
