@@ -281,6 +281,7 @@ class AgendaPartage_Forum_Shortcodes {
 	
 	/**
 	* [agdpforum-messages "nom du forum"]
+	* [agdpforum-messages] le forum est défini dans la configuration de la newsletter
 	* [agdpforum-messages mode:liste|list|email forum:"nom du forum"]
 	*/
 	public static function shortcodes_messages_callback($atts, $content = '', $shortcode = null){
@@ -291,6 +292,20 @@ class AgendaPartage_Forum_Shortcodes {
 				$forum = AgendaPartage_Forum::get_forum_by_name($att_key);
 				break;
 			}
+		}
+		if( ! $forum ){
+			global $post;
+			if( $post && $post->post_type === AgendaPartage_Newsletter::post_type )
+				$newsletter = $post;
+			else
+				$newsletter = AgendaPartage_Newsletter::is_sending_email();
+			if( $newsletter ){
+				$source = AgendaPartage_Newsletter::get_content_source( $newsletter->ID, true);
+				if( $source[0] == AgendaPartage_Forum::post_type ){
+					$forum = AgendaPartage_Forum::get_forum_of_newsletter( $newsletter->ID );
+				}
+			}
+			
 		}
 		if( ! $forum ){
 			foreach($atts as $att_key=>$att_value){

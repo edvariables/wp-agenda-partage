@@ -117,7 +117,23 @@ class AgendaPartage_Newsletter {
 		$email = self::get_mail_sender();
 		return $email;
 	}
-	 
+	
+	/**
+	 * Retourne la source de données du contenu de la newsletter.
+	 * Retourne un type de post (adgpevent, covoiturage) ou forum.{id} ou 'agdpstats'
+	 */
+	public static function get_content_source($newsletter_id, $explode = false){
+		if( is_a($newsletter_id, 'WP_Post') )
+			$newsletter_id = $newsletter_id->ID;
+				
+		$source = get_post_meta( $newsletter_id, 'source', true);
+		
+		if( $explode )
+			return explode('.', $source);
+	
+		return $source;
+	}
+	
 	/**
 	 * Retourne les périodes d'abonnement possibles
 	 */
@@ -214,7 +230,8 @@ class AgendaPartage_Newsletter {
 			case AgendaPartage::get_option(AgendaPartage_Covoiturage::newsletter_option) :
 				return AgendaPartage_Covoiturage::post_type;
 			default:
-				return false;
+				$source = self::get_content_source( $newsletter->ID, true);
+				return $source[0];
 		}
 	 }
 	/**
@@ -226,17 +243,30 @@ class AgendaPartage_Newsletter {
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		$sql = "SELECT MAX(posts.post_date) as post_date_max
-				FROM {$blog_prefix}posts posts
-				WHERE posts.post_status IN('publish', 'prepend')
-					AND posts.post_type = '". $post_type ."'
-		";
-		
+		if( $post_type == AgendaPartage_Forum::post_type){
+			//Comments
+			$forum = AgendaPartage_Forum::get_forum_of_newsletter( $newsletter );
+			if($forum && $page = AgendaPartage_Forum::get_page_of_forum($forum) )
+				$sql = "SELECT MAX(comments.comment_date) as date_max
+						FROM {$blog_prefix}comments comments
+						WHERE comments.comment_approved = 1
+							AND comments.comment_post_ID = ". $page->ID ."
+				";
+		}
+		else {
+			$sql = "SELECT MAX(posts.post_date) as date_max
+					FROM {$blog_prefix}posts posts
+					WHERE posts.post_status IN('publish', 'prepend')
+						AND posts.post_type = '". $post_type ."'
+			";
+		}
+		if( ! isset($sql) || ! $sql)
+			throw new Exception("Impossible de trouver l'origine des données");
 		$result = $wpdb->get_results($sql);
 		if( is_a($result,'WP_Error') )
 			throw new Exception(var_export($result, true));
 		if(count($result))
-			return $result[0]->post_date_max;
+			return $result[0]->date_max;
 		return false;
 	}
 	
@@ -431,7 +461,6 @@ class AgendaPartage_Newsletter {
 			
 			$user_subscription = null;
 			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
-			
 			/** périodicité de l'abonnement **/
 			$input_name = 'nl-period-' . $field_extension;
 			$subscription_periods = self::subscription_periods($newsletter);
@@ -461,9 +490,6 @@ class AgendaPartage_Newsletter {
 				}
 				$index++;
 			} 
-			/** nl_id **/
-			// $html .= "<input class='hidden' name='".AGDP_ARG_NEWSLETTERID."' value='{$current_nl_id}'/>";
-		
 		
 			$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
 								, sprintf('[$1 %s use_label_element %s]'
@@ -504,27 +530,6 @@ class AgendaPartage_Newsletter {
 								// , $html);
 		}
 		
-		/** admin **/
-		// if( current_user_can('manage_options')){
-			// $urls = [];
-			// $nls = self::get_newsletters_names();
-			// $basic_url = get_post_permalink();
-					
-			// if( count($nls) > 1){
-				// $html .= '<ul class="newsletter-change-nl">';
-				// foreach($nls as $nl_id=>$nl_name)
-					// if($nl_id === $current_nl_id){
-						// $html .= "<li>Administratriceur, vous êtes sur la page de la lettre-info \"{$nl_name}\".</li>";
-						// break;
-					// }
-				// foreach($nls as $nl_id=>$nl_name)
-					// if($nl_id !== $current_nl_id){
-						// $url = add_query_arg( AGDP_ARG_NEWSLETTERID, $nl_id, $basic_url);
-						// $html .= sprintf("<li>Basculer vers la lettre-info \"<a href=\"%s\">%s</a>\".</li>", esc_attr($url), $nl_name);
-					// }				
-				// $html .= '</ul>';
-			// }
-		// }
 		$form->set_properties(array('form'=>$html));
 				
 	}
@@ -577,6 +582,9 @@ class AgendaPartage_Newsletter {
 	public static function get_form_newsletter_field_extension($newsletter_option){
 		if(is_a($newsletter_option, 'WP_Post')){
 			$newsletter = $newsletter_option;
+			
+			// TODO if( $source = self::get_content_source($newsletter->ID, true) )
+				// return 
 			$newsletter_option = false;
 			foreach(['events_nl_post_id', 'covoiturages_nl_post_id', 'admin_nl_post_id'] as $option)
 				if( $newsletter->ID == AgendaPartage::get_option($option) ){
@@ -585,6 +593,19 @@ class AgendaPartage_Newsletter {
 				}
 			if( ! $newsletter_option)
 				throw new Exception('L\'argument $newsletter_option contient une référence inconnue : ' . var_export($newsletter_option, true));
+		}
+		//Numérique : un forum dont on cherche le nom
+		if( is_int($newsletter_option) ){
+			if($newsletter = get_post( $newsletter_option )){
+				if( $source = self::get_content_source($newsletter->ID, true)){
+					$post_type = AgendaPartage_Forum::post_type;
+					if( $source[0] === AgendaPartage_Forum::post_type ){
+						if( $forum = get_post( $source[1] )){
+							return $forum->post_type . '-' . $forum->post_name;
+						}
+					}
+				}
+			}
 		}
 		switch($newsletter_option){
 			case 'admin_nl_post_id' :
@@ -607,11 +628,27 @@ class AgendaPartage_Newsletter {
 		$option_id = 'covoiturages_nl_post_id';
 		$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
 		
+		//Forums
+		$all_newsletters = get_posts([
+			'post_type' => self::post_type,
+			'post_status' => 'publish',
+			'meta_query' => [[
+				'key' => 'source',
+				'value' => AgendaPartage_Forum::post_type . '.',
+				'compare' => 'LIKE'
+			]]
+		]);
+		foreach($all_newsletters as $forum_newsletter){
+			$nl_id = $forum_newsletter->ID;
+			$newsletters[ $nl_id . '' ] = get_post($nl_id);
+		}
+		
 		/** admin **/
 		if( current_user_can('manage_options')){
 			$option_id = 'admin_nl_post_id';
 			$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
 		}
+		
 		return $newsletters;
 	}
 	
@@ -854,7 +891,10 @@ class AgendaPartage_Newsletter {
 			if( ! $found)
 				$period = 'none';
 			
-			$newsletter_name = AgendaPartage::get_option_label($newsletter_option);
+			if( is_int($newsletter_option) )
+				$newsletter_name = $newsletter->post_title;
+			else
+				$newsletter_name = AgendaPartage::get_option_label($newsletter_option);
 			
 			$user_subscription = self::get_subscription( $email, $newsletter );
 			if( ! $user_subscription )
@@ -1150,7 +1190,7 @@ class AgendaPartage_Newsletter {
 		
 		$subject = do_shortcode( $subject );
 		
-		if( $newsletter->ID == AgendaPartage::get_option( AgendaPartage_Covoiturage::newsletter_option ))
+		if( self::get_newsletter_posts_post_type( $newsletter) === AgendaPartage_Covoiturage::post_type )
 			$subject = sprintf('[%s]', $subject);
 		else
 			$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);

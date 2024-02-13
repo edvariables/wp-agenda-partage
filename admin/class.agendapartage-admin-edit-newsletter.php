@@ -34,6 +34,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 	 */
 	public static function register_newsletter_metaboxes($post){
 				
+		add_meta_box('agdp_newsletter-source', __('Source liée', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-test', __('Test d\'envoi', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-mailing', __('Envoi automatique', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-subscribers', __('Abonnements', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Newsletter::post_type, 'normal', 'high');
@@ -46,6 +47,10 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		//var_dump(func_get_args());
 		
 		switch ($metabox['id']) {
+			
+			case 'agdp_newsletter-source':
+				parent::metabox_html( self::get_metabox_source_fields(), $post, $metabox );
+				break;
 			
 			case 'agdp_newsletter-subscribers':
 				self::get_metabox_subscribers();
@@ -66,6 +71,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 
 	public static function get_metabox_all_fields(){
 		return array_merge(
+			self::get_metabox_source_fields(),
 			self::get_metabox_mailing_fields(),
 			self::get_metabox_subscribers_fields(),
 			self::get_metabox_nl_test_fields(),
@@ -208,6 +214,32 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		return $fields;
 				
 	}
+	
+	
+	public static function get_metabox_source_fields(){
+		$newsletter = get_post();
+		
+		$fields = [];
+		
+		$meta_name = 'source';
+		$sources = [ AgendaPartage_Evenement::post_type => 'Evènements'
+				, AgendaPartage_Covoiturage::post_type => 'Covoiturages'
+				, 'agdpstats' => 'Statistiques pour administrateurices'];
+		//Forums
+		// var_dump(get_posts([ 'post_type' => AgendaPartage_Forum::post_type]));
+		foreach(get_posts([ 'post_type' => AgendaPartage_Forum::post_type]) as $forum){
+			$sources[ AgendaPartage_Forum::post_type . '.' . $forum->ID ] = 'Forum ' . $forum->post_title;
+		}
+		$sources[''] = '(autre)';
+		$fields[] = array('name' => $meta_name,
+						'label' => __('Source des données', AGDP_TAG),
+						'input' => 'select',
+						'values' => $sources
+		);
+		return $fields;
+				
+	}
+	
 	
 	public static function get_metabox_subscribers_fields(){
 		$newsletter = get_post();
