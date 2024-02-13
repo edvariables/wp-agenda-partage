@@ -93,11 +93,6 @@ class AgendaPartage_Forum_Shortcodes {
 				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
 				unset($atts[$key]);
 			}
-			$key = AGDP_COVOIT_SECRETCODE ;
-			if(array_key_exists($key, $atts)){
-				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
-				unset($atts[$key]);
-			}
 		}
 		// Si attribut toggle [forum-details toggle="Contactez-nous !"]
 		// Fait un appel récursif si si il y a l'attribut "ajax"
@@ -142,7 +137,7 @@ class AgendaPartage_Forum_Shortcodes {
 			return str_replace($guid, $html, $toogler);
 		}
 
-		//De la forme [agdpevents liste] ou [agdpevents-calendrier]
+		//De la forme [agdpforum-messages] ou [agdpforum-messages-list]
 		if($shortcode == 'agdpforum-messages' || str_starts_with($shortcode, 'agdpforum-messages-')){
 			return self::shortcodes_messages_callback($atts, $content, $shortcode);
 		}
@@ -208,7 +203,6 @@ class AgendaPartage_Forum_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
 				
 			case 'forum-description':
 
@@ -223,29 +217,37 @@ class AgendaPartage_Forum_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
 								
 			case 'forum':
 			
 				$meta_name = $atts['info'] ;
 				if(!$meta_name)
 					return '<div class="error">Le paramètre info="'.$meta_name.'" du shortcode "forum" est inconnu.</div>';
-				$val = AgendaPartage_Forum::get_post_meta($post_id, 'cov-' . $meta_name, true, false);
+				switch($meta_name){
+					case 'email' :
+						$meta_name = 'imap_email';
+						break;
+				}
+				$val = get_post_meta($post_id, $meta_name, true, false);
 				
 				if($val)
 					switch($meta_name){
-						case 'phone' :
-							$val = AgendaPartage_Forum::get_phone_html($post_id);
-							break;
-						case 'email' :
+						case 'imap_email' :
 							$val = antispambot(esc_html($val), -0.5);
+							if( isset($atts['mailto']) && $atts['mailto'])
+								$val = sprintf('<a href="mailto:%s">%s</a>', $val,
+									$atts['mailto'] === '1' || $atts['mailto'] === true ? $val : $atts['mailto']
+								);
+							return $val;
 							break;
 					}
 				if($val || $content){
-					return '<div class="agdp-forum">'
-						. ($label ? '<span class="label"> '.$label.'<span>' : '')
-						. do_shortcode( $val . wp_kses_post($content))
-						. '</div>';
+					if($label)
+						return '<div class="agdp-forum">'
+							. ($label ? '<span class="label"> '.$label.'<span>' : '')
+							. do_shortcode( $val . wp_kses_post($content))
+							. '</div>';
+					return do_shortcode( $val . wp_kses_post($content));
 				}
 				break;
 

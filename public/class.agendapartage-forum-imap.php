@@ -43,7 +43,6 @@ class AgendaPartage_Forum_IMAP {
 				$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 				if( ($pos = strpos($user_name, '@')) !== false)
 					$user_name = substr( $user_name, 0, $pos);
-				$comment_approved = true;
 				
 				$commentdata = [
 					'comment_post_ID' => $page->ID,
@@ -54,7 +53,7 @@ class AgendaPartage_Forum_IMAP {
 					'comment_date' => date(DATE_ATOM, $message['udate']),
 					'comment_parent' => $comment_parent,
 					'comment_agent' => $imap_email . '@' . $imap_server,
-					'comment_approved' => $comment_approved,
+					'comment_approved' => true,
 					'user_id' => $user_id,
 					'comment_meta' => [
 						'source' => 'imap',
@@ -66,7 +65,8 @@ class AgendaPartage_Forum_IMAP {
 						'title' => trim($message['subject']),
 						'attachments' => $message['attachments'],
 						'import_date' => date(DATE_ATOM),
-					]
+					],
+					'forum_id' => $forum->ID
 				];
 				// var_dump($commentdata);
 				$comment = wp_new_comment($commentdata, true);
@@ -81,6 +81,8 @@ class AgendaPartage_Forum_IMAP {
 	}
 	//Force l'approbation du commentaire pendant la boucle d'importation
 	public static function on_imap_pre_comment_approved($approved, $commentdata){
+		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['forum_id'] ) )
+			return false;
 		return true;
 	}
 	//Cherche un message déjà importé
@@ -215,6 +217,12 @@ class AgendaPartage_Forum_IMAP {
 		return trim($content);
 	}
 	
+	private static function user_email_approved( $user_email, $forum_id ) {
+		$source_email = get_post_meta($forum_id, 'imap_email', true);
+		if( $user_email === $source_email )
+			return false;
+		return true;
+	}
 	
 }
 ?>
