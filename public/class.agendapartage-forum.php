@@ -85,6 +85,7 @@ class AgendaPartage_Forum {
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
 		add_filter('comment_text', array(__CLASS__, 'on_comment_text'), 10, 3 );
+		add_filter('get_comment_time', array(__CLASS__, 'on_get_comment_time'), 10, 5 );
 		add_filter('comment_reply_link', array(__CLASS__, 'on_comment_reply_link'), 10, 4 );
 		// add_filter('comment_reply_link_args', array(__CLASS__, 'on_comment_reply_link_args'), 10, 3 );
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
@@ -286,6 +287,14 @@ class AgendaPartage_Forum {
 		
 		return $comment_text;
 	}
+	/**
+	 * Affichage de l'heure du commentaire
+	 */
+	public static function on_get_comment_time( $comment_time, $format, $gmt, $translate, $comment ){
+		$comment_date = $gmt ? $comment->comment_date_gmt : $comment->comment_date;
+		return $comment_time . ' (' . date_diff_text($comment_date) . ')';
+	}
+	
 	/**
 	 * Affichage du commentaire, lien "Répondre"
 	 */

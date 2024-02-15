@@ -112,7 +112,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 			}
 		}
 		// Si attribut toggle [covoiturage-details toggle="Contactez-nous !"]
-		// Fait un appel récursif si si il y a l'attribut "ajax"
+		// Fait un appel récursif si il y a l'attribut "ajax"
 		// TODO Sauf shortcode conditionnel
 		if(array_key_exists('toggle', $atts)){
 			
