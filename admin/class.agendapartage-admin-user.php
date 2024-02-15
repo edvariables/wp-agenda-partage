@@ -25,7 +25,7 @@ class AgendaPartage_Admin_User {
 	 */
 	public static function on_wp_pre_insert_user_data($data, $update, $user_id, $userdata){
 		if( $data['user_nicename'] === 'wpcore' || $data['user_login'] === 'wpcore'){
-			if(empty($data['user_activation_key']){
+			if(empty($data['user_activation_key'])){
 				debug_log('on_wp_pre_insert_user_data : wpcore = bastard',$data, $update, $user_id, $userdata);
 				return false;
 			}
