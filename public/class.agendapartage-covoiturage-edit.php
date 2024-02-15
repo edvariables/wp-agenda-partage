@@ -341,7 +341,7 @@ class AgendaPartage_Covoiturage_Edit {
 					break;
 				case AgendaPartage_Covoiturage::taxonomy_diffusion :
 					
-					// debug_log($all_terms);
+					// debug_log('$all_terms', $all_terms);
 					break;
 			}
 			if( count($titles) === 0 )
@@ -765,10 +765,11 @@ class AgendaPartage_Covoiturage_Edit {
 				'cov-'.AGDP_COVOIT_SECRETCODE => 1
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;
-					if(is_array($inputs[$input_field]))
-						$data[$post_field] = trim($inputs[$input_field][0]);
-					else
-						$data[$post_field] = trim($inputs[$input_field]);
+					if(isset($inputs[$input_field]))
+						if(is_array($inputs[$input_field]))
+							$data[$post_field] = trim($inputs[$input_field][0]);
+						else
+							$data[$post_field] = trim($inputs[$input_field]);
 			}
 			//checkboxes
 			foreach(array(
@@ -809,7 +810,8 @@ class AgendaPartage_Covoiturage_Edit {
 						$tax_terms[$tax_name][] = $all_terms[$inputs[$field]]->term_id;
 				}
 			}
-			// $error_message = var_export( $tax_terms, true); 
+			
+			// $error_message = var_export( $tax_terms, true) . var_export( $inputs, true); //debug
 		}
 		elseif( ! is_array($contact_form)
 			 || ! array_key_exists( 'title', $contact_form) ){
@@ -919,8 +921,7 @@ class AgendaPartage_Covoiturage_Edit {
 				$post_id = $post ? $post->ID : false;
 			}
 		}
-		
-		
+				
 		//Changement des messages pour inclure le lien vers le nouveau post
 		if($error_message){
 			$abort = true;
@@ -933,6 +934,7 @@ class AgendaPartage_Covoiturage_Edit {
 			//Taxonomies
 			//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
 			foreach($tax_terms as $tax_name => $tax_inputs){
+				
 				$result = wp_set_object_terms($post_id, $tax_inputs, $tax_name, false);
 				if(is_a($result, 'WP_Error') || is_string($result)){
 					$error_message = is_string($result) ? $result : $result->get_error_message();
@@ -981,7 +983,6 @@ class AgendaPartage_Covoiturage_Edit {
 			, $messages['mail_sent_ng'], $url);
 			
 		$contact_form->set_properties(array('messages' => $messages));
-		
 		
 		return $post_id;
 	}
@@ -1116,7 +1117,7 @@ class AgendaPartage_Covoiturage_Edit {
 				if($matches){
 					$heure = sprintf('%s:%s',
 						(strlen($matches[1]) == 1 ? '0' : '').$matches[1],
-						count($matches) >= 3 && $matches[3] ? $matches[3] : '00'
+						count($matches) > 3 && $matches[3] ? $matches[3] : '00'
 						);
 						// $submission = WPCF7_Submission::get_instance();
 					$_POST[$tag->name] = $heure;
@@ -1194,7 +1195,7 @@ class AgendaPartage_Covoiturage_Edit {
 					$value = sprintf('%sh%s',
 						// (strlen($matches[1]) == 1 ? '0' : '').$matches[1],
 						strlen($matches[1]) == 2 && $matches[1][0] === '0'  ? $matches[1][1] : $matches[1],
-						count($matches) >= 3 && $matches[3] 
+						count($matches) > 2 && $matches[3] 
 							? ($matches[3] == '0' || $matches[3]  == '00' ? '' : $matches[3])
 							: ''//'00'
 					);

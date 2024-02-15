@@ -71,3 +71,9 @@ padding-bottom: 30px;
 </style>
 <?php }
 add_action( ‘login_enqueue_scripts’, ‘my_login_logo’ );
+
+
+[forum info=email mailto] ne fonctionne pas lors de l'envoi du mail (sur le serveur)
+ajouter [forum-url link]
+
+Publier Covoit dans Forum

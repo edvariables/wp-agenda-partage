@@ -1105,7 +1105,7 @@ class AgendaPartage_Evenement_Edit {
 				if($matches){
 					$heure = sprintf('%s:%s',
 						(strlen($matches[1]) == 1 ? '0' : '').$matches[1],
-						count($matches) >= 3 && $matches[3] ? $matches[3] : '00'
+						count($matches) > 3 && $matches[3] ? $matches[3] : '00'
 						);
 						// $submission = WPCF7_Submission::get_instance();
 					$_POST[$tag->name] = $heure;
@@ -1183,7 +1183,7 @@ class AgendaPartage_Evenement_Edit {
 					$value = sprintf('%sh%s',
 						// (strlen($matches[1]) == 1 ? '0' : '').$matches[1],
 						strlen($matches[1]) == 2 && $matches[1][0] === '0'  ? $matches[1][1] : $matches[1],
-						count($matches) >= 3 && $matches[3] 
+						count($matches) > 3 && $matches[3] 
 							? ($matches[3] == '0' || $matches[3]  == '00' ? '' : $matches[3])
 							: ''//'00'
 					);

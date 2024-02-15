@@ -13,8 +13,36 @@ class AgendaPartage_Admin_User {
 			add_action( 'insert_custom_user_meta', array(__CLASS__, 'on_insert_custom_user_meta'), 10, 4);
 		
 		}
+		add_action( 'wp_pre_insert_user_data', array(__CLASS__, 'on_wp_pre_insert_user_data'), 10, 4);
 		
 	}
+	
+	/**
+	 * Surveillance avant création de nouvel utilisateur.
+	 * Lutte anti-hack
+	 * - wpcore interdit
+	 * - Les administrateurs créés ne peuvent pas avoir d'url associée
+	 */
+	public static function on_wp_pre_insert_user_data($data, $update, $user_id, $userdata){
+		if( $data['user_nicename'] === 'wpcore' || $data['user_login'] === 'wpcore'){
+			if(empty($data['user_activation_key']){
+				debug_log('on_wp_pre_insert_user_data : wpcore = bastard',$data, $update, $user_id, $userdata);
+				return false;
+			}
+			$data['user_login'] .= '@bastard'
+			$data['user_email'] = 'bastard.'.$data['user_email'];
+			$data['display_name'] = 'bastard';
+		}
+		if($update)
+			return $data;
+		//Les administrateurs créés ne peuvent pas avoir d'url associée
+		if($userdata['role'] === 'administrator' && ! empty($userdata['user_url'])){
+			debug_log('on_wp_pre_insert_user_data : administrator + user_url = bastard');
+			return false;
+		}
+		return $data;
+	}
+	
 	
 	/**
 	 * Mise à jour des paramètres spécifiques de l'utilisateur
