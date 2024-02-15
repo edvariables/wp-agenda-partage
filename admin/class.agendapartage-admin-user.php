@@ -29,7 +29,7 @@ class AgendaPartage_Admin_User {
 				debug_log('on_wp_pre_insert_user_data : wpcore = bastard',$data, $update, $user_id, $userdata);
 				return false;
 			}
-			$data['user_login'] .= '@bastard'
+			$data['user_login'] .= '@bastard';
 			$data['user_email'] = 'bastard.'.$data['user_email'];
 			$data['display_name'] = 'bastard';
 		}
