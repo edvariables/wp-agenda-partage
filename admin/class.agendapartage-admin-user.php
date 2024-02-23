@@ -24,9 +24,10 @@ class AgendaPartage_Admin_User {
 	 * - Les administrateurs créés ne peuvent pas avoir d'url associée
 	 */
 	public static function on_wp_pre_insert_user_data($data, $update, $user_id, $userdata){
-		if( $data['user_nicename'] === 'wpcore' || $data['user_login'] === 'wpcore'){
+		$excluded = array('wpcore', 'wp-blog', 'wp-user');
+		if( in_array($data['user_nicename'],$excluded) || in_array($data['user_login'], $excluded)){
 			if(empty($data['user_activation_key'])){
-				debug_log('on_wp_pre_insert_user_data : wpcore = bastard',$data, $update, $user_id, $userdata);
+				debug_log('on_wp_pre_insert_user_data : == bastard',$data, $update, $user_id, $userdata);
 				return false;
 			}
 			$data['user_login'] .= '@bastard';

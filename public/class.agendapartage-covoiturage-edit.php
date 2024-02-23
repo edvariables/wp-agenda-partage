@@ -420,7 +420,7 @@ class AgendaPartage_Covoiturage_Edit {
 			$html .= '<li>utiliser la même session internet qu\'à la création du covoiturage et, ce, le même jour.';
 
 			$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-			$url = '/wp-login.php?redirect_to=' . sanitize_url($url);
+			$url = wp_login_url( sanitize_url($url) );
 			$html .= sprintf('<li>avoir un compte utilisateur sur le site, être <a href="%s">%sconnecté(e)</a> et avoir des droits suffisants.'
 				, $url
 				, AgendaPartage::icon('unlock')
@@ -647,7 +647,7 @@ class AgendaPartage_Covoiturage_Edit {
 		)
 			return;
 		$user = new WP_USER($user_id);
-		$redirect_to = get_home_url( get_current_blog_id(), sprintf("wp-login.php?login=%s", rawurlencode( $user->user_login )), 'login' );
+		$redirect_to = get_home_url( get_current_blog_id(), sprintf("%s?login=%s", wp_login_url(), rawurlencode( $user->user_login )), 'login' );
 		$message = AgendaPartage_User::new_password_link($user, $redirect_to);
 		return $message;
 	}

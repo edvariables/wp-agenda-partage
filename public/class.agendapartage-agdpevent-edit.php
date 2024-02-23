@@ -416,7 +416,7 @@ class AgendaPartage_Evenement_Edit {
 			$html .= '<li>utiliser la même session internet qu\'à la création de l\'évènement et, ce, le même jour.';
 
 			$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-			$url = '/wp-login.php?redirect_to=' . sanitize_url($url);
+			$url = wp_login_url(sanitize_url($url));
 			$html .= sprintf('<li>avoir un compte utilisateur sur le site, être <a href="%s">%sconnecté(e)</a> et avoir des droits suffisants.'
 				, $url
 				, AgendaPartage::icon('unlock')
@@ -578,7 +578,7 @@ class AgendaPartage_Evenement_Edit {
 
 		if( empty( $emails['client'] )
 		|| ! is_email($emails['client'])
-		|| ( $emails['client'] == 'client@agendapartage.net' ) ){
+		|| ( $emails['client'] == 'client@agendapartage.net' ) ){//TODO
 			// 2ème mail à destination du client mais email invalide
 			if($wpcf7_mailcounter >= 2) {
 				//Cancels email without noisy error and clear log

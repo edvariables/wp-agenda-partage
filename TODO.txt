@@ -77,3 +77,6 @@ add_action( ‘login_enqueue_scripts’, ‘my_login_logo’ );
 ajouter [forum-url link]
 
 Publier Covoit dans Forum
+
+Subscription-content : ['new', 'two_weeks', 'two_months']
+

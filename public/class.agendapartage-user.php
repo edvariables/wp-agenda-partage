@@ -144,10 +144,9 @@ class AgendaPartage_User {
 		$password_key = get_password_reset_key($user);
 		if( ! $password_key)
 			return;
-		// $redirect_to = get_home_url( get_current_blog_id(), sprintf("wp-login.php?login=%s", rawurlencode( $user->user_login )), 'login' );
 		if(!$redirect_to)
 			$redirect_to = get_home_url();
-		$url = sprintf("wp-login.php?action=rp&key=%s&login=%s&redirect_to=%s", $password_key, rawurlencode( $user->user_login ), esc_url($redirect_to));
+		$url = sprintf("%s?action=rp&key=%s&login=%s&redirect_to=%s", wp_login_url(), $password_key, rawurlencode( $user->user_login ), esc_url($redirect_to));
 		$url = network_site_url( $url );
 		$message = sprintf(__( 'Pour définir votre mot de passe, <a href="%s">vous devez cliquer ici</a>.', AGDP_TAG) , $url ) . "\r\n";
 		return $message;

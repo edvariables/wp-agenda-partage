@@ -37,7 +37,7 @@ define( 'AGDP_PLUGIN_DIR', untrailingslashit( dirname( AGDP_PLUGIN ) ) );
 define( 'AGDP_PLUGIN_MODULES_DIR', AGDP_PLUGIN_DIR . '/modules' );
 
 define( 'AGDP_TAG', strtolower(AGDP_PLUGIN_NAME) ); //agendapartage
-define( 'AGDP_EMAIL_DOMAIN', AGDP_TAG . '.net' ); //agendapartage.net //TODO sic
+define( 'AGDP_EMAIL_DOMAIN', AGDP_PLUGIN_NAME . '.replace' ); //replace.agendapartage.net //Sert à ce que les valeurs fournies par WPCF7 soient remplacées
 define( 'AGDP_MAILLOG_ENABLE', 'maillog_enable');
 define( 'AGDP_DEBUGLOG_ENABLE', 'debuglog_enable');
 define( 'AGDP_CONNECT_MENU_ENABLE', 'connect_menu_enable');
