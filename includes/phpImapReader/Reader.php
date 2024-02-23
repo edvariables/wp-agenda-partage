@@ -1020,10 +1020,14 @@ class Reader
 
         if (isset($header->to)) {
             foreach ($header->to as $to) {
+				//ED240223
+				if( ! isset($to->mailbox)
+				 || $to->mailbox === 'undisclosed-recipients')
+					continue;
                 $to_name = isset($to->personal)
                     ? $this->decodeMimeHeader($to->personal)
                     : false;
-                $email->addTo($to->mailbox, $to->host, $to_name);
+				$email->addTo($to->mailbox, $to->host, $to_name);
             }
         }
 
@@ -1063,7 +1067,7 @@ class Reader
         $email->setRawBody(imap_fetchbody($this->stream(), $uid, '', $options));
 
         $body = imap_fetchstructure($this->stream(), $uid, FT_UID);
-
+// debug_log($body);
         if (isset($body->parts) && count($body->parts)) {
             foreach ($body->parts as $part_number => $part) {
                 $this->decodePart($email, $part, $part_number + 1);
@@ -1120,7 +1124,6 @@ class Reader
                 }
             }
         }
-
         return $email;
     }
 

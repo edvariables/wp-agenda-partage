@@ -633,7 +633,7 @@ class AgendaPartage_Evenement_Edit {
 	}
 
 	/**
-	 * Dans un email au contact d'évènement, ajoute une invitation à saisir un nouveaui mot de passe.
+	 * Dans un email au contact d'évènement, ajoute une invitation à saisir un nouveau mot de passe.
 	 * Returns a string to add to email for user to reset his password.
 	 */
 	private static function new_password_link($user_id){
@@ -643,7 +643,7 @@ class AgendaPartage_Evenement_Edit {
 		)
 			return;
 		$user = new WP_USER($user_id);
-		$redirect_to = get_home_url( get_current_blog_id(), sprintf("wp-login.php?login=%s", rawurlencode( $user->user_login )), 'login' );
+		$redirect_to = get_home_url( get_current_blog_id(), sprintf("%s?login=%s", wp_login_url(), rawurlencode( $user->user_login )), 'login' );
 		$message = AgendaPartage_User::new_password_link($user, $redirect_to);
 		return $message;
 	}

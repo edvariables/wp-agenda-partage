@@ -30,7 +30,6 @@ class AgendaPartage_Forum_IMAP {
 		$imap_email = get_post_meta($forum->ID, 'imap_email', true);
 		
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_imap_pre_comment_approved'), 10, 2 );
-		
 		foreach( $messages as $message ){
 			if( ($comment = self::get_existing_comment( $page, $message )) ){
 			}
@@ -153,7 +152,6 @@ class AgendaPartage_Forum_IMAP {
 				'text_html' => $email->text_html
 			];
 		}
-		
 		return $messages;
 	}
 	

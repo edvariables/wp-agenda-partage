@@ -1255,6 +1255,8 @@ class AgendaPartage_Newsletter {
 			$headers[] = sprintf('From: %s', self::get_mail_sender());
 			$headers[] = sprintf('Reply-to: %s', self::get_replyto_mail_sender());
 			
+			add_action( 'phpmailer_init', array( __CLASS__, 'on_sending_add_plain_text_body' ));
+			
 			if($success = wp_mail( $to
 				, '=?UTF-8?B?' . base64_encode($subject). '?='
 				, $message
@@ -1266,6 +1268,9 @@ class AgendaPartage_Newsletter {
 				if(class_exists('AgendaPartage_Admin', false))
 					AgendaPartage_Admin::add_admin_notice(sprintf("L'e-mail n'a pas pu être envoyé"), 'error');
 			}
+			
+			remove_action( 'phpmailer_init', array( __CLASS__, 'on_sending_add_plain_text_body' ));
+			
 		}
 		else {
 			$success = false;
@@ -1277,18 +1282,34 @@ class AgendaPartage_Newsletter {
 		
 		return $success;
 	 }
-	 /**
-	  * Retourne la newsletter en cours d'envoi d'email
-	  */
-	 public static function is_sending_email(){
-		 return self::$sending_email;
-	 }
-	 public static function content_is_empty($empty = null){
-		 if( $empty !== null)
+	/**
+	 * Retourne la newsletter en cours d'envoi d'email
+	 */
+	public static function is_sending_email(){
+		return self::$sending_email;
+	}
+	public static function content_is_empty($empty = null){
+		if( $empty !== null)
 			self::$content_is_empty = $empty;
 		return self::$content_is_empty;
-	 }
-	 
+	}
+	
+	/**
+	 * On sending mail, add plain text content
+	 */
+    public static function on_sending_add_plain_text_body( $phpmailer ) {
+		debug_log('on_sending_add_plain_text_body', $phpmailer->Body);
+        // don't run if sending plain text email already
+        // don't run if altbody is set
+        if( 'text/plain' === $phpmailer->ContentType || ! empty( $phpmailer->AltBody ) ) {
+            return;
+        }
+        $phpmailer->AltBody = self::get_plain_text( $phpmailer->Body );
+    }
+	private static function get_plain_text($html){
+		$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol))/', "\n$1", $html);
+		return htmlspecialchars_decode(wp_strip_all_tags($html));
+	}
 	 
 	 /**
 	  * Retourne les emails des abonnés pour un envoi ce jour et à qui l'envoi n'a pas encore été fait.
