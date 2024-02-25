@@ -22,9 +22,9 @@ class AgendaPartage_Forum_IMAP {
 		if( ! ($messages = self::get_imap_messages($forum)))
 			return false;
 		if( is_a($messages, 'WP_ERROR') )
-			return false;
+			return $messages;
 		if( count($messages) === 0 )
-			return false;
+			return true;
 		
 		$imap_server = get_post_meta($forum->ID, 'imap_server', true);
 		$imap_email = get_post_meta($forum->ID, 'imap_email', true);
@@ -43,13 +43,18 @@ class AgendaPartage_Forum_IMAP {
 				if( ($pos = strpos($user_name, '@')) !== false)
 					$user_name = substr( $user_name, 0, $pos);
 				
+				$dateTime = $message['date'];
+				$date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
+				$date_gmt = $dateTime->format('Y-m-d H:i:s');
+				
 				$commentdata = [
 					'comment_post_ID' => $page->ID,
 					'comment_author' => $user_name,
 					'comment_author_url' => 'mailto:' . $user_email,
 					'comment_author_email' => $user_email,
 					'comment_content' => self::get_imap_message_content($forum->ID, $message, $comment_parent),
-					'comment_date' => date(DATE_ATOM, $message['udate']),
+					'comment_date' => $date,
+					'comment_date_gmt' => $date_gmt,
 					'comment_parent' => $comment_parent,
 					'comment_agent' => $imap_email . '@' . $imap_server,
 					'comment_approved' => true,
@@ -63,7 +68,7 @@ class AgendaPartage_Forum_IMAP {
 						'from' => $message['from']->email,
 						'title' => trim($message['subject']),
 						'attachments' => $message['attachments'],
-						'import_date' => date(DATE_ATOM),
+						'import_date' => wp_date(DATE_ATOM),
 					],
 					'forum_id' => $forum->ID
 				];

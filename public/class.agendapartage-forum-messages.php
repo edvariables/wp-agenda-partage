@@ -432,7 +432,7 @@ class AgendaPartage_Forum_Messages {
 		$messages = self::get_week_comments($week);
 		
 		if(is_wp_error( $messages)){
-			$html = sprintf('<p class="alerte no-messages">%s</p>%s', __('Erreur lors de la recherche d\'messages.', AGDP_TAG), var_export($messages, true));
+			$html = sprintf('<p class="alerte no-messages">%s</p>%s', __('Erreur lors de la recherche de messages.', AGDP_TAG), var_export($messages, true));
 		}
 		elseif($messages){
 			$html = '';
@@ -440,8 +440,8 @@ class AgendaPartage_Forum_Messages {
 				$html .= sprintf('<p class="alerte no-messages">%s</p>', __('Aucun message trouvé', AGDP_TAG));
 			}
 			else {
-				foreach($messages as $event){
-					$html .= '<li>' . self::get_list_item_html($event, $options) . '</li>';
+				foreach($messages as $message){
+					$html .= '<li>' . self::get_list_item_html($message, $options) . '</li>';
 				}
 				
 				//Ce n'est plus nécessaire, les mois sont chargés complètement
@@ -490,7 +490,7 @@ class AgendaPartage_Forum_Messages {
 				.'<div class="titre">%s</div>'
 			.''
 			, str_replace(' mar ', ' mars ', strtolower(mysql2date( $format_date_debut, $date_debut)))
-			, date('H:i')
+			, date('H:i', strtotime($date_debut))
 			, htmlentities($value));
 		
 		$html .= '</div>';
