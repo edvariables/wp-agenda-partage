@@ -81,6 +81,14 @@ class AgendaPartage_Forum {
 		
 		$forum = self::get_forum($forum);
 		
+		try {
+			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-forum-imap.php");
+			AgendaPartage_Forum_IMAP::import_imap_messages($forum, $page);
+		}
+		catch(Exception $exception){
+			return $exception;
+		}
+		
 		add_filter('comment_form_defaults', array(__CLASS__, 'on_comment_text_before') );
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
@@ -90,13 +98,7 @@ class AgendaPartage_Forum {
 		// add_filter('comment_reply_link_args', array(__CLASS__, 'on_comment_reply_link_args'), 10, 3 );
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
 		
-		try {
-			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-forum-imap.php");
-			return AgendaPartage_Forum_IMAP::import_imap_messages($forum, $page);
-		}
-		catch(Exception $exception){
-			return $exception;
-		}
+		return true;
 	}
 	
 	/**

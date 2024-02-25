@@ -51,6 +51,9 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-forum.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Forum', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-forum-comments.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Forum_Comments', 'init' ) );
+
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-forum.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Forum', 'init' ) );
 
