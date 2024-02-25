@@ -221,7 +221,7 @@ class AgendaPartage_Forum_IMAP {
 		if( $user_email === $source_email )
 			return false;
 		//L'origine du mail est l'adresse d'envoi de newsletter de ce site
-		$source_email = AgendaPartage_Newsletter::get_mail_sender()
+		$source_email = AgendaPartage_Newsletter::get_mail_sender();
 		if( $user_email === $source_email )
 			return false;
 		return true;
