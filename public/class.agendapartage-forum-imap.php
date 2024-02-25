@@ -16,15 +16,14 @@ class AgendaPartage_Forum_IMAP {
 	 */
 	public static function import_imap_messages($forum, $page){
 		$forum = AgendaPartage_Forum::get_forum($forum);
-		if( ! $forum )
+		if( ! $forum ){
 			return false;
-		
-		if( ! ($messages = self::get_imap_messages($forum)))
-			return false;
+		}
+		if( ! ($messages = self::get_imap_messages($forum))){
+			return is_array($messages);
+		}
 		if( is_a($messages, 'WP_ERROR') )
 			return $messages;
-		if( count($messages) === 0 )
-			return true;
 		
 		$imap_server = get_post_meta($forum->ID, 'imap_server', true);
 		$imap_email = get_post_meta($forum->ID, 'imap_email', true);

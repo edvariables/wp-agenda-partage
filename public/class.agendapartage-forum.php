@@ -68,11 +68,14 @@ class AgendaPartage_Forum {
 	/**
 	 * Associe le forum et les commentaires de la page.
 	 * Fonction appelée par le shortcode [forum "nom du forum"]
+	 * Appelle la synchronisation IMAP.
 	 */
 	public static function init_page($forum, $page = false){
 		if( ! $page ){
-			if (!($page = self::get_page_of_forum( $forum )))
+			if (!($page = self::get_page_of_forum( $forum ))){
+				debug_log('init_page get_page_of_forum === FALSE', $forum);
 				return false;
+			}
 		}
 		elseif( is_int( $page ))
 			if (!($page = get_post($page)))

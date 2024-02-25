@@ -486,11 +486,12 @@ class AgendaPartage_Forum_Messages {
 		
 		$value = get_comment_meta($comment->comment_ID, 'title', true);
 		$html .= sprintf(
-				'<div class="date">%s à %s</div>'
+				'<div class="date">%s à %s (%s)</div>'
 				.'<div class="titre">%s</div>'
 			.''
 			, str_replace(' mar ', ' mars ', strtolower(mysql2date( $format_date_debut, $date_debut)))
 			, date('H:i', strtotime($date_debut))
+			, date_diff_text($date_debut)
 			, htmlentities($value));
 		
 		$html .= '</div>';
