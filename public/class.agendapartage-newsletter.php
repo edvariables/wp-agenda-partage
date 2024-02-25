@@ -1298,18 +1298,14 @@ class AgendaPartage_Newsletter {
 	 * On sending mail, add plain text content
 	 */
     public static function on_sending_add_plain_text_body( $phpmailer ) {
-		debug_log('on_sending_add_plain_text_body', $phpmailer->Body);
+		// debug_log('on_sending_add_plain_text_body', $phpmailer->Body);
         // don't run if sending plain text email already
         // don't run if altbody is set
         if( 'text/plain' === $phpmailer->ContentType || ! empty( $phpmailer->AltBody ) ) {
             return;
         }
-        $phpmailer->AltBody = self::get_plain_text( $phpmailer->Body );
+        $phpmailer->AltBody = get_plain_text( $phpmailer->Body );
     }
-	public static function get_plain_text($html){
-		$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol))/', "\n$1", $html);
-		return htmlspecialchars_decode(wp_strip_all_tags($html));
-	}
 	 
 	 /**
 	  * Retourne les emails des abonnés pour un envoi ce jour et à qui l'envoi n'a pas encore été fait.
