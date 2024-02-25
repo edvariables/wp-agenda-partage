@@ -1306,7 +1306,7 @@ class AgendaPartage_Newsletter {
         }
         $phpmailer->AltBody = self::get_plain_text( $phpmailer->Body );
     }
-	private static function get_plain_text($html){
+	public static function get_plain_text($html){
 		$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol))/', "\n$1", $html);
 		return htmlspecialchars_decode(wp_strip_all_tags($html));
 	}

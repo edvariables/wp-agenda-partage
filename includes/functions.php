@@ -155,6 +155,11 @@ function dateDiff($date1, $date2){
 		$intro = 'il y a ';
 	
 	$laps = dateDiff($now, $old_date);
+	
+	if( $laps['day'] > 0 && $laps['hour'] > 12 ){
+		$laps['day'] += 1;
+	}
+	
 	if( $laps['day'] )
 		$val = sprintf('%s%d jour%s', $intro, $laps['day'], $laps['day'] == 1 ? '' : 's' );
 	elseif( $laps['hour'] )
