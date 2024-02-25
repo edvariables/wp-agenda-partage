@@ -80,3 +80,5 @@ Publier Covoit dans Forum
 
 Subscription-content : ['new', 'two_weeks', 'two_months']
 
+newsletter forum :
+- prochaine date peut passer au jour suivant car aucun nouveau message alors qu'un import de dernière minute pourrait ajouter un message à diffuser.

@@ -315,7 +315,10 @@ class AgendaPartage_Forum_Messages {
 	*
 	*/
 	public static function get_list_for_email($forum, $content = '', $options = false){
-		AgendaPartage_Forum::init_page($forum);
+		$init = AgendaPartage_Forum::init_page($forum);
+		if( ! $init || is_a($init, 'Exception')){
+			debug_log('get_list_for_email', $init);
+		}
 		
 		if(!isset($options) || !is_array($options))
 			$options = array();
@@ -358,7 +361,7 @@ class AgendaPartage_Forum_Messages {
 	text-decoration: underline;
 	text-transform: uppercase;
 } 
-.agdp-agdpforummsgs-email .agdpevent .dates {
+.agdp-agdpforummsgs-email .agdpcomment .dates {
 	font-size: larger;
 	font-weight: bold;
 } 
