@@ -216,7 +216,12 @@ class AgendaPartage_Forum_IMAP {
 	}
 	
 	private static function user_email_approved( $user_email, $forum_id ) {
+		//L'origine du mail est l'adresse de la boite imap (bouclage)
 		$source_email = get_post_meta($forum_id, 'imap_email', true);
+		if( $user_email === $source_email )
+			return false;
+		//L'origine du mail est l'adresse d'envoi de newsletter de ce site
+		$source_email = AgendaPartage_Newsletter::get_mail_sender()
 		if( $user_email === $source_email )
 			return false;
 		return true;

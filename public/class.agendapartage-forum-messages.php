@@ -366,7 +366,7 @@ class AgendaPartage_Forum_Messages {
 	margin-left: 1em;
 	padding-top: 2em;
 }
-.agdp-agdpforummsgs-email div.titre, .agdp-agdpforummsgs-email div.localisation, .agdp-agdpforummsgs-email div.ev-cities {
+.agdp-agdpforummsgs-email div.titre {
 	font-weight: bold;
 }
 .agdp-agdpforummsgs-email i {
@@ -395,8 +395,10 @@ class AgendaPartage_Forum_Messages {
 		foreach([
 			'agdp-agdpforummsgs'=> 'aevs'
 			, 'agdpforummsgs'=> 'evs'
-			, 'agdpevent-'=> 'ev-'
-			, 'agdpevent '=> 'ev '
+			, 'agdpcomment-'=> 'agc-'
+			, 'agdpcomment '=> 'agc '
+			, 'comment-edit'=> 'c-e '
+			, 'created-since'=> 'cr-s '
 			, 'toggle-trigger' => 'tgt'
 			, 'toggle-container' => 'tgc'
 			
@@ -410,7 +412,7 @@ class AgendaPartage_Forum_Messages {
 		
 		if(false) '{{';//bugg notepad++ functions list
 		foreach([
-			'/\sagdpevent="\{[^\}]*\}"/' => '',
+			'/\sagdpcomment="\{[^\}]*\}"/' => '',
 			'/\sid="\w*"/' => '',
 			'/([\}\>\;]\s)\s+/m' => '$1'
 			] as $search=>$replace)
