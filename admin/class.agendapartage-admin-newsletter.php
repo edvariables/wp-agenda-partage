@@ -166,47 +166,26 @@ class AgendaPartage_Admin_Newsletter {
 		if( is_network_admin())
 			return;
 		
-		$newsletter = AgendaPartage_Newsletter::get_newsletter();
-		if( ! $newsletter )
-			return;
-		$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
-		
-		/** En attente d'envoi **/	
-		foreach(['aujourd\'hui' => 0, 'demain' => strtotime(wp_date('Y-m-d') . ' + 1 day')]
-			as $date_name => $date){
-			$subscribers = AgendaPartage_Newsletter::get_today_subscribers($newsletter, $date);
-			// debug_log($subscribers);
-			if($subscribers){
-				echo sprintf('<div><h3 class="%s">%d abonné.e(s) en attente d\'envoi <u>%s</u></h3></div>'
-					, $date === 0 ? 'alert' : 'info'
-					, count($subscribers)
-					, $date_name
-				);
+		foreach(AgendaPartage_Newsletter::get_active_newsletters() as $newsletter){
+			$periods = AgendaPartage_Newsletter::subscription_periods($newsletter);
+			
+			/** En attente d'envoi **/	
+			foreach(['aujourd\'hui' => 0, 'demain' => strtotime(wp_date('Y-m-d') . ' + 1 day')]
+				as $date_name => $date){
+				$subscribers = AgendaPartage_Newsletter::get_today_subscribers($newsletter, $date);
+				// debug_log($subscribers);
+				if($subscribers){
+					$post_title = preg_replace('/\(\[.*\]\)\s?/', '', $newsletter->post_title);
+					echo sprintf('<div><h3 class="%s">&nbsp;<a href="/wp-admin/post.php?post=%s&action=edit">%s</a><br>&nbsp;&nbsp;%d abonné.e(s) en attente d\'envoi <u>%s</u></h3></div>'
+						, $date === 0 ? 'alert' : 'info'
+						, $newsletter->ID
+						, $post_title
+						, count($subscribers)
+						, $date_name
+					);
+				}
 			}
 		}
-		
-		?><ul><?php
-		/* $crons = _get_cron_array();
-		foreach($crons as $cron_time => $cron_data){
-			//;
-			echo '<li>';
-			?><header class="entry-header"><?php 
-				echo sprintf('<h3 class="entry-title">%s</h3><pre>%s</pre>', wp_date('d/m/Y H:i:s', $cron_time), var_export($cron_data, true));
-			?></header><?php
-			echo '</li>';
-			
-		}
-		$crons = wp_get_schedules();
-		foreach($crons as $cron_name => $cron_data){
-			//;
-			echo '<li>';
-			?><header class="entry-header"><?php 
-				echo sprintf('<h3 class="entry-title">%s</h3><pre>%s</pre>', $cron_name, var_export($cron_data, true));
-			?></header><?php
-			echo '</li>';
-			
-		} */
-		?></ul><?php
 	} 
 }
 ?>
