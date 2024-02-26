@@ -218,7 +218,7 @@ function decode_spamcause_unrot($pair, $pos, $key = false){
 /**
  * Retourne le texte correspondant au html, sans balise html.
  */
-function get_plain_text($html){
+function html_to_plain_text($html){
 	$html = preg_replace('/^.*\<html.*\>([\s\S]*)\<\/html\>.*$/i', '$1', $html);
 	$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol|br))/', "\n$1", $html);
 	$html = str_replace('&nbsp;', ' ', $html);

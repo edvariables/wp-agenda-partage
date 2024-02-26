@@ -181,7 +181,7 @@ class AgendaPartage_Forum_IMAP {
 	private static function get_imap_message_content($forum_id, $message, $comment_parent){
 		$content = ' '
 				. empty($message['text_plain']) 
-					? get_plain_text( $message['text_html'] )
+					? html_to_plain_text( $message['text_html'] )
 					: $message['text_plain'];
 		
 		if( $clear_signatures = get_post_meta($forum_id, 'clear_signature', true))

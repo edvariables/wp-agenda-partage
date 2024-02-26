@@ -310,22 +310,37 @@ class AgendaPartage_Newsletter {
 	}
 	
 	/**
+	 * Retourne la prochaine date d'envoi pour chaque période.
+	 */
+	public static function get_periods_next_dates($newsletter = false, $after_date = false){
+		$newsletter = self::get_newsletter($newsletter);
+		if( ! $newsletter )
+			return false;
+		$periods_next_dates = [];
+		$min_date = 0;
+		foreach(self::subscription_periods($newsletter) as $period=>$period_name)
+			if( $period && $period !== 'none'){
+				$period_next_date = self::get_next_date($period, $newsletter, $after_date);
+				$periods_next_dates[$period] = $period_next_date;
+				if( $min_date === 0 )
+					$min_date = $period_next_date;
+				else
+					$min_date = min( $min_date, $period_next_date);
+			}
+		$periods_next_dates['*'] = $min_date;
+		return $periods_next_dates;
+	}
+	/**
 	 * Retourne la prochaine date d'envoi pour une période donnée
 	 */
 	public static function get_next_date($period = false, $newsletter = false, $after_date = false){
 		$newsletter = self::get_newsletter($newsletter);
 		if( ! $newsletter )
 			return false;
-		if( ! $period){
+		if( ! $period ){
 			$min_date = 0;
-			foreach(self::subscription_periods($newsletter) as $period=>$period_name)
-				if( $period && $period !== 'none'){
-					if( $min_date === 0 )
-						$min_date = self::get_next_date($period, $newsletter, $after_date);
-					else
-						$min_date = min( $min_date, self::get_next_date($period, $newsletter, $after_date));
-				}
-			return $min_date;
+			$periods_next_dates = self::get_periods_next_dates($newsletter, $after_date);
+			return $periods_next_dates['*'];
 		}
 		
 		if( $after_date )
@@ -338,8 +353,6 @@ class AgendaPartage_Newsletter {
 			$value = get_post_meta($newsletter->ID, $meta_name, true);
 			if($value){
 				$value = strtotime($value);
-				//TODO 
-				// $value respecte les règles ci-dessous ?
 				if($value >= $today)
 					return $value;
 			}
@@ -965,10 +978,14 @@ class AgendaPartage_Newsletter {
 			$cron_time = wp_next_scheduled( self::cron_hook );
 		if( $cron_time === false )
 			return '(cron inactif)'; 
-		else
+		else{
+			$delay = $cron_time - current_time('timestamp');
+			if( $delay < 0 )
+				$delay = 0;
 			return sprintf('Prochaine évaluation dans %s - %s'
-					, wp_date('H:i:s', $cron_time - current_time('timestamp'))
+					, wp_date('H:i:s', $delay)
 					, wp_date('d/m/Y H:i:s', $cron_time)); 
+		}
 	}
 	
 	/**
@@ -1036,18 +1053,19 @@ class AgendaPartage_Newsletter {
 		$newsletters_data = [];
 		$next_dates = [];
 		foreach($newsletters as $newsletter){
-			$next_date = self::get_next_date(false, $newsletter);
-			//TODO un mailing qui traine au delà de minuit
+			$periods_next_dates = self::get_periods_next_dates($newsletter);
+			$next_date = $periods_next_dates['*'];
 			if( $next_date > $today ){
-				$next_dates[] = wp_date('d/m/Y', $next_date) . ' ';
+				$next_dates[] = sprintf('%s : %s', $newsletter->post_title, wp_date('d/m/Y', $next_date));
 				continue;
 			}
 			$next_hour = self::get_mailing_hour($newsletter);
 			if( $next_hour > $hour ){
 				if(count($next_dates))
-					$next_dates[count($next_dates) - 1] .= $next_hour . 'H (il est ' . $hour . 'H)';
+					$next_dates[count($next_dates) - 1] .= ' ' . $next_hour . 'H'
+															. ($next_date == $today ? ' (il est ' . $hour . 'H)' : '');
 				else
-					$next_dates[] = $next_hour . 'H (il est ' . $hour . 'H)';
+					$next_dates[] = sprintf('%s : %s', $newsletter->post_title, $next_hour . 'H (il est ' . $hour . 'H)');
 				continue;
 			}
 			$subscribers = self::get_today_subscribers($newsletter, $today);
@@ -1059,15 +1077,17 @@ class AgendaPartage_Newsletter {
 				];
 			}
 			if( ! $subscribers ) {
-				$periods = self::subscription_periods($newsletter);
-				foreach($periods as $period => $period_name){
-					if($period === 'none')
+				foreach($periods_next_dates as $period => $next_date){
+					if($period === '*')
 						continue;
-					self::$cron_state .= sprintf(' | Prochaine date (%s) passe de %s', $period, $next_date);
-					$next_date = self::get_next_date($period, $newsletter, $today);
-					self::$cron_state .= sprintf(' à %s', $next_date);
-					$next_dates[] = wp_date('d/m/Y', $next_date) . ' ' . $next_hour . 'H';
-					self::set_next_date($period, $newsletter, $next_date);
+					//On ne change la date que le lendemain
+					if( $next_date < $today ){
+						self::$cron_state .= sprintf(' | Prochaine date (%s) passe de %s', $period, $next_date);
+						$next_date = self::get_next_date($period, $newsletter, $today);
+						self::$cron_state .= sprintf(' à %s', $next_date);
+						$next_dates[] = wp_date('d/m/Y', $next_date) . ' ' . $next_hour . 'H';
+						self::set_next_date($period, $newsletter, $next_date);
+					}
 				}
 			}
 		}
@@ -1304,7 +1324,7 @@ class AgendaPartage_Newsletter {
         if( 'text/plain' === $phpmailer->ContentType || ! empty( $phpmailer->AltBody ) ) {
             return;
         }
-        $phpmailer->AltBody = get_plain_text( $phpmailer->Body );
+        $phpmailer->AltBody = html_to_plain_text( $phpmailer->Body );
     }
 	 
 	 /**
@@ -1360,7 +1380,7 @@ class AgendaPartage_Newsletter {
 			. "\n INNER JOIN {$blog_prefix}postmeta next_date"
 				. "\n ON next_date.post_id = {$newsletter_id}"
 				. "\n AND next_date.meta_key = CONCAT( '{$meta_next_date}', subscription.meta_value)"
-				. "\n AND next_date.meta_value = '{$today_mysql}'"
+				. "\n AND next_date.meta_value <= '{$today_mysql}'"
 			. "\n LEFT JOIN {$user_prefix}usermeta mailing"
 				. "\n ON user.ID = mailing.user_id"
 				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"

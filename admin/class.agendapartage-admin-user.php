@@ -25,7 +25,7 @@ class AgendaPartage_Admin_User {
 	 */
 	public static function on_wp_pre_insert_user_data($data, $update, $user_id, $userdata){
 		$excluded = array('wpcore', 'wp-blog', 'wp-user');
-		if( in_array($data['user_nicename'],$excluded) || in_array($data['user_login'], $excluded)){
+		if( in_array($data['user_nicename'],$excluded) || (isset($data['user_login']) && in_array($data['user_login'], $excluded))){
 			if(empty($data['user_activation_key'])){
 				debug_log('on_wp_pre_insert_user_data : == bastard',$data, $update, $user_id, $userdata);
 				return false;
