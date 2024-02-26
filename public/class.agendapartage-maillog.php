@@ -61,7 +61,10 @@ class AgendaPartage_Maillog {
 		foreach($meta_input['headers'] as $header){
 			$matches = [];
 			if(preg_match_all('/^(from|bcc|cc|reply\-to)\:(.*)$/', strtolower($header), $matches)){
-				$meta_input[$matches[1][0]] = trim($matches[2][0], " \r\n;");
+				if( ! empty($meta_input[$matches[1][0]]) )
+					$meta_input[$matches[1][0]] .= ', ' . trim($matches[2][0], " \r\n;,");
+				else
+					$meta_input[$matches[1][0]] = trim($matches[2][0], " \r\n;,");
 			}
 		}
 		
