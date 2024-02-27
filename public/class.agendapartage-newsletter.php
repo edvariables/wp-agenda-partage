@@ -1037,8 +1037,6 @@ class AgendaPartage_Newsletter {
 			return '(cron inactif)'; 
 		else{
 			$delay = $cron_time - current_time('timestamp');
-			if( $delay < 0 )
-				$delay = 0;
 			return sprintf('Prochaine évaluation dans %s - %s'
 					, wp_date('H:i:s', $delay)	
 					, wp_date('d/m/Y H:i:s', $cron_time)); 
