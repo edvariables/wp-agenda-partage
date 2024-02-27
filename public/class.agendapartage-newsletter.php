@@ -789,20 +789,38 @@ class AgendaPartage_Newsletter {
 	/**
 	 * Ajoute ou met à jour le meta value de l'utilisateur de l'état de l'envoi
 	 */
-	public static function set_user_mailing_status($newsletter, $user_id, $status){
+	public static function set_user_mailing_status($newsletter, $user_id, $status, $mailing_status_meta_name = false){
+		if(is_array($user_id)){
+			$mailing_status_meta_name = self::get_mailing_meta_key($newsletter) . '-status';
+			foreach($user_id as $single_user_id){
+				if( is_a($single_user_id, 'stdClass') )
+					$single_user_id = $single_user_id->ID;
+				self::set_user_mailing_status($newsletter, $single_user_id, $status, $mailing_status_meta_name);
+			}
+			return;
+		}
+			
 		if(is_email($user_id))
 			$user_id = email_exists($user_id);
-		$mailing_status_meta_name = self::get_mailing_meta_key($newsletter) . '-status';
+		if( ! $mailing_status_meta_name )
+			$mailing_status_meta_name = self::get_mailing_meta_key($newsletter) . '-status';
 		update_user_meta($user_id, $mailing_status_meta_name, $status);
 				
 	}
 	/**
 	 * Supprime le meta value de l'utilisateur de l'état de l'envoi
 	 */
-	public static function delete_user_mailing_status($newsletter, $user_id){
+	public static function delete_user_mailing_status($newsletter, $user_id, $mailing_status_meta_name = false){
+		if(is_array($user_id)){
+			$mailing_status_meta_name = self::get_mailing_meta_key($newsletter) . '-status';
+			foreach($user_id as $single_user_id)
+				self::delete_user_mailing_status($newsletter, $single_user_id, $status, $mailing_status_meta_name);
+			return;
+		}
 		if(is_email($user_id))
 			$user_id = email_exists($user_id);
-		$mailing_status_meta_name = self::get_mailing_meta_key($newsletter) . '-status';
+		if( ! $mailing_status_meta_name )
+			$mailing_status_meta_name = self::get_mailing_meta_key($newsletter) . '-status';
 		delete_user_meta($user_id, $mailing_status_meta_name);
 				
 	}
@@ -1138,7 +1156,7 @@ class AgendaPartage_Newsletter {
 				self::$cron_state .= sprintf(' | mail #%d : %d destinataire(s) %s', $mails_counter, count($user_emails), implode(', ', array_keys( $user_emails )));
 				
 				if( ! $simulate){
-					self::set_user_mailing_status($newsletter, $subscriber->ID, 'prepared');
+					self::set_user_mailing_status($newsletter, $user_emails, 'prepared');
 					$success = self::send_email($newsletter, array_keys( $user_emails ));
 					if( ! $success && self::content_is_empty() )
 						$success = true;
@@ -1146,7 +1164,7 @@ class AgendaPartage_Newsletter {
 				
 				foreach($user_emails as $user_email => $subscriber){
 					if( ! $simulate ){
-						update_user_meta($subscriber->ID, $mailing_meta_name, date('Y-m-d H:i:s'));
+						update_user_meta($subscriber->ID, $mailing_meta_name, wp_date('Y-m-d H:i:s'));
 					}
 					$subscribers_done[] = $subscriber->ID;
 				}
@@ -1421,7 +1439,14 @@ class AgendaPartage_Newsletter {
 			foreach($mail_data['headers'] as $header){
 				$matches = [];
 				if(preg_match_all('/^(from|bcc|cc|reply\-to)\:(.*)$/', strtolower($header), $matches)){
-					$mail_data[$matches[1][0]] = trim($matches[2][0]);
+				if( ! empty($mail_data[$matches[1][0]]) ){
+					if( is_array($mail_data[$matches[1][0]]) )
+						$mail_data[$matches[1][0]][] = trim($matches[2][0], " \r\n;,");
+					else
+						$mail_data[$matches[1][0]] .= ',' . trim($matches[2][0], " \r\n;,");
+				}
+				else
+					$mail_data[$matches[1][0]] = trim($matches[2][0], " \r\n;,");
 				}
 			}
 			
