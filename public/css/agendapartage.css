@@ -29,6 +29,11 @@ p.info, div.info {
 , .masquer
 { display: none; }
 
+code span.dashicons {
+  padding-top: 4px;
+  margin-right: 3px;
+}
+
 .agdp-error-light {
   font-size: smaller;
   color: gray;
