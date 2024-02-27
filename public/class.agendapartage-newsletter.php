@@ -31,6 +31,12 @@ class AgendaPartage_Newsletter {
 		if ( ! self::$initiated ) {
 			self::$initiated = true;
 
+			define('ALL_PERIODS', '*');
+			define('PERIOD_DAYLY', 'd');
+			define('PERIOD_WEEKLY', 'w');
+			define('PERIOD_BIWEEKLY', '2w');
+			define('PERIOD_MONTHLY', 'm');
+			
 			self::init_hooks();
 		}
 	}
@@ -327,7 +333,7 @@ class AgendaPartage_Newsletter {
 				else
 					$min_date = min( $min_date, $period_next_date);
 			}
-		$periods_next_dates['*'] = $min_date;
+		$periods_next_dates[ALL_PERIODS] = $min_date;
 		return $periods_next_dates;
 	}
 	/**
@@ -340,7 +346,7 @@ class AgendaPartage_Newsletter {
 		if( ! $period ){
 			$min_date = 0;
 			$periods_next_dates = self::get_periods_next_dates($newsletter, $after_date);
-			return $periods_next_dates['*'];
+			return $periods_next_dates[ALL_PERIODS];
 		}
 		
 		if( $after_date )
@@ -360,10 +366,10 @@ class AgendaPartage_Newsletter {
 		
 		switch($period){
 				
-			case 'd':
+			case PERIOD_DAYLY:
 				return $today;
 				
-			case 'm':
+			case PERIOD_MONTHLY:
 				$month_day = get_post_meta($newsletter->ID, 'mailing-month-day', true);
 				if( $month_day === '')
 					return $today;
@@ -378,7 +384,7 @@ class AgendaPartage_Newsletter {
 				}
 				return strtotime(wp_date('Y-m-' . $month_day, $today));
 				
-			case '2w':
+			case PERIOD_BIWEEKLY:
 				//TODO et le 28 ?
 				$today_month_day = wp_date('d', $today);
 				$half2_month_day = get_post_meta($newsletter->ID, 'mailing-2W2-day', true);
@@ -393,7 +399,7 @@ class AgendaPartage_Newsletter {
 					return strtotime(wp_date('Y-m-' . $half2_month_day, $today));
 				return strtotime(wp_date('Y-m-' . $half1_month_day, $today));
 				
-			case 'w':
+			case PERIOD_WEEKLY:
 				$week_day = get_post_meta($newsletter->ID, 'mailing-week-day', true);
 				if( $week_day === '')
 					return $today;
@@ -983,7 +989,7 @@ class AgendaPartage_Newsletter {
 			if( $delay < 0 )
 				$delay = 0;
 			return sprintf('Prochaine évaluation dans %s - %s'
-					, wp_date('H:i:s', $delay)
+					, wp_date('H:i:s', $delay)	
 					, wp_date('d/m/Y H:i:s', $cron_time)); 
 		}
 	}
@@ -1054,7 +1060,7 @@ class AgendaPartage_Newsletter {
 		$next_dates = [];
 		foreach($newsletters as $newsletter){
 			$periods_next_dates = self::get_periods_next_dates($newsletter);
-			$next_date = $periods_next_dates['*'];
+			$next_date = $periods_next_dates[ALL_PERIODS];
 			if( $next_date > $today ){
 				$next_dates[] = sprintf('%s : %s', $newsletter->post_title, wp_date('d/m/Y', $next_date));
 				continue;
@@ -1078,10 +1084,10 @@ class AgendaPartage_Newsletter {
 			}
 			if( ! $subscribers ) {
 				foreach($periods_next_dates as $period => $next_date){
-					if($period === '*')
+					if($period === ALL_PERIODS)
 						continue;
-					//On ne change la date que le lendemain
-					if( $next_date < $today ){
+					//Pour les envois quotidiens, on ne change la date que le lendemain
+					if( $period !== PERIOD_DAYLY || $next_date < $today ){
 						self::$cron_state .= sprintf(' | Prochaine date (%s) passe de %s', $period, $next_date);
 						$next_date = self::get_next_date($period, $newsletter, $today);
 						self::$cron_state .= sprintf(' à %s', $next_date);
