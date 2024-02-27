@@ -22,6 +22,7 @@ class AgendaPartage_Newsletter {
 
 	private static $initiated = false;
 	private static $sending_email = false;
+	private static $sending_email_to = false;
 	private static $sending_email_data = false;
 	private static $content_is_empty = false;
 
@@ -825,7 +826,7 @@ class AgendaPartage_Newsletter {
 				
 	}
 	/**
-	 * Retourne l'historique
+	 * Retourne pour un utilisateur l'historique d'envoi d'une newsletter 
 	 */
 	public static function get_user_mailings($email, $newsletter_id = false){
 		
@@ -851,6 +852,38 @@ class AgendaPartage_Newsletter {
 						= is_array($meta_value) ? implode(', ', $meta_value) : $meta_value;
 			}
 		return array_reverse($history, true);//TODO sort
+	}
+	/**
+	 * Retourne pour un ou plusieurs utilisateurs la date de dernier envoi.
+	 */
+	public static function get_user_mailing_date($email, $newsletter, $min_date = false){
+		
+		if( is_array($email) ){
+			$users_min_date = false;
+			foreach($email as $single_email){
+				$date = self::get_user_mailing_date($single_email, $newsletter);
+				if ( $date !== false
+				&& ( $users_min_date === false || $date < $users_min_date )
+				&& ( ! $min_date || $date >= $min_date )
+				)
+					$users_min_date = $date;
+			}
+			return $users_min_date;
+		}
+		
+		$user_id = email_exists( $email );
+		if( ! $user_id)
+			return false;
+		
+		$meta_key = sprintf('%s_mailing_%d_%d', self::post_type, get_current_blog_id(), $newsletter->ID);
+		
+		$date = get_user_meta($user_id, $meta_key, true);
+		
+		if( ! $date )
+			return false;
+		if( ! $min_date || $date >= $min_date )
+			return $date;
+		return $min_date;
 	}
 	
 	/***********************************************************/
@@ -1222,17 +1255,19 @@ class AgendaPartage_Newsletter {
 		$newsletter = self::get_newsletter($newsletter);
 		
 		self::$sending_email = $newsletter;
+		self::$sending_email_to = $emails;
 		
 		$subject = get_the_title($newsletter);
 		if( ! $subject){
 			$subject = $newsletter->post_title;
 			if( ! $subject){
 				// debug_log($newsletter);
+				self::$sending_email = self::$sending_email_to = false;
 				return false;
 			}
 		}
 		
-		$subject = do_shortcode( $subject );
+		$subject = wp_strip_all_tags( do_shortcode( $subject ) );
 		
 		if( self::get_newsletter_posts_post_type( $newsletter) === AgendaPartage_Covoiturage::post_type )
 			$subject = sprintf('[%s]', $subject);
@@ -1245,6 +1280,7 @@ class AgendaPartage_Newsletter {
 			
 			$message = '<!DOCTYPE html><html>'
 					. '<head>'
+						. '<title>' . $subject . '</title>'
 						. '<meta name="viewport" content="width=device-width">'
 						. '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
 	/* 					. '<style>body {
@@ -1322,7 +1358,7 @@ class AgendaPartage_Newsletter {
 				AgendaPartage_Admin::add_admin_notice(sprintf("Le contenu est vide (aucun élément). Le mail n'a pas été envoyé."), 'warning');
 		}
 		
-		self::$sending_email = false;
+		self::$sending_email = self::$sending_email_to = false;
 		
 		return $success;
 	 }
@@ -1331,6 +1367,9 @@ class AgendaPartage_Newsletter {
 	 */
 	public static function is_sending_email(){
 		return self::$sending_email;
+	}
+	public static function is_sending_email_to(){
+		return self::$sending_email_to;
 	}
 	public static function content_is_empty($empty = null){
 		if( $empty !== null)
@@ -1412,7 +1451,7 @@ class AgendaPartage_Newsletter {
 				. ( $posts_last_change ? "\n OR mailing.meta_value > '{$posts_last_change}'" : '')
 				. ')'
 			. "\n WHERE mailing.meta_key IS NULL"
-			. "\n ORDER BY user.user_email";
+			. "\n ORDER BY mailing.meta_value ASC, user.ID DESC";
 // debug_log($sql);
 
 		$dbresults = $wpdb->get_results($sql);

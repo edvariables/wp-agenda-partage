@@ -119,14 +119,22 @@ class AgendaPartage_Forum_Messages {
 	}
 	
 	/**
-	 * Recherche des messages d'un mois
+	 * Recherche des messages d'une semaine donnée
 	 */
-	public static function get_week_comments($year_week){
+	public static function get_week_comments($year_week, $options = false){
 		if( ! $year_week) $year_week = date('Y-w');
 		
 		$dates = get_week_dates(substr($year_week, 0,4), substr($year_week, 5,2));
 		$date_min = $dates['start'];
 		$date_max = $dates['end'];
+		
+		if( is_array($options) && ! empty($options['since']) )
+			$since_date = $options['since'];
+		else
+			$since_date = false;
+		if( $since_date
+		 && $since_date > $date_min )
+			$date_min = $since_date;
 		
 		$query = array(
 			'date_query' => [
@@ -172,10 +180,19 @@ class AgendaPartage_Forum_Messages {
 	 * Recherche de tous les mois contenant des messages mais aussi les mois sans.
 	 * Return array($week => $count)
 	 */
-	public static function get_comments_weeks( $page ){
+	public static function get_comments_weeks( $page, $options = false ){
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$status_meta_alias = 'commmeta_status';
+		
+		if( is_array($options) && ! empty($options['since']) )
+			$since_date = $options['since'];
+		else
+			$since_date = false;
+		if( $since_date )
+			$since_date = "'" . $since_date . "'";
+		else
+			$since_date = 'DATE_SUB(NOW(), INTERVAL 1 MONTH)';
 		
 		//Find this in other blog 
 		$sql = "SELECT DISTINCT DATE_FORMAT(comment_date, '%Y') as year
@@ -186,7 +203,7 @@ class AgendaPartage_Forum_Messages {
 					ON comments.comment_ID = {$status_meta_alias}.comment_id
 					AND {$status_meta_alias}.meta_key = 'status'
 				WHERE comment_post_ID = {$page->ID}
-					AND comment_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
+					AND comment_date > {$since_date}
 					AND comment_type = 'comment'
 					AND comment_approved = '1'
 					AND ({$status_meta_alias}.meta_value IS NULL OR {$status_meta_alias}.meta_value != 'ended')
@@ -242,7 +259,7 @@ class AgendaPartage_Forum_Messages {
 		if( $options['mode'] == 'email' ){
 		}
 		
-		$weeks = self::get_comments_weeks( $page );
+		$weeks = self::get_comments_weeks( $page, $options );
 		
 		if($options['weeks'] > 0 && count($weeks) > $options['weeks'])
 			$weeks = array_slice($weeks, 0, $options['weeks'], true);
@@ -284,15 +301,21 @@ class AgendaPartage_Forum_Messages {
 			
 			$week_label = sprintf('du %s au %s', $week_dates['start'], $week_dates['end']);
 			
-			$html .= sprintf(
-				'<li><div class="week-title toggle-trigger %s %s">%s <span class="nb-items">(%d)</span></div>
-				<ul id="week-%s" class="agdpforummsgs-week toggle-container">'
-				, $week_messages_count === 0 ? 'no-items' : ''
-				, $week_messages_count ? 'active' : ''
-				, $week_label
-				, $week_messages_count
-				, $week
-			);
+			if( $options['mode'] == 'email' )
+				$html .= sprintf(
+					'<li><div class="week-title toggle-trigger active"></div><ul id="week-%s" class="agdpforummsgs-week toggle-container">'
+					, $week
+				);
+			else
+				$html .= sprintf(
+					'<li><div class="week-title toggle-trigger %s %s">%s <span class="nb-items">(%d)</span></div>
+					<ul id="week-%s" class="agdpforummsgs-week toggle-container">'
+					, $week_messages_count === 0 ? 'no-items' : ''
+					, $week_messages_count ? 'active' : ''
+					, $week_label
+					, $week_messages_count
+					, $week
+				);
 			if( $week_messages_count){
 				$html .= self::get_week_comments_list_html( $week, $options );
 			}
@@ -307,6 +330,7 @@ class AgendaPartage_Forum_Messages {
 		$html .= '</ul>';
 		
 		$html .= '</div>' . $content;
+		
 		return $html;
 	}
 	
@@ -324,10 +348,19 @@ class AgendaPartage_Forum_Messages {
 			$options = array();
 		$options = array_merge(
 			array(
-				'weeks' => date('d') < 10 ? 1 : 2, //à partir du 10, on met le mois suivant aussi
+				'weeks' => 2, 
 				'mode' => 'email'
 			), $options);
-				
+		
+		// Limite les messages à ceux publiés depuis le dernier envoi aux destinataires
+		if( ( $newsletter = AgendaPartage_Newsletter::is_sending_email() )
+		&& ( $newsletter_to_emails = AgendaPartage_Newsletter::is_sending_email_to() )){
+			//Jamais plus d'un mois
+			$min_date = date('Y-m-d',strtotime("-1 Month"));
+			$since_date = AgendaPartage_Newsletter::get_user_mailing_date( $newsletter_to_emails, $newsletter, $min_date );
+			if( $since_date )
+				$options['since'] = $since_date;
+		}
 		$css = '<style>'
 			. '
 .entry-content {
@@ -429,7 +462,7 @@ class AgendaPartage_Forum_Messages {
 	*/
 	public static function get_week_comments_list_html($week, $options = false){
 		
-		$messages = self::get_week_comments($week);
+		$messages = self::get_week_comments($week, $options);
 		
 		if(is_wp_error( $messages)){
 			$html = sprintf('<p class="alerte no-messages">%s</p>%s', __('Erreur lors de la recherche de messages.', AGDP_TAG), var_export($messages, true));
