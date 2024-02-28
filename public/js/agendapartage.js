@@ -109,6 +109,13 @@ jQuery( function( $ ) {
 					$arrivee.val(depart);
 				});
 				
+				/** Covoiturage : cov-periodique swappe des zones de saisie **/
+				$form.on('change', 'input[name="cov-periodique"]', function(e) {
+					var isPeriodique = this.value == '1';
+					$form.toggleClass('is-cov-periodique', isPeriodique);
+				})
+					.find('input[name="cov-periodique"]:checked').change();
+				
 				
 			});
 		}).trigger('wpcf7_form_fields-init');

@@ -121,7 +121,7 @@ class AgendaPartage_Covoiturages {
 	 * Recherche des covoiturages d'une semaine
 	 * $year_week : yyyy-ww
 	 */
-	public static function get_month_posts($year_week){
+	public static function get_week_posts($year_week){
 		if( ! $year_week) $year_week = date('Y-w');
 		
 		$dates = get_week_dates(substr($year_week, 0,4), substr($year_week, 5,2));
@@ -131,22 +131,61 @@ class AgendaPartage_Covoiturages {
 		$query = array(
 			'meta_query' => [
 				'relation' => 'AND',
-				[ [
-					'key' => 'cov-date-debut',
-					'value' => $date_min,
-					'compare' => '>=',
-					'type' => 'DATE',
-				],
-				'cov-date-debut' => [
-					'key' => 'cov-date-debut',
-					'value' => $date_max,
-					'compare' => '<=',
-					'type' => 'DATE',
-				] ]
+				[	[
+						'key' => 'cov-date-debut',
+						'value' => $date_min,
+						'compare' => '>=',
+						'type' => 'DATE',
+					],
+					'cov-date-debut' => [
+						'key' => 'cov-date-debut',
+						'value' => $date_max,
+						'compare' => '<=',
+						'type' => 'DATE',
+					],
+					'cov-periodique' => [
+						'key' => 'cov-periodique',
+						'value' => '1',
+						'compare' => '!='
+				]	]	
 			],
 			'orderby' => [
 				'cov-date-debut' => 'ASC',
 				'cov-heure-debut' => 'ASC',
+			],
+			'nopaging' => true
+			
+		);
+		
+		$posts = self::get_posts($query, self::get_filters_query(false));
+		
+		return $posts;
+    }
+	
+	/**
+	 * Recherche des covoiturages périodiques
+	 */
+	public static function get_periodique_posts(){
+		
+		$date_min = date('Y-m-d');
+		
+		$query = array(
+			'meta_query' => [
+				'relation' => 'AND',
+				[	[
+						'key' => 'cov-date-debut',
+						'value' => $date_min,
+						'compare' => '>=',
+						'type' => 'DATE',
+					],
+					'cov-periodique' => [
+						'key' => 'cov-periodique',
+						'value' => '1',
+						'compare' => '='
+				]	]	
+			],
+			'orderby' => [
+				'post_date' => 'DESC',
 			],
 			'nopaging' => true
 			
@@ -200,21 +239,25 @@ class AgendaPartage_Covoiturages {
 	 * Recherche de toutes les semaines contenant des covoiturages mais aussi les semaines sans.
 	 * Return array($year-$semaine => $count)
 	 */
-	public static function get_posts_months(){
+	public static function get_posts_weeks(){
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		
 		$sql_filters = self::get_filters_query(true);
 		
-		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year
-				/*, DATE_FORMAT(meta.meta_value, '%m') as month*/
-				, DATE_FORMAT(meta.meta_value, '%u') as week
-				, COUNT(post_id) as count
+		$sql = "SELECT DISTINCT DATE_FORMAT(meta_date.meta_value, '%Y') as year
+				/*, DATE_FORMAT(meta_date.meta_value, '%m') as month*/
+				, DATE_FORMAT(meta_date.meta_value, '%u') as week
+				, COUNT(posts.ID) as count
 				FROM {$blog_prefix}posts posts
-				INNER JOIN {$blog_prefix}postmeta meta
-					ON posts.ID = meta.post_id
-					AND meta.meta_key = 'cov-date-debut'
-					AND meta.meta_value >= CURDATE()
+				INNER JOIN {$blog_prefix}postmeta meta_date
+					ON posts.ID = meta_date.post_id
+					AND meta_date.meta_key = 'cov-date-debut'
+					AND meta_date.meta_value >= CURDATE()
+				INNER JOIN {$blog_prefix}postmeta meta_periodique
+					ON posts.ID = meta_periodique.post_id
+					AND meta_periodique.meta_key = 'cov-periodique'
+					AND meta_periodique.meta_value = 0
 				WHERE posts.post_status = 'publish'
 					AND posts.post_type = '". AgendaPartage_Covoiturage::post_type ."'
 		";
@@ -225,7 +268,7 @@ class AgendaPartage_Covoiturages {
 				ORDER BY year, week
 				";
 		$result = $wpdb->get_results($sql);
-		// debug_log('get_posts_months', $sql);
+		// debug_log('get_posts_weeks', $sql);
 		$months = [];
 		$prev_row = false;
 		foreach($result as $row){
@@ -415,7 +458,7 @@ class AgendaPartage_Covoiturages {
 		
 		$option_ajax = (bool)$options['ajax'];
 		
-		$months = self::get_posts_months();
+		$months = self::get_posts_weeks();
 		
 		if($options['months'] > 0 && count($months) > $options['months'])
 			$months = array_slice($months, 0, $options['months'], true);
@@ -432,7 +475,11 @@ class AgendaPartage_Covoiturages {
 				break;
 			}
 		}
-		if( $events_count === 0)
+		
+		$periodique_posts = self::get_periodique_posts();
+		
+		if( $events_count === 0
+		&& count($periodique_posts) === 0)
 			return false;
 		
 		$requested_id = array_key_exists(AGDP_ARG_COVOITURAGEID, $_GET) ? $_GET[AGDP_ARG_COVOITURAGEID] : false;
@@ -501,7 +548,7 @@ class AgendaPartage_Covoiturages {
 				, $week
 			);
 			if(!$ajax && $month_events_count){
-				$html .= self::get_month_posts_list_html( $week, $requested_id, $options );
+				$html .= self::get_week_posts_list_html( $week, $requested_id, $options );
 			}
 		
 			$html .= '</ul></li>';
@@ -509,6 +556,20 @@ class AgendaPartage_Covoiturages {
 			if($month_events_count > 0)
 				$not_empty_month_index++;
 			$events_count += $month_events_count;
+		}
+		
+		if( count($periodique_posts) ){
+			$html .= sprintf(
+				'<li><div class="month-title toggle-trigger active">%s <span class="nb-items">(%d)</span></div>
+				<ul id="periodiques" class="covoiturages-periodiques toggle-container">'
+				, "Covoiturages répétés"
+				, count($periodique_posts)
+			);
+			foreach($periodique_posts as $post){
+				$html .= '<li>' . self::get_list_item_html( $post, $requested_id, $options ) . '</li>';
+			}
+		
+			$html .= '</ul></li>';
 		}
 		
 		$html .= '</ul>';
@@ -769,9 +830,9 @@ class AgendaPartage_Covoiturages {
 	/**
 	* Rendu Html des covoiturages d'un mois sous forme de liste
 	*/
-	public static function get_month_posts_list_html($month, $requested_id = false, $options = false){
+	public static function get_week_posts_list_html($month, $requested_id = false, $options = false){
 		
-		$events = self::get_month_posts($month);
+		$events = self::get_week_posts($month);
 		
 		if(is_wp_error( $events)){
 			$html = sprintf('<p class="alerte no-events">%s</p>%s', __('Erreur lors de la recherche de covoiturages.', AGDP_TAG), var_export($events, true));
@@ -902,7 +963,7 @@ class AgendaPartage_Covoiturages {
 		else {
 			$data = $_POST['data'];
 			if( array_key_exists("month", $data)){
-				$ajax_response = self::get_month_posts_list_html($data['month']);
+				$ajax_response = self::get_week_posts_list_html($data['month']);
 			}
 		}
 		

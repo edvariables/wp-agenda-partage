@@ -18,13 +18,15 @@ class AgendaPartage_Covoiturage_Edit {
 	private static $initiated = false;
 	private static $changes_for_revision = null;
 	public static $revision_fields = [ 
-				'cov-date-debut',
-				'cov-organisateur', 
-				'cov-email',
-				'cov-depart',
-				'cov-arrivee',
-				'cov-description'
-				];
+			'cov-date-debut',
+			'cov-organisateur', 
+			'cov-email',
+			'cov-depart',
+			'cov-arrivee',
+			'cov-description',
+			'cov-periodique',
+			'cov-periodique-label'
+		];
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -53,6 +55,7 @@ class AgendaPartage_Covoiturage_Edit {
 		add_filter( 'wpcf7_validate_date', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_validate_date*', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_posted_data_text', array(__CLASS__, 'wpcf7_posted_data_fields_cb'), 10, 3);
+		add_filter( 'wpcf7_posted_data_date', array(__CLASS__, 'wpcf7_posted_data_fields_cb'), 10, 3);
 		add_filter( 'wpcf7_spam', array(__CLASS__, 'wpcf7_spam_cb'), 10, 2);
 		
 		//Fenêtre de réinitialisation de mot de passe
@@ -199,7 +202,10 @@ class AgendaPartage_Covoiturage_Edit {
 					'cov-phone-show',
 					'cov-' . AGDP_COVOIT_SECRETCODE,
 					'cov-organisateur',
-					'cov-nb-places'
+					'cov-nb-places',
+					'cov-periodique',
+					'cov-periodique-label',
+					'cov-date-fin'
 			] as $meta_name){
 				$attrs[$meta_name] = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
 			}
@@ -751,18 +757,21 @@ class AgendaPartage_Covoiturage_Edit {
 			$data = array();
 			
 			foreach(array(
-				'cov-intention' => 1,
-				'cov-depart' => 1,
-				'cov-arrivee' => 1,
-				'post_content' => 'cov-description',
-				'cov-date-debut' => 1,
-				'cov-heure-debut' => 1,
-				'cov-heure-fin' => 1,
-				'cov-organisateur' => 1,
-				'cov-email' => 1,
-				'cov-phone' => 1,
-				'cov-nb-places' => 1,
-				'cov-'.AGDP_COVOIT_SECRETCODE => 1
+					'cov-intention' => 1,
+					'cov-depart' => 1,
+					'cov-arrivee' => 1,
+					'post_content' => 'cov-description',
+					'cov-date-debut' => 1,
+					'cov-heure-debut' => 1,
+					'cov-heure-fin' => 1,
+					'cov-organisateur' => 1,
+					'cov-email' => 1,
+					'cov-phone' => 1,
+					'cov-nb-places' => 1,
+					'cov-'.AGDP_COVOIT_SECRETCODE => 1,
+					'cov-periodique' => 1,
+					'cov-periodique-label' => 1,
+					'cov-date-fin' => 1
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;
 					if(isset($inputs[$input_field]))
@@ -1136,7 +1145,16 @@ class AgendaPartage_Covoiturage_Edit {
 			case 'cov-date-debut':
 			case 'cov-date-fin':
 				$strDate = isset( $_POST[$tag->name] ) ? trim( $_POST[$tag->name] ) : '';
+				$is_periodique = isset( $_POST['cov-periodique'] ) ? $_POST['cov-periodique'] == '1' : false;
 				if(!$strDate){
+					if( $is_periodique && $tag->name == 'cov-date-debut'
+					 || ! $is_periodique && $tag->name == 'cov-date-fin')
+						break;
+					if( $tag->name == 'cov-date-debut' )
+						$label = "la date du covoiturage";
+					elseif( $tag->name == 'cov-date-fin' )
+						$label = "la date limite de validité de cette annonce";
+					$result->invalidate( $tag, sprintf("Veuillez renseigner %s", $label ) );
 					break;
 				}
 				$date = strtotime($strDate);
@@ -1147,7 +1165,7 @@ class AgendaPartage_Covoiturage_Edit {
 						$date_fin = isset( $_POST['cov-date-fin'] ) ? trim( $_POST['cov-date-fin'] ) : '';
 						if($date_fin){
 							$date_fin = strtotime($date_fin);
-							$invalide_date = $date_fin < $date_fin;
+							$invalide_date = $date_fin < $date_date;
 						}
 					}
 					if($invalide_date)
@@ -1170,6 +1188,18 @@ class AgendaPartage_Covoiturage_Edit {
 					}
 				}
 				break;
+				
+			case 'cov-periodique-label':
+				$is_periodique = isset( $_POST['cov-periodique'] ) ? $_POST['cov-periodique'] == '1' : false;
+				if( $is_periodique ){
+					$value = isset( $_POST[$tag->name] ) ? trim( $_POST[$tag->name] ) : '';
+					if( ! $value ){
+						$result->invalidate( $tag, sprintf("Vous devez indiquer la périodicité du covoiturage.\nPar exemple : \"Tous les jours\" ou \"Tous les mardis\"" ) );
+						break;
+					}
+				}
+				break;
+				
 			default:
 				break;
 		}
@@ -1180,7 +1210,6 @@ class AgendaPartage_Covoiturage_Edit {
 	 * Correction des valeurs envoyées depuis le formulaire.
 	 */
 	public static function wpcf7_posted_data_fields_cb( $value, $value_orig, $tag ) {
-		
 		switch($tag->name){
 			case 'cov-heure-debut':
 			case 'cov-heure-fin':
@@ -1200,6 +1229,16 @@ class AgendaPartage_Covoiturage_Edit {
 							: ''//'00'
 					);
 				}
+				break;
+			
+			case 'cov-date-debut':
+				$is_periodique = isset( $_POST['cov-periodique'] ) ? $_POST['cov-periodique'] == '1' : false;
+				if( $is_periodique )
+					$value = $_POST['cov-date-debut'] = $_POST['cov-date-fin'];
+				break;
+			
+			case 'cov-periodique-label':
+				$value = trim($value);
 				break;
 				
 			// case 'cov-localisation' :

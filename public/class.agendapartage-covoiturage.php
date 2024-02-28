@@ -60,8 +60,18 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		// $post_title = isset( $covoiturage->post_title ) ? $covoiturage->post_title : '';
 		$intentionid = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-intention', true);
 		$intention = AgendaPartage_Covoiturage_Post_type::get_intention_label($intentionid);
-		$le = "Le";
-		$dates = self::get_covoiturage_dates_text( $covoiturage_id, $data );
+		$is_periodique = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-periodique', true);
+		if( $is_periodique ){
+			$le = "Tous les";
+			$dates = $data ? $data['cov-periodique-label'] : get_post_meta($covoiturage_id, 'cov-periodique-label', true);
+			if( stripos($dates, $le) !== 0)
+				$dates = $le . ' ' . trim($dates);
+			$le = false;
+		}
+		else {
+			$le = "Le";
+			$dates = self::get_covoiturage_dates_text( $covoiturage_id, $data );
+		}
 		$de = "de";
 		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage_id, 'cov-depart', true);
 		$vers = "vers";
@@ -75,7 +85,8 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			$dates = preg_replace('/^(\w+\s)([0-9]+)/', '$1<span class="cov-date-jour-num">$2</span>', $dates);
 			$depart = sprintf('<span class="cov-depart">%s</span>', htmlentities($depart));
 			$arrivee = sprintf('<span class="cov-arrivee">%s</span>', htmlentities($arrivee));
-			$le = sprintf('<span class="title-prep">%s</span>', $le);
+			if( $le )
+				$le = sprintf('<span class="title-prep">%s</span>', $le);
 			$de = sprintf('<span class="title-prep">%s</span>', $de);
 			$vers = sprintf('<span class="title-prep">%s</span>', $vers);
 		}
@@ -84,7 +95,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		}
 		$separator = $no_html ? ', ' : '<br>';
 		$html = $intention . $nb_places . $separator
-			. $le . ' ' . $dates . $separator
+			. trim($le . ' ' . $dates) . $separator
 			. $de . ' ' . $depart . $separator
 			. $vers . ' ' . $arrivee;
 		return $html;

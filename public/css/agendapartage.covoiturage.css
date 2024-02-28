@@ -200,3 +200,17 @@ body.colors-dark .agdp-covoiturages-email *, body.colors-dark .aevs-email * {
 	font-size: larger;
 	padding: 0 3px 0 3px;
 }
+
+/* Covoiturage */
+.cov-periodiques p {
+	margin-bottom: 0px;
+}
+form .if-cov-periodique {
+	display: none;
+}
+form.is-cov-periodique .if-not-cov-periodique {
+	display: none;
+}
+form.is-cov-periodique .if-cov-periodique {
+	display: initial;
+}
