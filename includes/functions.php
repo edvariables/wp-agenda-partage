@@ -221,8 +221,8 @@ function decode_spamcause_unrot($pair, $pos, $key = false){
 function html_to_plain_text($html){
 	$html = preg_replace('/^.*\<html.*\>([\s\S]*)\<\/html\>.*$/i', '$1', $html);
 	$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol|br))/', "\n$1", $html);
-	$html = str_replace('&nbsp;', ' ', $html);
-	// debug_log( html_entity_decode( wp_strip_all_tags($html) ));
-	// die();
-	return htmlspecialchars_decode(wp_strip_all_tags($html));
+	return html_entity_decode(
+			htmlspecialchars_decode(
+			wp_strip_all_tags($html)
+			), ENT_QUOTES);
 }

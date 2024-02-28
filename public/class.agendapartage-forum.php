@@ -84,13 +84,7 @@ class AgendaPartage_Forum {
 		
 		$forum = self::get_forum($forum);
 		
-		try {
-			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-forum-imap.php");
-			$import_result = AgendaPartage_Forum_IMAP::import_imap_messages($forum, $page);
-		}
-		catch(Exception $exception){
-			return $exception;
-		}
+		$import_result = self::synchronize($forum, $page);
 		
 		add_filter('comment_form_defaults', array(__CLASS__, 'on_comment_text_before') );
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
@@ -100,6 +94,41 @@ class AgendaPartage_Forum {
 		add_filter('comment_reply_link', array(__CLASS__, 'on_comment_reply_link'), 10, 4 );
 		// add_filter('comment_reply_link_args', array(__CLASS__, 'on_comment_reply_link_args'), 10, 3 );
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
+		
+		return $import_result;
+	}
+	
+	/**
+	 * Appelle la synchronisation IMAP.
+	 */
+	public static function synchronize($forum, $page = false){
+		if( ! $page ){
+			if (!($page = self::get_page_of_forum( $forum ))){
+				debug_log('synchronize get_page_of_forum === FALSE', $forum);
+				return false;
+			}
+		}
+		elseif( is_int( $page ))
+			if (!($page = get_post($page)))
+				return false;
+		
+		
+		$forum = self::get_forum($forum);
+		
+		$meta_key = 'imap_sync_time';
+		$time = get_post_meta($forum->ID, $meta_key, true);
+		if( $time && $time >= strtotime('- 10 second'))
+			return true;
+		
+		try {
+			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-forum-imap.php");
+			$import_result = AgendaPartage_Forum_IMAP::import_imap_messages($forum, $page);
+		}
+		catch(Exception $exception){
+			return $exception;
+		}
+		
+		update_post_meta($forum->ID, $meta_key, time());
 		
 		return $import_result;
 	}

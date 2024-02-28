@@ -253,12 +253,15 @@ class AgendaPartage_Newsletter {
 		if( $post_type == AgendaPartage_Forum::post_type){
 			//Comments
 			$forum = AgendaPartage_Forum::get_forum_of_newsletter( $newsletter );
-			if($forum && $page = AgendaPartage_Forum::get_page_of_forum($forum) )
+			if($forum && $page = AgendaPartage_Forum::get_page_of_forum($forum) ){
+				//Synchronise avant de tester la date du dernier commentaire
+				AgendaPartage_Forum::synchronize($forum, $page);
 				$sql = "SELECT MAX(comments.comment_date) as date_max
 						FROM {$blog_prefix}comments comments
 						WHERE comments.comment_approved = 1
 							AND comments.comment_post_ID = ". $page->ID ."
 				";
+			}
 		}
 		else {
 			$sql = "SELECT MAX(posts.post_date) as date_max
@@ -1275,7 +1278,7 @@ class AgendaPartage_Newsletter {
 		$message = do_shortcode( get_the_content(false, false, $newsletter) );
 		
 		if( ! self::content_is_empty() ) {
-			
+			//TODO move <script>
 			$message = '<!DOCTYPE html><html>'
 					. '<head>'
 						. '<title>' . $subject . '</title>'
