@@ -201,6 +201,10 @@ body.colors-dark .agdp-covoiturages-email *, body.colors-dark .aevs-email * {
 	padding: 0 3px 0 3px;
 }
 
+.agdp-covoiturages .cov-periodiques {
+	background-color: #dba526;
+}
+
 /* Covoiturage */
 .cov-periodiques p {
 	margin-bottom: 0px;

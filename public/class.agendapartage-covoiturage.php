@@ -67,6 +67,14 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			if( stripos($dates, $le) !== 0)
 				$dates = $le . ' ' . trim($dates);
 			$le = false;
+			$heure_debut    = $data ? $data['cov-heure-debut'] : get_post_meta( $covoiturage_id, 'cov-heure-debut', true );
+			$heure_fin    = $data ? $data['cov-heure-fin'] : get_post_meta( $covoiturage_id, 'cov-heure-fin', true );
+			$dates .= ($heure_debut ? ' à ' . $heure_debut : '')
+				. ( $heure_fin 
+					? ', retour à ' . $heure_fin
+					: '')
+			;
+
 		}
 		else {
 			$le = "Le";

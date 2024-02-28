@@ -560,7 +560,7 @@ class AgendaPartage_Covoiturages {
 		
 		if( count($periodique_posts) ){
 			$html .= sprintf(
-				'<li><div class="month-title toggle-trigger active">%s <span class="nb-items">(%d)</span></div>
+				'<li><div class="month-title cov-periodiques toggle-trigger active">%s <span class="nb-items">(%d)</span></div>
 				<ul id="periodiques" class="covoiturages-periodiques toggle-container">'
 				, "Covoiturages répétés"
 				, count($periodique_posts)
