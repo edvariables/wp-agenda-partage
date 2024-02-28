@@ -1067,11 +1067,12 @@ class Reader
         $email->setRawBody(imap_fetchbody($this->stream(), $uid, '', $options));
 
         $body = imap_fetchstructure($this->stream(), $uid, FT_UID);
-// debug_log($body);
+// debug_log('imap_fetchstructure', $body);
         if (isset($body->parts) && count($body->parts)) {
             foreach ($body->parts as $part_number => $part) {
-                $this->decodePart($email, $part, $part_number + 1);
+                $this->decodePart($email, $part, $part_number + 1, $body->subtype);
             }
+			
         } else {
             $this->decodePart($email, $body);
         }
@@ -1136,7 +1137,7 @@ class Reader
      * 
      * @return string
      */
-    public function decodePart(Email $email, $part, $part_number = false)
+    public function decodePart(Email $email, $part, $part_number = false, $parent_subtype = false)
     {
         $options = ($this->mark_as_read) ? FT_UID : FT_UID | FT_PEEK;
 
@@ -1259,6 +1260,11 @@ class Reader
                         $email->setPlain($data);
                     } else {
                         $email->setHTML($data);
+						
+						//ED240228
+						if( strtoupper($parent_subtype) === 'MIXED' ){
+							$email->setPlain( html_to_plain_text( $data ) );
+						}
                     }
 
                     // part->type = 2 is MESSAGE
@@ -1272,9 +1278,9 @@ class Reader
         if (!empty($part->parts)) {
             foreach ($part->parts as $subpart_number => $subpart) {
                 if ($part->type == 2 && $part->subtype == 'RFC822') {
-                    $this->decodePart($email, $subpart, $part_number);
+                    $this->decodePart($email, $subpart, $part_number, $part->subtype);
                 } else {
-                    $this->decodePart($email, $subpart, $part_number . '.' . ($subpart_number + 1));
+                    $this->decodePart($email, $subpart, $part_number . '.' . ($subpart_number + 1), $part->subtype);
                 }
             }
         }

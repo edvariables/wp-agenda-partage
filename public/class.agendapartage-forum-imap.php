@@ -183,6 +183,7 @@ class AgendaPartage_Forum_IMAP {
 				. (empty($message['text_plain']) 
 					? html_to_plain_text( $message['text_html'] )
 					: $message['text_plain']);
+					
 		if( $clear_signatures = get_post_meta($forum_id, 'clear_signature', true))
 			foreach( explode("\n", str_replace("\r", '', $clear_signatures)) as $clear_signature ){
 				if ( ($pos = strpos( $content, $clear_signature) ) > 0)
