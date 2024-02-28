@@ -458,6 +458,7 @@ class AgendaPartage_Covoiturages {
 		
 		$option_ajax = (bool)$options['ajax'];
 		
+		//Semaines avec indicateurs du nombre de covoiturages, sans les périodiques.
 		$months = self::get_posts_weeks();
 		
 		if($options['months'] > 0 && count($months) > $options['months'])
@@ -476,6 +477,7 @@ class AgendaPartage_Covoiturages {
 			}
 		}
 		
+		//Covoiturages périodiques
 		$periodique_posts = self::get_periodique_posts();
 		
 		if( $events_count === 0
@@ -493,7 +495,19 @@ class AgendaPartage_Covoiturages {
 		$html = sprintf('<div class="agdp-covoiturages agdp-covoiturages-%s">', $options['mode']);
 		if( $options['mode'] != 'email')
 			$html .= self::get_list_header($requested_month);
-			
+		
+		//Covoiturages périodiques
+		if( count($periodique_posts) && $events_count ){
+			$html .= sprintf(
+				'<div class="cov-periodiques-link">%sVous trouverez,%s plus bas,<span class="cov-periodiques"> %d %s</span>.%s</div>'
+				, $options['mode'] == 'email' ? '' : '<span class="dashicons dashicons-info"></span>'
+				, $options['mode'] == 'email' ? '' : '<a href="#periodiques">'
+				, count($periodique_posts)
+				, count($periodique_posts) === 1 ? "covoiturage périodique" : "covoiturages périodiques"
+				, $options['mode'] == 'email' ? '' : '</a>'
+			);
+		}
+		
 		$not_empty_month_index = 0;
 		$events_count = 0;
 		
@@ -562,7 +576,7 @@ class AgendaPartage_Covoiturages {
 			$html .= sprintf(
 				'<li><div class="month-title cov-periodiques toggle-trigger active">%s <span class="nb-items">(%d)</span></div>
 				<ul id="periodiques" class="covoiturages-periodiques toggle-container">'
-				, "Covoiturages répétés"
+				, "Covoiturages périodiques"
 				, count($periodique_posts)
 			);
 			foreach($periodique_posts as $post){
@@ -650,6 +664,9 @@ class AgendaPartage_Covoiturages {
 .agdp-covoiturages-email i {
 	font-style: normal;
 }
+.agdp-covoiturages .cov-periodiques {
+	background-color: #dba526;
+}
 .created-since {
 	font-size: smaller;
 	font-style: italic;
@@ -674,7 +691,6 @@ class AgendaPartage_Covoiturages {
 			'agdp-covoiturages'=> 'aevs'
 			, 'covoiturages'=> 'evs'
 			, 'covoiturage-'=> 'cov-'
-			, 'covoiturage '=> 'ev '
 			, 'toggle-trigger' => 'tgt'
 			, 'toggle-container' => 'tgc'
 			

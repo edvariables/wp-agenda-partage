@@ -205,6 +205,12 @@ body.colors-dark .agdp-covoiturages-email *, body.colors-dark .aevs-email * {
 	background-color: #dba526;
 }
 
+.agdp-covoiturages .cov-periodiques-link {
+	font-family: Courier;
+	margin-top: 3px;
+	margin-bottom: 1em;
+}
+
 /* Covoiturage */
 .cov-periodiques p {
 	margin-bottom: 0px;
