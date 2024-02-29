@@ -376,7 +376,7 @@ class AgendaPartage_Forum {
 	 * Ajout des metas (title, send-email, is-private) lors de l'enregistrement du commentaire
 	 */
 	public static function on_preprocess_comment($commentdata ){
-		debug_log('on_preprocess_comment');
+		// debug_log('on_preprocess_comment');
 		
 		if( ! ($forum = self::get_forum_of_page($commentdata['comment_post_ID']) ))
 			return $commentdata;
