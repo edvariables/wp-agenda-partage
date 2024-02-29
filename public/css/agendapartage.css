@@ -427,6 +427,13 @@ article.use-agdpforum + #comments #respond {
 	margin-top: 1em;
 }
 
+article.use-agdpforum + #comments #respond .if-respond {
+	display: none;
+}
+article.use-agdpforum + #comments article + #respond .if-respond {
+	display: inline-block;
+}
+
 article.use-agdpforum + #comments ul.attachments {
 	list-style: none;
 }

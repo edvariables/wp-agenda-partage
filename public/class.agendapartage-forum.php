@@ -37,7 +37,13 @@ class AgendaPartage_Forum {
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
-
+		
+		global $pagenow;
+		if ( $pagenow === 'wp-comments-post.php' ) {
+			add_filter('pre_comment_approved', array(__CLASS__, 'on_pre_comment_approved'), 10, 2 );
+			add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
+			add_filter('comment_post', array(__CLASS__, 'on_comment_post'), 10, 3 );
+		}
 	}
 	/*
 	 **/
@@ -86,9 +92,10 @@ class AgendaPartage_Forum {
 		
 		$import_result = self::synchronize($forum, $page);
 		
+		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
+		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
 		add_filter('comment_form_defaults', array(__CLASS__, 'on_comment_text_before') );
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
-		add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
 		add_filter('comment_text', array(__CLASS__, 'on_comment_text'), 10, 3 );
 		add_filter('get_comment_time', array(__CLASS__, 'on_get_comment_time'), 10, 5 );
 		add_filter('comment_reply_link', array(__CLASS__, 'on_comment_reply_link'), 10, 4 );
@@ -265,10 +272,57 @@ class AgendaPartage_Forum {
 		return false;
 	}
 	
+	/**
+	 * 
+	 */
+	public static function on_pre_get_comments($wp_query){
+		if( ! empty($wp_query->query_vars['parent__in'] ) ){
+			// debug_log('pre_get_comments parent__in', $wp_query);
+			if( !  current_user_can('manage_options') )
+				add_action('comments_clauses', array(__CLASS__, 'on_sub_comments_clauses'), 10, 2);
+			return;
+		}
+		
+		
+		/* Dans le paramétrage de WP, Réglages / Commentaires :
+			Diviser les commentaires en pages, avec N commentaires de premier niveau par page et la PREMIERE page affichée par défaut
+			Les commentaires doivent être affichés avec le plus ANCIEN en premier
+		*/
+		$wp_query->query_vars['orderby'] = 'comment_date_gmt';
+		$wp_query->query_vars['order'] = 'DESC';
+		
+		
+	}
+	
+	public static function on_comments_pre_query($comment_data, $wp_query){
+		if( ! empty($wp_query->query_vars['parent__in'] ) ){
+			// debug_log('on_comments_pre_query parent__in', $comment_data, $wp_query);
+			return;
+		}
+	}
+	
+	public static function on_sub_comments_clauses($clauses, $wp_query){
+		debug_log('on_sub_comments_clauses parent__in', $clauses, $wp_query);
+		global $wpdb, $current_user;
+		$user_email = $current_user ? $current_user->user_email : false;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$clauses['join'] .= " LEFT JOIN {$blog_prefix}commentmeta meta_is_private"
+							. " ON meta_is_private.comment_id = {$blog_prefix}comments.comment_ID"
+							. " AND meta_is_private.meta_key = 'is-private'"
+							. " AND meta_is_private.meta_value != ''";
+		if( ! $user_email )
+			$clauses['where'] .= " AND meta_is_private.comment_id IS NULL";
+		else
+			$clauses['where'] .= " AND ( meta_is_private.comment_id IS NULL"
+								. " OR {$blog_prefix}comments.comment_author_email = '{$user_email}'"
+								. " OR meta_is_private.meta_value =  '{$user_email}')";
+		return $clauses;
+	}
+	
 	/********************************************/
 		 
 	/**
-	 * Modification du formulaire de commentaire
+	 * Adaptation du formulaire de commentaire
 	 */
 	public static function on_comment_text_before($defaults){
 		foreach($defaults as $key=>$value)
@@ -282,38 +336,160 @@ class AgendaPartage_Forum {
 	 * Ajout du champ Titre au formulaire de commentaire
 	 */
 	public static function on_comment_form_fields($fields){		
-		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></textarea></p>';
-		$fields['comment'] = $title_field . $fields['comment'];
+		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></p>';
+		$send_email_field = '<div class="comment-form-send-email if-respond"><label for="send-email">'
+			. '<input id="send-email" name="send-email" type="checkbox">'
+			. ' Envoyez votre réponse par e-mail à l\'auteur du message</label></div>';
+		$is_private_field = '<p class="comment-form-is-private if-respond"><label for="is-private">'
+			. '<input id="is-private" name="is-private" type="checkbox">'
+			. ' Ce message est privé, entre vous et l\'auteur du message. Sinon, il est visible par tous sur ce site.</label></p>';
+		$fields['comment'] = $title_field
+							. $fields['comment']
+							. $send_email_field
+							. $is_private_field;
 		unset($fields['url']);
 		return $fields;
 	}
 	
+	/*********************************
+	 * Enregistrement d'un Commentaire
+	 */
 	/**
-	 * Ajout du meta title lors de l'enregistrement du commentaire
+	 * Vérifie les données lors de l'enregistrement du commentaire
+	 */
+	public static function on_pre_comment_approved( $approved, $commentdata ){
+		
+		if( ! ($forum = self::get_forum_of_page($commentdata['comment_post_ID']) ))
+			return $approved;
+		debug_log($commentdata);
+		
+		if( empty( $_POST['title'] )
+		&& empty($commentdata['comment_meta'])
+		&& empty($commentdata['comment_meta']['title']) )
+			return new WP_Error( 'require_valid_comment', __( '<strong>Erreur :</strong> Veuillez indiquer un titre à votre message.' ), 200 );
+
+		
+		return $approved;
+	}
+	
+	/**
+	 * Ajout des metas (title, send-email, is-private) lors de l'enregistrement du commentaire
 	 */
 	public static function on_preprocess_comment($commentdata ){
+		debug_log('on_preprocess_comment');
 		
-		if( ! self::get_forum($commentdata['comment_post_ID']) )
+		if( ! ($forum = self::get_forum_of_page($commentdata['comment_post_ID']) ))
 			return $commentdata;
+		// debug_log($commentdata);
 		
-		if( empty( $_POST['title'] )){
-			if( isset($commentdata['comment_meta']) && isset($commentdata['comment_meta']['title']))
-				return $commentdata;
-			echo 'Le titre ne peut être vide.';
-			die();
-		}
 		if( empty($commentdata['comment_meta']) )
 			$commentdata['comment_meta'] = [];
+		
+		if( empty( $_POST['title'] )){
+			if($commentdata['comment_parent']){
+				$parent_subject = get_comment_meta( $commentdata['comment_parent'], 'title', true);
+				$_POST['title'] = sprintf('Re: %s', $parent_subject);
+			}
+			else {
+				//on_pre_comment_approved se charge de l'erreur
+				return $commentdata;
+			}
+		}
 		$commentdata['comment_meta'] = array_merge([ 'title' => $_POST['title'] ], $commentdata['comment_meta']);
+		
+		if( ! empty( $_POST['send-email'] )){
+			$commentdata['comment_meta'] = array_merge([ 'send-email' => $_POST['send-email'] ], $commentdata['comment_meta']);
+		}
+		if( ! empty( $_POST['is-private'] )){
+			$parent_comment = get_comment( $commentdata['comment_parent']);
+			//Mémorise l'email de l'auteur du commentaire parent pour le filtrage
+			$commentdata['comment_meta']['is-private'] = $parent_comment->comment_author_email;
+		}
 		
 		return $commentdata;
 	}
+	
+	/**
+	 * Après l'enregistrement du commentaire
+	 */
+	public static function on_comment_post($comment_id, $comment_approved, $commentdata ){
+		if( empty($commentdata['comment_meta']['send-email'])
+		|| $commentdata['comment_meta']['send-email'] === 'done')
+			return;
+		self::send_response_email($comment_id );
+	}
+	/**
+	 * Envoie l'email de réponse
+	 */
+	public static function send_response_email($comment_id ){
+		$comment = get_comment($comment_id);
+		
+		if( ! ($forum = self::get_forum_of_page($comment->comment_post_ID) ))
+			return;
+		$page_link = get_post_permalink($comment->comment_post_ID);
+		
+		if( empty(($comment->comment_parent))
+		|| ! ($parent_comment = get_comment($comment->comment_parent) ))
+			return;
+		
+		$email_to = $parent_comment->comment_author_email;
+		
+		$email_replyto = $comment->comment_author_email;
+		
+		$subject = get_comment_meta( $comment_id, 'title', true);
+		$parent_subject = get_comment_meta( $parent_comment->comment_ID, 'title', true);
+		$parent_date = wp_date('d/m/Y à H:i', strtotime($parent_comment->comment_date_gmt));
+		
+		$message = $comment->comment_content;
+		
+		$message .= "\n\n----------------";
+		$message .= sprintf("\nCe message a été envoyé depuis le site <a href=\"%s\">%s</a>"
+				, $page_link, get_bloginfo( 'name' ) ) ;
+		$message .= sprintf("\nIl est a l'initiative de %s (<a href=\"mailto:%s\">%s</a>)."
+				, $comment->comment_author 
+				, $comment->comment_author_email
+				, $comment->comment_author_email ) ;
+		$message .= sprintf("\nVous recevez ce message en réponse au votre, intitulé \"%s\" et daté du %s."
+				, $parent_subject, $parent_date) ;
+		$message .= sprintf("\n\nVous pouvez nous écrire pour signaler tout abus ou manquement aux règles du forum : <a href=\"mailto:%s\">%s</a>."
+				, get_bloginfo( 'admin_email' )
+				, get_bloginfo( 'admin_email' )) ;
+		$message .= sprintf("\nBonne journée.") ;
+		
+		$message = str_replace("\n", "\n<br>", $message);
+		
+		$headers[] = 'MIME-Version: 1.0';
+		$headers[] = 'Content-type: text/html; charset=utf-8';
+		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+		
+		$headers[] = sprintf('From: %s', get_bloginfo( 'admin_email' ));
+		$headers[] = sprintf('Reply-to: %s', $email_replyto);
+		
+		if($success = wp_mail( $email_to
+			, '=?UTF-8?B?' . base64_encode($subject). '?='
+			, $message
+			, $headers )){
+			
+			update_comment_meta( $comment_id, 'send-email', wp_date('d/m/Y H:i:s'));
+		}
+		else{
+		}
+		
+	}
+	
 	/********************************************/
 	
 	/**
 	 * Affichage du commentaire
 	 */
 	public static function on_comment_text($comment_text, $comment, $args ){
+		
+		$send_email = get_comment_meta($comment->comment_ID, 'send-email', true);
+		if( $send_email ) {
+			echo sprintf('<p>%s<code>Un e-mail a été envoyé : %s</code></p>'
+				, '<span class="dashicons dashicons-email-alt"></span>'
+				, $send_email);
+		}
 		
 		$title = get_comment_meta($comment->comment_ID, 'title', true);	
 		

@@ -38,7 +38,8 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 			'source_no',
 			'from',
 			'attachments', //TODO is object
-			'import_date'
+			'import_date',
+			'send-email'
 		];
 		?>
 		<div id="namediv" class="stuffbox">
