@@ -51,8 +51,6 @@ define( 'AGDP_ARG_COVOITURAGEID', 'covoitid' );
 define( 'AGDP_EMAIL4PHONE', 'email4phone' ); 
 define( 'AGDP_PAGE_META_FORUM', 'agdpforum' ); 
 define( 'AGDP_FORUM_META_PAGE', 'comments-page' ); 
-//répertoire des fichiers attachés aux emails des forums
-define( 'AGDP_FORUM_ATTACHMENT_PATH', false);//__DIR__ . '/attachments'); TODO
 
 // see translate_level_to_role()
 define( 'USER_LEVEL_ADMIN', 8 ); 

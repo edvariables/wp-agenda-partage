@@ -151,7 +151,7 @@ class AgendaPartage_Forum_IMAP {
 				'to' => $email->to,
 				'from' => $email->from,
 				'reply_to' => $email->reply_to,
-				'attachments' => $email->attachments,
+				'attachments' => self::sanitize_attachments($email->attachments),
 				'text_plain' => $email->text_plain,
 				'text_html' => $email->text_html
 			];
@@ -170,7 +170,9 @@ class AgendaPartage_Forum_IMAP {
 		
 		$encoding = 'UTF-8';
 		
-		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, AGDP_FORUM_ATTACHMENT_PATH, $mark_as_read, $encoding);
+		$attachment_path = AgendaPartage_Forum::get_attachments_path($forum_id);
+		
+		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, $attachment_path, $mark_as_read, $encoding);
 
 		return $imap;
 	}
@@ -232,5 +234,31 @@ class AgendaPartage_Forum_IMAP {
 		return true;
 	}
 	
+	/**
+	 * Fait le ménage dans les fichiers attachés
+	 */
+	private static function sanitize_attachments($attachments){
+		if( ! $attachments || count($attachments) === 0 )
+			return null;
+		$files = [];
+		foreach($attachments as $attachment){
+			if ( ! file_exists( $attachment->file_path ) )
+				continue;
+			$extension = strtolower(pathinfo($attachment->file_path, PATHINFO_EXTENSION));
+			switch($extension){
+				case 'exe':
+				case 'sh':
+				case 'cmd':
+				case 'bat':
+				case 'vbs':
+				case 'js':
+				case 'php':
+					unlink($attachment->file_path);
+					continue 2;
+			}
+			$files[] = $attachment->file_path;
+		}
+		return $files;
+	}
 }
 ?>

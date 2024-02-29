@@ -546,6 +546,8 @@ class AgendaPartage_Forum_Messages {
 			$html .= sprintf('<pre>%s%s</pre>', htmlentities($value), $more );
 		}
 		
+		$html .= AgendaPartage_Forum::get_attachments_links($comment);
+		
 		$value = $comment->comment_author;
 		if($value){
 			if($comment->comment_author_email && $comment->comment_author != $comment->comment_author_email);

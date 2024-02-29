@@ -31,9 +31,9 @@ class AgendaPartage {
 		// self::register_post_types();
 
 		if(!function_exists('antispam_shortcode_cb'))
-			require_once( AGDP_PLUGIN_DIR . '/public/shortcode.antispam.php' );
+			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.antispam.php' );
 		if(!function_exists('toggle_shortcode_cb'))
-			require_once( AGDP_PLUGIN_DIR . '/public/shortcode.toggle.php' );
+			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.toggle.php' );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-user.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_User', 'init' ) );

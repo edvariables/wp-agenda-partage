@@ -330,9 +330,51 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
+	 * Affichage des attachments
+	 */
+	public static function get_attachments_links($comment){
+		$html = '';
+		
+		$attachments = get_comment_meta($comment->comment_ID, 'attachments', true);
+		if($attachments){
+			$upload_dir_info = wp_upload_dir();
+			$upload_dir_info['basedir'] = str_replace('\\', '/', $upload_dir_info['basedir']);
+			$html .= '<ul class="attachments">';
+			foreach($attachments as $attachment){
+				if( ! file_exists($attachment) )
+					continue;
+				$html .= '<li>';
+				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
+				$url = str_replace($upload_dir_info['basedir'], $upload_dir_info['baseurl'], $attachment);
+				switch($extension){
+					case 'png':
+					case 'jpg':
+					case 'jpeg':
+					case 'bmp':
+					case 'tiff':
+						$html .= sprintf('<a href="%s"><img src="%s"/></a>', $url, $url);
+						break;
+					default:
+						$html .= sprintf('<a href="%s">%sTélécharger %s</a>'
+							, $url
+							, '<span class="dashicons-before dashicons-download"></span>'
+							, pathinfo($attachment, PATHINFO_BASENAME));
+						break;
+				}
+				$html .= '</li>';
+			}
+			$html .= '</ul>';
+		}
+		return $html;
+	}
+	
+	/**
 	 * Affichage du commentaire, lien "Répondre"
 	 */
 	public static function on_comment_reply_link($comment_reply_link, $args, $comment, $post ){
+		$attachments_links = self::get_attachments_links($comment);
+		echo $attachments_links;
+		
 		$user_can_change_comment = self::user_can_change_comment($comment);
 		 
 		//Statut du message (mark_as_ended). 
@@ -471,11 +513,37 @@ class AgendaPartage_Forum {
 		
 		$args = ['comment_ID' => $data['comment_id'], 'comment_approved' => 'trash'];
 		$comment = wp_update_comment($args, true);
-		if ( ! is_a($comment, 'WP_Error') )
+		if ( ! is_a($comment, 'WP_Error') ){		
+			$attachments = get_comment_meta($data['comment_id'], 'attachments', true);
+			if($attachments){
+				foreach($attachments as $attachment){
+					if( file_exists($attachment) )
+						unlink($attachment);
+				}
+			}
 			return 'js:$actionElnt.parents(\'.comment:first\').remove();';
+		}
+		
 		return $comment->get_error_message();
 	}
 	
-	
+	/**
+	 * Retourne le répertoire de stockage des fichiers attachés aux messages
+	 */
+	public static function get_attachments_path($forum_id){
+		$upload_dir = wp_upload_dir();
+		
+		$forum_dirname = str_replace('\\', '/', $upload_dir['basedir']);
+		if( is_multisite())
+			$forum_dirname .= '/sites/' . get_current_blog_id();
+		
+		$forum_dirname .= sprintf('/%s/%d/%d/%d/', self::post_type, $forum_id, date('Y'), date('m'));
+		
+		if ( ! file_exists( $forum_dirname ) ) {
+			wp_mkdir_p( $forum_dirname );
+		}
+
+		return $forum_dirname;
+	}
 }
 ?>
