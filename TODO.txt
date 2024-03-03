@@ -43,7 +43,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - Pour les destinataires administrateurs, ajouter le rédacteur de l'évènement
 - Pour les abonnés mensuels, afficher 2 mois
 - côté client, la saisie d'une adresse inconnue ne sélectionne pas "Aucun abonnement"
-
+- décocher "Recevoir maintenant" après envoi
 
 * Publish wp plugin
 
@@ -57,27 +57,13 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 	get_site_icon_url()
 - import sur nouveau site, il semble qu'il faille le faire 2 fois.
 
-* Remplacer le logo WP au login
-function my_login_logo() { ?>
-<style type=”text/css”>
-#login h1 a, .login h1 a {
-background-image: url(<?php echo get_stylesheet_directory_uri(); ?>/images/new-logo.png);
-height:65px;
-width:320px;
-background-size: 320px 65px;
-background-repeat: no-repeat;
-padding-bottom: 30px;
-}
-</style>
-<?php }
-add_action( ‘login_enqueue_scripts’, ‘my_login_logo’ );
 
-
-[forum info=email mailto] ne fonctionne pas lors de l'envoi du mail (sur le serveur)
-ajouter [forum-url link]
+ajouter [forum info=url link]
 
 Publier Covoit dans Forum
 
 Subscription-content : ['new', 'two_weeks', 'two_months']
 
-newsletter forum :
+attachments des messages de forum : 
+- supprimer avec la suppression des commentaires via admin
+- purger

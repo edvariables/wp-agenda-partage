@@ -64,7 +64,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		if( $is_periodique ){
 			$le = "Tous les";
 			$dates = $data ? $data['cov-periodique-label'] : get_post_meta($covoiturage_id, 'cov-periodique-label', true);
-			if( stripos($dates, $le) !== 0)
+			if( stripos($dates, "Tou") !== 0)
 				$dates = $le . ' ' . trim($dates);
 			$le = false;
 			$heure_debut    = $data ? $data['cov-heure-debut'] : get_post_meta( $covoiturage_id, 'cov-heure-debut', true );

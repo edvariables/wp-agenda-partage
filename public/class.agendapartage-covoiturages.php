@@ -689,7 +689,6 @@ class AgendaPartage_Covoiturages {
 
 		foreach([
 			'agdp-covoiturages'=> 'aevs'
-			, 'covoiturages'=> 'evs'
 			, 'covoiturage-'=> 'cov-'
 			, 'toggle-trigger' => 'tgt'
 			, 'toggle-container' => 'tgc'
