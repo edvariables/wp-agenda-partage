@@ -169,7 +169,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 					. '</p>'
 					. (isset($email_sent) && $email_sent ? '<div class="info">Un e-mail a été envoyé pour permettre la validation de ce nouveau covoiturage. Vérifiez votre boîte mails, la rubrique spam aussi.</div>' : '')
 					. (isset($no_email) && $no_email ? '<div class="alerte">Vous n\'avez pas indiqué d\'adresse mail pour permettre la validation de ce nouveau covoiturage.'
-											. '<br>Vous devrez attendre la validation par un modérateur pour que ce covoiturage soit public.'
+											. '<br>Vous devrez attendre la validation par un modérateur pour que ce covoiturage soit publique.'
 											. '<br>Vous pouvez encore modifier ce covoiturage et renseigner l\'adresse mail.'
 											. '<br>Le code secret de ce covoiturage est : <b>'.$secretcode.'</b>'
 											. '</div>' : '')
@@ -180,14 +180,14 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			case 'publish': 
 			
 				if(isset($email_sent) && $email_sent){
-					$info = '<div class="info">Ce covoiturage est désormais public.'
+					$info = '<div class="info">Ce covoiturage est désormais publique.'
 							. '<br>Un e-mail a été envoyé pour mémoire. Vérifiez votre boîte mails, la rubrique spam aussi.'
 							. '<br>Le code secret de ce covoiturage est : <b>'.$secretcode.'</b>'
 						.'</div>';
 					$html = $info . $html;
 				}
 				elseif( isset($no_email) && $no_email) {
-					$info = '<div class="alerte">Ce covoiturage est désormais public.</div>'
+					$info = '<div class="alerte">Ce covoiturage est désormais publique.</div>'
 							. '<br>Le code secret de ce covoiturage est : <b>'.$secretcode.'</b>';
 					$html = $info . $html;
 				}
@@ -271,7 +271,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 				break;
 			case 'publish':
 				if($caption === null)
-					$caption = __('Rendre public dans les covoiturages', AGDP_TAG);
+					$caption = __('Rendre publique dans les covoiturages', AGDP_TAG);
 				if($icon === true)
 					$icon = 'visibility';
 				if($confirmation === null || $confirmation === true)
@@ -501,7 +501,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 					$activation_url = add_query_arg('etat', 'en-attente', $activation_url);
 				}
 				
-				$message .= sprintf('<br><br><a href="%s"><b>Cliquez ici pour rendre ce covoiturage public dans l\'agenda</b></a>.<br>', $activation_url);
+				$message .= sprintf('<br><br><a href="%s"><b>Cliquez ici pour rendre ce covoiturage publique dans l\'agenda</b></a>.<br>', $activation_url);
 				break;
 			case 'trash':
 				$message .= sprintf('<br><br>Ce covoiturage a été SUPPRIMÉ.');
