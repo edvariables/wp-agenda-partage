@@ -864,7 +864,7 @@ class AgendaPartage_Evenement_Edit {
 			//Taxonomies
 			//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
 			foreach($tax_terms as $tax_name => $tax_inputs){
-				$result = wp_set_object_terms($post_id, $tax_inputs, $tax_name, false);
+				$result = wp_set_post_terms($post_id, $tax_inputs, $tax_name, false);
 				if(is_a($result, 'WP_Error') || is_string($result)){
 					$error_message = is_string($result) ? $result : $result->get_error_message();
 					$abort = true;
