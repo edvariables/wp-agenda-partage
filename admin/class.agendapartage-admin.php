@@ -371,6 +371,9 @@ class AgendaPartage_Admin {
 		wp_die();
 	}
 	
+	/*********************
+	 * init_wpcf7_form_html
+	 */
 	/**
 	 * Filtre le html avant enregistrement d'un formulaire wpcf7.
 	 */
@@ -402,20 +405,20 @@ class AgendaPartage_Admin {
 		}
 		else
 			throw new Exception('tax inconnue');
-		self::update_terms_in_wpcf7_html( $post_type );
+		self::init_wpcf7_form_html( $post_type );
 	}
 	/**
-	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
+	 * Met à jour le html d'un formulaire wpcf7 suite à la suppression d'un terme.
 	 */
 	public static function on_deleted_term_linked_to_wpcf7( $tt_id ){
 		if( ! ($term = get_term( $tt_id ) )) return;
 		if( ! ($taxonomy = get_taxonomy( $term->taxonomy ))) return;
-		self::update_terms_in_wpcf7_html( $taxonomy->object_type );
+		self::init_wpcf7_form_html( $taxonomy->object_type );
 	}
 	/**
-	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
+	 * Met à jour le html d'un formulaire wpcf7.
 	 */
-	public static function update_terms_in_wpcf7_html( $post_type ){
+	public static function init_wpcf7_form_html( $post_type ){
 		if( is_array($post_type) )
 			$post_type = $post_type[0];
 		switch( $post_type ){
@@ -441,5 +444,6 @@ class AgendaPartage_Admin {
 		if( $html )
 			update_post_meta($form_id, '_form', $html);
 	}
+	/*********************/
 }
 ?>

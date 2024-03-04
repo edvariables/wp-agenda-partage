@@ -74,20 +74,10 @@ abstract class AgendaPartage_Post_Abstract {
 	}
 	
 	/**
-	 * Retourne la classe qui hérite de celle-ci correspondant au post_type donné
+	 * Retourne la classe de Post_Type qui hérite de celle-ci correspondant au post_type donné
 	 */
 	private static function abstracted_post_type_class($post_type = false){
-		if( ! $post_type )
-			if( ! ($post_type = static::post_type) )
-				throw new ArgumentException('post_type argument is empty');
-		switch ($post_type){
-			case AgendaPartage_Evenement::post_type :
-				return 'AgendaPartage_Evenement_Post_Type';
-			case AgendaPartage_Covoiturage::post_type :
-				return 'AgendaPartage_Covoiturage_Post_Type';
-			default:
-				throw new ArgumentException('post_type argument is unknown : ' . var_export($post_type, true));
-		}
+		return self::abstracted_class($post_type) . '_Post_Type';
 	}
 	
 	/***************
@@ -672,7 +662,7 @@ abstract class AgendaPartage_Post_Abstract {
 							, esc_attr(json_encode($titles))
 				);
 			
-			$html = preg_replace('/\[(checkbox '.$input_name.')[^\]]*[\]]('.preg_quote('<span class="tax_terms_titles').'.*\<\/span\>)?/'
+			$html = preg_replace('/\[((checkbox|radio)\*? '.$input_name.')[^\]]*[\]]('.preg_quote('<span class="tax_terms_titles').'.*\<\/span\>)?/'
 								, sprintf('[$1 %s use_label_element %s %s]%s'
 									, $free_text
 									, $selected ? 'default:' . rtrim($selected, '_') : ''

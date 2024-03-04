@@ -224,5 +224,5 @@ function html_to_plain_text($html){
 	return html_entity_decode(
 			htmlspecialchars_decode(
 			wp_strip_all_tags($html)
-			), ENT_QUOTES);
+			), ENT_QUOTES | ENT_HTML401);
 }
