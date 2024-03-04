@@ -713,7 +713,6 @@ class AgendaPartage_Covoiturage_Edit {
 					'cov-phone' => 1,
 					'cov-nb-places' => 1,
 					'cov-'.AGDP_COVOIT_SECRETCODE => 1,
-					'cov-periodique' => 1,
 					'cov-periodique-label' => 1,
 					'cov-date-fin' => 1
 				) as $post_field => $input_field){
@@ -728,6 +727,7 @@ class AgendaPartage_Covoiturage_Edit {
 			foreach(array(
 				// 'cov-date-journee-entiere',
 				// 'cov-message-contact'
+				'cov-periodique',
 				'cov-phone-show'
 				) as $field){
 				if(array_key_exists($field, $inputs)){
@@ -735,6 +735,8 @@ class AgendaPartage_Covoiturage_Edit {
 						$data[$field] = $inputs[$field][0];
 					else
 						$data[$field] = $inputs[$field];
+					if( $data[$field] === 'false')
+						$data[$field] = false;
 				}
 			}
 			
