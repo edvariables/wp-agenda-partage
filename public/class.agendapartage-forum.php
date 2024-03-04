@@ -590,7 +590,7 @@ class AgendaPartage_Forum {
 			default:
 				$caption = "Toujours d'actualité ?";
 				$title = "Vous pouvez indiquer si ce message n'est plus d'actualité";
-				$icon = 'info-outline';
+				$icon = 'admin-post'; //info-outline';
 		}
 		if ( $status )
 			$data['status'] = $status;
