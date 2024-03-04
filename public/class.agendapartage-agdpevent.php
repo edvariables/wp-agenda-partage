@@ -612,7 +612,10 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		return self::get_post_terms( self::taxonomy_diffusion, $post_id, $args);
 	}
 	
- 	protected static function wpcf7_contact_form_init_tags( $form ) { 
+ 	/**
+	 * Filtre le html avant affichage d'un formulaire de contact wpcf7.
+	 */
+	protected static function wpcf7_contact_form_init_tags( $form ) { 
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$requested_id = isset($_REQUEST[self::postid_argument]) ? $_REQUEST[self::postid_argument] : false;
 		if( ! ($agdpevent = self::get_post($requested_id)))

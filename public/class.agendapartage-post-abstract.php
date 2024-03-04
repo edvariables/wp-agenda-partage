@@ -73,6 +73,23 @@ abstract class AgendaPartage_Post_Abstract {
 		}
 	}
 	
+	/**
+	 * Retourne la classe qui hérite de celle-ci correspondant au post_type donné
+	 */
+	private static function abstracted_post_type_class($post_type = false){
+		if( ! $post_type )
+			if( ! ($post_type = static::post_type) )
+				throw new ArgumentException('post_type argument is empty');
+		switch ($post_type){
+			case AgendaPartage_Evenement::post_type :
+				return 'AgendaPartage_Evenement_Post_Type';
+			case AgendaPartage_Covoiturage::post_type :
+				return 'AgendaPartage_Covoiturage_Post_Type';
+			default:
+				throw new ArgumentException('post_type argument is unknown : ' . var_export($post_type, true));
+		}
+	}
+	
 	/***************
 	 * the_title()
 	 */
@@ -607,6 +624,63 @@ abstract class AgendaPartage_Post_Abstract {
 				break;
 		}
 		return $form_class;
+	}	
+	
+	/**
+	 * Complète le html d'un formulaire WPCF7 avec les radios et checkboxes à jour en fonction des taxonomies
+	 * Si $post est fourni, modifie les valeurs sélectionnées.
+	 */
+ 	public static function init_wpcf7_form_html( $html, $post = false ) { 
+		$post_type_class = self::abstracted_post_type_class();
+		foreach( $post_type_class::get_taxonomies() as $tax_name => $taxonomy){
+		
+			if($post){
+				$post_terms = array();
+				foreach(wp_get_post_terms($post->ID, $tax_name, []) as $term)
+					$post_terms[ $term->term_id . ''] = $term->name;
+			}
+			else {
+				$post_terms = false;
+			}
+			$all_terms = $post_type_class::get_all_terms($tax_name);
+			$checkboxes = '';
+			$selected = '';
+			$free_text = false;
+			$index = 0;
+			$titles = [];
+			foreach($all_terms as $term){
+				$checkboxes .= sprintf(' "%s|%d"', $term->name, $term->term_id);
+				if($post_terms && array_key_exists($term->term_id . '', $post_terms)){
+					$selected .= sprintf('%d_', $index+1);
+				}
+				elseif( ! $post && $term->default_checked)
+					$selected .= sprintf('%d_', $index+1);
+				
+				if($term->description)
+					$titles[$term->name] = $term->description;
+				
+				$index++;
+			}
+			$input_name = $taxonomy['input'];
+			
+			if( count($titles) === 0 )
+				$titles = '';
+			else
+				//cf agendapartage.js
+				$titles = sprintf('<span class="tax_terms_titles hidden" input="%s" titles="%s"></span>'
+							, 'cov-' . $tax_name . 's[]'
+							, esc_attr(json_encode($titles))
+				);
+			
+			$html = preg_replace('/\[(checkbox '.$input_name.')[^\]]*[\]]('.preg_quote('<span class="tax_terms_titles').'.*\<\/span\>)?/'
+								, sprintf('[$1 %s use_label_element %s %s]%s'
+									, $free_text
+									, $selected ? 'default:' . rtrim($selected, '_') : ''
+									, $checkboxes
+									, $titles)
+								, $html);
+		}
+		return $html;
 	}
 	
 	public static function change_email_recipient($contact_form){

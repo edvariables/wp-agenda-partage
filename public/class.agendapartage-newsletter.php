@@ -1,5 +1,4 @@
 <?php
-
 /**
  * AgendaPartage -> Newsletter
  * Custom post type for WordPress.
@@ -479,47 +478,7 @@ class AgendaPartage_Newsletter {
 		
 		$newsletters = self::get_newsletters();
 		
-		// foreach newsletter type (events, covoiturage, admin)
-		foreach($newsletters as $newsletter_option => $newsletter){
-			
-			$user_subscription = null;
-			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
-			/** périodicité de l'abonnement **/
-			$input_name = 'nl-period-' . $field_extension;
-			$subscription_periods = self::subscription_periods($newsletter);
-			
-			if(isset($_REQUEST['action']))
-				switch($_REQUEST['action']){
-					case 'unsubscribe':
-					case 'desinscription':
-						$user_subscription = 'none';
-						$subscription_periods[$user_subscription] = 'Désinscription à valider';
-						break;
-					default:
-						break;
-				}
-			if( $user_subscription === null)
-				$user_subscription = self::get_subscription($email, $newsletter);
-			if( ! $user_subscription)
-				$user_subscription = 'none';
-			
-			$checkboxes = '';
-			$selected = '';
-			$index = 0;
-			foreach( $subscription_periods as $subscribe_code => $label){
-				$checkboxes .= sprintf(' "%s|%s"', $label, $subscribe_code);
-				if($user_subscription == $subscribe_code){
-					$selected = sprintf('default:%d', $index+1);
-				}
-				$index++;
-			} 
-		
-			$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
-								, sprintf('[$1 %s use_label_element %s]'
-									, $selected
-									, $checkboxes)
-								, $html);
-		}
+		$html = self::init_wpcf7_form_html( $html, $newsletters, $email );
 		
 		$option_id = 'admin_nl_post_id';
 		if( ! isset($newsletters[$option_id]) ){
@@ -552,9 +511,63 @@ class AgendaPartage_Newsletter {
 								// , ''
 								// , $html);
 		}
-		
+				
 		$form->set_properties(array('form'=>$html));
 				
+	}
+	
+	/**
+	 * Complète le html d'un formulaire WPCF7 avec les radios et checkboxes à jour en fonction des taxonomies
+	 * Si $post est fourni, modifie les valeurs sélectionnées.
+	 */
+ 	public static function init_wpcf7_form_html( $html, $newsletters = false, $email = false ) { 
+	
+		if( ! $newsletters )
+			$newsletters = self::get_newsletters();
+		
+		// foreach newsletter type (events, covoiturage, forum, admin)
+		foreach($newsletters as $newsletter_option => $newsletter){
+			
+			$user_subscription = null;
+			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
+			/** périodicité de l'abonnement **/
+			$input_name = 'nl-period-' . $field_extension;
+			$subscription_periods = self::subscription_periods($newsletter);
+			
+			if(isset($_REQUEST['action']))
+				switch($_REQUEST['action']){
+					case 'unsubscribe':
+					case 'desinscription':
+						$user_subscription = 'none';
+						$subscription_periods[$user_subscription] = 'Désinscription à valider';
+						break;
+					default:
+						break;
+				}
+			if( $user_subscription === null && $email)
+				$user_subscription = self::get_subscription($email, $newsletter);
+			if( ! $user_subscription)
+				$user_subscription = 'none';
+			
+			$checkboxes = '';
+			$selected = '';
+			$index = 0;
+			foreach( $subscription_periods as $subscribe_code => $label){
+				$checkboxes .= sprintf(' "%s|%s"', $label, $subscribe_code);
+				if($user_subscription == $subscribe_code){
+					$selected = sprintf('default:%d', $index+1);
+				}
+				$index++;
+			} 
+		
+			$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
+								, sprintf('[$1 %s use_label_element %s]'
+									, $selected
+									, $checkboxes)
+								, $html);
+		}
+		
+		return $html;
 	}
 	
 	/**

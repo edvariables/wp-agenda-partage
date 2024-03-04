@@ -273,7 +273,7 @@ input.wpcf7-form-control[name="nl-user-name"] {
 form.wpcf7-form .hidden {
 	display: none;
 }
-form.wpcf7-form .agdpevents-tax_titles {
+form.wpcf7-form .tax_terms_titles {
 	margin-left: 1.2em;
 	cursor: pointer;
 }

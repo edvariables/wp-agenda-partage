@@ -288,7 +288,7 @@ class AgendaPartage_Evenement_Edit {
 		
 		return $html;
 	}
-	
+		
 	/**
 	 * Interception du formulaire avant que les shortcodes ne soient analysés.
 	 * Affectation des valeurs par défaut.
@@ -299,64 +299,7 @@ class AgendaPartage_Evenement_Edit {
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$post = get_post();
 		
-		foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
-		
-			if($post){
-				$post_terms = array();
-				foreach(wp_get_post_terms($post->ID, $tax_name, []) as $term)
-					$post_terms[ $term->term_id . ''] = $term->name;
-			}
-			else {
-				$post_terms = false;
-			}
-			$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name);
-			$checkboxes = '';
-			$selected = '';
-			$free_text = false;
-			$index = 0;
-			$titles = [];
-			foreach($all_terms as $term){
-				$checkboxes .= sprintf(' "%s|%d"', $term->name, $term->term_id);
-				if($post_terms && array_key_exists($term->term_id . '', $post_terms)){
-					$selected .= sprintf('%d_', $index+1);
-				}
-				elseif( ! $post && $term->default_checked)
-					$selected .= sprintf('%d_', $index+1);
-				
-				if($term->description)
-					$titles[$term->name] = $term->description;
-				
-				$index++;
-			}
-			$input_name = $taxonomy['input'];
-					
-			switch($tax_name){
-				case AgendaPartage_Evenement::taxonomy_city :
-					// $checkboxes .= '"(autre)|0"';
-					// $free_text = 'free_text';
-					break;
-				case AgendaPartage_Evenement::taxonomy_diffusion :
-					
-					// debug_log($all_terms);
-					break;
-			}
-			if( count($titles) === 0 )
-				$titles = '';
-			else
-				//cf agendapartage.js
-				$titles = sprintf('<span class="agdpevents-tax_titles hidden" input="%s" titles="%s"></span>'
-							, 'ev-' . $tax_name . 's[]'
-							, esc_attr(json_encode($titles))
-				);
-			$html = preg_replace('/\[(checkbox '.$input_name.')[^\]]*[\]]/'
-								, sprintf('[$1 %s use_label_element %s %s]%s'
-									, $free_text
-									, $selected ? 'default:' . rtrim($selected, '_') : ''
-									, $checkboxes
-									, $titles)
-								, $html);
-								
-		}
+		$html = AgendaPartage_Evenement::init_wpcf7_form_html( $html, $post );
 		
 		/** e-mail non-obligatoire si connecté **/
 		if(($user = wp_get_current_user())

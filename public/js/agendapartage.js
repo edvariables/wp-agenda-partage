@@ -69,7 +69,7 @@ jQuery( function( $ ) {
 				});
 				
 				/** Récupère les titres des cases à cocher pour ajouter l'attribut title **/
-				$form.find('.agdpevents-tax_titles[input][titles]').each(function(event){
+				$form.find('.tax_terms_titles[input][titles]').each(function(event){
 					var input = this.getAttribute('input');
 					var titles = JSON.parse(this.getAttribute('titles'));
 					for(title in titles){

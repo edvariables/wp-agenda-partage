@@ -78,6 +78,9 @@ class AgendaPartage_Admin {
 		
 		if(class_exists('WPCF7_ContactForm')){
 			add_action( 'wpcf7_admin_notices', array( __CLASS__, 'wpcf7_admin_notices' ), 10, 3 ); //edit
+			add_action( 'wpcf7_save_contact_form', array( __CLASS__, 'on_wpcf7_save_contact_form' ), 10, 3 ); //update
+			add_action( 'saved_term', array( __CLASS__, 'on_saved_term_linked_to_wpcf7' ), 10, 5 ); //update
+			add_action( 'deleted_term_taxonomy', array( __CLASS__, 'on_deleted_term_linked_to_wpcf7' ), 10, 1 ); //update
 		}
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_admin_action', array(__CLASS__, 'on_wp_ajax_admin_action_cb') );
@@ -366,6 +369,77 @@ class AgendaPartage_Admin {
 	 
 		// Don't forget to stop execution afterward.
 		wp_die();
+	}
+	
+	/**
+	 * Filtre le html avant enregistrement d'un formulaire wpcf7.
+	 */
+	public static function on_wpcf7_save_contact_form( $contact_form, $args, $context ){
+		$html = false;
+		switch($args['id']){
+			case AgendaPartage::get_option('newsletter_subscribe_form_id'):
+				$html = AgendaPartage_Newsletter::init_wpcf7_form_html( $args['form'] );
+				break;
+			case AgendaPartage::get_option('agdpevent_edit_form_id'):
+				$html = AgendaPartage_Evenement::init_wpcf7_form_html( $args['form'] );
+				break;
+			case AgendaPartage::get_option('covoiturage_edit_form_id'):
+				$html = AgendaPartage_Covoiturage::init_wpcf7_form_html( $args['form'] );
+				break;
+		}
+		if( $html )
+			$contact_form->set_properties( ['form' => $html] );
+	}
+	/**
+	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
+	 */
+	public static function on_saved_term_linked_to_wpcf7( $term_id, $tt_id, $taxonomy, $update, $args ){
+		if( $args && ! empty($args['post_type']) )
+			$post_type = $args['post_type'];
+		elseif( $taxonomy ) {
+			if( ! ($taxonomy = get_taxonomy( $taxonomy ))) return;
+			$post_type = $taxonomy->object_type;
+		}
+		else
+			throw new Exception('tax inconnue');
+		self::update_terms_in_wpcf7_html( $post_type );
+	}
+	/**
+	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
+	 */
+	public static function on_deleted_term_linked_to_wpcf7( $tt_id ){
+		if( ! ($term = get_term( $tt_id ) )) return;
+		if( ! ($taxonomy = get_taxonomy( $term->taxonomy ))) return;
+		self::update_terms_in_wpcf7_html( $taxonomy->object_type );
+	}
+	/**
+	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
+	 */
+	public static function update_terms_in_wpcf7_html( $post_type ){
+		if( is_array($post_type) )
+			$post_type = $post_type[0];
+		switch( $post_type ){
+			case AgendaPartage_Newsletter::post_type :
+				$option_form_id = 'newsletter_subscribe_form_id';
+				$function = 'AgendaPartage_Newsletter::init_wpcf7_form_html';
+				break;
+			case AgendaPartage_Evenement::post_type :
+				$option_form_id = 'agdpevent_edit_form_id';
+				$function = 'AgendaPartage_Evenement::init_wpcf7_form_html';
+				break;
+			case AgendaPartage_Covoiturage::post_type :
+				$option_form_id = 'covoiturage_edit_form_id';
+				$function = 'AgendaPartage_Covoiturage::init_wpcf7_form_html';
+				break;
+			default:
+				return;
+		}
+		
+		$form_id = AgendaPartage::get_option($option_form_id);
+		$html = get_post_meta($form_id, '_form', true);
+		$html = $function( $html );
+		if( $html )
+			update_post_meta($form_id, '_form', $html);
 	}
 }
 ?>

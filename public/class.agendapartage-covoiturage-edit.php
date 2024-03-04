@@ -305,68 +305,12 @@ class AgendaPartage_Covoiturage_Edit {
 	 * Affectation des listes de taxonomies
 	 */
  	public static function wpcf7_form_init_tags_cb( $form_class ) { 
+	
 		$form = WPCF7_ContactForm::get_current();
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$post = get_post();
 		
-		foreach( AgendaPartage_Covoiturage_Post_type::get_taxonomies() as $tax_name => $taxonomy){
-		
-			if($post){
-				$post_terms = array();
-				foreach(wp_get_post_terms($post->ID, $tax_name, []) as $term)
-					$post_terms[ $term->term_id . ''] = $term->name;
-			}
-			else {
-				$post_terms = false;
-			}
-			$all_terms = AgendaPartage_Covoiturage_Post_type::get_all_terms($tax_name);
-			$checkboxes = '';
-			$selected = '';
-			$free_text = false;
-			$index = 0;
-			$titles = [];
-			foreach($all_terms as $term){
-				$checkboxes .= sprintf(' "%s|%d"', $term->name, $term->term_id);
-				if($post_terms && array_key_exists($term->term_id . '', $post_terms)){
-					$selected .= sprintf('%d_', $index+1);
-				}
-				elseif( ! $post && $term->default_checked)
-					$selected .= sprintf('%d_', $index+1);
-				
-				if($term->description)
-					$titles[$term->name] = $term->description;
-				
-				$index++;
-			}
-			$input_name = $taxonomy['input'];
-					
-			switch($tax_name){
-				case AgendaPartage_Covoiturage::taxonomy_city :
-					// $checkboxes .= '"(autre)|0"';
-					// $free_text = 'free_text';
-					break;
-				case AgendaPartage_Covoiturage::taxonomy_diffusion :
-					
-					// debug_log('$all_terms', $all_terms);
-					break;
-			}
-			if( count($titles) === 0 )
-				$titles = '';
-			else
-				//cf agendapartage.js
-				$titles = sprintf('<span class="covoiturages-tax_titles hidden" input="%s" titles="%s"></span>'
-							, 'cov-' . $tax_name . 's[]'
-							, esc_attr(json_encode($titles))
-				);
-			$html = preg_replace('/\[(checkbox '.$input_name.')[^\]]*[\]]/'
-								, sprintf('[$1 %s use_label_element %s %s]%s'
-									, $free_text
-									, $selected ? 'default:' . rtrim($selected, '_') : ''
-									, $checkboxes
-									, $titles)
-								, $html);
-								
-		}
+		$html = AgendaPartage_Covoiturage::init_wpcf7_form_html( $html, $post );
 		
 		/** e-mail non-obligatoire si connecté **/
 		if(($user = wp_get_current_user())
