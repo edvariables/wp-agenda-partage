@@ -11,7 +11,7 @@ class AgendaPartage_Evenements_Export {
 	  *
 	  * $return = url|file|data
 	  */
-	 public static function do_export($posts, $file_format = 'ics', $return = 'url' ){
+	 public static function do_export($posts, $file_format = 'ics', $return = 'url', $filters = false ){
 		$encode_to = "UTF-8";
 		switch( strtolower( $file_format )){
 			case 'vcalendar':
@@ -27,6 +27,10 @@ class AgendaPartage_Evenements_Export {
 				$encode_to = "Windows-1252";
 				$export_data = self::export_posts_bv_txt($posts);
 				break;
+			case 'docx':
+				$encode_to = false;
+				$export_data = self::export_posts_docx($posts, $filters);
+				break;
 			default:
 				return sprintf('format inconnu : "%s"', $file_format);
 		}
@@ -37,9 +41,10 @@ class AgendaPartage_Evenements_Export {
 		if( ! $export_data)
 			return sprintf('Aucune donnée à exporter');
 		
-		$enc = mb_detect_encoding($export_data);
-		$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
-
+		if( $encode_to ) {
+			$enc = mb_detect_encoding($export_data);
+			$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
+		}
 		self::clear_export_history();
 		
 		$file = self::get_export_filename( $file_format );
@@ -140,6 +145,224 @@ class AgendaPartage_Evenements_Export {
 		return implode("\r\n", $txt);
 	}
 	
+	/**
+	 * Retourne le fichier modèle pour la diffusion
+	 */
+	private static function get_diffusion_docx_model_file($filters){
+		$term_id = false;
+		foreach($filters as $filter_name => $filter_value)
+			if( $filter_name === AgendaPartage_Evenement::taxonomy_diffusion ){
+				$term_id = $filter_value;
+				break;
+			}
+		if( ! $term_id )
+			throw new Exception('Impossible de trouver le fichier modèle : terme de diffusion des évènements introuvable.');
+		$meta_name = 'download_file_model';
+		$file = get_term_meta($term_id, $meta_name, true);
+		if( ! $file )
+			throw new Exception('Impossible de trouver le fichier modèle : valeur non définie dans la configuration du terme de diffusion des évènements.');
+		
+		$upload_dir = wp_upload_dir();
+		$upload_dir = str_replace('\\', '/', $upload_dir['basedir']);
+		$file = $upload_dir . $file;
+		if( ! file_exists( $file ) )
+			throw new Exception('Impossible de trouver le fichier modèle : fichier introuvable ('. $file . ').');
+		
+		return $file;
+	}
+	/**
+	 * Crée le fichier zip d'un dossier
+	 */
+	private static function create_zip_file($dir_path, $zip_file){
+		if( file_exists($zip_file) )
+			unlink($zip_file);
+			
+		$zip = new ZipArchive();
+		$zip->open($zip_file, ZIPARCHIVE::CREATE);
+
+		self::folderToZip($dir_path, $zip, strlen("$dir_path/"));
+
+		$zip->close();
+	}
+	/**
+	 * Add files and sub-directories in a folder to zip file.
+	 * @param string $folder
+	 * @param ZipArchive $zipFile
+	 * @param int $exclusiveLength Number of text to be exclusived from the file path.
+	 */
+	private static function folderToZip($folder, &$zipFile, $exclusiveLength) {
+		$handle = opendir($folder);
+		while (false !== $f = readdir($handle)) {
+		  if ($f != '.' && $f != '..') {
+			$filePath = "$folder/$f";
+			// Remove prefix from file path before add to zip.
+			$localPath = substr($filePath, $exclusiveLength);
+			if (is_file($filePath)) {
+			  $zipFile->addFile($filePath, $localPath);
+			} elseif (is_dir($filePath)) {
+			  // Add sub-directory.
+			  $zipFile->addEmptyDir($localPath);
+			  self::folderToZip($filePath, $zipFile, $exclusiveLength);
+			}
+		  }
+		}
+		closedir($handle);
+	}
+	
+	/**
+	 * Retourne les données en docx pour le téléchargement de l'export des évènements
+	 */
+	public static function export_posts_docx($posts, $filters){
+		$file = self::get_diffusion_docx_model_file( $filters );
+		$fileZip = self::get_export_folder() . '/' . basename($file) . '.zip';
+		if( file_exists($fileZip) )
+			unlink($fileZip);
+		//Extraction
+		$zip = new ZipArchive();
+		if( $zip->open($file) !== true )
+			throw new Exception('Impossible de décompresser le fichier modèle.');
+		$zipDir = dirname($fileZip) . '/' . basename($file);
+		if( is_dir($zipDir) )
+			rrmdir($zipDir);
+		$zip->extractTo($zipDir);
+		$zip->close();
+		//Document à modifier
+		$xmlFile = $zipDir . '/word/document.xml';
+		if( ! file_exists($xmlFile) )
+			throw new Exception('Impossible de trouver le document dans le zip : '  . $xmlFile);
+		$xml = file_get_contents($xmlFile);
+		
+		$find = '[**DEBUT**]';
+		$pos = strpos($xml, $find);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$find = '<w:p ';
+		$pos = strrpos( substr($xml, 0, $pos), $find);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$xml_before = substr( $xml, 0, $pos);
+		
+		$find = '[**FIN**]';
+		$pos = strpos($xml, $find);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$find = '</w:p>';
+		$pos = strpos( $xml, $find, $pos);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$xml_after = substr( $xml, $pos + strlen($find));
+		
+		$xml_block_model = substr( $xml, strlen( $xml_before ), strlen( $xml ) - strlen( $xml_before ) - strlen( $xml_after ));
+		$xml_block_model = self::remove_xml_paragraph($xml_block_model, '[**DEBUT**]');
+				
+		foreach($posts as $post){
+			$xml_post = str_replace('[**FIN**]', '', $xml_block_model);
+			
+			if( $cities = AgendaPartage_Evenement::get_event_cities($post->ID))
+				$cities = ' - ' . implode(', ', $cities);
+			else
+				$cities = '';
+			$txt = $post->post_title . $cities;
+			$xml_post = str_replace('[Titre-Commune]', htmlspecialchars($txt), $xml_post);
+			
+			$localisation = get_post_meta($post->ID, 'ev-localisation', true);
+			if($localisation)
+				$localisation = ' - ' . $localisation;
+			$dates = AgendaPartage_Evenement::get_event_dates_text( $post->ID );
+			$dates = str_replace(':00', 'h',$dates);
+			$dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
+			$txt = $dates . $localisation;
+			$xml_post = str_replace('[Date-Lieu]', htmlspecialchars($txt), $xml_post);
+			
+			$txt = $post->post_content;
+			if( ! trim($txt) ){
+				$xml_post = self::remove_xml_paragraph($xml_post, '[Description]');
+			} elseif( strpos($txt, "\n") === false){
+				$xml_post = str_replace('[Description]', htmlspecialchars($txt), $xml_post);
+			} else {
+				$parts = self::explode_xml_paragraph($xml_post, '[Description]');
+				$xml_post = $parts[0];
+				foreach( explode("\n", $txt) as $txt_row){
+					if( trim($txt_row) )
+						$xml_post .= str_replace('[Description]', htmlspecialchars($txt_row), $parts[1]);
+				}
+				$xml_post .= $parts[2];
+			}
+			
+			$meta_key = 'ev-organisateur';
+			if( $value = get_post_meta($post->ID, $meta_key, true) ){
+				$txt = sprintf('Organisé par : %s', $value);
+				$xml_post = str_replace('[Organisateur]', $txt, $xml_post);
+			}
+			else
+				$xml_post = self::remove_xml_paragraph($xml_post, '[Organisateur]');
+			
+			$infos = '';
+			$meta_key = 'ev-phone';
+			if( $value = get_post_meta($post->ID, $meta_key, true) )
+				$infos = $value;
+				
+			$meta_key = 'ev-email';
+			if( $value = get_post_meta($post->ID, $meta_key, true) )
+				if($infos)
+					$infos .= ' / ';
+				$infos .= $value;
+			if( $infos ){
+				$infos = 'Infos : ' . $infos;
+				$xml_post = str_replace('[Infos]', $infos, $xml_post);
+			}
+			else
+				$xml_post = self::remove_xml_paragraph($xml_post, '[Infos]');
+			
+			$meta_key = 'ev-siteweb';
+			if( $value = get_post_meta($post->ID, $meta_key, true) ){
+				$txt = str_replace( [ 'http://', 'https://' ], '', $value);
+				$xml_post = str_replace('[Site-web]', $txt, $xml_post);
+			}
+			else
+				$xml_post = self::remove_xml_paragraph($xml_post, '[Site-web]');
+			
+			$xml_before .= $xml_post;
+		}
+		$xml = $xml_before . $xml_after;
+		$xml = str_replace( '[MOIS]', __(date('F')), $xml);
+		$xml = str_replace( '[ANNEE]', date('Y'), $xml);
+		
+		file_put_contents($xmlFile, $xml);
+		
+		//Regénération du fichier docx
+		self::create_zip_file($zipDir, $fileZip);
+		//Nettoyage	
+		// rrmdir($zipDir);
+		
+		$file = dirname($fileZip) . '/final-' . basename($file);
+		rename($fileZip, $file);
+		
+		return file_get_contents($file);
+	}
+	
+	private static function explode_xml_paragraph($xml, $field){
+		$find = $field;
+		$pos = strpos($xml, $find);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$find = '<w:p ';
+		$pos = strrpos( substr($xml, 0, $pos), $find);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$xml_before = substr( $xml, 0, $pos);
+		
+		$find = '</w:p>';
+		$pos = strpos( $xml, $find, $pos);
+		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
+		$xml_after = substr( $xml, $pos + strlen($find));
+		
+		$xml_inner = substr( $xml, strlen( $xml_before ), strlen( $xml ) - strlen( $xml_before ) - strlen( $xml_after ));
+		
+		return [$xml_before, $xml_inner, $xml_after];
+		
+	}
+	
+	private static function remove_xml_paragraph($xml, $field){
+		$parts = self::explode_xml_paragraph($xml, $field);
+		
+		return $parts[0] . $parts[2];
+		
+	}
 	
 	/**
 	 * Retourne les données ICS pour le téléchargement de l'export des évènements

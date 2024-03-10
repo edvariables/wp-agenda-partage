@@ -699,7 +699,7 @@ class AgendaPartage_Covoiturage_Edit {
 		if(is_object($contact_form) && is_a($contact_form, 'WPCF7_ContactForm', true)){ //contact form 7 -> wp_mail -> $args['message']
 			$form = $contact_form;
 			$data = array();
-			
+		
 			foreach(array(
 					'cov-intention' => 1,
 					'cov-depart' => 1,

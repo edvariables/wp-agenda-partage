@@ -1045,7 +1045,7 @@ class AgendaPartage_Evenements {
 		$file_format = $data['file_format'];
 		
 		require_once( dirname(__FILE__) . '/class.agendapartage-agdpevents-export.php');
-		$url = AgendaPartage_Evenements_Export::do_export($posts, $file_format, 'url');
+		$url = AgendaPartage_Evenements_Export::do_export($posts, $file_format, 'url', $filters);
 		
 		return 'download:' . $url;
 	}

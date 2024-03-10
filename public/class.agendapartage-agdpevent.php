@@ -581,6 +581,10 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			$format_date_fin = 'l j\e\r M Y';
 		else
 			$format_date_fin = 'l j M Y';
+		if( $heure_debut )
+			$heure_debut = str_replace(':', 'h', str_replace(':00', 'h', $heure_debut));
+		if( $heure_fin )
+			$heure_fin = str_replace(':', 'h', str_replace(':00', 'h', $heure_fin));
 		return mb_strtolower( trim(
 			  ($date_fin && $date_fin != $date_debut ? 'du ' : '')
 			. ($date_debut ? str_ireplace(' mar ', ' mars ', mysql2date( $format_date_debut, $date_debut )) : '')

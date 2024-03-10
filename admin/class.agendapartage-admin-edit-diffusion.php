@@ -25,6 +25,8 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		// && $_POST['taxonomy'] == AgendaPartage_Evenement::taxonomy_diffusion)
 			add_action( 'saved_' . AgendaPartage_Evenement::taxonomy_diffusion , array(__CLASS__, 'saved_term_cb'), 10, 4 );
 
+		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_term_new_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
+		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_term_edit_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
 		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
 		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
 
@@ -71,6 +73,44 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 			else {
 				delete_term_meta($term_id, $meta_name);
 			}
+		
+		$meta_name = 'download_file_model';
+		if(array_key_exists($meta_name, $_FILES) && $_FILES[$meta_name]
+		&& $_FILES[$meta_name]['name'] && $_FILES[$meta_name]['error'] === 0 ){
+			$final_path = sprintf('%st%s-%s', self::get_attachments_path(), $term_id, $_FILES[$meta_name]['name']);
+			if( move_uploaded_file($_FILES[$meta_name]['tmp_name'], $final_path) ){
+				$upload_dir = wp_upload_dir();
+				$upload_dir = str_replace('\\', '/', $upload_dir['basedir']);
+				$final_path = str_replace($upload_dir, '', $final_path);
+				update_term_meta($term_id, $meta_name, $final_path);
+			}
+		}
+	}
+	
+	/**
+	 * Retourne le répertoire de stockage des fichiers modèles
+	 */
+	private static function get_attachments_path(){
+		$upload_dir = wp_upload_dir();
+		
+		$dirname = str_replace('\\', '/', $upload_dir['basedir']);
+		if( is_multisite())
+			$dirname .= '/sites/' . get_current_blog_id();
+		
+		$dirname .= sprintf('/%s/%s/', date('Y'), date('m'));
+		
+		if ( ! file_exists( $dirname ) ) {
+			wp_mkdir_p( $dirname );
+		}
+
+		return $dirname;
+	}
+
+	/**
+	 * Attribut de la balise form
+	 */
+	public static function on_term_edit_form_tag( ){
+		echo ' enctype="multipart/form-data" ';
 	}
 
 	/**
@@ -87,7 +127,7 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		
     ?><tr class="form-comment">
         <th scope="row">
-        <td><i>La description appraitra en information complémentaire lors de l'édition d'un évènement.</td>
+        <td><i>La description apparaitra en information complémentaire lors de l'édition d'un évènement.</td>
     </tr><?php
     ?><tr class="form-field">
         <th scope="row"><label for="default_checked">Coché par défaut</label></th>
@@ -109,6 +149,7 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 						, 'ics' => 'vCalendar (.ics)'
 						, 'txt' => 'texte brut (.txt)'
 						, 'bv.txt' => 'texte préformaté BV (.bv.txt)'
+						, 'docx' => 'document préformaté (.docx)'
 					];
 			
 			parent::metabox_html([array('name' => $meta_name,
@@ -116,6 +157,26 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 									'input' => 'select',
 									'values' => $values
 								)], $tag, null);
+        ?></td>
+    </tr><?php
+    ?><tr class="form-field">
+        <th scope="row"><label for="download_link"></label></th>
+        <td><?php
+			$meta_name = 'download_file_model';
+				
+			parent::metabox_html([array('name' => $meta_name,
+									'label' => __('Fichier modèle (.docx)', AGDP_TAG),
+									'input' => 'file',
+									'type' => 'file',
+								)], $tag, null);
+			
+			if( $tag
+			&& ($meta_value = get_term_meta($tag->term_id, $meta_name, true)) ){
+				$upload_dir_info = wp_upload_dir();
+				$url = $upload_dir_info['baseurl'] . $meta_value;
+				
+				echo sprintf('<br><label>Fichier actuel : </label><a href="%s">%s</a>', $url, basename($meta_value));
+			}
         ?></td>
     </tr><?php
 		if( $tag === null)
