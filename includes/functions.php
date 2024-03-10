@@ -226,3 +226,45 @@ function html_to_plain_text($html){
 			wp_strip_all_tags($html)
 			), ENT_QUOTES | ENT_HTML401);
 }
+
+
+/**
+ * Crée le fichier zip d'un dossier, sans ou avec dossier racine dans le zip
+ */
+function zip_create_folder_zip($dir_path, $zip_file, $add_root_folder = false){
+	if( file_exists($zip_file) )
+		unlink($zip_file);
+		
+	$zip = new ZipArchive();
+	$zip->open($zip_file, ZIPARCHIVE::CREATE);
+	if( $add_root_folder )
+		$zipFile->addEmptyDir(basename($dir_path));//TODO test
+		
+	zip_add_folder($dir_path, $zip, strlen("$dir_path/"));
+
+	$zip->close();
+}
+/**
+ * Add files and sub-directories in a folder to zip file.
+ * @param string $folder
+ * @param ZipArchive $zipFile
+ * @param int $exclusiveLength Number of text to be exclusived from the file path.
+ */
+function zip_add_folder($folder, &$zipFile, $exclusiveLength) {
+	$handle = opendir($folder);
+	while (false !== $f = readdir($handle)) {
+		if ($f != '.' && $f != '..') {
+			$filePath = "$folder/$f";
+			// Remove prefix from file path before add to zip.
+			$localPath = substr($filePath, $exclusiveLength);
+			if (is_file($filePath)) {
+				$zipFile->addFile($filePath, $localPath);
+			} elseif (is_dir($filePath)) {
+				// Add sub-directory.
+				$zipFile->addEmptyDir($localPath);
+				zip_add_folder($filePath, $zipFile, $exclusiveLength);
+			}
+		}
+	}
+	closedir($handle);
+}

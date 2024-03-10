@@ -343,9 +343,14 @@ class AgendaPartage_Covoiturages {
 			$query_tax_terms = [];
 			// Taxonomies
 			foreach( AgendaPartage_Covoiturage_Post_type::get_taxonomies() as $tax_name => $taxonomy){
-				$field = $taxonomy['filter'];
+				if(isset($filters[$tax_name]))
+					$field = $tax_name;
+				else
+					$field = $taxonomy['filter'];
 				if(isset($filters[$field])){
 					$query_tax_terms[$tax_name] = ['IN'=>[]];
+					if( ! is_array($filters[$field]) )
+						$filters[$field] = [ $filters[$field] => 1];
 					foreach($filters[$field] as $term_id => $checked){
 						if($term_id === '*'){
 							unset($query_tax_terms[$tax_name]);

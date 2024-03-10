@@ -39,20 +39,22 @@ class AgendaPartage_Evenements_Export {
 			return $export_data;
 		
 		if( ! $export_data)
-			return sprintf('Aucune donnée à exporter');
+			return sprintf('alert:Aucune donnée à exporter');
 		
 		if( $encode_to ) {
 			$enc = mb_detect_encoding($export_data);
 			$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
 		}
 		self::clear_export_history();
-		
-		$file = self::get_export_filename( $file_format );
+		if( strrpos($export_data, '.' . $file_format) === strlen($export_data) - 1 - strlen($file_format) )
+			$file = $export_data;
+		else {
+			$file = self::get_export_filename( $file_format );
 
-		$handle = fopen($file, "w");
-		fwrite($handle, $export_data);
-		fclose($handle);
-		
+			$handle = fopen($file, "w");
+			fwrite($handle, $export_data);
+			fclose($handle);
+		}
 		if($return === 'file')
 			return $file;
 		
@@ -145,69 +147,8 @@ class AgendaPartage_Evenements_Export {
 		return implode("\r\n", $txt);
 	}
 	
-	/**
-	 * Retourne le fichier modèle pour la diffusion
-	 */
-	private static function get_diffusion_docx_model_file($filters){
-		$term_id = false;
-		foreach($filters as $filter_name => $filter_value)
-			if( $filter_name === AgendaPartage_Evenement::taxonomy_diffusion ){
-				$term_id = $filter_value;
-				break;
-			}
-		if( ! $term_id )
-			throw new Exception('Impossible de trouver le fichier modèle : terme de diffusion des évènements introuvable.');
-		$meta_name = 'download_file_model';
-		$file = get_term_meta($term_id, $meta_name, true);
-		if( ! $file )
-			throw new Exception('Impossible de trouver le fichier modèle : valeur non définie dans la configuration du terme de diffusion des évènements.');
-		
-		$upload_dir = wp_upload_dir();
-		$upload_dir = str_replace('\\', '/', $upload_dir['basedir']);
-		$file = $upload_dir . $file;
-		if( ! file_exists( $file ) )
-			throw new Exception('Impossible de trouver le fichier modèle : fichier introuvable ('. $file . ').');
-		
-		return $file;
-	}
-	/**
-	 * Crée le fichier zip d'un dossier, sans dossier racine dans le zip
-	 */
-	private static function create_zip_file($dir_path, $zip_file){
-		if( file_exists($zip_file) )
-			unlink($zip_file);
-			
-		$zip = new ZipArchive();
-		$zip->open($zip_file, ZIPARCHIVE::CREATE);
-
-		self::folderToZip($dir_path, $zip, strlen("$dir_path/"));
-
-		$zip->close();
-	}
-	/**
-	 * Add files and sub-directories in a folder to zip file.
-	 * @param string $folder
-	 * @param ZipArchive $zipFile
-	 * @param int $exclusiveLength Number of text to be exclusived from the file path.
-	 */
-	private static function folderToZip($folder, &$zipFile, $exclusiveLength) {
-		$handle = opendir($folder);
-		while (false !== $f = readdir($handle)) {
-		  if ($f != '.' && $f != '..') {
-			$filePath = "$folder/$f";
-			// Remove prefix from file path before add to zip.
-			$localPath = substr($filePath, $exclusiveLength);
-			if (is_file($filePath)) {
-			  $zipFile->addFile($filePath, $localPath);
-			} elseif (is_dir($filePath)) {
-			  // Add sub-directory.
-			  $zipFile->addEmptyDir($localPath);
-			  self::folderToZip($filePath, $zipFile, $exclusiveLength);
-			}
-		  }
-		}
-		closedir($handle);
-	}
+	/**********************************************************/
+	/******************  DOCX  ********************************/
 	
 	/**
 	 * Retourne les données en docx pour le téléchargement de l'export des évènements
@@ -320,22 +261,54 @@ class AgendaPartage_Evenements_Export {
 			$xml_before .= $xml_post;
 		}
 		$xml = $xml_before . $xml_after;
-		$xml = str_replace( '[MOIS]', __(date('F')), $xml);
-		$xml = str_replace( '[ANNEE]', date('Y'), $xml);
+		
+		$date = new DateTime();
+		$date->modify('+1 month');
+		$xml = str_replace( '[MOIS]', __($date->format('F')), $xml);
+		$xml = str_replace( '[ANNEE]', $date->format('Y'), $xml);
 		
 		file_put_contents($xmlFile, $xml);
 		
 		//Regénération du fichier docx
-		self::create_zip_file($zipDir, $fileZip);
+		zip_create_folder_zip($zipDir, $fileZip);
 		//Nettoyage	
-		// rrmdir($zipDir);
+		rrmdir($zipDir);
 		
-		$file = dirname($fileZip) . '/final-' . basename($file);
+		$file = sprintf( '%s/%s-%s', dirname($fileZip), $date->format('Y-m'), basename($file));
 		rename($fileZip, $file);
 		
-		return file_get_contents($file);
+		return $file;
 	}
 	
+	/**
+	 * Retourne le fichier modèle pour la diffusion
+	 */
+	private static function get_diffusion_docx_model_file($filters){
+		$term_id = false;
+		foreach($filters as $filter_name => $filter_value)
+			if( $filter_name === AgendaPartage_Evenement::taxonomy_diffusion ){
+				$term_id = $filter_value;
+				break;
+			}
+		if( ! $term_id )
+			throw new Exception('Impossible de trouver le fichier modèle : terme de diffusion des évènements introuvable.');
+		$meta_name = 'download_file_model';
+		$file = get_term_meta($term_id, $meta_name, true);
+		if( ! $file )
+			throw new Exception('Impossible de trouver le fichier modèle : valeur non définie dans la configuration du terme de diffusion des évènements.');
+		
+		$upload_dir = wp_upload_dir();
+		$upload_dir = str_replace('\\', '/', $upload_dir['basedir']);
+		$file = $upload_dir . $file;
+		if( ! file_exists( $file ) )
+			throw new Exception('Impossible de trouver le fichier modèle : fichier introuvable ('. $file . ').');
+		
+		return $file;
+	}
+	
+	/**
+	 * Découpe en 3 (avant, paragraphe, après) un XML autours d'un paragraphe contenant $field
+	 */
 	private static function explode_xml_paragraph($xml, $field){
 		$find = $field;
 		$pos = strpos($xml, $find);
@@ -356,12 +329,16 @@ class AgendaPartage_Evenements_Export {
 		
 	}
 	
+	/**
+	 * Supprime, dans un XML, un paragraphe contenant $field
+	 */
 	private static function remove_xml_paragraph($xml, $field){
 		$parts = self::explode_xml_paragraph($xml, $field);
 		
 		return $parts[0] . $parts[2];
 		
 	}
+	/**********************************************************/
 	
 	/**
 	 * Retourne les données ICS pour le téléchargement de l'export des évènements

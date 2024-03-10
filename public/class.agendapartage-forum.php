@@ -710,8 +710,8 @@ class AgendaPartage_Forum {
 		$upload_dir = wp_upload_dir();
 		
 		$forum_dirname = str_replace('\\', '/', $upload_dir['basedir']);
-		if( is_multisite())
-			$forum_dirname .= '/sites/' . get_current_blog_id();
+		// if( is_multisite())
+			// $forum_dirname .= '/sites/' . get_current_blog_id();
 		
 		$forum_dirname .= sprintf('/%s/%d/%d/%d/', self::post_type, $forum_id, date('Y'), date('m'));
 		

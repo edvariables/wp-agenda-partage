@@ -94,8 +94,8 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		$upload_dir = wp_upload_dir();
 		
 		$dirname = str_replace('\\', '/', $upload_dir['basedir']);
-		if( is_multisite())
-			$dirname .= '/sites/' . get_current_blog_id();
+		// if( is_multisite())
+			// $dirname .= '/sites/' . get_current_blog_id();
 		
 		$dirname .= sprintf('/%s/%s/', date('Y'), date('m'));
 		

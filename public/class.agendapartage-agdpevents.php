@@ -370,7 +370,7 @@ class AgendaPartage_Evenements {
 				// echo "<pre>";echo($sql);echo "</pre>";
 			}
 		}
-		debug_log('get_filters_query', isset($sql) ? $sql : '', $query_tax_terms);
+		// debug_log('get_filters_query', isset($sql) ? $sql : '', $query_tax_terms);
 		if($return_sql)
 			return isset($sql) ? $sql : '';
 		if( ! empty($sql))
