@@ -77,7 +77,8 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		$meta_name = 'download_file_model';
 		if(array_key_exists($meta_name, $_FILES) && $_FILES[$meta_name]
 		&& $_FILES[$meta_name]['name'] && $_FILES[$meta_name]['error'] === 0 ){
-			$final_path = sprintf('%st%s-%s', self::get_attachments_path(), $term_id, $_FILES[$meta_name]['name']);
+			$file_name = preg_replace('/^(t[0-9]+\-)+/', '', $_FILES[$meta_name]['name']);
+			$final_path = sprintf('%st%s-%s', self::get_attachments_path(), $term_id, $file_name);
 			if( move_uploaded_file($_FILES[$meta_name]['tmp_name'], $final_path) ){
 				$upload_dir = wp_upload_dir();
 				$upload_dir = str_replace('\\', '/', $upload_dir['basedir']);
