@@ -293,13 +293,18 @@ class AgendaPartage_Evenements {
 	 */
 	public static function get_filters_query($return_sql = false, $filters = null){
 		$filters = self::get_filters($filters);
-		// debug_log('get_filters_query IN ', $filters);
+		debug_log('get_filters_query IN ', $filters);
 		if(count($filters)){
 			$query_tax_terms = [];
 			foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
-				$field = $taxonomy['filter'];
+				if(isset($filters[$tax_name]))
+					$field = $tax_name;
+				else
+					$field = $taxonomy['filter'];
 				if(isset($filters[$field])){
 					$query_tax_terms[$tax_name] = ['IN'=>[]];
+					if( ! is_array($filters[$field]) )
+						$filters[$field] = [ $filters[$field] => 1];
 					foreach($filters[$field] as $term_id => $checked){
 						if($term_id === '*'){
 							unset($query_tax_terms[$tax_name]);
@@ -365,7 +370,7 @@ class AgendaPartage_Evenements {
 				// echo "<pre>";echo($sql);echo "</pre>";
 			}
 		}
-		// debug_log('get_filters_query', isset($sql) ? $sql : '', $query);
+		debug_log('get_filters_query', isset($sql) ? $sql : '', $query_tax_terms);
 		if($return_sql)
 			return isset($sql) ? $sql : '';
 		if( ! empty($sql))

@@ -171,7 +171,7 @@ class AgendaPartage_Evenements_Export {
 		return $file;
 	}
 	/**
-	 * Crée le fichier zip d'un dossier
+	 * Crée le fichier zip d'un dossier, sans dossier racine dans le zip
 	 */
 	private static function create_zip_file($dir_path, $zip_file){
 		if( file_exists($zip_file) )
@@ -265,7 +265,6 @@ class AgendaPartage_Evenements_Export {
 			if($localisation)
 				$localisation = ' - ' . $localisation;
 			$dates = AgendaPartage_Evenement::get_event_dates_text( $post->ID );
-			$dates = str_replace(':00', 'h',$dates);
 			$dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
 			$txt = $dates . $localisation;
 			$xml_post = str_replace('[Date-Lieu]', htmlspecialchars($txt), $xml_post);

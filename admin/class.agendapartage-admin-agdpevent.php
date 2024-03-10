@@ -45,7 +45,7 @@ class AgendaPartage_Admin_Evenement {
 			'details'     => __( 'Détails', AGDP_TAG ),
 			'ev_category'     => __( 'Catégories', AGDP_TAG ),
 			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
-			'diffusion'      => __( 'Diffusion', AGDP_TAG ),
+			'ev_diffusion'      => __( 'Diffusion', AGDP_TAG ),
 			'author'        => __( 'Auteur', AGDP_TAG ),
 			'date'      => __( 'Date', AGDP_TAG )
 		);
@@ -71,7 +71,7 @@ class AgendaPartage_Admin_Evenement {
 			case 'ev_category' :
 				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
 				break;
-			case 'diffusion' :
+			case 'ev_diffusion' :
 				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
 				break;
 			case 'details' :
@@ -103,7 +103,7 @@ class AgendaPartage_Admin_Evenement {
 		$columns['author']    = 'author';
 		$columns['dates'] = 'dates';
 		$columns['details'] = 'details';
-		$columns['diffusion'] = 'diffusion';
+		$columns['ev_diffusion'] = 'ev_diffusion';
 		$columns['organisateur'] = 'organisateur';
 		return $columns;
 	}
