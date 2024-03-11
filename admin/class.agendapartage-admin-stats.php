@@ -160,7 +160,7 @@ class AgendaPartage_Admin_Stats {
 				if( ! is_a($posts, 'WP_Query'))
 					continue;
 				//;
-				$url = get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=%s', $post_status, $post_type));
+				$url = wp_login_url(get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=%s', $post_status, $post_type)));
 				echo '<td>';
 				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d %s(s)</a>', $status_name, $url, $posts->found_posts, strtolower( $post_type_labels->singular_name));
 				?></header><?php

@@ -11,8 +11,6 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 
 * $(recaptcha).init après ajax sur androïd
 
-* Remplacer var id = 'agdp-tabs'; par var class_name = 'agdp-tabs'; + .css
-
 * Menu Se connecter n'apparait pas sur //agendapartage.fr
 	cf "top" menu qui n'est pas "top"
 
@@ -39,10 +37,7 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 - shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
 - shortcode [agdp-stats] pour mailing admin
 - Désabonnement : suppression du user si jamais connecté
-- affichage date de prochain qd tout le monde a été traité
-- Pour les destinataires administrateurs, ajouter le rédacteur de l'évènement
 - Pour les abonnés mensuels, afficher 2 mois
-- côté client, la saisie d'une adresse inconnue ne sélectionne pas "Aucun abonnement"
 - décocher "Recevoir maintenant" après envoi
 
 * Publish wp plugin
