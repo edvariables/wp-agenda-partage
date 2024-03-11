@@ -426,11 +426,12 @@ class AgendaPartage_Newsletter {
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
 		jQuery('form div.agdp-tabs-wrap:first').each(function(){
-			var id = 'agdp-tabs';
+			var id = 'agdp-tabs-' + Math.floor( Math.random()*1000);
+			var class_name = 'agdp-tabs';
 			var tabs_counter = 0;
 			var $tabs_contents = [];
-			var $tabs = jQuery('<div id="' + id + '"/>');
-			var $nav = jQuery('<ul id="' + id + '-nav"/>').appendTo($tabs);
+			var $tabs = jQuery('<div class="' + class_name + '"/>');
+			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
 			
 			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
@@ -777,12 +778,11 @@ class AgendaPartage_Newsletter {
 		
 		$ajax_response = '0';
 		if(array_key_exists("email", $_POST)){
-			if( email_exists($_POST['email'])){
+			if( $is_user = email_exists($_POST['email'])){
 				if( ! self::current_user_can_change_subscription($_POST['email']) ){
 					wp_send_json('Vous n\'avez pas l\'autorisation de modifier cet utilisateur. Veuillez vous connecter avec cette adresse email.');
 					wp_die();
 				}
-				$is_user = true;
 			}
 			$subscriptions = array();
 			foreach( self::get_newsletters() as $newsletter_option => $newsletter){
@@ -970,7 +970,7 @@ class AgendaPartage_Newsletter {
 			
 			if( ! ($found = is_numeric($period)))
 				foreach($subscription_periods as $key=>$label)
-					if( $found = ($label === $period) ){
+					if( $found = ($label === $period) || ($key === $period) ){
 						$period = $key;
 						break;
 					}

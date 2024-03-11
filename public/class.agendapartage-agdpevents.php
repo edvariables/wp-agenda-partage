@@ -293,9 +293,10 @@ class AgendaPartage_Evenements {
 	 */
 	public static function get_filters_query($return_sql = false, $filters = null){
 		$filters = self::get_filters($filters);
-		debug_log('get_filters_query IN ', $filters);
+		// debug_log('get_filters_query IN ', $filters);
 		if(count($filters)){
 			$query_tax_terms = [];
+			// Taxonomies
 			foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 				if(isset($filters[$tax_name]))
 					$field = $tax_name;
@@ -318,6 +319,7 @@ class AgendaPartage_Evenements {
 					}
 				}
 			}
+			
 			$sql = '';
 			if(count($query_tax_terms)){
 				global $wpdb;

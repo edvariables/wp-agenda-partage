@@ -261,16 +261,21 @@ jQuery( function( $ ) {
 								var subscription = response[nloption];
 								if( ! subscription || ! subscription.subscription_name)
 									continue;
-								var $radio = $form.find('input[name="nl-period-' + subscription.field_extension + '"][value="' + subscription.subscription_name + '"]');
-								$radio.prop("checked", true);
+								$form.find('input[name="nl-period-' + subscription.field_extension + '"][value="' + subscription.subscription_name + '"]')
+									.prop("checked", true);
 							}
 							is_user = response.is_user;
 						}
 						if(is_user)
-							$form.find('.if-not-connected').hide().prop("checked", false);
-						else
+							$form.find('.if-not-connected').hide();
+						else {
 							$form.find('.if-not-connected').show();
+							$form.find('.wpcf7-list-item.first input[name^="nl-period-"]').prop('checked', true);
+						}
 						
+						$form.find('input[name^="nl-send_newsletter-now-"]').prop('checked', false);
+						$form.find('input[name="nl-create-user[]"]').prop('checked', false);
+						$form.find('input[name="nl-user-name"]').val('');
 						if(typeof response === 'string'){
 							var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 							.click(function(){$msg.remove()});

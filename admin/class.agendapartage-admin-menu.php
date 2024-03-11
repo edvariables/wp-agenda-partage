@@ -486,17 +486,18 @@ class AgendaPartage_Admin_Menu {
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
 		jQuery('form > div.agdp-tabs-wrap:first').each(function(){
-			var id = 'agdp-tabs';
+			var id = 'agdp-tabs-' + Math.floor( Math.random()*1000);
+			var class_name = 'agdp-tabs';
 			var tabs_counter = 0;
 			var $tabs_contents = [];
-			var $tabs = jQuery(sprintf('<div id="%s"/>', id));
-			var $nav = jQuery(sprintf('<ul id="%s-nav"/>', id)).appendTo($tabs);
+			var $tabs = jQuery('<div class="' + class_name + '"/>');
+			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
 			var $submit = jQuery(this).find('p.submit');
 			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
 				tabs_counter++;
-				$nav.append(sprintf('<li><a href="#%s-%d">%s</a></li>', id, tabs_counter, this.innerText));
-				var $content = jQuery(sprintf('<div id="%s-%d" class="agdp-panel"><div/>', id, tabs_counter));
+				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
+				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
 			});
