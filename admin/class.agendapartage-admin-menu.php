@@ -279,6 +279,21 @@ class AgendaPartage_Admin_Menu {
 					'input_type' => 'checkbox'
 				]
 			);
+
+			// 
+			$field_id = 'agdpevent_ev_diffusion';
+			add_settings_field(
+				$field_id, 
+				__( 'Diffusions', AGDP_TAG ),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_agdpevents',
+				[
+					'label' => __('Diffusion docx', AGDP_TAG) . ' ' . self::get_ev_diffusion_docx(),
+					'learn-more' => [__( 'L\'importation du document Word (.docx) servant de modèle s\'effectue dans le paramétrage des diffusions des évènements.', AGDP_TAG )],
+					'class' => 'agendapartage_row',
+				]
+			);
 			
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
@@ -649,9 +664,13 @@ class AgendaPartage_Admin_Menu {
 	 * $args['post_type'] doit être fourni
 	 */
 	public static function agendapartage_input_cb( $args ) {
-		$option_id = $args['label_for'];
-		$input_type = $args['input_type'];
-		$value = AgendaPartage::get_option($option_id);
+		if( empty($args['label_for']) )
+			$value = $option_id = false;
+		else {
+			$option_id = $args['label_for'];
+			$value = AgendaPartage::get_option($option_id);
+		}
+		$input_type = empty($args['input_type']) ? false : $args['input_type'];
 		
 		if($input_type === 'checkbox'){
 			echo sprintf('<label><input id="%s" name="%s[%s]" type="%s" class="%s" %s> %s</label>'
@@ -662,7 +681,7 @@ class AgendaPartage_Admin_Menu {
 				, $value ? 'checked' : ''
 				, $args['label']
 			);
-		} else {
+		} elseif($input_type) {
 			echo sprintf('<input id="%s" name="%s[%s]" type="%s" class="%s" placeholder="%s" value="%s">'
 				, esc_attr( $option_id )
 				, AGDP_TAG, esc_attr( $option_id )
@@ -672,9 +691,14 @@ class AgendaPartage_Admin_Menu {
 				, esc_attr( $value )
 				
 			);
+		} elseif( ! empty($args['label'])){
+			echo sprintf('<label class="%s"> %s</label>'
+				, empty($args['class']) ? '' : esc_attr( $args['class'] )
+				, $args['label']
+			);
 		}
 		if(isset($args['learn-more'])){
-			echo '<br><br>';
+			if($input_type) echo '<br><br>';
 			if( ! is_array($args['learn-more']))
 				$args['learn-more'] = [$args['learn-more']];
 			foreach($args['learn-more'] as $learn_more){
@@ -985,6 +1009,33 @@ class AgendaPartage_Admin_Menu {
 		if( count($logs) ){
 			AgendaPartage_Admin::add_admin_notice($logs, 'error', true);
 		}
+	}
+	
+	private static function get_ev_diffusion_docx( $returns_html = true){
+		$terms = get_terms( array(
+			'taxonomy'   => AgendaPartage_Evenement::taxonomy_diffusion,
+			'hide_empty' => false,
+			'meta_key' => 'download_link',
+			'meta_value'=> 'docx'
+		) );
+		debug_log($terms);
+		$html = '';
+		foreach($terms as $term){
+			if( ! $returns_html ) 
+				return $term_id;
+			if( $html ) $html .= ', ';
+			$html .= sprintf('<a href="%s">%s</a>',
+						site_url(sprintf('wp-admin/term.php?taxonomy=%s&tag_ID=%s&post_type=%s',
+							$term->taxonomy,
+							$term->term_id,
+							AgendaPartage_Evenement::post_type
+						)),
+						$term->name
+					);
+		}
+		if( $returns_html ) 
+			return $html;
+		return false;
 	}
 }
 
