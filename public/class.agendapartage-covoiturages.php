@@ -946,9 +946,9 @@ class AgendaPartage_Covoiturages {
 				global $current_user;
 				//Rôle autorisé
 				if(	$current_user->has_cap( 'edit_posts' ) ){
-					$user_name = $current_user->get('display_name');
 					$html .= '<td/><td>';
 					$creator = new WP_User($post->post_author);
+					$user_name = $creator->get('display_name');
 					$html .= 'créé par <a>' . $user_name . '</a>';
 					
 					$html .= '</td></tr><tr>';
