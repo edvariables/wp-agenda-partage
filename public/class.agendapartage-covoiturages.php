@@ -672,6 +672,9 @@ class AgendaPartage_Covoiturages {
 .agdp-covoiturages .cov-periodiques {
 	background-color: #dba526;
 }
+.cov-depart, .cov-arrivee {
+	font-size: larger;
+}
 .created-since {
 	font-size: smaller;
 	font-style: italic;
