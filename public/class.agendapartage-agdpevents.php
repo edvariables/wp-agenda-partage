@@ -816,6 +816,7 @@ class AgendaPartage_Evenements {
 				global $current_user;
 				//Rôle autorisé
 				if(	$current_user->has_cap( 'edit_posts' ) ){
+					$creator = new WP_User($post->post_author);
 					if(($user_name = $creator->get('display_name'))
 					|| ($user_name = $creator->get('user_login'))){
 						$html .= '<td/><td>';
