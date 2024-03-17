@@ -816,13 +816,13 @@ class AgendaPartage_Evenements {
 				global $current_user;
 				//Rôle autorisé
 				if(	$current_user->has_cap( 'edit_posts' ) ){
-				
-					$html .= '<td/><td>';
-					$creator = new WP_User($event->post_author);
-					$user_name = $creator->get('display_name');
-					$html .= 'créé par "' . $user_name . '"';
-					
-					$html .= '</td></tr><tr>';
+					if(($user_name = $creator->get('display_name'))
+					|| ($user_name = $creator->get('user_login'))){
+						$html .= '<td/><td>';
+						$html .= 'créé par <a>' . $user_name . '</a>';
+						
+						$html .= '</td></tr><tr>';
+					}
 				}
 			}
 			

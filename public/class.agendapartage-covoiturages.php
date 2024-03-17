@@ -946,12 +946,14 @@ class AgendaPartage_Covoiturages {
 				global $current_user;
 				//Rôle autorisé
 				if(	$current_user->has_cap( 'edit_posts' ) ){
-					$html .= '<td/><td>';
 					$creator = new WP_User($post->post_author);
-					$user_name = $creator->get('display_name');
-					$html .= 'créé par <a>' . $user_name . '</a>';
-					
-					$html .= '</td></tr><tr>';
+					if(($user_name = $creator->get('display_name'))
+					|| ($user_name = $creator->get('user_login'))){
+						$html .= '<td/><td>';
+						$html .= 'créé par <a>' . $user_name . '</a>';
+						
+						$html .= '</td></tr><tr>';
+					}
 				}
 			}
 			
