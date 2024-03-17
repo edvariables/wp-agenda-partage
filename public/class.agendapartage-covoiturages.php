@@ -669,11 +669,11 @@ class AgendaPartage_Covoiturages {
 .agdp-covoiturages-email i {
 	font-style: normal;
 }
-.agdp-covoiturages .cov-periodiques {
-	background-color: #dba526;
-}
-.cov-depart, .cov-arrivee {
+.cov-depart, .cov-arrivee, .cov-date-jour-num {
 	font-size: larger;
+}
+.cov-periodiques, .cov-periodiques .nb-items {
+	background-color: #dba526;
 }
 .created-since {
 	font-size: smaller;
@@ -946,10 +946,10 @@ class AgendaPartage_Covoiturages {
 				global $current_user;
 				//Rôle autorisé
 				if(	$current_user->has_cap( 'edit_posts' ) ){
-				
+					$user_name = $current_user->get('display_name');
 					$html .= '<td/><td>';
 					$creator = new WP_User($post->post_author);
-					$html .= 'créé par <a>' . $creator->get('user_nicename') . '</a>';
+					$html .= 'créé par <a>' . $user_name . '</a>';
 					
 					$html .= '</td></tr><tr>';
 				}
