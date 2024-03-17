@@ -671,6 +671,7 @@ class AgendaPartage_Covoiturages {
 }
 .cov-depart, .cov-arrivee, .cov-date-jour-num {
 	font-size: larger;
+	font-variant-caps: small-caps;
 }
 .cov-periodiques, .cov-periodiques .nb-items {
 	background-color: #dba526;

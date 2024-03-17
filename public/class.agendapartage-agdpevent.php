@@ -173,7 +173,9 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			if(	$current_user->has_cap( 'edit_posts' ) ){
 			
 				$creator = new WP_User($agdpevent->post_author);
-				$html .= '<p>créé par "' . $creator->get('user_nicename') . '"</p>';
+				if(($user_name = $creator->get('display_name'))
+				|| ($user_name = $creator->get('user_login')))
+					$html .= '<p>créé par "' . $user_name . '"</p>';
 			}
 		}
 		return $html;
