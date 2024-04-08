@@ -197,7 +197,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 				'learn-more' => "De la forme {ssl0.ovh.net:993/ssl} ou {imap.free.fr:143/notls}."
 			],
 			[	'name' => 'imap_email',
-				'label' => __('Adresse email', AGDP_TAG),
+				'label' => __('Compte email', AGDP_TAG),
 				'type' => 'text'
 			],
 			[	'name' => 'imap_password',
@@ -216,7 +216,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 				'input' => 'textarea',
 				'learn-more' => "Entrez ici les débuts des textes de signatures à reconnaitre."
 							. "\nCeci tronque le message depuis la signature jusqu'à la fin."
-							. "\nMettre ci-dessous une recherche par ligne."
+							. "\nMettre ci-dessus une recherche par ligne."
 			],
 			[	'name' => 'clear_raw',
 				'label' => __('Effacer des lignes inutiles', AGDP_TAG),
@@ -224,7 +224,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 				'input' => 'textarea',
 				'learn-more' => "Entrez ici les débuts des textes (par exemple \"Envoyé à partir de\".)"
 							. "\nCeci tronque le message d'une seule ligne."
-							. "\nMettre ci-dessous une recherche par ligne."
+							. "\nMettre ci-dessus une recherche par ligne."
 			],
 		];
 		return $fields;

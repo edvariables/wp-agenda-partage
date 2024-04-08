@@ -21,6 +21,15 @@ class AgendaPartage_Admin {
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-multisite.php' );
 			add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Multisite', 'init' ) );
 		}
+		
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-post-type.php' );
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-mailbox.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Mailbox', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-mailbox.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Mailbox', 'init' ) );
+		
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Evenement', 'init' ) );
 
@@ -33,8 +42,6 @@ class AgendaPartage_Admin {
 		}
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-covoiturage.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Covoiturage', 'init' ) );
-		
-		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-post-type.php' );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Evenement', 'init' ) );

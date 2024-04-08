@@ -48,6 +48,9 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			$learn_more = ! array_key_exists ( 'learn-more', $field ) || ! $field['learn-more'] ? false : $field['learn-more'];
 			if( $learn_more && ! is_array($learn_more))
 				$learn_more = [$learn_more];
+			$comments = ! array_key_exists ( 'comments', $field ) || ! $field['comments'] ? false : $field['comments'];
+			if( $comments && ! is_array($comments))
+				$comments = [$comments];
 			$warning = ! array_key_exists ( 'warning', $field ) || ! $field['warning'] ? false : $field['warning'];
 			if( $warning && ! is_array($warning))
 				$warning = [$warning];
@@ -99,10 +102,10 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 
 				////////////////
 				case 'textarea':
-					echo '<textarea id="'.$id.'" name="'.$name
+					echo '<textarea id="'.$id.'" name="'.$name.'"'
 						. ($readonly ? ' readonly ' : '')
-						.'">'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						.'>'
 						. htmlentities($val).'</textarea>'
 						. ($unit ? ' ' . $unit : '');;
 					break;
@@ -216,7 +219,15 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						echo '<label></label>';
 					?><span class="dashicons-before dashicons-welcome-learn-more"><?=$comment?></span><?php
 				}
-		
+			
+			if($comments)
+				foreach($comments as $comment){
+					echo '<br>';
+					if($input != 'checkbox')
+						echo '<label></label>';
+					?><span><?=$comment?></span><?php
+				}
+			
 			if($warning)
 				foreach($warning as $comment){
 					echo '<br>';

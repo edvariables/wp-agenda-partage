@@ -302,7 +302,6 @@ class AgendaPartage_Forum {
 	}
 	
 	public static function on_sub_comments_clauses($clauses, $wp_query){
-		debug_log('on_sub_comments_clauses parent__in', $clauses, $wp_query);
 		global $wpdb, $current_user;
 		$user_email = $current_user ? $current_user->user_email : false;
 		$blog_prefix = $wpdb->get_blog_prefix();

@@ -39,6 +39,9 @@ class AgendaPartage {
 		add_action( 'agendapartage-init', array( 'AgendaPartage_User', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-mailbox.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement', 'init' ) );
@@ -438,6 +441,10 @@ class AgendaPartage {
 			switch($class_name){
 				case 'AgendaPartage_Post_Types':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-post_types.php';
+					break;
+
+				case 'AgendaPartage_Mailbox_Post_type':
+		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-mailbox-post_type.php';
 					break;
 
 				case 'AgendaPartage_Evenement_Post_type':

@@ -1115,7 +1115,7 @@ class AgendaPartage_Newsletter {
 		$newsletters = self::get_active_newsletters();
 		if( ! $newsletters || count($newsletters) === 0){
 			self::deactivate_cron();
-			self::$cron_state = '0|Aucune lettres-info actives';
+			self::$cron_state = '0|Aucune lettre-info active';
 			return;
 		}
 		$today = strtotime(wp_date('Y-m-d'));

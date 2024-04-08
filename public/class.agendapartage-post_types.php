@@ -12,6 +12,11 @@ class AgendaPartage_Post_Types {
 	public static function init_includes() {
 		if(!class_exists('AgendaPartage_Post_Abstract'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
+		
+		if(!class_exists('AgendaPartage_Mailbox'))
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-mailbox.php' );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-mailbox-post_type.php' );
+		
 		if(!class_exists('AgendaPartage_Evenement'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent-post_type.php' );
@@ -39,6 +44,8 @@ class AgendaPartage_Post_Types {
 
 		do_action( 'agendapartage_register_post_types' );
 
+		AgendaPartage_Mailbox_Post_type::register_post_type();
+		
 		AgendaPartage_Evenement_Post_type::register_post_type();
 		AgendaPartage_Evenement_Post_type::register_taxonomy_ev_category();
 		AgendaPartage_Evenement_Post_type::register_taxonomy_city();
