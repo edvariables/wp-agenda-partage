@@ -1018,7 +1018,6 @@ class AgendaPartage_Admin_Menu {
 			'meta_key' => 'download_link',
 			'meta_value'=> 'docx'
 		) );
-		debug_log($terms);
 		$html = '';
 		foreach($terms as $term){
 			if( ! $returns_html ) 

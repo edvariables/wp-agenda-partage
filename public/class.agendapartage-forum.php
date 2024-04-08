@@ -361,7 +361,6 @@ class AgendaPartage_Forum {
 		
 		if( ! ($forum = self::get_forum_of_page($commentdata['comment_post_ID']) ))
 			return $approved;
-		debug_log($commentdata);
 		
 		if( empty( $_POST['title'] )
 		&& empty($commentdata['comment_meta'])

@@ -45,7 +45,6 @@ class AgendaPartage_Forum_IMAP {
 				$dateTime = $message['date'];
 				$date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
 				$date_gmt = $dateTime->format('Y-m-d H:i:s');
-				
 				$commentdata = [
 					'comment_post_ID' => $page->ID,
 					'comment_author' => $user_name,
@@ -71,6 +70,7 @@ class AgendaPartage_Forum_IMAP {
 					],
 					'forum_id' => $forum->ID
 				];
+					
 				// var_dump($commentdata);
 				$comment = wp_new_comment($commentdata, true);
 				if( is_a($comment, 'WP_ERROR') ){
@@ -191,9 +191,11 @@ class AgendaPartage_Forum_IMAP {
 				if ( ($pos = strpos( $content, $clear_signature) ) > 0)
 					$content = substr( $content, 0, $pos);
 			}
-		
+			
 		$clear_raws = get_post_meta($forum_id, 'clear_raw', true);
 		foreach( explode("\n", str_replace("\r", '', $clear_raws)) as $clear_raw ){
+			if( ! $clear_raw )
+				continue;
 			$raw_start = -1;
 			$raw_end = -1;
 			$offset = 0;
