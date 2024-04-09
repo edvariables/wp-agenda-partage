@@ -50,6 +50,7 @@ define( 'AGDP_ARG_NEWSLETTERID', 'agdpnlid' );
 define( 'AGDP_ARG_COVOITURAGEID', 'covoitid' ); 
 define( 'AGDP_EMAIL4PHONE', 'email4phone' ); 
 define( 'AGDP_PAGE_META_FORUM', 'agdpforum' ); 
+define( 'AGDP_PAGE_META_MAILBOX', 'agdpmailbox' ); 
 define( 'AGDP_FORUM_META_PAGE', 'comments-page' ); 
 
 // see translate_level_to_role()

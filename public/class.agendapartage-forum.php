@@ -2,19 +2,15 @@
 
 /**
  * AgendaPartage -> Forum
- * Custom post type for WordPress.
- * 
- * Définition du Post Type agdpforum
- * Mise en forme du formulaire Forum
+ * Gestion des commentaires d'une page. Les commentaires sont importés depuis une boîte e-mails.
  *
- * Voir aussi AgendaPartage_Admin_Forum
+ * Voir aussi AgendaPartage_Mailbox
  *
- * Un forum est associé à une page qui doit afficher ses commentaires.
- * Le forum gère l'importation d'emails en tant que commentaires de la page.
+ * Un forum est une page qui doit afficher ses commentaires.
  */
 class AgendaPartage_Forum {
 
-	const post_type = 'agdpforum';
+	const page_class = 'use-agdpforum';
 	
 	// const user_role = 'author';
 
@@ -48,16 +44,16 @@ class AgendaPartage_Forum {
 	/*
 	 **/
 	
+	
 	/**
 	*/
 	public static function on_post_class_cb( $classes, $css_class, $post_id ){
-		$forum = self::get_forum_of_page($post_id);
-		if ( $forum ){
-			$classes[] = 'use-' . self::post_type;
-			$classes[] = self::post_type . '-' . $forum->ID;
+		$mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($post_id);
+		if ( $mailbox ){
+			$classes[] = self::page_class;
 			
 			// Initialise la page et importe les nouveaux messages
-			$messages = self::init_page($forum, $post_id);
+			$messages = self::init_page($mailbox, $post_id);
 			if( is_wp_error($messages)  )
 				$error = $messages->get_error_message();
 			elseif (is_a($messages, 'Exception'))
@@ -76,21 +72,18 @@ class AgendaPartage_Forum {
 	 * Fonction appelée par le shortcode [forum "nom du forum"]
 	 * Appelle la synchronisation IMAP.
 	 */
-	public static function init_page($forum, $page = false){
-		if( ! $page ){
-			if (!($page = self::get_page_of_forum( $forum ))){
-				debug_log('init_page get_page_of_forum === FALSE', $forum);
-				return false;
-			}
-		}
-		elseif( is_int( $page ))
+	public static function init_page($mailbox, $page = false){
+		if( is_int( $page )){
 			if (!($page = get_post($page)))
 				return false;
+		}
+		elseif (! $page ){
+			debug_log(__CLASS__ . '::init_page', '! $page');
+			return false;
+		}
+		$mailbox = AgendaPartage_Mailbox::get_mailbox($mailbox);
 		
-		
-		$forum = self::get_forum($forum);
-		
-		$import_result = self::synchronize($forum, $page);
+		$import_result = AgendaPartage_Mailbox::synchronize($mailbox, $page);
 		
 		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
 		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
@@ -103,129 +96,6 @@ class AgendaPartage_Forum {
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
 		
 		return $import_result;
-	}
-	
-	/**
-	 * Appelle la synchronisation IMAP.
-	 */
-	public static function synchronize($forum, $page = false){
-		if( ! $page ){
-			if (!($page = self::get_page_of_forum( $forum ))){
-				debug_log('synchronize get_page_of_forum === FALSE', $forum);
-				return false;
-			}
-		}
-		elseif( is_int( $page ))
-			if (!($page = get_post($page)))
-				return false;
-		
-		
-		$forum = self::get_forum($forum);
-		
-		$meta_key = 'imap_sync_time';
-		$time = get_post_meta($forum->ID, $meta_key, true);
-		if( $time && $time >= strtotime('- 10 second'))
-			return true;
-		
-		try {
-			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-forum-imap.php");
-			$import_result = AgendaPartage_Forum_IMAP::import_imap_messages($forum, $page);
-		}
-		catch(Exception $exception){
-			return $exception;
-		}
-		
-		update_post_meta($forum->ID, $meta_key, time());
-		
-		return $import_result;
-	}
-	
-	/**
-	 * Retourne l'objet forum.
-	 */
-	public static function get_forum($forum = false){
-		$forum = get_post($forum);
-		if(is_a($forum, 'WP_Post')
-		&& $forum->post_type == self::post_type)
-			return $forum;
-		return false;
-	}
-	
-	/**
-	 * Retourne le forum du nom donné.
-	 */
-	public static function get_forum_by_name($forum_name){
-		if( is_int($forum_name) )
-			$forum = get_post($forum_name);
-		else
-			$forum = get_page_by_path($forum_name, 'OBJECT', self::post_type);
-		if(is_a($forum, 'WP_Post')
-		&& $forum->post_type == self::post_type)
-			return $forum;
-		return false;
-	}
-	
-	/**
-	 * Retourne le forum associé à une page.
-	 */
-	public static function get_forum_of_page($page_id){
-		if( is_a($page_id, 'WP_Post') ){
-			if($page_id->post_type === AgendaPartage_Newsletter::post_type)
-				return self::get_forum_of_newsletter($page_id);
-			if($page_id->post_type != 'page')
-				return false;
-			$page_id = $page_id->ID;
-		}
-		if($forum_id = get_post_meta( $page_id, AGDP_PAGE_META_FORUM, true))
-			return self::get_forum($forum_id);
-		return false;
-	}
-	
-	/**
-	 * Retourne la page associée à un forum.
-	 */
-	public static function get_page_of_forum($forum_id){
-		if( is_a($forum_id, 'WP_Post') ){
-			if($forum_id->post_type != self::post_type)
-				return false;
-			$forum_id = $forum_id->ID;
-		}
-		if($page_id = get_post_meta( $forum_id, AGDP_FORUM_META_PAGE, true))
-			return get_post($page_id);
-		return false;
-	}
-	
-	/**
-	 * Retourne le forum associé à une newsletter.
-	 */
-	public static function get_forum_of_newsletter($newsletter_id){
-		if( is_a($newsletter_id, 'WP_Post') ){
-			if($newsletter_id->post_type != AgendaPartage_Newsletter::post_type)
-				return false;
-			$newsletter_id = $newsletter_id->ID;
-		}
-		
-		if( $source = AgendaPartage_Newsletter::get_content_source($newsletter_id, true)){
-			if( $source[0] === self::post_type ){
-				if( $forum = get_post( $source[1] )){
-					return $forum;
-				}
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * Returns posts where post_status == 'publish'
-	 */
-	 public static function get_forums(){
-		$posts = [];
-		foreach( get_posts([
-			'post_type' => self::post_type
-			, 'post_status' => 'publish'
-			]) as $post)
-			$posts[$post->ID . ''] = $post;
-		return $posts;
 	}
 	
 	/**
@@ -358,7 +228,7 @@ class AgendaPartage_Forum {
 	 */
 	public static function on_pre_comment_approved( $approved, $commentdata ){
 		
-		if( ! ($forum = self::get_forum_of_page($commentdata['comment_post_ID']) ))
+		if( ! ($mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) ))
 			return $approved;
 		
 		if( empty( $_POST['title'] )
@@ -376,7 +246,7 @@ class AgendaPartage_Forum {
 	public static function on_preprocess_comment($commentdata ){
 		// debug_log('on_preprocess_comment');
 		
-		if( ! ($forum = self::get_forum_of_page($commentdata['comment_post_ID']) ))
+		if( ! ($mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) ))
 			return $commentdata;
 		// debug_log($commentdata);
 		
@@ -422,7 +292,7 @@ class AgendaPartage_Forum {
 	public static function send_response_email($comment_id ){
 		$comment = get_comment($comment_id);
 		
-		if( ! ($forum = self::get_forum_of_page($comment->comment_post_ID) ))
+		if( ! ($mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($comment->comment_post_ID) ))
 			return;
 		$page_link = get_post_permalink($comment->comment_post_ID);
 		
@@ -699,25 +569,6 @@ class AgendaPartage_Forum {
 		}
 		
 		return $comment->get_error_message();
-	}
-	
-	/**
-	 * Retourne le répertoire de stockage des fichiers attachés aux messages
-	 */
-	public static function get_attachments_path($forum_id){
-		$upload_dir = wp_upload_dir();
-		
-		$forum_dirname = str_replace('\\', '/', $upload_dir['basedir']);
-		// if( is_multisite())
-			// $forum_dirname .= '/sites/' . get_current_blog_id();
-		
-		$forum_dirname .= sprintf('/%s/%d/%d/%d/', self::post_type, $forum_id, date('Y'), date('m'));
-		
-		if ( ! file_exists( $forum_dirname ) ) {
-			wp_mkdir_p( $forum_dirname );
-		}
-
-		return $forum_dirname;
 	}
 }
 ?>

@@ -132,6 +132,8 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 					$values = ! array_key_exists ( 'values', $field ) || ! $field['values'] ? false : $field['values'];
 					if(is_array($values)){
 						foreach($values as $item_key => $item_label){
+							if( is_int($item_key) )
+								$item_key = $item_label;
 							echo '<option ' . selected( $val, $item_key ) . ' value="' . $item_key . '">'. htmlentities($item_label) . '</option>';
 						}
 					}

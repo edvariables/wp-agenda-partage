@@ -2,11 +2,10 @@
 
 /**
  * AgendaPartage -> Forum
- * Custom post type for WordPress.
+ * Page liée à une mailbox
  * 
  * Définition des shortcodes 
  *
- * Voir aussi AgendaPartage_Admin_Forum
  */
 class AgendaPartage_Forum_Shortcodes {
 
@@ -39,8 +38,6 @@ class AgendaPartage_Forum_Shortcodes {
 	public static function init_shortcodes(){
 
 		add_shortcode( 'forum', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'forum-titre', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'forum-description', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpforum-messages', array(__CLASS__, 'shortcodes_callback') );
 
 	}
@@ -137,8 +134,8 @@ class AgendaPartage_Forum_Shortcodes {
 			return str_replace($guid, $html, $toogler);
 		}
 
-		//De la forme [agdpforum-messages] ou [agdpforum-messages-list]
-		if($shortcode == 'agdpforum-messages' || str_starts_with($shortcode, 'agdpforum-messages-')){
+		//De la forme [agdpforum-messages]
+		if($shortcode == 'agdpforum-messages'){
 			return self::shortcodes_messages_callback($atts, $content, $shortcode);
 		}
 
@@ -151,12 +148,10 @@ class AgendaPartage_Forum_Shortcodes {
 	* [forum-description]
 	*/
 	private static function shortcodes_forum_callback($atts, $content = '', $shortcode = null){
-		if( ! ( $post = AgendaPartage_Forum::get_forum_of_page(get_post()) ) )
+		$page = get_post();
+		if( ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($page) ) ){
 			return $content;
-		
-		if($post)
-			$post_id = $post->ID;
-		
+		}
 		$label = isset($atts['label']) ? $atts['label'] : '' ;
 				
 		$html = '';
@@ -172,63 +167,30 @@ class AgendaPartage_Forum_Shortcodes {
 		if($shortcode == 'forum'
 		&& count($atts) > 0){
 			
-			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-forum', 'details'];
-			if(array_key_exists('info', $atts)
-			&& in_array($atts['info'], $specificInfos))
-				$shortcode .= '-' . $atts['info'];
 			if(array_key_exists('0', $atts))
-				if(is_numeric($atts['0']))
-					$atts['post_id'] = $atts['0'];
-				elseif( ! array_key_exists('info', $atts))
-					if(in_array($atts['0'], $specificInfos))
-						$shortcode .= '-' . $atts['0'];
-					else
-						$atts['info'] = $atts['0'];
+				if( ! array_key_exists('info', $atts))
+					$atts['info'] = $atts['0'];
 					
 		}
 		$no_html = isset($atts['no-html']) && $atts['no-html']
 				|| isset($atts['html']) && $atts['html'] == 'no';
 		
 		switch($shortcode){
-			case 'forum-titre':
-
-				$val = isset( $post->post_title ) ? $post->post_title : '';
-				if($val || $content){
-					$val = do_shortcode( wp_kses_post($val . $content));
-					if($no_html)
-						$html = $val;
-					else
-						$html = '<div class="agdp-forum agdp-'. $shortcode .'">'
-							. $val
-							. '</div>';
-				}
-				return $html;
-				
-			case 'forum-description':
-
-				$val = isset( $post->post_content ) ? $post->post_content : '';
-				if($val || $content){
-					$val = do_shortcode( wp_kses_post($val . $content));
-					if($no_html)
-						$html = $val;
-					else
-						$html = '<div class="agdp-forum agdp-'. $shortcode .'">'
-							. $val
-							. '</div>';
-				}
-				return $html;
-								
 			case 'forum':
 			
 				$meta_name = $atts['info'] ;
 				if(!$meta_name)
-					return '<div class="error">Le paramètre info="'.$meta_name.'" du shortcode "forum" est inconnu.</div>';
+					return '<div class="error">Le paramètre info="xxx" du shortcode "forum" n\'est pas fourni.</div>';
+				$val = false;
 				switch($meta_name){
+					case 'imap_email' :
 					case 'email' :
 						$meta_name = 'imap_email';
+						$val = AgendaPartage_Mailbox::get_page_email($page);
 						break;
 				}
-				$val = get_post_meta($post_id, $meta_name, true, false);
+				if($val === false)
+					$val = get_post_meta($page->ID, $meta_name, true, false);
 				
 				if($val)
 					switch($meta_name){
@@ -286,36 +248,8 @@ class AgendaPartage_Forum_Shortcodes {
 	*/
 	public static function shortcodes_messages_callback($atts, $content = '', $shortcode = null){
 		
-		$forum = false;
-		foreach($atts as $att_key=>$att_value){
-			if( $att_key === ' forum' ){
-				$forum = AgendaPartage_Forum::get_forum_by_name($att_key);
-				break;
-			}
-		}
-		if( ! $forum ){
-			global $post;
-			if( $post && $post->post_type === AgendaPartage_Newsletter::post_type )
-				$newsletter = $post;
-			else
-				$newsletter = AgendaPartage_Newsletter::is_sending_email();
-			if( $newsletter ){
-				$source = AgendaPartage_Newsletter::get_content_source( $newsletter->ID, true);
-				if( $source[0] == AgendaPartage_Forum::post_type ){
-					$forum = AgendaPartage_Forum::get_forum_of_newsletter( $newsletter->ID );
-				}
-			}
-			
-		}
-		if( ! $forum ){
-			foreach($atts as $att_key=>$att_value){
-				if( $att_value == 1 ){
-					$forum = AgendaPartage_Forum::get_forum_by_name($att_key);
-					break;
-				}
-			}
-		}
-		if( ! $forum ){
+		$page = get_post();
+		if( ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($page) ) ){
 			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).'] inconnu.</div>';
 		}
 		
@@ -326,17 +260,15 @@ class AgendaPartage_Forum_Shortcodes {
 			elseif(array_key_exists('0', $atts))
 				$shortcode .= '-' . $atts['0'];
 		}
-
+		
 		switch($shortcode){
-			case 'agdpforum-messages-liste':
-				$shortcode = 'agdpevents-list';
 			case 'agdpforum-messages-list':
 				
-				return AgendaPartage_Forum_Messages::get_list_html( $forum, $content );
+				return AgendaPartage_Forum_Messages::get_list_html( $mailbox, $page, $content );
 				
 			case 'agdpforum-messages-email':
 				
-				$html = AgendaPartage_Forum_Messages::get_list_for_email( $forum, $content );
+				$html = AgendaPartage_Forum_Messages::get_list_for_email( $mailbox, $page, $content );
 				return $html;
 
 			default:

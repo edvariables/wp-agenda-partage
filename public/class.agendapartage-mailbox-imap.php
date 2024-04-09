@@ -12,15 +12,31 @@ class AgendaPartage_Mailbox_IMAP {
 	/****************  IMAP  ********************/
 
 
+	
+	/**
+	 * Teste la connexion IMAP.
+	 */
+	public static function check_connexion($mailbox){
+		
+		$imap = self::get_ImapReader($mailbox->ID, false);
+		
+		try {
+			$imap
+				->limit(1)
+				->get();
+			
+			return true;
+		}
+		catch(Exception $exception){
+			return $exception;
+		}
+	}
+	
 	/**
 	 * Récupère les messages non lus depuis un serveur imap
 	 */
 	public static function get_imap_messages($mailbox){
 		
-		
-		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/Reader.php");
-		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/Email.php");
-		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/EmailAttachment.php");
 		$imap = self::get_ImapReader($mailbox->ID);
 		
 		$search = date("j F Y", strtotime("-1 days"));
@@ -37,8 +53,6 @@ class AgendaPartage_Mailbox_IMAP {
 				if( preg_match('/-SPAMCAUSE$/', $header) )
 					$email->custom_headers[$header] = decode_spamcause( $header_content );
 			}
-			// debug_log($email->custom_headers);
-			
 			$messages[] = [
 				'id' => $email->id,
 				'msgno' => $email->msgno,
@@ -59,17 +73,25 @@ class AgendaPartage_Mailbox_IMAP {
 	/**
 	 * Retourne une instance du lecteur IMAP.
 	 */
-	private static function get_ImapReader($mailbox_id){
+	private static function get_ImapReader($mailbox_id, $mark_as_read = null){
+		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/Reader.php");
+		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/Email.php");
+		require_once( AGDP_PLUGIN_DIR . "/includes/phpImapReader/EmailAttachment.php");
+		
 		$server = get_post_meta($mailbox_id, 'imap_server', true);
 		$email = get_post_meta($mailbox_id, 'imap_email', true);
 		$password = get_post_meta($mailbox_id, 'imap_password', true);
-		$mark_as_read = get_post_meta($mailbox_id, 'imap_mark_as_read', true);
+		if( $mark_as_read !== false )
+			$mark_as_read = get_post_meta($mailbox_id, 'imap_mark_as_read', true);
 		
-		$encoding = 'UTF-8';
+		$encoding = get_post_meta($mailbox_id, 'imap_encoding', true);
+		if( ! $encoding )
+			$encoding = 'UTF-8';
+		$content_encoding = 'UTF-8';
 		
 		$attachment_path = AgendaPartage_Mailbox::get_attachments_path($mailbox_id);
 		
-		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, $attachment_path, $mark_as_read, $encoding);
+		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, $attachment_path, $mark_as_read, $encoding, $content_encoding);
 
 		return $imap;
 	}

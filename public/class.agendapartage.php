@@ -41,7 +41,7 @@ class AgendaPartage {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-mailbox.php' );
-		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum', 'init' ) );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Mailbox', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-agdpevent.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Evenement', 'init' ) );
@@ -477,6 +477,8 @@ class AgendaPartage {
 	 * Register user roles
 	 */
 	private static function register_user_roles(){
+		self::include_and_init('AgendaPartage_Mailbox_Post_type');
+		AgendaPartage_Mailbox_Post_type::register_user_role();
 		self::include_and_init('AgendaPartage_Evenement_Post_type');
 		AgendaPartage_Evenement_Post_type::register_user_role();
 		self::include_and_init('AgendaPartage_Newsletter_Post_type');

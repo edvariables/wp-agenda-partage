@@ -2,7 +2,7 @@
 
 /**
  * AgendaPartage -> Forum -> Messages
- * Collection d'messages
+ * Liste des commentaires d'une page associée à une mailbox
  */
 class AgendaPartage_Forum_Messages {
 
@@ -31,19 +31,6 @@ class AgendaPartage_Forum_Messages {
 	/*
 	 * Hook
 	 ******/
-	
-	public static function get_url($forum, $comment = false){
-		$page = AgendaPartage_Forum::get_page_of_forum($forum);
-		if($page){
-			$url = get_permalink($page->ID);
-			if( $comment ){
-				//TODO
-			}
-		}
-		else
-			$url = home_url();
-		return $url;
-	}
 	
 	/**
 	 *
@@ -240,11 +227,8 @@ class AgendaPartage_Forum_Messages {
 	* Rendu Html des messages sous forme d'arborescence par mois
 	*
 	*/
-	public static function get_list_html($forum, $content = '', $options = false){
+	public static function get_list_html($mailbox, $page, $content = '', $options = false){
 		
-		$page = AgendaPartage_Forum::get_page_of_forum($forum);
-		if( ! $page )
-			return false;
 		self::init_default_comments_query($page);
 			
 		if(!isset($options) || !is_array($options))
@@ -338,8 +322,9 @@ class AgendaPartage_Forum_Messages {
 	* Rendu Html des messages destinés au corps d'un email (newsletter)
 	*
 	*/
-	public static function get_list_for_email($forum, $content = '', $options = false){
-		$init = AgendaPartage_Forum::init_page($forum);
+	public static function get_list_for_email($mailbox, $page, $content = '', $options = false){
+		$page = AgendaPartage_Mailbox::get_forum_page($page);
+		$init = AgendaPartage_Forum::init_page($mailbox, $page);
 		if( ! $init || is_a($init, 'Exception')){
 			debug_log('get_list_for_email', $init);
 		}
@@ -418,7 +403,7 @@ class AgendaPartage_Forum_Messages {
 }
 '
 			. '</style>';
-		$html = self::get_list_html($forum, $content, $options );
+		$html = self::get_list_html($mailbox, $page, $content, $options );
 		
 		if( ! $html ){
 			if ( AgendaPartage_Newsletter::is_sending_email() )

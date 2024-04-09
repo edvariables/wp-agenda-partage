@@ -134,7 +134,7 @@ class Reader
      * 
      * @return boolean
      */
-    public function __construct($hostname, $user_name, $password, $attachment_dir = false, $mark_as_read = true, $encoding = 'UTF-8')
+    public function __construct($hostname, $user_name, $password, $attachment_dir = false, $mark_as_read = true, $encoding = 'UTF-8', $content_encoding = 'UTF-8')
     {
         $this->hostname = $hostname;
 
@@ -143,6 +143,8 @@ class Reader
         $this->password = $password;
 
         $this->encoding = $encoding;
+
+        $this->content_encoding = $content_encoding;
 
         $this->retry = 0;
 
@@ -1067,7 +1069,6 @@ class Reader
         $email->setRawBody(imap_fetchbody($this->stream(), $uid, '', $options));
 
         $body = imap_fetchstructure($this->stream(), $uid, FT_UID);
-// debug_log('imap_fetchstructure', $body);
         if (isset($body->parts) && count($body->parts)) {
             foreach ($body->parts as $part_number => $part) {
                 $this->decodePart($email, $part, $part_number + 1, $body->subtype);
@@ -1124,6 +1125,14 @@ class Reader
                     $email->addCustomHeader($header);
                 }
             }
+			
+			//ED240409
+			if( count($email->to) === 0 
+			&& isset($email->custom_headers['X-Original-To'])
+			&& strpos($email->custom_headers['X-Original-To'], '@') !== false){
+				$address = explode('@', $email->custom_headers['X-Original-To']);
+				$email->addTo($address[0], $address[1]);
+			}
         }
         return $email;
     }
@@ -1256,7 +1265,7 @@ class Reader
                 if ($part->type == 0) {
                     // subpart is either plain text or html version
                     if (strtoupper($part->subtype) == 'PLAIN') {
-// debug_log($data_before, $params, $part, $data);
+// debug_log('decodePart', $data_before, $params, $part, $data);
                         $email->setPlain($data);
                     } else {
                         $email->setHTML($data);
@@ -1327,15 +1336,15 @@ class Reader
         if (!$string) {
             return $string;
         }
-
-        if ($current_encoding_type == $this->encoding) {
+		
+        if ($current_encoding_type == $this->content_encoding) {
             return $string;
         }
 
         if (extension_loaded('mbstring')) {
-            $converted_string = @mb_convert_encoding($string, $this->encoding, $current_encoding_type);
+            $converted_string = @mb_convert_encoding($string, $this->content_encoding, $current_encoding_type);
         } else {
-            $converted_string = @iconv($current_encoding_type, $this->encoding . '//IGNORE', $string);
+            $converted_string = @iconv($current_encoding_type, $this->content_encoding . '//IGNORE', $string);
         }
 
         return $converted_string ?: $string;

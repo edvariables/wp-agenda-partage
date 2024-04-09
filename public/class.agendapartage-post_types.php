@@ -34,7 +34,6 @@ class AgendaPartage_Post_Types {
 		
 		if(!class_exists('AgendaPartage_Forum'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum.php' );
-		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum-post_type.php' );
 	}
 
 	/**
@@ -61,9 +60,7 @@ class AgendaPartage_Post_Types {
 		AgendaPartage_Covoiturage_Post_type::register_post_type();
 		AgendaPartage_Covoiturage_Post_type::register_taxonomy_city();
 		AgendaPartage_Covoiturage_Post_type::register_taxonomy_diffusion();
-		
-		AgendaPartage_Forum_Post_type::register_post_type();
-		
+				
 	    // clear the permalinks after the post type has been registered
 	    flush_rewrite_rules();
 
@@ -78,6 +75,8 @@ class AgendaPartage_Post_Types {
 		do_action( 'agendapartage_unregister_post_types' );
 		
 		
+		unregister_post_type(AgendaPartage_Mailbox::post_type);
+		
 		foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 			if ( post_type_exists( $tax_name ) ) 
 				unregister_post_type($tax_name);
@@ -91,8 +90,6 @@ class AgendaPartage_Post_Types {
 		}
 		
 		unregister_post_type(AgendaPartage_Covoiturage::post_type);
-		
-		unregister_post_type(AgendaPartage_Forum::post_type);
 		
 		// clear the permalinks to remove our post type's rules from the database
     	flush_rewrite_rules();

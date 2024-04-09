@@ -225,10 +225,19 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		$sources = [ AgendaPartage_Evenement::post_type => 'Evènements'
 				, AgendaPartage_Covoiturage::post_type => 'Covoiturages'
 				, 'agdpstats' => 'Statistiques pour administrateurices'];
-		//Forums
-		// var_dump(get_posts([ 'post_type' => AgendaPartage_Forum::post_type]));
-		foreach(get_posts([ 'post_type' => AgendaPartage_Forum::post_type]) as $forum){
-			$sources[ AgendaPartage_Forum::post_type . '.' . $forum->ID ] = 'Forum ' . $forum->post_title;
+		//Mailboxes
+		foreach(get_posts([ 'post_type' => AgendaPartage_Mailbox::post_type]) as $mailbox){
+			foreach( AgendaPartage_Mailbox::get_emails_dispatch($mailbox->ID) as $email_to => $destination)
+				if( $destination['type'] === 'page'){
+					if( $page = get_post($destination['id']) ){
+						$title = $page->post_title . ' ('. $email_to . ')';
+						if( stripos($title, 'forum') === false)
+							$title = 'Forum ' . $title;
+						if( $page->comment_status != 'open' )
+							$title .= ' (Commentaires fermés !)';
+						$sources[ 'page.' . $page->ID ] = $title;
+					}
+				}
 		}
 		$sources[''] = '(autre)';
 		$fields[] = array('name' => $meta_name,

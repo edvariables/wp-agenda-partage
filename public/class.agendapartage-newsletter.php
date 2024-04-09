@@ -249,12 +249,14 @@ class AgendaPartage_Newsletter {
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		if( $post_type == AgendaPartage_Forum::post_type){
+		if( $post_type == 'page'){
 			//Comments
-			$forum = AgendaPartage_Forum::get_forum_of_newsletter( $newsletter );
-			if($forum && $page = AgendaPartage_Forum::get_page_of_forum($forum) ){
+			$source = self::get_content_source($newsletter);
+			$page_id = $source[1];
+			$mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $page_id );
+			if($mailbox && $page = get_post($page_id) ){
 				//Synchronise avant de tester la date du dernier commentaire
-				AgendaPartage_Forum::synchronize($forum, $page);
+				AgendaPartage_Mailbox::synchronize($mailbox, $page);
 				$sql = "SELECT MAX(comments.comment_date) as date_max
 						FROM {$blog_prefix}comments comments
 						WHERE comments.comment_approved = 1
@@ -270,7 +272,7 @@ class AgendaPartage_Newsletter {
 			";
 		}
 		if( ! isset($sql) || ! $sql)
-			throw new Exception("Impossible de trouver l'origine des données");
+			throw new Exception(sprintf("Impossible de trouver l'origine des données pour %s.", $newsletter->post_title));
 		$result = $wpdb->get_results($sql);
 		if( is_a($result,'WP_Error') )
 			throw new Exception(var_export($result, true));

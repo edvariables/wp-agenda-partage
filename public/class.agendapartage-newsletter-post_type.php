@@ -43,7 +43,7 @@ class AgendaPartage_Newsletter_Post_type {
 			'label'                 => __( 'Lettre-info', AGDP_TAG ),
 			'description'           => __( 'Lettre-info de l\'agenda partagé', AGDP_TAG ),
 			'labels'                => $labels,
-			'supports'              => array( 'title', 'editor', 'thumbnail', 'revisions' ),//, 'author', 'editor' see AgendaPartage_Admin_Newsletter::init_PostType_Supports
+			'supports'              => array( 'title', 'editor', 'revisions' ),//, 'author', 'editor' see AgendaPartage_Admin_Newsletter::init_PostType_Supports
 			'taxonomies'            => array(  ),
 			'hierarchical'          => false,
 			'public'                => true,

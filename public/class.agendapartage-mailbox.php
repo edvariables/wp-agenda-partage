@@ -5,11 +5,11 @@
  * Custom post type for WordPress.
  * 
  * Définition du Post Type agdpmailbox
- * Mise en forme du formulaire Mailbox
  *
  * Voir aussi AgendaPartage_Admin_Mailbox
  *
  * Une mailbox dispatche les mails vers des posts ou comments.
+ * AgendaPartage_Forum traite les commentaires.
  */
 class AgendaPartage_Mailbox {
 
@@ -44,6 +44,76 @@ class AgendaPartage_Mailbox {
 	 **/
 	
 	
+	
+	/**
+	 * Retourne la boîte e-mails associée à une page.
+	 */
+	public static function get_mailbox_of_page($page_id){
+		$page = self::get_forum_page($page_id);
+		$page_id = $page->ID;
+		
+		if($mailbox_id = get_post_meta( $page_id, AGDP_PAGE_META_MAILBOX, true))
+			return self::get_mailbox($mailbox_id);
+		return false;
+	}
+	
+	/**
+	 * Retourne la page associée.
+	 */
+	public static function get_forum_page($page_id){
+		if( is_a($page_id, 'WP_Post') ){
+			$page = $page_id;
+			$page_id = $page->ID;
+		}
+		else {
+			$page = get_post($page_id);
+		}
+		if( $page->post_type === AgendaPartage_Newsletter::post_type){
+			if( $source = AgendaPartage_Newsletter::get_content_source($page_id, true)){
+				if( $source[0] === 'page' ){
+					return self::get_forum_page($source[1]);
+				}
+			}
+			return false;
+		}
+		return $page;
+	}
+	
+	/**
+	 * Retourne l'adresse e-mail associée à une page.
+	 */
+	public static function get_page_email($page_id){
+		$page = self::get_forum_page($page_id);
+		$page_id = $page->ID;
+		
+		$mailbox = self::get_mailbox_of_page($page_id);
+		foreach( self::get_emails_dispatch($mailbox) as $email => $destination )
+			if( $destination['type'] == $page_id
+			|| $destination['id'] == $page_id)
+				return $email;
+		return false;
+	}
+	
+	/**
+	 * Retourne le forum associé à une newsletter.
+	 */
+	public static function get_mailbox_of_newsletter($newsletter_id){
+		if( is_a($newsletter_id, 'WP_Post') ){
+			if($newsletter_id->post_type != AgendaPartage_Newsletter::post_type)
+				return false;
+			$newsletter_id = $newsletter_id->ID;
+		}
+		//TODO
+		if( $source = AgendaPartage_Newsletter::get_content_source($newsletter_id, true)){
+			if( $source[0] === self::post_type ){
+				if( $mailbox = get_post( $source[1] )){
+					return $mailbox;
+				}
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Returns posts where post_status == 'publish' && meta['cron-enable'] == true
 	 */
@@ -72,6 +142,31 @@ class AgendaPartage_Mailbox {
 	}
 	
 	/**
+	 * Teste la connexion IMAP.
+	 */
+	public static function check_connexion($mailbox = false){
+		$mailbox = self::get_mailbox($mailbox);
+		
+		try {
+			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-mailbox-imap.php");
+			
+			if( ! ($messages = AgendaPartage_Mailbox_IMAP::check_connexion($mailbox))){
+				return $messages;
+			}
+			if( is_a($messages, 'Exception') )
+				return $messages;
+			
+		}
+		catch(Exception $exception){
+			return $exception;
+		}
+		
+		return true;
+	}
+	
+	
+	
+	/**
 	 * Etat du cron
 	 */
 	public static function get_cron_state(){
@@ -93,9 +188,9 @@ class AgendaPartage_Mailbox {
 		if( $cron_time === false )
 			return '(cron inactif)'; 
 		else{
-			$delay = $cron_time - current_time('timestamp');
+			$delay = $cron_time - time();
 			return sprintf('Prochaine évaluation dans %s - %s'
-					, wp_date('H:i:s', $delay)	
+					, date('H:i:s', $delay)	
 					, wp_date('d/m/Y H:i:s', $cron_time)); 
 		}
 	}
@@ -113,7 +208,9 @@ class AgendaPartage_Mailbox {
 	 */
 	public static function init_cron($next_time = false){
 		$cron_time = wp_next_scheduled( self::cron_hook );
+		// debug_log('init_cron', $cron_time);
 		if($next_time){
+			// debug_log_callstack('init_cron next_time', $next_time);
 			if( $cron_time !== false )
 				wp_unschedule_event( $cron_time, self::cron_hook );
 			if( $next_time < 1024 )
@@ -121,11 +218,11 @@ class AgendaPartage_Mailbox {
 			else
 				$cron_time = $next_time;
 			$result = wp_schedule_single_event( $cron_time, self::cron_hook, [], true );
-			// debug_log('[agdpmailbox-init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
+			// debug_log('[agdpmailbox::init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
 		}
 		if( $cron_time === false ){
 			$cron_time = wp_schedule_event( time(), 'hourly', self::cron_hook );
-			// debug_log('[agdpmailbox-init_cron] wp_schedule_event', $cron_time);
+			// debug_log('[agdpmailbox::init_cron] wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
 		}
 		else {
@@ -146,6 +243,7 @@ class AgendaPartage_Mailbox {
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
 	 */
 	public static function on_cron_exec(){
+		// debug_log(__CLASS__.'::on_cron_exec');
 		self::cron_exec(false);
 	}
 	
@@ -159,15 +257,13 @@ class AgendaPartage_Mailbox {
 			self::$cron_state = '0|Aucune boîte e-mails active';
 			return;
 		}
-		$today = strtotime(wp_date('Y-m-d'));
-		$hour = (int)wp_date('H');
 				
 		$time_start = time();
 					
 		self::$cron_state = sprintf('1|%d boîte(s) e-mails à traiter', count($mailboxes));
 		
 		$imported = false;
-		$cron_period_min = 0;
+		$cron_period_min = 60;
 		foreach($mailboxes as $mailbox){
 			$cron_period = get_post_meta($mailbox->ID, 'cron-period', true);
 			if( $cron_period_min > $cron_period )
@@ -176,10 +272,13 @@ class AgendaPartage_Mailbox {
 			if( ! $simulate )
 				$imported = self::synchronize($mailbox);
 		
-			if( ! $simulate )
+			if( ! $simulate ){
 				update_post_meta($mailbox->ID, 'cron-last', wp_date('Y-m-d H:i:s') . ( $forced ? ' (forcé)' : ''));
+				// debug_log("cron_exec update_post_meta(".$mailbox->ID.", 'cron-last', ".wp_date('Y-m-d H:i:s') . ( $forced ? ' (forcé)' : ''));
+			}
 		}
-		self::init_cron($cron_period_min * 60);
+		if( ! $simulate )
+			self::init_cron($cron_period_min * 60);
 		
 		if( is_array($imported) )
 			self::$cron_state .= sprintf(' | Au final, %d e-mail(s) importé(s) en %s sec. %s'
@@ -221,7 +320,9 @@ class AgendaPartage_Mailbox {
 					continue;
 				$dispatch_raw = explode('>', $dispatch_raw);
 				$email = strtolower(trim($dispatch_raw[0]));
-				if( strpos($email, '@' ) === false )
+				if( ! $email )
+					$email .= $mailbox_email; 
+				elseif( strpos($email, '@' ) === false )
 					$email .= '@' . $mailbox_domain; 
 				$destination = trim($dispatch_raw[1]);
 				if( strpos($destination, '.' ) !== false ){
@@ -267,7 +368,7 @@ class AgendaPartage_Mailbox {
 	 * Appelle la synchronisation IMAP.
 	 */
 	public static function synchronize($mailbox){
-		debug_log( __CLASS__ . '::synchronize()');
+		// debug_log( __CLASS__ . '::synchronize()');
 		
 		$mailbox = self::get_mailbox($mailbox);
 		
@@ -311,9 +412,8 @@ class AgendaPartage_Mailbox {
 		$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
 		
 		$dispatch = self::get_emails_dispatch($mailbox);
-		debug_log('$dispatch', $dispatch);
 		
-		$forums = [];//cache
+		$posts = [];//cache
 		
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_imap_pre_comment_approved'), 10, 2 );
 		foreach( $messages as $message ){
@@ -323,23 +423,26 @@ class AgendaPartage_Mailbox {
 					$email_to = strtolower($to->email);
 					break;
 				}
-			if( ! $email_to ){
-				debug_log(__CLASS__ . '.import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
-				continue;
-			}
+			if( ! $email_to )
+				if( isset($dispatch['*@*']) )
+					$email_to = '*@*';
+				else {
+					debug_log(__CLASS__ . '.import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
+					continue;
+				}
 			
 			switch( $dispatch[$email_to]['type'] ){
-				case 'agdpforum' :
-					$forum_id = $dispatch[$email_to]['id'];
-					if( ! $forum_id )
-						throw new Exception(sprintf("La configuration de la boîte e-mails indique un forum sans préciser son identifiant : %s.", $email_to));
-					if( isset($forums['' . $forum_id]) )
-						$forum = $forums['' . $forum_id];
-					elseif( ! ($forum = AgendaPartage_Forum::get_forum($forum_id)) )
-						throw new Exception(sprintf("La configuration de la boîte e-mails indique un forum introuvable : %s > %s.%s.", $email_to, $dispatch[$email_to]['type'], $forum_id));
+				case 'page' :
+					$page_id = $dispatch[$email_to]['id'];
+					if( ! $page_id )
+						throw new Exception(sprintf("La configuration de la boîte e-mails indique une page sans préciser son identifiant : %s.", $email_to));
+					if( isset($posts['' . $page_id]) )
+						$page = $posts['' . $page_id];
+					elseif( ! ($page = get_post($page_id)) )
+						throw new Exception(sprintf("La configuration de la boîte e-mails indique une page introuvable : %s > %s.%s.", $email_to, $dispatch[$email_to]['type'], $page_id));
 					else
-						$forums['' . $forum_id] = $forum;
-					$comment = self::import_message_to_comment( $mailbox, $message, $forum );
+						$posts['' . $page_id] = $page;
+					$comment = self::import_message_to_comment( $mailbox, $message, $page );
 					if($comment)
 						$imported[] = $comment;
 					break;
@@ -413,7 +516,7 @@ class AgendaPartage_Mailbox {
 					'attachments' => $message['attachments'],
 					'import_date' => wp_date(DATE_ATOM),
 				],
-				'forum_id' => $forum->ID
+				'mailbox_id' => $mailbox->ID
 			];
 				
 			// var_dump($postdata);
@@ -426,15 +529,10 @@ class AgendaPartage_Mailbox {
 	/**
 	 * Import as comment
 	 */
-	public static function import_message_to_comment($mailbox, $message, $forum){
-		debug_log('import_message_to_comment', $message, 'forum '.$forum->ID);
+	public static function import_message_to_comment($mailbox, $message, $page){
+		// debug_log('import_message_to_comment', $message, 'page '.$page->ID);
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){
-			return false;
-		}
-		
-		if (!($page = AgendaPartage_Forum::get_page_of_forum( $forum ))){
-			debug_log('AgendaPartage_Forum::get_page_of_forum() ne retourne aucune page', $forum);
 			return false;
 		}
 
@@ -478,7 +576,7 @@ class AgendaPartage_Mailbox {
 					'attachments' => $message['attachments'],
 					'import_date' => wp_date(DATE_ATOM),
 				],
-				'forum_id' => $forum->ID
+				'mailbox_id' => $mailbox->ID
 			];
 				
 			// var_dump($commentdata);
@@ -501,7 +599,7 @@ class AgendaPartage_Mailbox {
 	 */
 	//Force l'approbation du commentaire pendant la boucle d'importation
 	public static function on_imap_pre_comment_approved($approved, $commentdata){
-		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['forum_id'] ) )
+		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['mailbox_id'] ) )
 			return false;
 		return true;
 	}
