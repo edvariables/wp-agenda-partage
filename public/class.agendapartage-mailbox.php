@@ -685,7 +685,7 @@ class AgendaPartage_Mailbox {
 	/******** Droits ***********/
 	
 	/**
-	 * Retourne le libellé des droits
+	 * Retourne tous les droits
 	 */
 	public static function get_all_rights( ){
 		return [
@@ -698,18 +698,27 @@ class AgendaPartage_Mailbox {
 		];
 	}
 	/**
+	 * Retourne tous les libellés des droits
+	 */
+	public static function get_all_rights_labels( ){
+		$all_rights = [];
+		foreach( self::get_all_rights() as $right)
+			$all_rights[$right] = self::get_right_label( $right );
+		return $all_rights;
+	}
+	/**
 	 * Retourne le libellé des droits
 	 */
-	public static function get_right_label( $rights ){
-		switch( $rights ){
+	public static function get_right_label( $right ){
+		switch( $right ){
 			case 'P' : 
-				return 'public';
+				return 'Public';
 			case 'E' : 
 				return 'Validation par e-mail';
 			case 'C' : 
 				return 'Connexion requise';
 			case 'CO' : 
-				return 'Inscription cooptée et connexion requises';
+				return 'Inscription cooptée et connexion requise';
 			case 'A' : 
 				return 'Adhésion requise';
 			case 'AO' : 

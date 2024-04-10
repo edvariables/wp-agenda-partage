@@ -30,8 +30,6 @@ class AgendaPartage_Admin_Menu {
 		
 		add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
 		add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
-
-		
 	}
 
 	public static function init_settings(){
@@ -43,6 +41,7 @@ class AgendaPartage_Admin_Menu {
 			'after_section' => '</div>'
 		);
 		
+		//Cette section permet d'englober les onglets suivants. Sans ça, pas d'onglets. Idem dans class.agendapartage-admin-edit-rights.php
 		add_settings_section(
 			'agendapartage_section_checkup',
 			'',
@@ -529,10 +528,11 @@ class AgendaPartage_Admin_Menu {
 	* Injecté dans le <head>
 	*/
 	public static function add_form_enctype() {
+		$tag = isset($_GET['page']) ? $_GET['page'] : AGDP_TAG;
 		?><script type="text/javascript">
 				jQuery(document).ready(function(){
 					var $form = jQuery('#wpbody-content form:first');
-					var $input = $form.children('input[name="option_page"][value="<?php echo(AGDP_TAG)?>"]:first');
+					var $input = $form.children('input[name="option_page"][value="<?php echo($tag)?>"]:first');
 					if($input.length){
 						$form.attr('enctype','multipart/form-data');
 						$form.attr('encoding', 'multipart/form-data');
@@ -847,7 +847,7 @@ class AgendaPartage_Admin_Menu {
 
 		    $user = wp_get_current_user();
 		    $roles = ( array ) $user->roles;
-		    if(in_array('agdpevent', $roles)) {
+		    if(!in_array('agdpevent', $roles)) {
 				remove_menu_page('posts');//TODO
 				remove_menu_page('wpcf7');
 			}
@@ -886,6 +886,12 @@ class AgendaPartage_Admin_Menu {
 			$page_title =  'Covoiturages en attente de validation';
 			$menu_slug = $parent_slug . '&post_status=pending';
 			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
+			
+			$parent_slug = AGDP_TAG;
+			$page_title =  'Règles de publications';
+			$menu_slug = $parent_slug . '-rights';
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+				array(__CLASS__, 'agendapartage_rights_page_html'), 1);
 		}
 	}
 
@@ -1035,6 +1041,17 @@ class AgendaPartage_Admin_Menu {
 		if( $returns_html ) 
 			return $html;
 		return false;
+	}
+	
+	
+	/**
+	* top level menu:
+	* callback functions
+	*/
+	public static function agendapartage_rights_page_html() {
+		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-rights.php');
+		AgendaPartage_Admin_Edit_Rights::init();
+		AgendaPartage_Admin_Edit_Rights::agendapartage_rights_page_html();
 	}
 }
 
