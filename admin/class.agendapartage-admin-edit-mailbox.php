@@ -35,7 +35,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		if( ! $post )
 			return;
 		switch($post->post_type){
-			// page
+			// Edition d'une mailbox
 			case AgendaPartage_Mailbox::post_type:
 							
 				if ( ! get_post_meta($post->ID, 'imap_mark_as_read', true) )
@@ -67,14 +67,19 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 						AgendaPartage_Admin::add_admin_notice_now(sprintf('<ul><li>%s</li></ul>', implode('</li><li>', $links))
 							, ['type' => 'info']);
 				break;
-			// page
+				
+			// Edition d'une page de forum
 			case 'page':
 				$meta_key = AGDP_PAGE_META_MAILBOX;
 				if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
 					$mailbox = get_post($mailbox_id);
-							
+					
+					$emails = AgendaPartage_Mailbox::get_emails_dispatch( false, $post->ID );
+					if( is_array($emails) ) 
+						$emails = implode( ', ', array_keys($emails));
+					
 					if ( ! get_post_meta($mailbox_id, 'imap_mark_as_read', true) )
-						AgendaPartage_Admin::add_admin_notice_now(sprintf('Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée'
+						AgendaPartage_Admin::add_admin_notice_now(sprintf('Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée.'
 							. ' pour <a href="/wp-admin/post.php?post=%s&action=edit">la boîte e-mails <u>%s</u></a>.', $mailbox_id, $mailbox->post_title)
 							, ['type' => 'warning', 
 								'actions' => [
@@ -84,14 +89,16 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 						
 					if( $mailbox->post_status != 'publish' )
 						AgendaPartage_Admin::add_admin_notice_now('Attention, la boîte e-mails associée n\'est pas publiée.'
-							. sprintf(' <a href="/wp-admin/post.php?post=%s&action=edit">Cliquez ici pour modifier la boîte e-mails</a>.', $mailbox_id)
+							. sprintf(' <a href="/wp-admin/post.php?post=%s&action=edit">Cliquez ici pour modifier la boîte e-mails</a>. ', $mailbox_id)
+							. sprintf('<br>E-mail(s) associé(s) : %s.', $emails)
 							, ['type' => 'warning', 
 								'actions' => [
 									'url' => sprintf('/wp-admin/post.php?post=%s&action=edit', $mailbox_id)
 								]
 							]);
 					else
-						AgendaPartage_Admin::add_admin_notice_now(sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">Cliquez ici pour afficher la boîte e-mails associée</a>.', $mailbox_id)
+						AgendaPartage_Admin::add_admin_notice_now(sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">Cliquez ici pour afficher la boîte e-mails associée</a>. ', $mailbox_id)
+								. sprintf('<br>E-mail(s) associé(s) : %s.', $emails)
 							, ['type' => 'info', 
 								'actions' => [
 									'url' => sprintf('/wp-admin/post.php?post=%s&action=edit', $mailbox_id)
@@ -148,20 +155,26 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 	}
 	
 	public static function get_metabox_dispatch_fields(){
+		$rights = [];
+		foreach(AgendaPartage_Mailbox::get_all_rights() as $right)
+			$rights[] = sprintf('<b>%s</b> %s', $right, AgendaPartage_Mailbox::get_right_label($right));
+		$rights = implode(', ', $rights);
 		
 		$fields = [
 			[	'name' => 'emails_dispatch',
 				'label' => __('Distribution des e-mails', AGDP_TAG),
 				'type' => 'text',
 				'input' => 'textarea',
-				'class' => 'NOT-hidden',
-				'learn-more' => 'Chaque ligne est de la forme <code>%e-mail_to% > %post_type%[.%post_id%]</code>.',
+				'input_attributes' => ['rows="5"'],
+				'learn-more' => 'Chaque ligne est de la forme <code>%e-mail_to% > %post_type%[.%post_id%][.%droits%]</code>.',
 				'comments' => ['<code>%e-mail_to%</code> peut ne pas contenir le domaine si c\'est le même que celui de la boîte e-mails.'
 								, 'Par exemple : <code>info-partage.nord-ardeche@agenda-partage.fr > page.3574</code> (création de commentaires)'
 								, 'ou : <code>evenement.nord-ardeche > agdpevent</code>'
 								, 'ou : <code>covoiturage.nord-ardeche@agenda-partage.fr > covoiturage</code>'
 								, 'ou : <code> > page.3255</code> (l\'adresse principale est utilisée)'
 								, 'ou : <code>*@* > page.3255</code> (toutes les adresses)'
+								, 'Droits : <code>* > page.3574.P</code> ('.$rights.')'
+								
 							]
 			]
 		];
@@ -270,7 +283,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		$cron_exec_comment .= AgendaPartage_Mailbox::get_cron_time_str();
 		
 		$simulate = ! $cron_exec; //Keep true !
-		AgendaPartage_Mailbox::cron_exec( $simulate, true );
+		AgendaPartage_Mailbox::cron_exec( $simulate, $mailbox );
 		
 		if( $cron_last = get_post_meta($mailbox->ID, 'cron-last', true) )
 			$cron_exec_comment .= sprintf(' - précédente exécution : %s', $cron_last);/*date('d/m/Y H:i:s', strtotime($cron_last))*/

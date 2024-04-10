@@ -62,7 +62,7 @@ class AgendaPartage_Admin_User {
 	 */
 	public static function on_custom_user_profil( $profile_user ) {
 		$user_histories = [];
-		?><br><h2>Abonnement à la lettre-info de l'Agenda partagé</h2>
+		?><br><h2>Abonnements aux lettres-infos de l'Agenda partagé</h2>
 
 		<table class="form-table" role="presentation"><?php
 			$active_newsletters = AgendaPartage_Newsletter::get_active_newsletters();

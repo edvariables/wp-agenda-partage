@@ -43,6 +43,8 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			$style = ! array_key_exists ( 'style', $field ) || ! $field['style'] ? '' : $field['style'];
 			$class = ! array_key_exists ( 'class', $field ) || ! $field['class'] ? '' : $field['class'];
 			$container_class = ! array_key_exists ( 'container_class', $field ) || ! $field['container_class'] ? '' : $field['container_class'];
+			$input_attributes = ! array_key_exists ( 'input_attributes', $field ) || ! $field['input_attributes'] ? '' : $field['input_attributes'];
+			if( is_array($input_attributes) ) $input_attributes = implode(' ', $input_attributes);
 			$readonly = ! array_key_exists ( 'readonly', $field ) || ! $field['readonly'] ? false : $field['readonly'];
 			$unit = ! array_key_exists ( 'unit', $field ) || ! $field['unit'] ? false : $field['unit'];
 			$learn_more = ! array_key_exists ( 'learn-more', $field ) || ! $field['learn-more'] ? false : $field['learn-more'];
@@ -90,6 +92,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'label':
 					echo '<label id="'.$id.'" for="'.$name.'"'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. '>' . htmlentities($label).'</label>';
 					break;
 
@@ -97,6 +100,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'link':
 					echo '<label id="'.$id.'" for="'.$name.'"'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. '>' . $label.'</label>';
 					break;
 
@@ -105,6 +109,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 					echo '<textarea id="'.$id.'" name="'.$name.'"'
 						. ($readonly ? ' readonly ' : '')
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($input_attributes ? ' '.$input_attributes : '')
 						.'>'
 						. htmlentities($val).'</textarea>'
 						. ($unit ? ' ' . $unit : '');;
@@ -127,6 +132,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						.' name="' . $name
 						. ($readonly ? ' readonly ' : '')
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. '">';
 
 					$values = ! array_key_exists ( 'values', $field ) || ! $field['values'] ? false : $field['values'];
@@ -149,6 +155,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($readonly ? '  onclick="return false" ' : '')
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. ' value="1" />';
 					echo htmlentities($label) . '</label>'
 						. ($unit ? ' ' . $unit : '');
@@ -163,6 +170,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($readonly ? ' readonly ' : '')
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. ' />'
 						. ($unit ? ' ' . $unit : '');
 					break;
@@ -194,6 +202,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ' placeholder="hh:mm"'
 						. ' maxlength="5" size="5"'
 						. ($readonly ? ' readonly ' : '')
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. '/>'
 						. ($unit ? ' ' . $unit : '');
 					break;
@@ -209,6 +218,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '')
 						. ($readonly ? ' readonly ' : '')
+						. ($input_attributes ? ' '.$input_attributes : '')
 						. '/>'
 						. ($unit ? ' ' . $unit : '');
 					break;

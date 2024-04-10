@@ -115,19 +115,30 @@ class AgendaPartage_Mailbox {
 	}
 	
 	/**
+	 * Returns posts where post_status == $published_only ? 'publish' : * && meta['cron-enable'] == $cron_enable_only
+	 */
+	 public static function get_mailboxes( $published_only = true, $cron_enable_only = false){
+		$posts = [];
+		$query = [ 'post_type' => self::post_type ];
+		if( $published_only )
+			$query[ 'post_status' ] = 'publish';
+		if( $cron_enable_only )
+			$query = array_merge( $query, [
+				'meta_key' => 'cron-enable'
+				, 'meta_value' => '1'
+				, 'meta_compare' => '='
+			]);
+		
+		foreach( get_posts($query) as $post)
+			$posts[$post->ID . ''] = $post;
+		return $posts;
+	}
+	
+	/**
 	 * Returns posts where post_status == 'publish' && meta['cron-enable'] == true
 	 */
 	 public static function get_active_mailboxes(){
-		$posts = [];
-		foreach( get_posts([
-			'post_type' => self::post_type
-			, 'post_status' => 'publish'
-			, 'meta_key' => 'cron-enable'
-			, 'meta_value' => '1'
-			, 'meta_compare' => '='
-			]) as $post)
-			$posts[$post->ID . ''] = $post;
-		return $posts;
+		return self::get_mailboxes( true, true );
 	}
 	
 	/**
@@ -250,8 +261,11 @@ class AgendaPartage_Mailbox {
 	/**
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
 	 */
-	public static function cron_exec($simulate = false, $forced = false){
-		$mailboxes = self::get_active_mailboxes();
+	public static function cron_exec($simulate = false, $mailbox = false){
+		if( $mailbox )
+			$mailboxes = [$mailbox];
+		else
+			$mailboxes = self::get_active_mailboxes();
 		if( ! $mailboxes || count($mailboxes) === 0){
 			self::deactivate_cron();
 			self::$cron_state = '0|Aucune boîte e-mails active';
@@ -273,7 +287,7 @@ class AgendaPartage_Mailbox {
 				$imported = self::synchronize($mailbox);
 		
 			if( ! $simulate ){
-				update_post_meta($mailbox->ID, 'cron-last', wp_date('Y-m-d H:i:s') . ( $forced ? ' (forcé)' : ''));
+				update_post_meta($mailbox->ID, 'cron-last', wp_date('Y-m-d H:i:s'));
 				// debug_log("cron_exec update_post_meta(".$mailbox->ID.", 'cron-last', ".wp_date('Y-m-d H:i:s') . ( $forced ? ' (forcé)' : ''));
 			}
 		}
@@ -302,10 +316,15 @@ class AgendaPartage_Mailbox {
 	/**
 	 * Retourne les paramètres de distribution des e-mails
 	 */
-	public static function get_emails_dispatch($mailbox_id){
+	public static function get_emails_dispatch( $mailbox_id = false, $destination_filter = false ){
+		$dispatch = [];
+		if( $mailbox_id === false ){
+			foreach( self::get_mailboxes() as $mailbox )
+				$dispatch = array_merge( $dispatch, self::get_emails_dispatch( $mailbox, $destination_filter) );
+			return $dispatch;
+		}
 		if( is_a($mailbox_id, 'WP_POST') )
 			$mailbox_id = $mailbox_id->ID;
-		$dispatch = [];
 		
 		$meta_name = 'imap_email';
 		$mailbox_email = get_post_meta($mailbox_id, $meta_name, true);
@@ -325,17 +344,29 @@ class AgendaPartage_Mailbox {
 				elseif( strpos($email, '@' ) === false )
 					$email .= '@' . $mailbox_domain; 
 				$destination = trim($dispatch_raw[1]);
+				$rights = '';
 				if( strpos($destination, '.' ) !== false ){
 					$destination = explode('.', $destination);
+					if( count($destination) >= 3)
+						$rights = $destination[2];
 					$destination_id = $destination[1];
 					$destination = $destination[0];
 				}
 				else
 					$destination_id = false;
 				
+				if( $destination_filter ){
+					if( ! (  (is_int($destination_filter) && $destination_id == $destination_filter)
+						  || (is_a($destination_filter, 'WP_POST') && $destination_id == $destination_filter->ID)
+						  || ($destination_id === false && $destination === $destination_filter)
+					))
+						continue;
+				}
 				$dispatch[ $email ] = [
 					'type' => $destination,
-					'id' => $destination_id
+					'id' => $destination_id,
+					'mailbox' => $mailbox_id,
+					'rights' => $rights
 				];
 			}
 		}
@@ -485,6 +516,8 @@ class AgendaPartage_Mailbox {
 			$post_parent = false;
 			$user_id = 0;
 			// var_dump($message);
+			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
+				$message['reply_to'] = [ $message['from'] ];
 			$user_email = $message['reply_to'][0]->email;
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 			if( ($pos = strpos($user_name, '@')) !== false)
@@ -512,11 +545,12 @@ class AgendaPartage_Mailbox {
 					'source_id' => $message['id'],
 					'source_no' => $message['msgno'],
 					'from' => $message['from']->email,
+					'to' => $message['to'][0]->email,
 					'title' => trim($message['subject']),
 					'attachments' => $message['attachments'],
 					'import_date' => wp_date(DATE_ATOM),
-				],
-				'mailbox_id' => $mailbox->ID
+					'mailbox_id' => $mailbox->ID,
+				]
 			];
 				
 			// var_dump($postdata);
@@ -545,6 +579,8 @@ class AgendaPartage_Mailbox {
 			$comment_parent = self::find_comment_parent( $page, $message );
 			$user_id = 0;
 			// var_dump($message);
+			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
+				$message['reply_to'] = [ $message['from'] ];
 			$user_email = $message['reply_to'][0]->email;
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 			if( ($pos = strpos($user_name, '@')) !== false)
@@ -572,11 +608,12 @@ class AgendaPartage_Mailbox {
 					'source_id' => $message['id'],
 					'source_no' => $message['msgno'],
 					'from' => $message['from']->email,
+					'to' => $message['to'][0]->email,
 					'title' => trim($message['subject']),
 					'attachments' => $message['attachments'],
 					'import_date' => wp_date(DATE_ATOM),
-				],
-				'mailbox_id' => $mailbox->ID
+					'mailbox_id' => $mailbox->ID,
+				]
 			];
 				
 			// var_dump($commentdata);
@@ -599,12 +636,12 @@ class AgendaPartage_Mailbox {
 	 */
 	//Force l'approbation du commentaire pendant la boucle d'importation
 	public static function on_imap_pre_comment_approved($approved, $commentdata){
-		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['mailbox_id'] ) )
+		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['comment_meta']['mailbox_id'], $commentdata['comment_meta']['to'] ) )
 			return false;
 		return true;
 	}
 	
-	private static function user_email_approved( $user_email, $mailbox_id ) {
+	private static function user_email_approved( $user_email, $mailbox_id, $email_to ) {
 		//L'origine du mail est l'adresse de la boite imap (bouclage)
 		$source_email = get_post_meta($mailbox_id, 'imap_email', true);
 		if( $user_email === $source_email )
@@ -613,6 +650,7 @@ class AgendaPartage_Mailbox {
 		$source_email = AgendaPartage_Newsletter::get_mail_sender();
 		if( $user_email === $source_email )
 			return false;
+		
 		return true;
 	}
 	//Cherche un message déjà importé
@@ -641,6 +679,43 @@ class AgendaPartage_Mailbox {
 			
 		}
 		return 0;
+	}
+	
+	/***************************/
+	/******** Droits ***********/
+	
+	/**
+	 * Retourne le libellé des droits
+	 */
+	public static function get_all_rights( ){
+		return [
+			'P',
+			'E',
+			'C',
+			'A',
+			'CO',
+			'AO',
+		];
+	}
+	/**
+	 * Retourne le libellé des droits
+	 */
+	public static function get_right_label( $rights ){
+		switch( $rights ){
+			case 'P' : 
+				return 'public';
+			case 'E' : 
+				return 'Validation par e-mail';
+			case 'C' : 
+				return 'Connexion requise';
+			case 'CO' : 
+				return 'Inscription cooptée et connexion requises';
+			case 'A' : 
+				return 'Adhésion requise';
+			case 'AO' : 
+				return 'Adhésion cooptée requise';
+		}
+		return '';
 	}
 }
 ?>

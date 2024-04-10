@@ -192,7 +192,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			[	'name' => 'mailing-num-users-per-mail',
 				'label' => __('Destinataires par e-mail', AGDP_TAG),
 				'unit' => __('adresse(s) par e-mail', AGDP_TAG),
-				'learn-more' => [sprintf(__('Si vous choississez plus d\'une adresse de destinataire par e-mail, elles seront en copie cachée et le destinataire principal sera %s.', AGDP_TAG),
+				'learn-more' => [sprintf(__('Si vous choississez plus d\'une adresse de destinataire par e-mail, elles seront en copie cachée et le destinataire principal sera "%s".', AGDP_TAG),
 									AgendaPartage_Newsletter::get_bcc_mail_sender()),
 								__('Les destinataires multiples ne permettent pas de personnaliser le message envoyé.', AGDP_TAG)],
 				'type' => 'number'

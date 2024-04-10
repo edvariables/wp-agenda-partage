@@ -19,8 +19,8 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 	}
 	
 	public static function is_forum_comment($comment){
-		if( $forum = AgendaPartage_Forum::get_forum_of_page($comment->comment_post_ID))
-			return $forum;
+		if( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($comment->comment_post_ID))
+			return $mailbox;
 		return false;
 	}
 	
@@ -37,9 +37,10 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 			'source_id',
 			'source_no',
 			'from',
-			'attachments', //TODO is object
+			'to',
 			'import_date',
-			'send-email'
+			'mailbox_id',
+			'attachments', 
 		];
 		?>
 		<div id="namediv" class="stuffbox">
@@ -56,7 +57,20 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 					?>
 					<tr>
 					<td><label><?=$meta?></label></td>
-					<td><?php echo htmlentities($value)?></td>
+					<td><?php 
+						switch( $meta ) {
+							case 'attachments' :
+								echo AgendaPartage_Forum::get_attachments_links($comment);
+								break;
+							case 'mailbox_id' :
+								if( $value && ( $mailbox = get_post($value) ) )
+									echo sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $mailbox->ID, $mailbox->post_title);
+								break;
+						
+						default:
+							echo htmlentities($value);
+						}
+					?></td>
 					</tr>
 				<?php }
 			?>

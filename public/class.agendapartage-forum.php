@@ -29,12 +29,13 @@ class AgendaPartage_Forum {
 	 */
 	public static function init_hooks() {
 		
-		add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
-		
+		global $pagenow;
+		if ( $pagenow !== 'edit.php' && $pagenow !== 'post.php' ) {
+			add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
+		}
 		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
 		
-		global $pagenow;
 		if ( $pagenow === 'wp-comments-post.php' ) {
 			add_filter('pre_comment_approved', array(__CLASS__, 'on_pre_comment_approved'), 10, 2 );
 			add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
@@ -43,7 +44,6 @@ class AgendaPartage_Forum {
 	}
 	/*
 	 **/
-	
 	
 	/**
 	*/

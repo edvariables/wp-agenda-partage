@@ -18,25 +18,25 @@ class AgendaPartage_Mailbox_Post_type {
 	public static function register_post_type() {
 
 		$labels = array(
-			'name'                  => _x( 'Boîtes mail', 'Post Type General Name', AGDP_TAG ),
+			'name'                  => _x( 'Boîtes e-mails', 'Post Type General Name', AGDP_TAG ),
 			'singular_name'         => _x( 'Boîte e-mails', 'Post Type Singular Name', AGDP_TAG ),
-			'menu_name'             => __( 'Boîtes mail', AGDP_TAG ),
+			'menu_name'             => __( 'Boîtes e-mails', AGDP_TAG ),
 			'name_admin_bar'        => __( 'Boîte e-mails', AGDP_TAG ),
-			'archives'              => __( 'Boîtes mail', AGDP_TAG ),
+			'archives'              => __( 'Boîtes e-mails', AGDP_TAG ),
 			'attributes'            => __( 'Attributs', AGDP_TAG ),
 			'parent_item_colon'     => __( 'Boîte e-mails parente:', AGDP_TAG ),
-			'all_items'             => __( 'Tous les boîtes mail', AGDP_TAG ),
-			'add_new_item'          => __( 'Ajouter une boîte e-mails', AGDP_TAG ),
+			'all_items'             => __( 'Tous les boîtes', AGDP_TAG ),
+			'add_new_item'          => __( 'Ajouter une boîte', AGDP_TAG ),
 			'add_new'               => __( 'Ajouter', AGDP_TAG ),
 			'new_item'              => __( 'Nouvelle boîte e-mails', AGDP_TAG ),
 			'edit_item'             => __( 'Modifier', AGDP_TAG ),
 			'update_item'           => __( 'Mettre à jour', AGDP_TAG ),
 			'view_item'             => __( 'Afficher', AGDP_TAG ),
-			'view_items'            => __( 'Voir les boîtes mail', AGDP_TAG ),
-			'search_items'          => __( 'Rechercher des boîtes mail', AGDP_TAG ),
-			'items_list'            => __( 'Liste de boîtes mail', AGDP_TAG ),
-			'items_list_navigation' => __( 'Navigation dans la liste de boîtes mail', AGDP_TAG ),
-			'filter_items_list'     => __( 'Filtrer la liste des boîtes mail', AGDP_TAG ),
+			'view_items'            => __( 'Voir les boîtes e-mails', AGDP_TAG ),
+			'search_items'          => __( 'Rechercher des boîtes e-mails', AGDP_TAG ),
+			'items_list'            => __( 'Liste de boîtes e-mails', AGDP_TAG ),
+			'items_list_navigation' => __( 'Navigation dans la liste de boîtes e-mails', AGDP_TAG ),
+			'filter_items_list'     => __( 'Filtrer la liste des boîtes e-mails', AGDP_TAG ),
 		);
 		$capabilities = self::post_type_capabilities();
 		$args = array(

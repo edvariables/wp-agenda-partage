@@ -120,15 +120,13 @@ class AgendaPartage_Admin_Mailbox {
 	public static function manage_custom_columns( $column, $post_id ) {
 		switch ( $column ) {
 			case 'associated-page' :
-				//TODO
 				$post = get_post( $post_id );
 				if($post->post_status != 'publish')
-					echo 'non, statut "' . __($post->post_status) . '"';
-				else
-					_e('non', AGDP_TAG);
+					echo 'statut "' . __($post->post_status) . '"' . '<br>';
+				if( $emails_dispatch = get_post_meta($post_id, 'emails_dispatch', true) )
+					echo sprintf('<code>%s</code>', str_replace("\n", '<br>', $emails_dispatch));
 				break;
 			case 'imap' :
-				//TODO
 				$imap_server = get_post_meta($post_id, 'imap_server', true);
 				$imap_email = get_post_meta($post_id, 'imap_email', true);
 				echo sprintf('%s@%s', $imap_email, $imap_server);
