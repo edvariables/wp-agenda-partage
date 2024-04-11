@@ -54,6 +54,15 @@ class AgendaPartage_Admin_User {
 			if( array_key_exists($meta_key, $_POST))
 				$custom_meta[$meta_key] = $_POST[$meta_key];
 		}
+		
+		
+		$pages = AgendaPartage_Mailbox::get_pages_dispatch();
+		foreach( $pages as $page_id => $dispatches ){
+			$meta_key = AgendaPartage_Forum::get_subscription_meta_key($page_id);
+			if( array_key_exists($meta_key, $_POST))
+				$custom_meta[$meta_key] = $_POST[$meta_key];
+		}
+		
 		return $custom_meta;
 	}
 	
@@ -61,6 +70,67 @@ class AgendaPartage_Admin_User {
 	 * A l'affichage de l'édition d'un utilisateur, ajoute des champs spécifiques
 	 */
 	public static function on_custom_user_profil( $profile_user ) {
+		self::newsletters_subscriptions( $profile_user );
+		self::forums_subscriptions( $profile_user );
+	}
+	
+	/**
+	 * Inscriptions aux newsletters
+	 */
+	public static function forums_subscriptions( $profile_user ) {
+		$user_histories = [];
+		?><br><h2>Abonnements aux forums</h2>
+
+		<table class="form-table" role="presentation"><?php
+			$pages = AgendaPartage_Mailbox::get_pages_dispatch();
+			
+			$subscription_roles = [
+				'' => '(non défini)',
+				'administrator' => 'Administrateurice',
+				'moderator' => 'Modérateurice',
+				'subscriber' => 'Abonné-e',
+				'banned' => 'Banni-e',
+			];
+			$post_statues = [
+				'publish' => 'publié',
+				'pending' => 'en attente de modération',
+				'draft' => 'brouillon',
+			];
+				
+			foreach( $pages as $page_id => $dispatches ){
+				$rigths = $dispatches[0]['rights'];
+				$page = get_post($page_id);
+				$user_subscription = AgendaPartage_Forum::get_subscription($profile_user->user_email, $page_id);
+				$meta_key = AgendaPartage_Forum::get_subscription_meta_key($page_id);
+				$post_status = AgendaPartage_Forum::get_forum_post_status($page, $profile_user, $profile_user->user_email);
+				$post_status = isset($post_statues[$post_status]) ? $post_statues[$post_status] : $post_status;
+				?><tr class="agdp-forum-subscription">
+					<th><label>Page "<?php echo htmlentities($page->post_title)?>"</label>
+					<br><?php echo sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">modifier</a>', $page_id)?></label>
+					&nbsp;<?php echo sprintf('<a href="%s">voir</a>', get_permalink($page_id))?></label>
+					</th>
+					<td>
+						Règles : <code><?php echo AgendaPartage_Mailbox::get_right_label($rigths); ?></code>
+						<br>Nouvelle publication : <code><?php echo $post_status; ?></code>
+						<br><select name="<?php echo $meta_key?>">
+						<?php 
+							foreach( $subscription_roles as $subscribe_code => $label){
+								$selected = $user_subscription == $subscribe_code ? 'selected="selected"' : '';
+								echo sprintf('<option value="%s" %s>%s</label></option>'
+									, $subscribe_code, $selected, $label);
+							}
+						?>
+						</select>
+					</td>
+				</tr><?php
+			}?>
+		</table><?php
+	}
+	
+	/**
+	 * Inscriptions aux newsletters
+	 */
+	public static function newsletters_subscriptions( $profile_user ) {
 		$user_histories = [];
 		?><br><h2>Abonnements aux lettres-infos de l'Agenda partagé</h2>
 

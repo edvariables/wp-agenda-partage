@@ -13,19 +13,7 @@ class AgendaPartage_Admin_Edit_Rights {
 		if(self::$initialized)
 			return;
 		self::$initialized = true;
-		self::init_includes();
-		self::init_hooks();
 		self::init_settings();
-	}
-
-	public static function init_includes() {
-	}
-
-	public static function init_hooks() {
-
-		
-		add_action('admin_head', array('AgendaPartage_Admin_Menu', 'add_form_enctype'));
-		add_action('admin_head', array('AgendaPartage_Admin_Menu', 'init_js_sections_tabs'));
 	}
 
 	/**
@@ -49,25 +37,7 @@ class AgendaPartage_Admin_Edit_Rights {
 		);
 		
 		$publish_all_rights = AgendaPartage_Mailbox::get_all_rights_labels();
-		$pages = [];
-		$all_dispatches = AgendaPartage_Mailbox::get_emails_dispatch();
-		foreach( $all_dispatches as $email => $dispatch ){
-			if($dispatch['type'] === 'page')
-				$page_id = $dispatch['id'].'';
-			elseif( $dispatch['type'] === AgendaPartage_Evenement::post_type ){
-				$page_id = AgendaPartage::get_option('agenda_page_id');
-			}
-			elseif( $dispatch['type'] === AgendaPartage_Covoiturage::post_type ){
-				$page_id = AgendaPartage::get_option('covoiturages_page_id');
-			}
-			else
-				continue;
-			$dispatch['email'] = $email;
-			if( ! isset($pages[$page_id]) )
-				$pages[$page_id] = [ $dispatch ];
-			else
-				$pages[$page_id][] = $dispatch;
-		}
+		$pages = AgendaPartage_Mailbox::get_pages_dispatch();
 		
 		foreach( $pages as $page_id => $dispatches ){
 			$dispatch = $dispatches[0];
@@ -110,7 +80,8 @@ class AgendaPartage_Admin_Edit_Rights {
 				);
 		}
 		
-/* 		foreach( $all_dispatches as $email => $dispatch ){
+/* 		$all_dispatches = AgendaPartage_Mailbox::get_emails_dispatch($mailbox_id);
+		foreach( $all_dispatches as $email => $dispatch ){
 			$email_esc = str_replace('@', '_', $email);
 			add_settings_section(
 				'email_section_' . $email_esc,

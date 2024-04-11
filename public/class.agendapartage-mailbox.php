@@ -344,11 +344,14 @@ class AgendaPartage_Mailbox {
 				elseif( strpos($email, '@' ) === false )
 					$email .= '@' . $mailbox_domain; 
 				$destination = trim($dispatch_raw[1]);
-				$rights = '';
+				$rights = 'P';//Public par défaut
+				if( strpos($destination, '|' ) !== false ){
+					$destination = explode('|', $destination);
+					$rights = strtoupper(trim($destination[1]));
+					$destination = trim($destination[0]);
+				}
 				if( strpos($destination, '.' ) !== false ){
 					$destination = explode('.', $destination);
-					if( count($destination) >= 3)
-						$rights = $destination[2];
 					$destination_id = $destination[1];
 					$destination = $destination[0];
 				}
@@ -372,6 +375,51 @@ class AgendaPartage_Mailbox {
 		}
 		
 		return $dispatch;
+	}
+	
+	/**
+	 * Retourne les paramètres de distribution d'une page (forum / agdpevent / covoiturage)
+	 */
+	public static function get_page_dispatch( $mailbox_id = false, $page_id = false ){
+		if( is_a($page_id, 'WP_POST') )
+			$page_id = $page_id->ID;
+		if( ($pages = self::get_pages_dispatch( $mailbox_id, $page_id ))
+		&& isset($pages[$page_id.'']) )
+			return $pages[$page_id.''];
+		return [];
+	}
+	
+	/**
+	 * Retourne les paramètres de distribution par page (forum + agdpevent + covoiturage)
+	 */
+	public static function get_pages_dispatch( $mailbox_id = false, $page_id_only = false ){
+		if( is_a($page_id_only, 'WP_POST') )
+			$page_id_only = $page_id_only->ID;
+		$pages = [];
+		$all_dispatches = self::get_emails_dispatch($mailbox_id);
+		// debug_log('get_pages_dispatch $all_dispatches', $all_dispatches);
+		foreach( $all_dispatches as $email => $dispatch ){
+			if($dispatch['type'] === 'page')
+				$page_id = $dispatch['id'].'';
+			elseif( $dispatch['type'] === AgendaPartage_Evenement::post_type ){
+				$page_id = AgendaPartage::get_option('agenda_page_id');
+			}
+			elseif( $dispatch['type'] === AgendaPartage_Covoiturage::post_type ){
+				$page_id = AgendaPartage::get_option('covoiturages_page_id');
+			}
+			else
+				continue;
+			if( $page_id_only &&
+			$page_id_only != $page_id)
+				continue;
+				
+			$dispatch['email'] = $email;
+			if( ! isset($pages[$page_id]) )
+				$pages[$page_id] = [ $dispatch ];
+			else
+				$pages[$page_id][] = $dispatch;
+		}
+		return $pages;
 	}
 	
 	/**
@@ -650,6 +698,8 @@ class AgendaPartage_Mailbox {
 		$source_email = AgendaPartage_Newsletter::get_mail_sender();
 		if( $user_email === $source_email )
 			return false;
+		
+		
 		
 		return true;
 	}

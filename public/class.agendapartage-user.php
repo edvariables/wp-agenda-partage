@@ -100,10 +100,9 @@ class AgendaPartage_User {
 		return $user;
 	}
 
-	//TODO
 	public static function get_blog_admin_id(){
 		$email = get_bloginfo('admin_email');
-		return null;
+		return email_exists( $email );
 	}
 
 	/**
@@ -224,4 +223,5 @@ class AgendaPartage_User {
 		}
 		echo $html;
 	}
+	
 }

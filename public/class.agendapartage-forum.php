@@ -10,6 +10,7 @@
  */
 class AgendaPartage_Forum {
 
+	const tag = 'agdpforum';
 	const page_class = 'use-agdpforum';
 	
 	// const user_role = 'author';
@@ -569,6 +570,165 @@ class AgendaPartage_Forum {
 		}
 		
 		return $comment->get_error_message();
+	}
+	
+	/*************************************************/
+	
+	
+	
+	public static function get_page($page = false){
+		if(is_a($page, 'WP_Post'))
+			return $page;
+		return get_post($page);
+	}
+	
+	/**
+	 * utilisateur
+	 */
+	public static function get_current_user(){
+		$current_user = wp_get_current_user();
+		if($current_user && $current_user->ID){
+			return $current_user;
+		}
+		return false;
+	}
+	public static function get_user_email(){
+		$current_user = self::get_current_user();
+		if($current_user){
+			$email = $current_user->data->user_email;
+			if(is_email($email))
+				return $email;
+		}
+		return false;
+	}
+	/**
+	 * Option d'abonnement de l'utilisateur
+	 */
+	public static function get_user_subscription(){
+		return self::get_subscription(self::get_user_email());
+	}
+	
+	public static function get_subscription_meta_key($page = false){
+		$page = self::get_page($page);
+		return sprintf('%s_subscr_%d_%d', self::tag, get_current_blog_id(), $page->ID);
+	}
+	
+	/**
+	 * Retourne le meta value d'abonnement pour l'utilisateur
+	 */
+	public static function get_subscription( $email, $page = false){
+		// $page = self::get_page($page);
+		
+		$user_id = email_exists( sanitize_email($email) );
+		if( ! $user_id)
+			return false;
+		
+		$meta_name = self::get_subscription_meta_key($page);
+		$meta_value = get_user_meta($user_id, $meta_name, true);
+		return $meta_value;
+	}
+	/**
+	 * Supprime le meta value d'abonnement pour l'utilisateur
+	 */
+	public static function remove_subscription($email, $page = false){
+		// $page = self::get_page($page);
+		
+		$user_id = email_exists( $email );
+		if( ! $user_id)
+			return true;
+		
+		$meta_name = self::get_subscription_meta_key($page);
+		delete_user_meta($user_id, $meta_name, null);
+		
+		return true;
+	}
+	/**
+	 * Ajoute ou met à jour le meta value d'abonnement pour l'utilisateur
+	 */
+	public static function update_subscription($email, $period, $page = false){
+		// $page = self::get_page($page);
+		
+		$user_id = email_exists( $email );
+		if( ! $user_id){
+			if( ! $period || $period == 'none')
+				return true;
+			$user = self::create_subscriber_user($email, false, false);
+			if( ! $user )
+				return false;
+			$user_id = $user->ID;
+		}
+		$meta_name = self::get_subscription_meta_key($page);
+		update_user_meta($user_id, $meta_name, $period);
+		return true;
+	}
+	
+	
+	public static function get_forum_post_status($page, $user, $email) {
+		
+		$dispatches = AgendaPartage_Mailbox::get_page_dispatch(false, $page);
+		// debug_log('get_forum_post_status $dispatches', $page->post_title, $dispatches);
+		
+		//Right Public
+		$right = $dispatches ? $dispatches[0]['rights'] : false;
+		if( $right === 'P' )
+			return 'publish';
+		
+		if(is_a($user, 'WP_User')){
+			$user_id = $user->ID;
+		}
+		elseif( is_int($user) ){
+			$user_id = $user;
+			$user = new WP_USER($user_id);
+		}
+		else
+			$user = false;
+		if( !$user && $email ){
+			if( $user_id = email_exists($email) )
+				$user = new WP_USER($user_id);
+		}
+		if( ! $user)
+			return 'pending';
+
+		if( user_can( $user, 'manage_options') )
+			return 'publish';
+		
+		$user_subscription = AgendaPartage_Forum::get_subscription($user->user_email, $page);
+		// debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
+		switch($user_subscription){
+			case 'administrator' :
+			case 'moderator' :
+				return 'publish';
+			case 'subscriber' :
+				switch( $right ){
+					case '';
+					case false;
+					case 'P' : //Public;
+					case 'E' : //'Validation par e-mail';
+					case 'C' : //'Connexion requise';
+					case 'A' : //'Adhésion requise';
+						return 'publish';
+					case 'CO' : //'Inscription cooptée et connexion requise';
+					case 'AO' : //'Adhésion cooptée requise';
+						if( $user_id === get_current_user_id() )
+							return 'publish';
+					default:
+						return 'pending';
+				}
+			case 'banned' :
+				return 'draft';
+			default:
+				switch( $right ){
+					case '' : 
+					case false : 
+					case 'P' : //Public;
+						return 'publish';
+					case 'E' : //'Validation par e-mail';
+						return 'pending';
+					default:
+						return 'draft';
+				}
+		}
+		return false;
 	}
 }
 ?>

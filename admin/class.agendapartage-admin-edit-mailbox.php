@@ -166,14 +166,14 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 				'type' => 'text',
 				'input' => 'textarea',
 				'input_attributes' => ['rows="5"'],
-				'learn-more' => 'Chaque ligne est de la forme <code>%e-mail_to% > %post_type%[.%post_id%][.%droits%]</code>.',
+				'learn-more' => 'Chaque ligne est de la forme <code>%e-mail_to% > %post_type%[.%post_id%][ | %droits%]</code>.',
 				'comments' => ['<code>%e-mail_to%</code> peut ne pas contenir le domaine si c\'est le même que celui de la boîte e-mails.'
 								, 'Par exemple : <code>info-partage.nord-ardeche@agenda-partage.fr > page.3574</code> (création de commentaires)'
 								, 'ou : <code>evenement.nord-ardeche > agdpevent</code>'
 								, 'ou : <code>covoiturage.nord-ardeche@agenda-partage.fr > covoiturage</code>'
 								, 'ou : <code> > page.3255</code> (l\'adresse principale est utilisée)'
 								, 'ou : <code>*@* > page.3255</code> (toutes les adresses)'
-								, 'Droits : <code>* > page.3574.P</code> ('.$rights.')'
+								, 'Droits : <code>* > page.3574 | P</code> ('.$rights.')'
 								
 							]
 			]
