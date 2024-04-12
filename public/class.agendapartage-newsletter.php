@@ -637,8 +637,8 @@ class AgendaPartage_Newsletter {
 		if( is_int($newsletter_option) ){
 			if($newsletter = get_post( $newsletter_option )){
 				if( $source = self::get_content_source($newsletter->ID, true)){
-					$post_type = AgendaPartage_Forum::post_type;
-					if( $source[0] === AgendaPartage_Forum::post_type ){
+					$post_type = AgendaPartage_Forum::tag;
+					if( $source[0] === AgendaPartage_Forum::tag ){
 						if( $forum = get_post( $source[1] )){
 							return $forum->post_type . '-' . $forum->post_name;
 						}
@@ -673,7 +673,7 @@ class AgendaPartage_Newsletter {
 			'post_status' => 'publish',
 			'meta_query' => [[
 				'key' => 'source',
-				'value' => AgendaPartage_Forum::post_type . '.',
+				'value' => AgendaPartage_Forum::tag . '.',
 				'compare' => 'LIKE'
 			]]
 		]);
