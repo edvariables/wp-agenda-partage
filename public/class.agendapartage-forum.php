@@ -220,6 +220,11 @@ class AgendaPartage_Forum {
 	 * Ajout du champ Titre au formulaire de commentaire
 	 */
 	public static function on_comment_form_fields($fields){	
+		
+		if( $comment_css = self::get_property('comment_css') ){
+			echo '<style>'.  $comment_css . '</style>';
+		}
+		
 		if( self::get_property_is_value('comment_form', false) ){
 			$fields['comment'] = '<style>#respond.comment-respond { display: none; }</style>';
 			return $fields;
@@ -758,6 +763,7 @@ class AgendaPartage_Forum {
 	
 	
 	public static function on_comments_array($comments, $post_id){
+		
 		if( current_user_can('manage_options') )
 			return $comments;
 		
