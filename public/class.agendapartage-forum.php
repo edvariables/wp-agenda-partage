@@ -600,6 +600,12 @@ class AgendaPartage_Forum {
 		
 		return $comment->get_error_message();
 	}
+	/**
+	 * Requête Ajax de récupération d'un (nouveau) commentaire
+	 */
+	public static function on_ajax_action_get($data) {
+		return wp_list_comments(['echo'=>false], [ $data['comment_id'] ]);
+	}
 	
 	/*************************************************/
 	

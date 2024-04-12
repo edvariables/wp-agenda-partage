@@ -118,6 +118,54 @@ jQuery( function( $ ) {
 				
 				
 			});
+			
+			//Forum
+			$("article.use-agdpforum").each(	function(){
+				function show_new_comment(id){
+					data = { 
+						'action' : 'agendapartage_comment_action',
+						'method' : 'get',
+						'data' : { 'comment_id' : id },
+					};
+					jQuery.ajax({
+						url : agendapartage_ajax.ajax_url,
+						type : 'post', 
+						data : Object.assign(data, {
+							_nonce : agendapartage_ajax.check_nonce
+						}),
+						success : function( response ) {
+							if(response){
+								if(typeof response === 'string' || response instanceof String){
+									$('#comments .comment-list').prepend( response );
+								}
+							}
+						},
+						fail : function( response ){
+							var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+								.click(function(){$msg.remove()});
+							$actionElnt.after($msg);
+						}
+					});
+				}
+				/** En réponse d'enregistremement, le message mail_sent_ok contient une fonction **/
+				document.addEventListener( 'wpcf7mailsent', function( event ) {
+					var post_url = event.detail.apiResponse['message'];
+					if(post_url && post_url.startsWith('redir:')){
+						post_url = post_url.substring('redir:'.length);
+						if(post_url){
+							event.detail.apiResponse['message'] = 'La page va être rechargée. Merci de patienter.';
+							document.location = post_url;
+						}
+					}
+					else if(post_url && post_url.startsWith('js:')){
+						var script = post_url.substring('js:'.length);
+						if(script){
+							event.detail.apiResponse['message'] = eval(script);
+						}
+					}
+				}, false );
+				
+			});
 		}).trigger('wpcf7_form_fields-init');
 		
 		

@@ -497,7 +497,7 @@ class AgendaPartage_Mailbox {
 		
 		$posts = [];//cache
 		
-		add_filter('pre_comment_approved', array(__CLASS__, 'on_imap_pre_comment_approved'), 10, 2 );
+		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
 		foreach( $messages as $message ){
 			$email_to = false;
 			foreach($message['to'] as $to)
@@ -542,7 +542,7 @@ class AgendaPartage_Mailbox {
 					throw new Exception(sprintf("La configuration de la boîte e-mails indique un type inconnu : %s.", $dispatch[$email_to]['type']));
 			}
 		}
-		remove_filter('pre_comment_approved', array(__CLASS__, 'on_imap_pre_comment_approved'), 10);
+		remove_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10);
 		
 		return $imported;
 	}
@@ -689,7 +689,7 @@ class AgendaPartage_Mailbox {
 	 * Comments
 	 */
 	//Force l'approbation du commentaire pendant la boucle d'importation
-	public static function on_imap_pre_comment_approved($approved, $commentdata){
+	public static function on_import_pre_comment_approved($approved, $commentdata){
 		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['comment_meta']['mailbox_id'], $commentdata['comment_meta']['to'] ) )
 			return false;
 		return true;
@@ -813,9 +813,10 @@ class AgendaPartage_Mailbox {
 						return;
 					// debug_log('$emails[$email]', $emails[$email_to]);
 					
+					//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
 					$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
 					$matches = [];
-					$preg_match_all = preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)")?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
+					$preg_match_all = preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
 					//$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
 					$user_name = $matches[2][0];
 					$email_replyto = $matches[3][0];
@@ -856,10 +857,28 @@ class AgendaPartage_Mailbox {
 						]
 					];
 						
+					add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
 					$comment = wp_new_comment($commentdata, true);
-					if(	is_wp_error( $comment ) )
-						debug_log('wpcf7_before_send_mail', $comment);
-					
+					if(	is_wp_error( $comment ) ){
+						$message = 'Erreur : ' . $comment->get_error_message();
+						$submission->set_response($message);
+						
+						$abort = true;
+					}
+					else {					
+						//$html = wp_list_comments(['echo'=>false], [ get_comment($comment) ]);
+						$messages = ($contact_form->get_properties())['messages'];
+						$messages['mail_sent_ok'] = str_replace("\t", '', str_replace("\n", '', 
+							sprintf('js:(function( id ){
+								show_new_comment( id );
+								return "%s";
+							})(%d)'
+							, str_replace('"', '\\"', $messages['mail_sent_ok'])
+							, $comment
+						)));
+						$contact_form->set_properties(array('messages' => $messages));
+					}
+
 					add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
 				}
 			}
