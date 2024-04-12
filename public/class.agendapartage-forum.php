@@ -226,7 +226,7 @@ class AgendaPartage_Forum {
 		}
 		
 		if( self::get_property_is_value('comment_form', false) ){
-			$fields['comment'] = '<style>#respond.comment-respond { display: none; }</style>';
+			$fields['comment'] = '<script>jQuery("#respond.comment-respond").remove();</script>';
 			return $fields;
 		}
 			
@@ -384,9 +384,10 @@ class AgendaPartage_Forum {
 				, $send_email);
 		}
 		
-		$title = get_comment_meta($comment->comment_ID, 'title', true);	
-		
-		echo sprintf('<h3>%s</h3>', $title);
+		if( ! self::get_property_is_value('comment_title', false) ){
+			$title = get_comment_meta($comment->comment_ID, 'title', true);	
+			echo sprintf('<h3>%s</h3>', $title);
+		}
 		
 		return $comment_text;
 	}
