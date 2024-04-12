@@ -619,10 +619,12 @@ class AgendaPartage_Mailbox {
 		// debug_log('import_message_to_comment', $message, 'page '.$page->ID);
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){
+			// debug_log('import_message_to_comment  ! $mailbox');
 			return false;
 		}
 
 		if( ($comment = self::get_existing_comment( $page, $message )) ){
+			// debug_log('import_message_to_comment get_existing_comment');
 		}
 		else {
 			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
@@ -672,6 +674,10 @@ class AgendaPartage_Mailbox {
 				
 			// var_dump($commentdata);
 			$comment = wp_new_comment($commentdata, true);
+			if( is_wp_error($comment) ){
+				debug_log('import_message_to_comment !wp_new_comment : ', $comment);
+			}
+			
 		}
 		
 		return $comment;
@@ -688,14 +694,28 @@ class AgendaPartage_Mailbox {
 	/********************
 	 * Comments
 	 */
-	//Force l'approbation du commentaire pendant la boucle d'importation
+	/**
+	 * Force l'approbation du commentaire pendant la boucle d'importation
+	 */
 	public static function on_import_pre_comment_approved($approved, $commentdata){
-		if ( ! self::user_email_approved( $commentdata['comment_author_email'], $commentdata['comment_meta']['mailbox_id'], $commentdata['comment_meta']['to'] ) )
-			return false;
-		return true;
+		debug_log('on_import_pre_comment_approved', "approved $approved");
+		$user_email_approved = self::user_email_approved( $commentdata['comment_author_email'], $commentdata['comment_meta']['mailbox_id'], $commentdata['comment_meta']['to'] );
+		debug_log('on_import_pre_comment_approved', "user_email_approved $user_email_approved");
+		if ( ! $user_email_approved )
+			return 0;
+		return $approved;
 	}
-	
+	/**
+	 *
+	 * $approved :
+	 * 0 (int) comment is marked for moderation as "Pending"
+	 * 1 (int) comment is marked for immediate publication as "Approved"
+	 * 'spam' (string) comment is marked as "Spam"
+	 * 'trash' (string) comment is to be put in the Trash
+	 */
 	private static function user_email_approved( $user_email, $mailbox_id, $email_to ) {
+		debug_log('user_email_approved', "user_email $user_email", "mailbox_id $mailbox_id");
+		
 		//L'origine du mail est l'adresse de la boite imap (bouclage)
 		$source_email = get_post_meta($mailbox_id, 'imap_email', true);
 		if( $user_email === $source_email )
@@ -705,9 +725,25 @@ class AgendaPartage_Mailbox {
 		if( $user_email === $source_email )
 			return false;
 		
+		debug_log('user_email_approved', "email_to $email_to");
 		
+		if( ! ($dispatches = self::get_emails_dispatch($mailbox_id))
+		|| ! isset($dispatches[$email_to]))
+			return true;
+		$dispatch = $dispatches[$email_to];
+		debug_log('user_email_approved', "dispatch ", $dispatch);
+		if( $dispatch['type'] === 'page' )
+			$page = get_post($page_id = $dispatch['id']);
+		else
+			$page = $page_id = $dispatch['type'];
 		
-		return true;
+		$user_subscription = AgendaPartage_Forum::get_subscription($user_email, $page_id);
+		$user = email_exists($user_email);
+		$comment_approved = AgendaPartage_Forum::get_forum_comment_approved($page, $user, $user_email);
+		
+		debug_log('user_email_approved', "page_id $page_id", "user_subscription", $user_subscription, "user " . ($user ? $user->name : 'NON'), "comment_approved $comment_approved");
+		
+		return $comment_approved;
 	}
 	//Cherche un message déjà importé
 	private static function get_existing_comment( $page, $message ){
@@ -796,93 +832,101 @@ class AgendaPartage_Mailbox {
 			$meta_key = AGDP_PAGE_META_MAILBOX;
 			if( $mailbox_id = get_post_meta( $page->ID, $meta_key, true)){
 				if( $dispatch = self::get_page_dispatch( false, $page->ID) ){
-					
-					$properties = $contact_form->get_properties();
-					$posted_data = $submission->get_posted_data();
-					$mail_properties = $properties['mail'];
-					$email_to = strtolower($mail_properties['recipient']);
-					
-					if( isset($posted_data['is-public'])
-					&& $posted_data['is-public'] ){
-						if( is_array($posted_data['is-public']) )
-							$posted_data['is-public'] = $posted_data['is-public'][0];
-						$posted_data['is-public'] = strtolower($posted_data['is-public']) !== 'non';
-					}
-					$emails = self::get_emails_dispatch();
-					if( ! isset($emails[$email_to]) )
-						return;
-					// debug_log('$emails[$email]', $emails[$email_to]);
-					
-					//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
-					$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
-					$matches = [];
-					$preg_match_all = preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
-					//$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
-					$user_name = $matches[2][0];
-					$email_replyto = $matches[3][0];
-					$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
-					$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
-					// debug_log('wpcf7_before_send_mail', $subject, $body);
-					
-					if( $user_id = email_exists($email_replyto) ){
-						$user = new WP_User($user_id);
-						if( ! $user_name)
-							$user_name = $user->slug;
-					}
-					elseif( ! $user_name ) {
-						$user_name = preg_replace('/^(.*)@.*$/', '$1', $email_replyto);
-					}
-					
-					$date = wp_date('Y-m-d H:i:s');
-					$date_gmt = date('Y-m-d H:i:s');
-					$commentdata = [
-						'comment_post_ID' => $page->ID,
-						'comment_author' => $user_name,
-						'comment_author_url' => 'mailto:' . $email_replyto,
-						'comment_author_email' => $email_replyto,
-						'comment_content' => $body,
-						'comment_date' => $date,
-						'comment_date_gmt' => $date_gmt,
-						'comment_parent' => false,
-						'comment_agent' => sprintf('wpcf7.%s@page.%d', $contact_form->id(), $page->ID),
-						'comment_approved' => true,
-						'user_id' => $user_id,
-						'comment_meta' => [
-							'source' => 'wpcf7',
-							'from' => $email_replyto,
-							'to' => $email_to,
-							'title' => trim($subject),
-							'mailbox_id' => $mailbox_id,
-							'posted_data' => $posted_data
-						]
-					];
-						
-					add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
-					$comment = wp_new_comment($commentdata, true);
-					if(	is_wp_error( $comment ) ){
-						$message = 'Erreur : ' . $comment->get_error_message();
-						$submission->set_response($message);
-						
-						$abort = true;
-					}
-					else {					
-						//$html = wp_list_comments(['echo'=>false], [ get_comment($comment) ]);
-						$messages = ($contact_form->get_properties())['messages'];
-						$messages['mail_sent_ok'] = str_replace("\t", '', str_replace("\n", '', 
-							sprintf('js:(function( id ){
-								show_new_comment( id );
-								return "%s";
-							})(%d)'
-							, str_replace('"', '\\"', $messages['mail_sent_ok'])
-							, $comment
-						)));
-						$contact_form->set_properties(array('messages' => $messages));
-					}
-
-					add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
+					return self::import_wpcf7_to_comment($contact_form, $abort, $submission, $mailbox_id, $dispatch);
 				}
 			}
 		}
+	} 
+	/*
+	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
+	 */
+	public static function import_wpcf7_to_comment ($contact_form, &$abort, $submission, $mailbox_id, $dispatch){
+					
+		$properties = $contact_form->get_properties();
+		$posted_data = $submission->get_posted_data();
+		$mail_properties = $properties['mail'];
+		$email_to = strtolower($mail_properties['recipient']);
+		
+		if( isset($posted_data['is-public'])
+		&& $posted_data['is-public'] ){
+			if( is_array($posted_data['is-public']) )
+				$posted_data['is-public'] = $posted_data['is-public'][0];
+			$posted_data['is-public'] = strtolower($posted_data['is-public']) !== 'non';
+		}
+		$emails = self::get_emails_dispatch();
+		if( ! isset($emails[$email_to]) )
+			return;
+		// debug_log('$emails[$email]', $emails[$email_to]);
+		
+		//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
+		$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
+		$matches = [];
+		$preg_match_all = preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
+		//$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
+		$user_name = $matches[2][0];
+		$email_replyto = $matches[3][0];
+		$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
+		$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
+		// debug_log('wpcf7_before_send_mail', $subject, $body);
+		
+		if( $user_id = email_exists($email_replyto) ){
+			$user = new WP_User($user_id);
+			if( ! $user_name)
+				$user_name = $user->slug;
+		}
+		elseif( ! $user_name ) {
+			$user_name = preg_replace('/^(.*)@.*$/', '$1', $email_replyto);
+		}
+		
+		$comment_approved = true;
+		
+		$date = wp_date('Y-m-d H:i:s');
+		$date_gmt = date('Y-m-d H:i:s');
+		$commentdata = [
+			'comment_post_ID' => $page->ID,
+			'comment_author' => $user_name,
+			'comment_author_url' => 'mailto:' . $email_replyto,
+			'comment_author_email' => $email_replyto,
+			'comment_content' => $body,
+			'comment_date' => $date,
+			'comment_date_gmt' => $date_gmt,
+			'comment_parent' => false,
+			'comment_agent' => sprintf('wpcf7.%s@page.%d', $contact_form->id(), $page->ID),
+			'comment_approved' => $comment_approved,
+			'user_id' => $user_id,
+			'comment_meta' => [
+				'source' => 'wpcf7',
+				'from' => $email_replyto,
+				'to' => $email_to,
+				'title' => trim($subject),
+				'mailbox_id' => $mailbox_id,
+				'posted_data' => $posted_data
+			]
+		];
+			
+		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+		$comment = wp_new_comment($commentdata, true);
+		if(	is_wp_error( $comment ) ){
+			$message = 'Erreur : ' . $comment->get_error_message();
+			$submission->set_response($message);
+			
+			$abort = true;
+		}
+		else {					
+			//$html = wp_list_comments(['echo'=>false], [ get_comment($comment) ]);
+			$messages = ($contact_form->get_properties())['messages'];
+			$messages['mail_sent_ok'] = str_replace("\t", '', str_replace("\n", '', 
+				sprintf('js:(function( id ){
+					show_new_comment( id );
+					return "%s";
+				})(%d)'
+				, str_replace('"', '\\"', $messages['mail_sent_ok'])
+				, $comment
+			)));
+			$contact_form->set_properties(array('messages' => $messages));
+		}
+
+		add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
 	} 
 	
 	/*
@@ -890,6 +934,7 @@ class AgendaPartage_Mailbox {
 	 * Skip forced
 	 */
 	public static function wpcf7_skip_mail_forced( $skip_mail, $contact_form ){ 
+		remove_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
 		return true;
 	}
 	

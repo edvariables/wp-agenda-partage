@@ -699,10 +699,34 @@ class AgendaPartage_Forum {
 	}
 	
 	
-	public static function get_forum_post_status($page, $user, $email) {
+	
+	/**
+	 * Retourne l'état d'un commentaire à importer selon l'utilisateur lié
+	 */
+	public static function get_forum_comment_approved($page, $user, $email) {
+		$post_status = self::get_forum_post_status($page, $user, $email);
+		switch( $post_status ){
+			case 'publish':
+				return 1;
+			case 'draft':
+				return 0;
+			case 'pending':
+				return 0;
+			case 'trash':
+			case 'spam':
+				return $post_status;
+			default:
+				return 0;
+		}
+	}
+	
+	/**
+	 * Retourne l'état d'un post à importer selon l'utilisateur lié
+	 */
+	 public static function get_forum_post_status($page, $user, $email) {
 		
 		$dispatches = AgendaPartage_Mailbox::get_page_dispatch(false, $page);
-		// debug_log('get_forum_post_status $dispatches', $page->post_title, $dispatches);
+		debug_log('get_forum_post_status $dispatches', $page->post_title, $dispatches);
 		
 		//Right Public
 		$right = $dispatches ? $dispatches[0]['rights'] : false;
@@ -729,7 +753,7 @@ class AgendaPartage_Forum {
 			return 'publish';
 		
 		$user_subscription = AgendaPartage_Forum::get_subscription($user->user_email, $page);
-		// debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
+		debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
 		switch($user_subscription){
 			case 'administrator' :
 			case 'moderator' :

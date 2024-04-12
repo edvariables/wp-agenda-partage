@@ -91,7 +91,7 @@ class AgendaPartage_Admin_User {
 				'subscriber' => 'Abonné-e',
 				'banned' => 'Banni-e',
 			];
-			$post_statues = [
+			$post_statuses = [
 				'publish' => 'publié',
 				'pending' => 'en attente de modération',
 				'draft' => 'brouillon',
@@ -103,7 +103,8 @@ class AgendaPartage_Admin_User {
 				$user_subscription = AgendaPartage_Forum::get_subscription($profile_user->user_email, $page_id);
 				$meta_key = AgendaPartage_Forum::get_subscription_meta_key($page_id);
 				$post_status = AgendaPartage_Forum::get_forum_post_status($page, $profile_user, $profile_user->user_email);
-				$post_status = isset($post_statues[$post_status]) ? $post_statues[$post_status] : $post_status;
+				if(isset($post_statuses[$post_status]))
+					$post_status = $post_statuses[$post_status];
 				?><tr class="agdp-forum-subscription">
 					<th><label>Page "<?php echo htmlentities($page->post_title)?>"</label>
 					<br><?php echo sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">modifier</a>', $page_id)?></label>
