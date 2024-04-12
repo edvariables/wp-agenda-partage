@@ -255,6 +255,9 @@ input.wpcf7-form-control[name="cov-nb-places"] {
 .wpcf7-form .next-radio-br + .wpcf7-form-control-wrap .wpcf7-list-item{
 	display: block;
 }
+.wpcf7-form .radios-br .wpcf7-form-control-wrap .wpcf7-list-item{
+	display: block;
+}
 .wpcf7-form label[for="nl-user-name"]{
 	margin-left: 1em;
 }
@@ -304,6 +307,9 @@ div.labels-one-row label.radio-checked {
 }
 div.labels-one-row label {
 	display: inline-block;
+}
+div.labels-one-per-row .wpcf7-list-item {
+	display: block;
 }
 
 .entry-title span.cov-intention,
