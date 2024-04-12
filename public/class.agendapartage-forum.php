@@ -459,7 +459,6 @@ class AgendaPartage_Forum {
 			$comment_reply_link = $comment_actions;
 		else
 			$comment_reply_link = preg_replace('/(\<\/div>)$/', $comment_actions . '$1', $comment_reply_link);
-		debug_log('on_comment_reply_link', $comment_reply_link, $args, $comment);
 		
 		return $comment_reply_link;
 	}

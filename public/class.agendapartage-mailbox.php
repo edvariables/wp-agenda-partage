@@ -807,7 +807,6 @@ class AgendaPartage_Mailbox {
 						if( is_array($posted_data['is-public']) )
 							$posted_data['is-public'] = $posted_data['is-public'][0];
 						$posted_data['is-public'] = strtolower($posted_data['is-public']) !== 'non';
-						debug_log('is-public', $posted_data['is-public']);
 					}
 					$emails = self::get_emails_dispatch();
 					if( ! isset($emails[$email_to]) )
@@ -815,18 +814,21 @@ class AgendaPartage_Mailbox {
 					// debug_log('$emails[$email]', $emails[$email_to]);
 					
 					$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
-					$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
-					// debug_log('$email_replyto', $email_replyto);
-					
+					$matches = [];
+					$preg_match_all = preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)")?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
+					//$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
+					$user_name = $matches[2][0];
+					$email_replyto = $matches[3][0];
 					$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
 					$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
 					// debug_log('wpcf7_before_send_mail', $subject, $body);
 					
 					if( $user_id = email_exists($email_replyto) ){
 						$user = new WP_User($user_id);
-						$user_name = $user->slug;
+						if( ! $user_name)
+							$user_name = $user->slug;
 					}
-					else {
+					elseif( ! $user_name ) {
 						$user_name = preg_replace('/^(.*)@.*$/', '$1', $email_replyto);
 					}
 					
