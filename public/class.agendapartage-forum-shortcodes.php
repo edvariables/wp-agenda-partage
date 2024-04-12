@@ -6,6 +6,7 @@
  * 
  * Définition des shortcodes 
  *
+ *	
  */
 class AgendaPartage_Forum_Shortcodes {
 
@@ -38,6 +39,7 @@ class AgendaPartage_Forum_Shortcodes {
 	public static function init_shortcodes(){
 
 		add_shortcode( 'forum', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'forum-prop', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpforum-messages', array(__CLASS__, 'shortcodes_callback') );
 
 	}
@@ -146,6 +148,7 @@ class AgendaPartage_Forum_Shortcodes {
 	* [forum info=titre|description]
 	* [forum-titre]
 	* [forum-description]
+	* [forum-prop hide_comments=0 mark_as_ended=0 reply_link=0 comment_form=0]
 	*/
 	private static function shortcodes_forum_callback($atts, $content = '', $shortcode = null){
 		$page = get_post();
@@ -176,6 +179,16 @@ class AgendaPartage_Forum_Shortcodes {
 				|| isset($atts['html']) && $atts['html'] == 'no';
 		
 		switch($shortcode){
+			case 'forum-prop':
+				foreach($atts as $att_key => $att_value){
+					if( is_int($att_key) ){
+						$att_key = $att_value;
+						$att_value = true;
+					}
+					AgendaPartage_Forum::set_property($att_key, $att_value);
+				}
+				break;
+				
 			case 'forum':
 			
 				$meta_name = $atts['info'] ;

@@ -50,7 +50,8 @@ class AgendaPartage_WPCF7 {
 		if($skip_mail
 		|| $contact_form->id() == AgendaPartage::get_option('newsletter_subscribe_form_id'))
 			return true;
-		return $skip_mail || AgendaPartage::$skip_mail;
+			
+		return AgendaPartage::$skip_mail;
 	} 
 
 	/**

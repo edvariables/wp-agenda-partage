@@ -16,6 +16,8 @@ class AgendaPartage_Forum {
 	// const user_role = 'author';
 
 	private static $initiated = false;
+	
+	public static $properties = [];
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -42,9 +44,21 @@ class AgendaPartage_Forum {
 			add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
 			add_filter('comment_post', array(__CLASS__, 'on_comment_post'), 10, 3 );
 		}
+		
+		add_filter('comments_array', array(__CLASS__, 'on_comments_array'), 10, 2);
 	}
 	/*
 	 **/
+	
+	public static function set_property($key, $value){
+		self::$properties[$key] = $value;
+	}
+	public static function get_property($key){
+		return isset(self::$properties[$key]) ? self::$properties[$key] : null;
+	}
+	public static function get_property_is_value($key, $value){
+		return isset(self::$properties[$key]) ? self::$properties[$key] == $value : null === $value;
+	}
 	
 	/**
 	*/
@@ -205,7 +219,12 @@ class AgendaPartage_Forum {
 	/**
 	 * Ajout du champ Titre au formulaire de commentaire
 	 */
-	public static function on_comment_form_fields($fields){		
+	public static function on_comment_form_fields($fields){	
+		if( self::get_property_is_value('comment_form', false) ){
+			$fields['comment'] = '<style>#respond.comment-respond { display: none; }</style>';
+			return $fields;
+		}
+			
 		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></p>';
 		$send_email_field = '<div class="comment-form-send-email if-respond"><label for="send-email">'
 			. '<input id="send-email" name="send-email" type="checkbox">'
@@ -430,8 +449,12 @@ class AgendaPartage_Forum {
 		}
 		
 		$comment_actions = sprintf('<span class="comment-agdp-actions">%s</span>', $comment_actions);
-		$comment_reply_link = preg_replace('/(\<\/div>)$/', $comment_actions . '$1', $comment_reply_link);
-		// debug_log('on_comment_reply_link', $comment_reply_link, $args, $comment);
+		
+		if( self::get_property_is_value('mark_as_ended', false) )
+			$comment_reply_link = $comment_actions;
+		else
+			$comment_reply_link = preg_replace('/(\<\/div>)$/', $comment_actions . '$1', $comment_reply_link);
+		debug_log('on_comment_reply_link', $comment_reply_link, $args, $comment);
 		
 		return $comment_reply_link;
 	}
@@ -439,7 +462,9 @@ class AgendaPartage_Forum {
 	 * Retourne le html d'action pour marqué un message comme étant terminé
 	 */
 	private static function get_comment_mark_as_ended_link($comment_id){
-		
+		if( self::get_property_is_value('mark_as_ended', false) )
+			return '';
+			
 		$data = [
 			'comment_id' => $comment_id
 		];
@@ -729,6 +754,27 @@ class AgendaPartage_Forum {
 				}
 		}
 		return false;
+	}
+	
+	
+	public static function on_comments_array($comments, $post_id){
+		if( current_user_can('manage_options') )
+			return $comments;
+		
+		if( self::get_property('hide_comments'))
+			return [];
+			
+		$public_comments = [];
+		foreach($comments as $comment){
+			$meta_key = 'posted_data';
+			if( $posted_data = get_comment_meta($comment->comment_ID, $meta_key, true)){
+				if(isset($posted_data['is-public'])
+				&& ! $posted_data['is-public'])
+					continue;
+			}
+			$public_comments[] = $comment;
+		}
+		return $public_comments;
 	}
 }
 ?>

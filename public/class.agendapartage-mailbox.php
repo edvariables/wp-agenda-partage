@@ -36,6 +36,9 @@ class AgendaPartage_Mailbox {
 	 * Hook
 	 */
 	public static function init_hooks() {
+		//Interception des mails
+		add_filter('wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
+		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
 		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Mailbox', 'init_cron'); ne suffit pas
@@ -549,6 +552,7 @@ class AgendaPartage_Mailbox {
 	 */	
 	public static function import_message_to_post_type($mailbox, $message, $post_class){
 		debug_log('import_message_to_post_type', $message, $post_class);
+			return false;
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){
 			return false;
@@ -629,8 +633,10 @@ class AgendaPartage_Mailbox {
 			// var_dump($message);
 			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
 				$message['reply_to'] = [ $message['from'] ];
+			
 			$user_email = $message['reply_to'][0]->email;
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
+			
 			if( ($pos = strpos($user_name, '@')) !== false)
 				$user_name = substr( $user_name, 0, $pos);
 			
@@ -776,5 +782,95 @@ class AgendaPartage_Mailbox {
 		}
 		return '';
 	}
+	
+	
+	/*
+	 * wpcf7_skip_mail callback 
+	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
+	 */
+	public static function wpcf7_before_send_mail ($contact_form, &$abort, $submission){ 
+		if($abort)
+			return;
+		if( isset($_POST['_wpcf7_container_post']) ){
+			$page = get_post($_POST['_wpcf7_container_post']);
+			$meta_key = AGDP_PAGE_META_MAILBOX;
+			if( $mailbox_id = get_post_meta( $page->ID, $meta_key, true)){
+				if( $dispatch = self::get_page_dispatch( false, $page->ID) ){
+					
+					$properties = $contact_form->get_properties();
+					$posted_data = $submission->get_posted_data();
+					$mail_properties = $properties['mail'];
+					$email_to = strtolower($mail_properties['recipient']);
+					
+					if( isset($posted_data['is-public'])
+					&& $posted_data['is-public'] ){
+						if( is_array($posted_data['is-public']) )
+							$posted_data['is-public'] = $posted_data['is-public'][0];
+						$posted_data['is-public'] = strtolower($posted_data['is-public']) !== 'non';
+						debug_log('is-public', $posted_data['is-public']);
+					}
+					$emails = self::get_emails_dispatch();
+					if( ! isset($emails[$email_to]) )
+						return;
+					// debug_log('$emails[$email]', $emails[$email_to]);
+					
+					$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
+					$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
+					// debug_log('$email_replyto', $email_replyto);
+					
+					$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
+					$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
+					// debug_log('wpcf7_before_send_mail', $subject, $body);
+					
+					if( $user_id = email_exists($email_replyto) ){
+						$user = new WP_User($user_id);
+						$user_name = $user->slug;
+					}
+					else {
+						$user_name = preg_replace('/^(.*)@.*$/', '$1', $email_replyto);
+					}
+					
+					$date = wp_date('Y-m-d H:i:s');
+					$date_gmt = date('Y-m-d H:i:s');
+					$commentdata = [
+						'comment_post_ID' => $page->ID,
+						'comment_author' => $user_name,
+						'comment_author_url' => 'mailto:' . $email_replyto,
+						'comment_author_email' => $email_replyto,
+						'comment_content' => $body,
+						'comment_date' => $date,
+						'comment_date_gmt' => $date_gmt,
+						'comment_parent' => false,
+						'comment_agent' => sprintf('wpcf7.%s@page.%d', $contact_form->id(), $page->ID),
+						'comment_approved' => true,
+						'user_id' => $user_id,
+						'comment_meta' => [
+							'source' => 'wpcf7',
+							'from' => $email_replyto,
+							'to' => $email_to,
+							'title' => trim($subject),
+							'mailbox_id' => $mailbox_id,
+							'posted_data' => $posted_data
+						]
+					];
+						
+					$comment = wp_new_comment($commentdata, true);
+					if(	is_wp_error( $comment ) )
+						debug_log('wpcf7_before_send_mail', $comment);
+					
+					add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
+				}
+			}
+		}
+	} 
+	
+	/*
+	 * wpcf7_skip_mail callback 
+	 * Skip forced
+	 */
+	public static function wpcf7_skip_mail_forced( $skip_mail, $contact_form ){ 
+		return true;
+	}
+	
 }
 ?>
