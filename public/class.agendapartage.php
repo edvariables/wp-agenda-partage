@@ -457,10 +457,6 @@ class AgendaPartage {
 				case 'AgendaPartage_Covoiturage_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-covoiturage-post_type.php';
 					break;
-
-				case 'AgendaPartage_Forum_Post_type':
-		 			$file = AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum-post_type.php';
-					break;
 				
 				default:
 					var_dump($class_name);//show calls stack
@@ -484,8 +480,6 @@ class AgendaPartage {
 		AgendaPartage_Newsletter_Post_type::register_user_role();
 		self::include_and_init('AgendaPartage_Covoiturage_Post_type');
 		AgendaPartage_Covoiturage_Post_type::register_user_role();
-		self::include_and_init('AgendaPartage_Forum_Post_type');
-		AgendaPartage_Forum_Post_type::register_user_role();
 	}
 
 	/**
