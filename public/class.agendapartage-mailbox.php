@@ -556,7 +556,7 @@ class AgendaPartage_Mailbox {
 	 * Import as post
 	 */	
 	public static function import_message_to_post_type($mailbox, $message, $post_class){
-		debug_log('import_message_to_post_type', $message, $post_class);
+		// debug_log('import_message_to_post_type', $message, $post_class);
 			return false;
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){
@@ -703,9 +703,9 @@ class AgendaPartage_Mailbox {
 	 * Force l'approbation du commentaire pendant la boucle d'importation
 	 */
 	public static function on_import_pre_comment_approved($approved, $commentdata){
-		debug_log('on_import_pre_comment_approved', "approved $approved");
+		// debug_log('on_import_pre_comment_approved', "approved $approved");
 		$user_email_approved = self::user_email_approved( $commentdata['comment_author_email'], $commentdata['comment_meta']['mailbox_id'], $commentdata['comment_meta']['to'] );
-		debug_log('on_import_pre_comment_approved', "user_email_approved $user_email_approved");
+		// debug_log('on_import_pre_comment_approved', "user_email_approved $user_email_approved");
 		if ( ! $user_email_approved )
 			return 0;
 		return $user_email_approved;
@@ -719,7 +719,7 @@ class AgendaPartage_Mailbox {
 	 * 'trash' (string) comment is to be put in the Trash
 	 */
 	private static function user_email_approved( $user_email, $mailbox_id, $email_to ) {
-		debug_log('user_email_approved', "user_email $user_email", "mailbox_id $mailbox_id");
+		// debug_log('user_email_approved', "user_email $user_email", "mailbox_id $mailbox_id");
 		
 		//L'origine du mail est l'adresse de la boite imap (bouclage)
 		$source_email = get_post_meta($mailbox_id, 'imap_email', true);
@@ -730,13 +730,13 @@ class AgendaPartage_Mailbox {
 		if( $user_email === $source_email )
 			return false;
 		
-		debug_log('user_email_approved', "email_to $email_to");
+		// debug_log('user_email_approved', "email_to $email_to");
 		
 		if( ! ($dispatches = self::get_emails_dispatch($mailbox_id))
 		|| ! isset($dispatches[$email_to]))
 			return true;
 		$dispatch = $dispatches[$email_to];
-		debug_log('user_email_approved', "dispatch ", $dispatch);
+		// debug_log('user_email_approved', "dispatch ", $dispatch);
 		if( $dispatch['type'] === 'page' )
 			$page = get_post($page_id = $dispatch['id']);
 		else
@@ -748,7 +748,7 @@ class AgendaPartage_Mailbox {
 		
 		$comment_approved = AgendaPartage_Forum::get_forum_comment_approved($page, $user, $user_email);
 		
-		debug_log('user_email_approved', "page_id $page_id", "user_subscription", $user_subscription, "user " . ($user ? $user->name : 'NON'), "comment_approved $comment_approved");
+		// debug_log('user_email_approved', "page_id $page_id", "user_subscription", $user_subscription, "user " . ($user ? $user->name : 'NON'), "comment_approved $comment_approved");
 		
 		return $comment_approved;
 	}

@@ -791,7 +791,7 @@ class AgendaPartage_Forum {
 	 public static function get_forum_post_status($page, $user, $email) {
 		
 		$dispatches = AgendaPartage_Mailbox::get_page_dispatch(false, $page);
-		debug_log('get_forum_post_status $dispatches', $page->post_title, $dispatches);
+		// debug_log('get_forum_post_status $dispatches', $page->post_title, $dispatches);
 		
 		//Right Public
 		$right = $dispatches ? $dispatches[0]['rights'] : false;
