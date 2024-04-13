@@ -122,6 +122,9 @@ jQuery( function( $ ) {
 			//Forum
 			$("article.use-agdpforum").each(	function(){
 				function show_new_comment(id){
+					var $comment_list = $('#comments .comment-list');
+					if( $comment_list.length === 0)
+						return;
 					data = { 
 						'action' : 'agendapartage_comment_action',
 						'method' : 'get',
@@ -136,7 +139,7 @@ jQuery( function( $ ) {
 						success : function( response ) {
 							if(response){
 								if(typeof response === 'string' || response instanceof String){
-									$('#comments .comment-list').prepend( response );
+									$comment_list.prepend( response );
 								}
 							}
 						},

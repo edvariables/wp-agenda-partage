@@ -903,7 +903,7 @@ class AgendaPartage_Admin_Menu {
 		global $menu;
 		foreach($menu as $menu_index => $menu_data)
 			if($menu_data[2] === 'wpcf7'){
-				$menu[$menu_index][0] = 'Formulaires';
+				$menu[$menu_index][0]	 = 'Formulaires';
 				
 				break;
 			}

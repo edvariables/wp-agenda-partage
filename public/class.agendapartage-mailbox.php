@@ -708,7 +708,7 @@ class AgendaPartage_Mailbox {
 		debug_log('on_import_pre_comment_approved', "user_email_approved $user_email_approved");
 		if ( ! $user_email_approved )
 			return 0;
-		return $approved;
+		return $user_email_approved;
 	}
 	/**
 	 *
@@ -839,7 +839,7 @@ class AgendaPartage_Mailbox {
 			$meta_key = AGDP_PAGE_META_MAILBOX;
 			if( $mailbox_id = get_post_meta( $page->ID, $meta_key, true)){
 				if( $dispatch = self::get_page_dispatch( false, $page->ID) ){
-					return self::import_wpcf7_to_comment($contact_form, $abort, $submission, $mailbox_id, $dispatch);
+					return self::import_wpcf7_to_comment($contact_form, $abort, $submission, $mailbox_id, $dispatch, $page);
 				}
 			}
 		}
@@ -847,7 +847,7 @@ class AgendaPartage_Mailbox {
 	/*
 	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
 	 */
-	public static function import_wpcf7_to_comment ($contact_form, &$abort, $submission, $mailbox_id, $dispatch){
+	public static function import_wpcf7_to_comment($contact_form, &$abort, $submission, $mailbox_id, $dispatch, $page){
 					
 		$properties = $contact_form->get_properties();
 		$posted_data = $submission->get_posted_data();

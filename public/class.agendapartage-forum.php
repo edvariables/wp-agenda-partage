@@ -97,7 +97,7 @@ class AgendaPartage_Forum {
 			return false;
 		}
 
-		if( ! current_user_can('manage_options')
+		if( ! current_user_can('moderate_comments')
 		&& $page->comment_status === 'closed' )
 			return false;
 		
@@ -173,7 +173,18 @@ class AgendaPartage_Forum {
 			return;
 		}
 		
-		
+		$current_user_can_moderate_comments = current_user_can('moderate_comments');
+		// debug_log('on_pre_get_comments IN', "current_user_can_moderate_comments $current_user_can_moderate_comments", $wp_query->query_vars);
+		if( $current_user_can_moderate_comments ) {
+			//Adds pending comments
+			$wp_query->query_vars['status'] = ['0', '1'];
+		}
+		else {
+			if( self::get_property('hide_comments') ){
+				$wp_query->query_vars['ID'] = -1;
+				return;
+			}
+		}
 		/* Dans le paramétrage de WP, Réglages / Commentaires :
 			Diviser les commentaires en pages, avec N commentaires de premier niveau par page et la PREMIERE page affichée par défaut
 			Les commentaires doivent être affichés avec le plus ANCIEN en premier
@@ -185,6 +196,13 @@ class AgendaPartage_Forum {
 	}
 	
 	public static function on_comments_pre_query($comment_data, $wp_query){
+		$current_user_can_moderate_comments = current_user_can('moderate_comments');
+		// debug_log('on_comments_pre_query IN', $comment_data, "current_user_can_moderate_comments $current_user_can_moderate_comments");
+		if( $current_user_can_moderate_comments ) {
+		}
+		elseif( self::get_property('hide_comments') )
+			return [];
+		
 		if( ! empty($wp_query->query_vars['parent__in'] ) ){
 			// debug_log('on_comments_pre_query parent__in', $comment_data, $wp_query);
 			return;
@@ -205,6 +223,7 @@ class AgendaPartage_Forum {
 			$clauses['where'] .= " AND ( meta_is_private.comment_id IS NULL"
 								. " OR {$blog_prefix}comments.comment_author_email = '{$user_email}'"
 								. " OR meta_is_private.meta_value =  '{$user_email}')";
+		remove_action('comments_clauses', array(__CLASS__, 'on_sub_comments_clauses'), 10, 2);
 		return $clauses;
 	}
 	
@@ -651,7 +670,7 @@ class AgendaPartage_Forum {
 	 * Requête Ajax de récupération d'un (nouveau) commentaire
 	 */
 	public static function on_ajax_action_get($data) {
-		return wp_list_comments(['echo'=>false], [ $data['comment_id'] ]);
+		return wp_list_comments(['echo'=>false], [ get_comment($data['comment_id']) ]);
 	}
 	
 	/*************************************************/
@@ -795,7 +814,10 @@ class AgendaPartage_Forum {
 		if( ! $user)
 			return 'pending';
 
-		if( user_can( $user, 'manage_options') )
+		if( $user && ! $email )
+			$email = $user->user_email;
+		
+		if( user_can( $user, 'moderate_comments') )
 			return 'publish';
 		
 		$user_subscription = AgendaPartage_Forum::get_subscription($user->user_email, $page);
@@ -837,25 +859,25 @@ class AgendaPartage_Forum {
 		return false;
 	}
 	
-	
+	/**
+	 * Avant affichage, filtre ou ajoute des commentaires
+	 */
 	public static function on_comments_array($comments, $post_id){
-		
-		if( current_user_can('moderate_comments') ) {
-			//Adds pending comments
-			$pending_comments = get_comments([
-				'post_id' => $post_id,
-				'comment_approved' => 0,
-			]);
-			return array_merge($pending_comments, $comments);
-		}
-		
-		if( self::get_property('hide_comments'))
-			return [];
+		// debug_log('on_comments_array IN', $post_id, count($comments));
 			
+		if( current_user_can('moderate_comments') ) 
+			return $comments;
+		
+		
+		global $current_user;
+		$current_user_email = $current_user->user_email;
+		// is-public != false
 		$public_comments = [];
 		foreach($comments as $comment){
 			$meta_key = 'posted_data';
-			if( $posted_data = get_comment_meta($comment->comment_ID, $meta_key, true)){
+			if( $comment->comment_author_email != $current_user_email 
+			//TODO && (! $parent_comment || $parent_comment->comment_author_email != $current_user_email)
+			&& ($posted_data = get_comment_meta($comment->comment_ID, $meta_key, true)) ){
 				if(isset($posted_data['is-public'])
 				&& ! $posted_data['is-public'])
 					continue;
