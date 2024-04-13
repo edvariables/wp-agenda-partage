@@ -410,8 +410,13 @@ class AgendaPartage_Mailbox {
 			elseif( $dispatch['type'] === AgendaPartage_Covoiturage::post_type ){
 				$page_id = AgendaPartage::get_option('covoiturages_page_id');
 			}
-			else
+			else {
+				debug_log(__CLASS__ . '::get_pages_dispatch'
+					, sprintf('Erreur de configuration de la mailbox %s, le type "%s" est inconnu.'
+						, is_a($mailbox_id, 'WP_Post') ? $mailbox_id->post_title : $mailbox_id
+						, $dispatch['type']));
 				continue;
+			}
 			if( $page_id_only &&
 			$page_id_only != $page_id)
 				continue;
@@ -495,7 +500,7 @@ class AgendaPartage_Mailbox {
 		
 		$dispatch = self::get_emails_dispatch($mailbox);
 		
-		$posts = [];//cache
+		$pages = [];//cache
 		
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
 		foreach( $messages as $message ){
@@ -518,12 +523,12 @@ class AgendaPartage_Mailbox {
 					$page_id = $dispatch[$email_to]['id'];
 					if( ! $page_id )
 						throw new Exception(sprintf("La configuration de la boîte e-mails indique une page sans préciser son identifiant : %s.", $email_to));
-					if( isset($posts['' . $page_id]) )
-						$page = $posts['' . $page_id];
+					if( isset($pages['' . $page_id]) )
+						$page = $pages['' . $page_id];
 					elseif( ! ($page = get_post($page_id)) )
 						throw new Exception(sprintf("La configuration de la boîte e-mails indique une page introuvable : %s > %s.%s.", $email_to, $dispatch[$email_to]['type'], $page_id));
 					else
-						$posts['' . $page_id] = $page;
+						$pages['' . $page_id] = $page;
 					$comment = self::import_message_to_comment( $mailbox, $message, $page );
 					if($comment)
 						$imported[] = $comment;
@@ -738,7 +743,9 @@ class AgendaPartage_Mailbox {
 			$page = $page_id = $dispatch['type'];
 		
 		$user_subscription = AgendaPartage_Forum::get_subscription($user_email, $page_id);
-		$user = email_exists($user_email);
+		if( $user = email_exists($user_email) )
+			$user = new WP_User($user);
+		
 		$comment_approved = AgendaPartage_Forum::get_forum_comment_approved($page, $user, $user_email);
 		
 		debug_log('user_email_approved', "page_id $page_id", "user_subscription", $user_subscription, "user " . ($user ? $user->name : 'NON'), "comment_approved $comment_approved");

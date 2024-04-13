@@ -208,13 +208,23 @@ class AgendaPartage_Admin_Edit_Rights {
 			
 			$mailboxes = [];
 			foreach( $args['dispatches'] as $dispatch ){
-				if( isset($mailboxes[$dispatch['mailbox'].'']) )
-					continue;
 				$mailbox = get_post($dispatch['mailbox']);
-				$mailboxes[$dispatch['mailbox'].''] = $mailbox;
 				if($message)
 					$message .= ', ';
-				$message .= sprintf('par l\'e-mail <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $mailbox->ID, $dispatch['email']);
+				if( isset($mailboxes[$dispatch['mailbox'].'']) )
+					$message .= 'ou ';
+				$email = $dispatch['email'];
+				if( $email === '*@*'){
+					$meta_key = 'imap_email';
+					$mailbox_email = get_post_meta($mailbox->ID, $meta_key, true);
+					$email = sprintf('toutes les autres adresses dans %s', $mailbox_email);
+				}
+				$message .= sprintf('par l\'e-mail <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $mailbox->ID, $email);
+				
+				if( $mailbox->post_status != 'publish' )
+					$message .= ' (non publié)';
+				$mailboxes[$dispatch['mailbox'].''] = $mailbox;
+				
 			}
 		}
 		

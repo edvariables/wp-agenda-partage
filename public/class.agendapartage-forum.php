@@ -96,6 +96,11 @@ class AgendaPartage_Forum {
 			debug_log(__CLASS__ . '::init_page', '! $page');
 			return false;
 		}
+
+		if( ! current_user_can('manage_options')
+		&& $page->comment_status === 'closed' )
+			return false;
+		
 		$mailbox = AgendaPartage_Mailbox::get_mailbox($mailbox);
 		
 		$import_result = AgendaPartage_Mailbox::synchronize($mailbox, $page);
@@ -384,6 +389,12 @@ class AgendaPartage_Forum {
 				, $send_email);
 		}
 		
+		if( $comment->comment_approved == 0
+		&& current_user_can('moderate_comments')){
+			echo sprintf('<div class="unapproved-action-links">%s</div>',
+				self::get_comment_approve_link($comment->comment_ID));
+		}
+		
 		if( ! self::get_property_is_value('comment_title', false) ){
 			$title = get_comment_meta($comment->comment_ID, 'title', true);	
 			echo sprintf('<h3>%s</h3>', $title);
@@ -396,7 +407,10 @@ class AgendaPartage_Forum {
 	 */
 	public static function on_get_comment_time( $comment_time, $format, $gmt, $translate, $comment ){
 		$comment_date = $gmt ? $comment->comment_date_gmt : $comment->comment_date;
-		return $comment_time . ' (' . date_diff_text($comment_date) . ')';
+
+		$comment_time .= ' (' . date_diff_text($comment_date) . ')';
+		
+		return $comment_time;
 	}
 	
 	/**
@@ -512,6 +526,22 @@ class AgendaPartage_Forum {
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
 		return AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, true, $data);
 	}
+	/**
+	 * Retourne le html d'action pour approuver un message 
+	 */
+	private static function get_comment_approve_link($comment_id){
+		
+		$data = [
+			'comment_id' => $comment_id
+		];
+			
+		$caption = "Approuver";
+		$title = "Approuver ce message";
+		$icon = 'admin-post';
+
+		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
+		return AgendaPartage::get_ajax_action_link(false, ['comment','approve'], $icon, $caption, $title, true, $data);
+	}
 	
 	// /**
 	 // * Affichage du commentaire, lien "Répondre"
@@ -528,14 +558,13 @@ class AgendaPartage_Forum {
 	 */
 	public static function on_get_comment_author_link( $comment_author_link, $comment_author, $comment_id ){
 		
-		// debug_log('on_get_comment_author_link', $comment_author_link, $comment_author);
-		if( strpos( $comment_author_link, ' href=' ) 
-		 || strpos( $comment_author_link, '@' ) )
-			return $comment_author_link;
+		if( ! strpos( $comment_author_link, ' href=' ) 
+		 && ! strpos( $comment_author_link, '@' ) ){
+			$comment = get_comment($comment_id);
 			
-		$comment = get_comment($comment_id);
-		if( $comment->comment_author_email )
-			return sprintf('<a href="mailto:%s">%s</a>', $comment->comment_author_email, $comment_author);
+			if( $comment->comment_author_email )
+				$comment_author_link = sprintf('<a href="mailto:%s">%s</a>', $comment->comment_author_email, $comment_author);
+		 }
 		return $comment_author_link;
 	}
 	
@@ -600,6 +629,23 @@ class AgendaPartage_Forum {
 		}
 		
 		return $comment->get_error_message();
+	}
+	/**
+	 * Requête Ajax d'approbation du commentaire
+	 */
+	public static function on_ajax_action_approve($data) {
+		if( current_user_can('moderate_comments') ) {
+			$args = ['comment_ID' => $data['comment_id'], 'comment_approved' => 1];
+			$comment = wp_update_comment($args, true);
+			if ( is_a($comment, 'WP_Error') )
+				return $comment->get_error_message();
+			update_comment_meta($data['comment_id'], 'approved'
+				, sprintf('%s / %s', wp_date(DATE_ATOM), (wp_get_current_user())->name)
+			);
+				
+			return 'replace:<h4 class="text-green">Approuvé</h4>';
+		}
+		return 'Vous n\'êtes pas autorisé à exécuter cette action.';
 	}
 	/**
 	 * Requête Ajax de récupération d'un (nouveau) commentaire
@@ -794,8 +840,14 @@ class AgendaPartage_Forum {
 	
 	public static function on_comments_array($comments, $post_id){
 		
-		if( current_user_can('manage_options') )
-			return $comments;
+		if( current_user_can('moderate_comments') ) {
+			//Adds pending comments
+			$pending_comments = get_comments([
+				'post_id' => $post_id,
+				'comment_approved' => 0,
+			]);
+			return array_merge($pending_comments, $comments);
+		}
 		
 		if( self::get_property('hide_comments'))
 			return [];

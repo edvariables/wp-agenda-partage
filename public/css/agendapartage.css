@@ -24,6 +24,10 @@ p.info, div.info {
 	text-align: right;
 }
 
+.text-green {
+	color: green !important;
+}
+
 /* ED200318 "Fièrement propulsé par Word Press" */
 .site-info > a
 , .masquer
@@ -476,5 +480,11 @@ body.colors-dark #comments #reply-title a {
 }
 #comments .comment-agdp-actions .mark_as_ended {
 	font-weight: bold;
+	color: red;
+}
+#comments .comment-content .unapproved-action-links {
+	margin-bottom: 1em;
+}
+#comments .comment-content .unapproved-action-links * {
 	color: red;
 }

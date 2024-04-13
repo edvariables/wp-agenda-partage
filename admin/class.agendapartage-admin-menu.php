@@ -888,11 +888,25 @@ class AgendaPartage_Admin_Menu {
 			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
 			$parent_slug = AGDP_TAG;
+			$page_title =  'Boîtes e-mails';
+			$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Mailbox::post_type);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, 1);
+			
+			$parent_slug = AGDP_TAG;
 			$page_title =  'Règles de publications';
 			$menu_slug = $parent_slug . '-rights';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agendapartage_rights_page_html'), 1);
+				array(__CLASS__, 'agendapartage_rights_page_html'), 2);
 		}
+		
+		//Replace wpcf7 menu title
+		global $menu;
+		foreach($menu as $menu_index => $menu_data)
+			if($menu_data[2] === 'wpcf7'){
+				$menu[$menu_index][0] = 'Formulaires';
+				
+				break;
+			}
 	}
 
 	/**

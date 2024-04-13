@@ -37,35 +37,44 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		switch($post->post_type){
 			// Edition d'une mailbox
 			case AgendaPartage_Mailbox::post_type:
-							
+				$alerts = [];
+				if( $post->post_status != 'publish')
+					$alerts[] = sprintf('Attention, cette page est marquée "%s".', (get_post_statuses())[$post->post_status]);
 				if ( ! get_post_meta($post->ID, 'imap_mark_as_read', true) )
-					AgendaPartage_Admin::add_admin_notice_now('Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée.'
+					$alerts[] = 'Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée.';
+				if( $alerts )
+					AgendaPartage_Admin::add_admin_notice_now( implode('<br>', $alerts)
 						, ['type' => 'warning']);
 						
 				$dispatch = AgendaPartage_Mailbox::get_emails_dispatch($post->ID);
 				$links = [];
-				foreach($dispatch as $email => $destination)
+				foreach($dispatch as $email => $destination){
+					if( $email === '*@*')
+						$email = 'toutes les autres adresses';
+					else
+						$email = sprintf('<u>%s</u>', $email);
 					switch($destination['type']){
 						case 'page':
 							$page_id = $destination['id'];
 							$page = get_post($page_id);
-							$links[] = sprintf('E-mails <u>%s</u> publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>.', $email, $page_id, $page->post_title);
+							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>.', $email, $page_id, $page->post_title);
 							break;
 						case AgendaPartage_Evenement::post_type:
 							$post_id = AgendaPartage::get_option('agenda_page_id');
-							$links[] = sprintf('E-mails <u>%s</u> publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">Evénements</a>.', $email, $post_id);
+							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">Evénements</a>.', $email, $post_id);
 							break;
 						case AgendaPartage_Covoiturage::post_type:
 							$post_id = AgendaPartage::get_option('covoiturages_page_id');
-							$links[] = sprintf('E-mails <u>%s</u> publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">Covoiturages</a>.', $email, $post_id);
+							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">Covoiturages</a>.', $email, $post_id);
 							break;
 						default:
 							AgendaPartage_Admin::add_admin_notice_now(sprintf('Destination de distribution inconnue : %s > %s', $email, print_r( $destination, true ))
 								, ['type' => 'error']);
 					}
-					if( $links )
-						AgendaPartage_Admin::add_admin_notice_now(sprintf('<ul><li>%s</li></ul>', implode('</li><li>', $links))
-							, ['type' => 'info']);
+				}
+				if( $links )
+					AgendaPartage_Admin::add_admin_notice_now(sprintf('<ul><li>%s</li></ul>', implode('</li><li>', $links))
+						, ['type' => 'info']);
 				break;
 				
 			// Edition d'une page de forum
@@ -130,7 +139,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		switch ($metabox['id']) {
 			
 			case 'agdp_mailbox-dispatch':
-				parent::metabox_html( self::get_metabox_dispatch_fields(), $post, $metabox );
+				self::get_metabox_dispatch( $post, $metabox );
 				break;
 			
 			case 'agdp_mailbox-imap':
@@ -152,6 +161,38 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 			self::get_metabox_cron_fields(),
 			self::get_metabox_dispatch_fields(),
 		);
+	}
+	
+	public static function get_metabox_dispatch($post, $metabox){
+		echo '<ul style="margin-left: 12em;">';
+		foreach( AgendaPartage_Mailbox::get_pages_dispatch( $post ) as $page_id => $dispatches ){
+			if( is_int($page_id) ){
+				if( $page = get_post($page_id))
+					$page_title = $page->post_title;
+				else
+					$page_title = sprintf('(page %d inconnue)', $page_id);
+			}
+			else {
+				$page_title = $page_id;
+			}
+			echo sprintf('<li>Page <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $page_id, $page_title);
+			//echo print_r($dispatches);
+			echo '<ul style="margin-left: 1em;">';
+			foreach($dispatches as $dispatch){
+				if($dispatch['email'] === '*@*')
+					$dispatch['email'] = 'Toutes les autres adresses';
+				echo sprintf('<li>Email : <b>%s</b>', $dispatch['email']);
+				echo sprintf(' - (%s - %s)', $dispatch['rights'], AgendaPartage_Mailbox::get_right_label($dispatch['rights']));
+				echo '</li>';
+			}
+			echo '</ul>';
+			
+			echo '</li>';
+		}
+		echo '</ul>';
+		
+		parent::metabox_html( self::get_metabox_dispatch_fields(), $post, $metabox );
+		
 	}
 	
 	public static function get_metabox_dispatch_fields(){
