@@ -262,7 +262,14 @@ class AgendaPartage_Forum_Shortcodes {
 	public static function shortcodes_messages_callback($atts, $content = '', $shortcode = null){
 		
 		$page = get_post();
-		if( ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($page) ) ){
+		if( ! $page )
+			$page = AgendaPartage_Newsletter::is_sending_email();
+		if( ! $page )
+			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).']. Page courante inconnue.</div>';
+		if( $page->post_type === AgendaPartage_Newsletter::post_type )
+			$page = AgendaPartage_Newsletter::get_forum_of_newsletter( $page );
+		if( ! $page
+		 || ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($page) ) ){
 			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).'] inconnu.</div>';
 		}
 		
