@@ -182,9 +182,9 @@ class AgendaPartage {
 	 */
 	public static function register_plugin_js() {
 		wp_enqueue_script("jquery");
-		wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array(), AGDP_VERSION , 'all' );
+		wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array(), AGDP_VERSION, false );
 		wp_enqueue_script( AGDP_TAG );
-		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array(), AGDP_VERSION , 'all' );
+		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array(), AGDP_VERSION, false );
 		wp_enqueue_script( AGDP_TAG . '-tools' );
 		
 	    
@@ -649,12 +649,12 @@ class AgendaPartage {
 			if( self::get_option(AGDP_CONNECT_MENU_ENABLE) ){
 				if(is_user_logged_in()){
 					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-					$url = wp_login_url($url, true) . '&action=logout';//&redirect_to=' . sanitize_url($url);
+					$url = wp_login_url($url, true) . '&action=logout';
 					$label = 'Se déconnecter';
 				}
 				else{
 					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-					$url = wp_login_url($url);// . '?redirect_to=' . sanitize_url($url);
+					$url = wp_login_url($url);
 					$label = 'Se connecter';
 				}
 				
