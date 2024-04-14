@@ -649,12 +649,12 @@ class AgendaPartage {
 			if( self::get_option(AGDP_CONNECT_MENU_ENABLE) ){
 				if(is_user_logged_in()){
 					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-					$url = wp_login_url($url, true);
+					$url = wp_login_url($url, true) . '?action=logout';//&redirect_to=' . sanitize_url($url);
 					$label = 'Se déconnecter';
 				}
 				else{
 					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-					$url = wp_login_url($url);
+					$url = wp_login_url($url);// . '?redirect_to=' . sanitize_url($url);
 					$label = 'Se connecter';
 				}
 				
