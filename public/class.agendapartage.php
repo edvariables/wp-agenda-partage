@@ -164,13 +164,13 @@ class AgendaPartage {
 	 * Registers stylesheets.
 	 */
 	public static function register_plugin_styles() {
-	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/public/css/agendapartage.css' ), array(), AGDP_VERSION , 'all' );
+	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/public/css/agendapartage.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG);
-	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION , 'all' );
+	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '_ui');
-	    wp_register_style( AGDP_TAG . '_cal', plugins_url( 'agenda-partage/public/css/agendapartage.calendrier.css' ), array(), AGDP_VERSION , 'all' );
+	    wp_register_style( AGDP_TAG . '_cal', plugins_url( 'agenda-partage/public/css/agendapartage.calendrier.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '_cal');
-		wp_register_style( AGDP_TAG . '_cov', plugins_url( 'agenda-partage/public/css/agendapartage.covoiturage.css' ), array(), AGDP_VERSION , 'all' );
+		wp_register_style( AGDP_TAG . '_cov', plugins_url( 'agenda-partage/public/css/agendapartage.covoiturage.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '_cov');
 		
 		if(!is_admin())
@@ -181,10 +181,10 @@ class AgendaPartage {
 	 * Registers js files.
 	 */
 	public static function register_plugin_js() {
-		wp_enqueue_script("jquery");
-		wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array(), AGDP_VERSION, false );
+		wp_enqueue_script('jquery');
+		wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array('jquery'), AGDP_VERSION, false );
 		wp_enqueue_script( AGDP_TAG );
-		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array(), AGDP_VERSION, false );
+		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array('jquery'), AGDP_VERSION, false );
 		wp_enqueue_script( AGDP_TAG . '-tools' );
 		
 	    
