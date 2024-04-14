@@ -2,7 +2,8 @@
 
 /**
  * AgendaPartage -> Forum
- * Gestion des commentaires d'une page. Les commentaires sont importés depuis une boîte e-mails.
+ * Structurellement, un forum est une page dont les commentaires sont alimentés et dont les commentaires sont utilisés dans une newsletter.
+ * Gestion des commentaires d'une page. Les commentaires sont importés depuis une boîte e-mails ou une interception de mail sortant.
  *
  * Voir aussi AgendaPartage_Mailbox
  *
@@ -10,6 +11,7 @@
  */
 class AgendaPartage_Forum {
 
+	const post_type = 'page';
 	const tag = 'agdpforum';
 	const page_class = 'use-agdpforum';
 	
@@ -45,6 +47,8 @@ class AgendaPartage_Forum {
 			add_filter('comment_post', array(__CLASS__, 'on_comment_post'), 10, 3 );
 		}
 		
+		add_filter('wp_get_nav_menu_items', array(__CLASS__, 'on_wp_get_nav_menu_items'), 10, 3);
+		
 		add_filter('comments_array', array(__CLASS__, 'on_comments_array'), 10, 2);
 	}
 	/*
@@ -58,6 +62,80 @@ class AgendaPartage_Forum {
 	}
 	public static function get_property_is_value($key, $value){
 		return isset(self::$properties[$key]) ? self::$properties[$key] == $value : null === $value;
+	}
+	
+	/**
+	 * Retourne un tableau de pages de forum
+	 */
+	public static function get_forums( $args = false){
+		$default_args = [
+			'post_type' => self::post_type,
+			'post_status' => 'publish',
+			'meta_query' => [[
+				'key' => 'agdpmailbox',
+				'value' => '0',
+				'compare' => '>'
+			]]
+		];
+		if( is_array($args) ) 
+			$args = array_merge( $default_args, $args );
+		else
+			$args = $default_args;
+		//Forums
+		$posts = get_posts( $args );
+		// debug_log("get_forums", count($posts), $args);
+		$pages = [];
+		foreach($posts as $page){
+			if( is_int($page) )
+				$pages[] = $page;
+			else {
+				$post_id = $page->ID;
+				$pages[ $post_id . '' ] = $page;
+			}
+		}
+		return $pages;
+	}
+	/**
+	 * Retourne un tableau de pages de forum masquées à l'utilisateur courant
+	 */
+	public static function get_hidden_forums( $args = false){
+		if( current_user_can('moderate_comments') ) 
+			return self::get_forums();
+		
+		$hidden_forums = [];
+		
+		$current_user = self::get_current_user();
+		foreach( AgendaPartage_Mailbox::get_emails_dispatch() as $email => $dispatch){
+			if( $dispatch['type'] !== 'page'
+			|| in_array($dispatch['id'], $hidden_forums))
+				continue;
+			if( ! isset($dispatch['rights'])
+				|| ! $dispatch['rights']
+				|| in_array($dispatch['rights'], ['P', 'E']) //public ou validation par email
+			)
+				continue;
+			if( $current_user && $dispatch['rights'] = 'C')
+				continue;
+			if( ! $current_user )
+				$hidden_forums[] = $dispatch['id'];
+			else
+				switch( self::get_subscription( $current_user, $dispatch['id'] ) ){
+					case 'administrator':
+					case 'moderator':
+					case 'subscriber':
+						continue 2;
+					default:
+						$hidden_forums[] = $dispatch['id'];
+						break;
+				}
+		}
+		
+		if( ! $args )
+			$args = [];
+		$args['include'] = $hidden_forums;
+		$pages = self::get_forums( $args );
+		// debug_log("get_hidden_forums", count($pages), $args, $hidden_forums);
+		return $pages;
 	}
 	
 	/**
@@ -693,10 +771,11 @@ class AgendaPartage_Forum {
 		}
 		return false;
 	}
-	public static function get_user_email(){
-		$current_user = self::get_current_user();
-		if($current_user){
-			$email = $current_user->data->user_email;
+	public static function get_user_email( $user = false){
+		if( ! $user )
+			$user = self::get_current_user();
+		if($user){
+			$email = $user->data->user_email;
 			if(is_email($email))
 				return $email;
 		}
@@ -705,8 +784,8 @@ class AgendaPartage_Forum {
 	/**
 	 * Option d'abonnement de l'utilisateur
 	 */
-	public static function get_user_subscription(){
-		return self::get_subscription(self::get_user_email());
+	public static function get_user_subscription($page = false){
+		return self::get_subscription(self::get_user_email(), $page);
 	}
 	
 	public static function get_subscription_meta_key($page = false){
@@ -821,7 +900,7 @@ class AgendaPartage_Forum {
 			return 'publish';
 		
 		$user_subscription = AgendaPartage_Forum::get_subscription($user->user_email, $page);
-		debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
+		// debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
 		switch($user_subscription){
 			case 'administrator' :
 			case 'moderator' :
@@ -886,5 +965,30 @@ class AgendaPartage_Forum {
 		}
 		return $public_comments;
 	}
+	
+	/**
+	 * wp_nav_menu hook
+	 * Filtre les menus suivants l'utilisateur et ses abonnements aux forums
+	 TODO Cache
+	 */
+	public static function on_wp_get_nav_menu_items( $items, $menu, $args ){
+		// debug_log('on_wp_get_nav_menu_items', $items/* , $menu, $args */ );
+		if( current_user_can('moderate_comments') )
+			return $items;
+		
+		$hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids']);
+		$hidden_menu_items_ids = [];
+		foreach( $items as $index => $menu_item ){
+			if( in_array($menu_item->menu_item_parent, $hidden_menu_items_ids)
+			|| ( $menu_item->object === 'page' 
+				&& in_array($menu_item->object_id, $hidden_forums_ids))
+			){
+				$hidden_menu_items_ids[] = $menu_item->ID;
+				unset($items[$index]);
+			}
+		}		
+		return $items;
+	}
+	
 }
 ?>

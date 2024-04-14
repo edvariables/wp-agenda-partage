@@ -53,6 +53,8 @@ define( 'AGDP_PAGE_META_FORUM', 'agdpforum' );
 define( 'AGDP_PAGE_META_MAILBOX', 'agdpmailbox' ); 
 define( 'AGDP_FORUM_META_PAGE', 'comments-page' ); 
 
+define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');
+
 // see translate_level_to_role()
 define( 'USER_LEVEL_ADMIN', 8 ); 
 define( 'USER_LEVEL_EDITOR', 5 ); 

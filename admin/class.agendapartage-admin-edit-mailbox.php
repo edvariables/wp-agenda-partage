@@ -83,7 +83,12 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 				if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
 					$mailbox = get_post($mailbox_id);
 					
-					$emails = AgendaPartage_Mailbox::get_emails_dispatch( false, $post->ID );
+					$emails = '';
+					foreach( AgendaPartage_Mailbox::get_emails_dispatch( false, $post->ID ) as $email=>$dispatch){
+						if( $emails ) $emails .= ', ';
+						if( $email === '*@*' ) $email = '(toutes les autres adresses)';
+						$emails .= sprintf('%s (%s)', $email, $dispatch['rights']);
+					}
 					if( is_array($emails) ) 
 						$emails = implode( ', ', array_keys($emails));
 					

@@ -4,7 +4,12 @@
  * Custom post type for WordPress.
  * 
  * Définition du Post Type agdpnl
- * Mise en forme du formulaire Lettre-info
+ * Mise en forme du formulaire Lettres-info par wpcf7
+ * 	- Le html du wpcf7 est modifié
+		- dans la base de données 
+			- pour contenir tous les termes de taxonomies en bouton radio + en premier et masqué, un bouton radio (no_change)
+		- au moment de l'affichage
+			- masquer/afficher les onglets (administrateurice et forums) suivant l'utilisateur connecté
  *
  * Voir aussi AgendaPartage_Admin_Newsletter
  */
@@ -428,6 +433,7 @@ class AgendaPartage_Newsletter {
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
 		jQuery('form div.agdp-tabs-wrap:first').each(function(){
+			var $wrapper = jQuery(this);
 			var id = 'agdp-tabs-' + Math.floor( Math.random()*1000);
 			var class_name = 'agdp-tabs';
 			var tabs_counter = 0;
@@ -437,16 +443,18 @@ class AgendaPartage_Newsletter {
 			var $contents = jQuery('<ul/>').appendTo($tabs);
 			
 			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
-				if( jQuery(this).parents('.hidden:first').length )
+				var $hidden_parent;
+				if( ($hidden_parent = jQuery(this).parents('.hidden:first')).length ){
+					$hidden_parent.insertAfter($wrapper);
 					return;
+				}
 				tabs_counter++;
 				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
 			});
-			jQuery(this)
-				.html( $tabs.tabs() )
+			$wrapper.html( $tabs.tabs() )
 			;
 		});
 	});</script>
@@ -485,10 +493,28 @@ class AgendaPartage_Newsletter {
 		
 		$option_id = 'admin_nl_post_id';
 		if( ! isset($newsletters[$option_id]) ){
-			//Hide tab (js skips hidden elements)
-			$html = preg_replace('/\<div\s*class="\w*admin-user-only/'
+			//Hide tab (javascript skips hidden elements)
+			$html = preg_replace('/\<div\s*class="admin-user-only/'
 					, '$0 hidden'
 					, $html);
+		}
+		
+		//$hidden_newsletters : Selon le droit de certains forums, il faut être connecté et adhérent pour voir certains onglets
+		if( ! current_user_can('moderate_comments') ){
+			global $current_user;
+			foreach( $newsletters as $newsletter_id => $newsletter)
+				if( is_int($newsletter_id)
+				&& ( $forum = self::get_forum_of_newsletter($newsletter_id) )){
+					$approved = AgendaPartage_Forum::get_forum_comment_approved( $forum, $current_user, false );
+					if( $approved !== 1 ){
+						$field_extension = self::get_form_newsletter_field_extension($newsletter_id, $forum);
+						//Hide tab (javascript skips hidden elements)
+						$html = preg_replace('/\<div\s*class="[^"]*'.$field_extension.'/'
+								, '$0 hidden'
+								, $html);
+						
+					}
+				}
 		}
 		
 		/** email **/
@@ -528,9 +554,8 @@ class AgendaPartage_Newsletter {
 		if( ! $newsletters )
 			$newsletters = self::get_newsletters();
 		
-		// foreach newsletter type (events, covoiturage, forum, admin)
+		// foreach newsletter type (agdpevent, covoiturage, forums, admin)
 		foreach($newsletters as $newsletter_option => $newsletter){
-			
 			$user_subscription = null;
 			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
 			/** périodicité de l'abonnement **/
@@ -552,7 +577,7 @@ class AgendaPartage_Newsletter {
 			if( ! $user_subscription)
 				$user_subscription = 'none';
 			
-			$checkboxes = '';
+			$checkboxes = sprintf('"%s"', AGDP_WPCF7_RADIO_NO_CHANGE);//option masquée
 			$selected = '';
 			$index = 0;
 			foreach( $subscription_periods as $subscribe_code => $label){
@@ -562,11 +587,24 @@ class AgendaPartage_Newsletter {
 				}
 				$index++;
 			} 
+			if( ! $selected)
+				$selected = 'default:1'; //(no-change) hidden option
 		
 			$html = preg_replace('/\[(radio\s+'.$input_name.')[^\]]*[\]]/'
 								, sprintf('[$1 %s use_label_element %s]'
 									, $selected
 									, $checkboxes)
+								, $html);
+		}
+		
+		//Administrateurice masqué : wpcf7 râle car aucune option sélectionnée. On en ajoute une, cochée.
+		$option_id = 'admin_nl_post_id';
+		if( ! isset($newsletters[$option_id]) ){
+			$field_extension = self::get_form_newsletter_field_extension($option_id);
+			$input_name = 'nl-period-' . $field_extension;
+			$selected = sprintf('default:1');
+			$html = preg_replace('/(\[radio\s+'.$input_name.'\s[^\]]*)(default:[0-9]+)/'
+								, '$1'.$selected
 								, $html);
 		}
 		
@@ -615,10 +653,34 @@ class AgendaPartage_Newsletter {
 		return false;
 	}
 	
+	
+	/**
+	 * Retourne le forum associé à une newsletter.
+	 */
+	public static function get_forum_of_newsletter($newsletter_id){
+		if( is_a($newsletter_id, 'WP_Post') ){
+			if($newsletter_id->post_type != AgendaPartage_Newsletter::post_type)
+				return false;
+			$newsletter_id = $newsletter_id->ID;
+		}
+		
+		if( $source = self::get_content_source($newsletter_id, true)){
+			if( $source[0] === 'page' ){
+				if( $forum = get_post( $source[1] )){
+					return $forum;
+				}
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Les champs du formulaire contiennent une extension correspondant au type de posts associés à la lettre-info ('-admin', '-agdpevent', '-covoiturage')
 	 */
-	public static function get_form_newsletter_field_extension($newsletter_option){
+	public static function get_form_newsletter_field_extension($newsletter_option, $forum = false){
+		if( is_a($forum, 'WP_Post') )
+			return AgendaPartage_Forum::tag . '-' . $forum->post_name;
+			
 		if(is_a($newsletter_option, 'WP_Post')){
 			$newsletter = $newsletter_option;
 			
@@ -635,17 +697,10 @@ class AgendaPartage_Newsletter {
 		}
 		//Numérique : un forum dont on cherche le nom
 		if( is_int($newsletter_option) ){
-			if($newsletter = get_post( $newsletter_option )){
-				if( $source = self::get_content_source($newsletter->ID, true)){
-					$post_type = AgendaPartage_Forum::tag;
-					if( $source[0] === AgendaPartage_Forum::tag ){
-						if( $forum = get_post( $source[1] )){
-							return $forum->post_type . '-' . $forum->post_name;
-						}
-					}
-				}
-			}
+			if( $forum = self::get_forum_of_newsletter( $newsletter_option ) )
+				return AgendaPartage_Forum::tag . '-' . $forum->post_name;
 		}
+		
 		switch($newsletter_option){
 			case 'admin_nl_post_id' :
 				return 'admin';
@@ -673,13 +728,13 @@ class AgendaPartage_Newsletter {
 			'post_status' => 'publish',
 			'meta_query' => [[
 				'key' => 'source',
-				'value' => AgendaPartage_Forum::tag . '.',
+				'value' => 'page.',
 				'compare' => 'LIKE'
 			]]
 		]);
 		foreach($all_newsletters as $forum_newsletter){
 			$nl_id = $forum_newsletter->ID;
-			$newsletters[ $nl_id . '' ] = get_post($nl_id);
+			$newsletters[ $nl_id . '' ] = $forum_newsletter;
 		}
 		
 		/** admin **/
@@ -965,6 +1020,9 @@ class AgendaPartage_Newsletter {
 			
 			$period = $inputs['nl-period-' . $field_extension];
 			
+			if( $period === AGDP_WPCF7_RADIO_NO_CHANGE )
+				continue;
+			
 			if(is_array($period))
 				$period = count($period) && $period[0] ? $period[0] : 'none';//wpcf7 is strange with first radio option
 			
@@ -1011,7 +1069,7 @@ class AgendaPartage_Newsletter {
 			}
 			
 			$field_name = 'nl-send_newsletter-now-' . $field_extension;
-			$send_newsletter_now = isset($inputs[$field_name]) && $inputs[$field_name][0];
+			$send_newsletter_now = isset($inputs[$field_name]) && count($inputs[$field_name]) && $inputs[$field_name][0];
 			if($send_newsletter_now){
 				if(self::send_email($newsletter, $email))
 					$messages['mail_sent_ok'] .= sprintf("\r\n\"%s\" a été envoyée à %s.", $newsletter_name, $email);

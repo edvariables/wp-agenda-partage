@@ -276,6 +276,10 @@ input.wpcf7-form-control[name="nl-user-name"] {
 .wpcf7-list-item input[name="nl-period"]:checked + span.wpcf7-list-item-label {
 	font-weight: bold;
 }
+/* hide first radio (no_change) for newsletter period  */
+.wpcf7-form-control-wrap[data-name^="nl-period-"] > .wpcf7-radio > .wpcf7-list-item.first {
+	display: none;
+}
 
 form.wpcf7-form .hidden {
 	display: none;
