@@ -579,7 +579,7 @@ class AgendaPartage_Newsletter {
 			
 			$checkboxes = sprintf('"%s"', AGDP_WPCF7_RADIO_NO_CHANGE);//option masquée
 			$selected = '';
-			$index = 0;
+			$index = 1;
 			foreach( $subscription_periods as $subscribe_code => $label){
 				$checkboxes .= sprintf(' "%s|%s"', $label, $subscribe_code);
 				if($user_subscription == $subscribe_code){

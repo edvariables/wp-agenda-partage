@@ -65,5 +65,4 @@ attachments des messages de forum :
 
 Import email vers forum : d'après le html
 Page abo Lettres-infos : Activation de l'onglet par l'url
-Masquer/Afficher le menu du forum suivant user
 Forum Rights : un droit en lecture, un droit en écriture

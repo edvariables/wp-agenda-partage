@@ -119,7 +119,7 @@ jQuery( function( $ ) {
 				
 			});
 			
-			//Forum
+			//Forum comments
 			$("article.use-agdpforum").each(	function(){
 				function show_new_comment(id){
 					var $comment_list = $('#comments .comment-list');
@@ -291,6 +291,10 @@ jQuery( function( $ ) {
 				$form.find('.if-not-connected').show();
 				return;
 			}
+			$form
+				.removeClass('sent')
+				.attr('data-status', 'init')
+				.find('.wpcf7-response-output').html('');
 			var post_id = $actionElnt.parents('article[id]:first').attr('id');
 			if( ! post_id || ! post_id.startsWith('post-'))
 				return;
