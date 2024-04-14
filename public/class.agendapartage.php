@@ -182,9 +182,9 @@ class AgendaPartage {
 	 */
 	public static function register_plugin_js() {
 		wp_enqueue_script('jquery');
-		wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array('jquery'), AGDP_VERSION, false );
+		wp_register_script( AGDP_TAG, plugins_url( 'agenda-partage/public/js/agendapartage.js' ), array('jquery', 'contact-form-7', 'swv'), AGDP_VERSION, false );
 		wp_enqueue_script( AGDP_TAG );
-		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array('jquery'), AGDP_VERSION, false );
+		wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array(), AGDP_VERSION, false );
 		wp_enqueue_script( AGDP_TAG . '-tools' );
 		
 	    
