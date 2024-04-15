@@ -68,3 +68,6 @@ Page abo Lettres-infos : Activation de l'onglet par l'url
 Forum Rights : un droit en lecture, un droit en écriture
 
 Ecolocos : SMTP
+
+Newsletter : Date du dernier changement parmi les pages
+	c'est bien la date d'importation des messages qui doit être prise en compte et non la date initiale du mail, par exemple

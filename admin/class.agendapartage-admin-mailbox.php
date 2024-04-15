@@ -129,7 +129,9 @@ class AgendaPartage_Admin_Mailbox {
 			case 'imap' :
 				$imap_server = get_post_meta($post_id, 'imap_server', true);
 				$imap_email = get_post_meta($post_id, 'imap_email', true);
-				echo sprintf('%s@%s', $imap_email, $imap_server);
+				echo sprintf('<code>%s@%s</code>', $imap_email, $imap_server);
+				if( ! ($imap_mark_as_read = get_post_meta($post_id, 'imap_mark_as_read', true)) )
+					echo sprintf('<br>%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée.', AgendaPartage::icon('warning'));
 				break;
 			default:
 				break;

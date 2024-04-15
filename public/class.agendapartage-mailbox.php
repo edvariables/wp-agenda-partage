@@ -46,13 +46,12 @@ class AgendaPartage_Mailbox {
 	/*
 	 **/
 	
-	
-	
 	/**
 	 * Retourne la boîte e-mails associée à une page.
 	 */
 	public static function get_mailbox_of_page($page_id){
-		$page = self::get_forum_page($page_id);
+		if( ! ($page = self::get_forum_page($page_id)) )
+			return false;
 		$page_id = $page->ID;
 		
 		if($mailbox_id = get_post_meta( $page_id, AGDP_PAGE_META_MAILBOX, true))
@@ -680,6 +679,8 @@ class AgendaPartage_Mailbox {
 			// var_dump($commentdata);
 			$comment = wp_new_comment($commentdata, true);
 			if( is_wp_error($comment) ){
+				if( ! in_array('comment_duplicate', $comment->get_error_codes())
+				 || get_post_meta($mailbox->ID, 'imap_mark_as_read', true))
 				debug_log('import_message_to_comment !wp_new_comment : ', $comment);
 			}
 			
@@ -906,10 +907,11 @@ class AgendaPartage_Mailbox {
 				'from' => $email_replyto,
 				'to' => $email_to,
 				'title' => trim($subject),
-				'mailbox_id' => $mailbox_id,
-				'posted_data' => $posted_data
+				'mailbox_id' => $mailbox_id
 			]
 		];
+		foreach( $posted_data as $key=>$value )
+			$commentdata['comment_meta']['posted_data_' . $key] = $value;
 			
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
 		$comment = wp_new_comment($commentdata, true);

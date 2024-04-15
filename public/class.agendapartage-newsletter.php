@@ -182,8 +182,20 @@ class AgendaPartage_Newsletter {
 			return $label;
 	}
 	
+	public static function get_subscription_parent($newsletter_id = false){
+		if( is_a($newsletter_id, 'WP_Post') )
+			$newsletter_id = $newsletter_id->ID;
+		$meta_name = 'subscription_parent';
+		if( $subscription_parent = get_post_meta($newsletter_id, $meta_name, true) )
+			return self::get_newsletter($subscription_parent);
+		return false;
+	}
+	
 	public static function get_subscription_meta_key($newsletter = false){
-		$newsletter = self::get_newsletter($newsletter);
+		if( $subscription_parent = self::get_subscription_parent($newsletter) )
+			$newsletter = $subscription_parent;
+		else
+			$newsletter = self::get_newsletter($newsletter);
 		return sprintf('%s_subscr_%d_%d', self::post_type, get_current_blog_id(), $newsletter->ID);
 	}
 	
@@ -256,7 +268,7 @@ class AgendaPartage_Newsletter {
 		$blog_prefix = $wpdb->get_blog_prefix();
 		if( $post_type == 'page'){
 			//Comments
-			$source = self::get_content_source($newsletter);
+			$source = self::get_content_source($newsletter, true);
 			$page_id = $source[1];
 			$mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $page_id );
 			if($mailbox && $page = get_post($page_id) ){
@@ -381,7 +393,7 @@ class AgendaPartage_Newsletter {
 				
 			case PERIOD_MONTHLY:
 				$month_day = get_post_meta($newsletter->ID, 'mailing-month-day', true);
-				if( $month_day === '')
+				if( ! is_int($month_day) )
 					return $today;
 				if(wp_date('d', $today) > $month_day){
 					if($month_day > 28
@@ -411,7 +423,7 @@ class AgendaPartage_Newsletter {
 				
 			case PERIOD_WEEKLY:
 				$week_day = get_post_meta($newsletter->ID, 'mailing-week-day', true);
-				if( $week_day === '')
+				if( ! is_int($week_day) )
 					return $today;
 				$today_week_day = wp_date('w', $today);
 				if( $week_day >= $today_week_day )

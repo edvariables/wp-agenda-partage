@@ -268,3 +268,15 @@ function zip_add_folder($folder, &$zipFile, $exclusiveLength) {
 	}
 	closedir($handle);
 }
+
+/**
+ * Teste si un tableau est associatif
+ */
+function is_associative_array($array){
+	if( ! $array )
+		return false;
+	$keys = array_keys($array);
+	if( $keys[0] !== 0)
+		return true;
+	return $keys !== $array;
+}

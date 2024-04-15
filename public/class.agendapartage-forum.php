@@ -953,12 +953,15 @@ class AgendaPartage_Forum {
 		// is-public != false
 		$public_comments = [];
 		foreach($comments as $comment){
-			$meta_key = 'posted_data';
+			$meta_key = 'posted_data_is-public';
 			if( $comment->comment_author_email != $current_user_email 
 			//TODO && (! $parent_comment || $parent_comment->comment_author_email != $current_user_email)
-			&& ($posted_data = get_comment_meta($comment->comment_ID, $meta_key, true)) ){
-				if(isset($posted_data['is-public'])
-				&& ! $posted_data['is-public'])
+			// && ($posted_data = get_comment_meta($comment->comment_ID, $meta_key, true)) ){
+			&& ( $is_public = get_comment_meta($comment->comment_ID, $meta_key, true) ) !== null 
+			&& ! $is_public
+			){
+				// if(isset($posted_data['is-public'])
+				// && ! $posted_data['is-public'])
 					continue;
 			}
 			$public_comments[] = $comment;

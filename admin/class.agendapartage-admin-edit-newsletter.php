@@ -183,7 +183,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				'label' => __('Jour de la semaine', AGDP_TAG),
 				'unit' => 'pour l\'abonnement "Toutes les semaines"',
 				'input' => 'select',
-				'values' => [1=>'lundi', 2=>'mardi', 3=>'mercredi', 4=>'jeudi', 5=>'vendredi', 6=>'samedi', 0=>'dimanche']
+				'values' => ['1'=>'lundi', '2'=>'mardi', '3'=>'mercredi', '4'=>'jeudi', '5'=>'vendredi', '6'=>'samedi', '0'=>'dimanche']
 			],
 			[	'name' => 'mailing-hour',
 				'label' => __('Heure d\'envoi', AGDP_TAG),
@@ -244,6 +244,22 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 						'label' => __('Source des données', AGDP_TAG),
 						'input' => 'select',
 						'values' => $sources
+		);
+		
+		
+		//Subscribers source
+		$meta_name = 'subscription_parent';
+		//newsletters
+		$sources = ['' => '(aucune)'];
+		foreach(get_posts([ 'post_type' => AgendaPartage_Newsletter::post_type]) as $post)
+			if( $newsletter->ID !== $post->ID ){
+				$sources[ '' . $post->ID ] = $post->post_title;
+			}
+		$fields[] = array('name' => $meta_name,
+						'label' => __('Alias des abonnements', AGDP_TAG),
+						'input' => 'select',
+						'values' => $sources,
+						'learn-more' => 'Permet d\'utiliser les abonnements d\'une autre lettre-info'
 		);
 		return $fields;
 				
