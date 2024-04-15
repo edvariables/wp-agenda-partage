@@ -1,0 +1,70 @@
+TODO list
+---------
+
+- Ajouter des marqueurs d'évènement sur une carte
+https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-sur-votre-site
+
+
+* Créer un rôle author-agdpevent
+
+* Taxonomy Type event Color
+
+* $(recaptcha).init après ajax sur androïd
+
+* Menu Se connecter n'apparait pas sur //agendapartage.fr
+	cf "top" menu qui n'est pas "top"
+
+* Event 
+- avec image
+	- load on toggle
+- récurrents
+	- via cron
+	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
+- révisions depuis /public
+- Mail de la part de l'administrateur
+		ne part pas chez l'organisateur mais agdp
+		email en hexa
+- Interdiction de http dans message levée pour admin et modérateur
+	
+* Events
+- Liste : griser les évènements passés
+- Filtre (sans commune) : (autre commune)
+- Show more months without ajax to 30 events limit
+- CHECK un event du 30/08 au 2/09 est-il bien visible aussi dans septembre ?
+	par contre, "du dimanche 31 déc 2023 de 19h au lundi 1er jan 2024 à 5h" ne doit rien afficher en janvier
+
+* Newsletter
+- shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
+- shortcode [agdp-stats] pour mailing admin
+- Désabonnement : suppression du user si jamais connecté
+- Pour les abonnés mensuels, afficher 2 mois
+- décocher "Recevoir maintenant" après envoi
+
+* Publish wp plugin
+
+* Admin dashboard
+- new events only
+- newsletter subscribers
+
+* Multisites
+- import médiathèque
+	option theme_mods_twentyseventeen
+	get_site_icon_url()
+- import sur nouveau site, il semble qu'il faille le faire 2 fois.
+
+
+ajouter [forum info=url link]
+
+Publier Covoit dans Forum
+
+Subscription-content : ['new', 'two_weeks', 'two_months']
+
+attachments des messages de forum : 
+- supprimer avec la suppression des commentaires via admin
+- purger
+
+Import email vers forum : d'après le html
+Page abo Lettres-infos : Activation de l'onglet par l'url
+Forum Rights : un droit en lecture, un droit en écriture
+
+Ecolocos : SMTP

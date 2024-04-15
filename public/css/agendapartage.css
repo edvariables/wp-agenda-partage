@@ -1,0 +1,494 @@
+/**
+ * ED20200326
+ * Feuille de styles pour Agenda partagé
+ */
+ 
+a:active, a:focus {
+	outline: none;
+}
+
+p.alerte, div.alerte {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
+	border-radius: 2px;
+}
+p.info, div.info {
+	border-style: solid;
+	border-color:green;
+	padding: 5px;
+	border-radius: 2px;
+}
+
+.align-right {
+	text-align: right;
+}
+
+.text-green {
+	color: green !important;
+}
+
+/* ED200318 "Fièrement propulsé par Word Press" */
+.site-info > a
+, .masquer
+{ display: none; }
+
+code span.dashicons {
+  padding-top: 4px;
+  margin-right: 3px;
+}
+
+.agdp-error-light {
+  font-size: smaller;
+  color: gray;
+  padding: 5px;
+  text-align: center;
+}
+body.colors-dark .agdp-error-light {
+  color: rgb(208, 208, 208);
+}
+
+/* Masque la navigation
+ * Géré par code /hook on_navigation_markup_template_cb
+article.type-agdpevent ~ nav.post-navigation {
+	display: none;
+}*/
+
+.entry-content .agdp-agdpevent-dates {
+	font-weight : bold;
+}
+
+.entry-content .agdp-agdpevent,
+.entry-content .agdp-covoiturage {
+	white-space: pre-line;
+	margin-bottom: 1.5em;
+}
+.entry-content .agdp-agdpevent .nowrap
+, .entry-content .agdp-agdpevent ul,
+.entry-content .agdp-covoiturage .nowrap
+, .entry-content .agdp-covoiturage ul {
+	white-space: normal;
+}
+
+.entry-content .agdp-agdpevent-message-contact,
+.entry-content .agdp-covoiturage-message-contact {
+	white-space: normal;
+}
+
+.entry-content .agdp-agdpevent-description
+, .entry-content .agdp-agdpevent-details
+, .entry-content .agdp-covoiturage-description
+, .entry-content .agdp-covoiturage-details {
+	background-color: #f7f7f7;
+	border-color: #9fa4a6;
+	border-style: solid;
+	border-width: thin;
+	color: #333;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	padding: 1em;	
+}
+body.colors-dark .entry-content .agdp-agdpevent-description,
+.entry-content .agdp-agdpevent-details,
+body.colors-dark .entry-content .agdp-covoiturage-description,
+.entry-content .agdp-covoiturage-details {
+	background-color: #272727;
+	color: rgb(238, 238, 238);
+}
+
+.entry-content .agdp-agdpevent-details .entry-date,
+.entry-content .agdp-covoiturage-details .entry-date {
+	font-size: small;
+	font-style: italic;
+	white-space: normal;
+	text-align: right;
+}
+
+.entry-content .agdp-agdpevent-cree-depuis,
+.entry-content .agdp-covoiturage-cree-depuis {
+  float: right;
+  font-style: italic;
+  font-size: smaller;
+}
+
+/*toggle shortcode*/
+.toggle-trigger {
+	margin: 0px !important;
+	font-size: 18px;
+	padding: 10px;
+	padding-left: 30px;
+	background-color: #F5F5F5;
+	background-image: url('../images/toggle-plus.png');
+	background-position: 10px center;
+	background-repeat: no-repeat;
+}
+body.colors-dark .toggle-trigger {
+	background-color: #252525;
+}
+
+.toggle-trigger a {
+	color: #333;
+	text-decoration: none;
+	display: block;
+}
+body.colors-dark .toggle-trigger a {
+	color: #CCC;
+}
+
+.toggle-trigger a:hover {
+	color: #0489B7;
+	text-decoration: none;
+}
+body.colors-dark .toggle-trigger a:hover {
+	color: #FA7628;
+}
+.toggle-trigger .wpcf7-spinner {
+	float: right;
+}
+
+.toggle-trigger.active{
+	background-image: url('../images/toggle-minus.png') !important;
+	background-position: 10px center;
+	background-repeat: no-repeat;
+}
+
+.toggle-container {
+	/* display: none; TODO hide on load before jQuery */
+	display: none;
+	overflow: hidden;
+	padding: 20px 10px;
+}
+.toggle-trigger.active + .toggle-container {
+	display: block;
+}
+
+label.textarea-rows-2 textarea {
+	max-height: 5em;
+}
+label.textarea-rows-3 textarea {
+	max-height: 6em;
+}
+label.textarea-rows-4 textarea {
+	max-height: 7em;
+}
+label.textarea-rows-5 textarea {
+	max-height: 8em;
+}
+
+.adgpevent-forbidden, .covoiturage-forbidden {
+	padding-left: 2em;
+}
+.adgpevent-forbidden ul > li, .covoiturage-forbidden ul > li {
+	margin-left: 1em;
+}
+.agdp-title-link a {
+	float:right;
+	box-shadow: none !important;
+	text-decoration: none;
+	outline: none;
+}
+
+.adgpevent-forbidden form, .covoiturage-forbidden form {
+	display: inline-flex;
+}
+
+.agdpevent-edit-toolbar,
+.covoiturage-edit-toolbar {
+	text-align: right;
+}
+.agdpevent-edit-toolbar > .agdpevent-tool > *,
+.covoiturage-edit-toolbar > .covoiturage-tool > * {
+	float: right;
+	margin-left: 1em;
+}
+.agdpevent-edit-toolbar > .agdpevent-tool .dashicons-before,
+.covoiturage-edit-toolbar > .covoiturage-tool .dashicons-before {
+	margin-right: 3px;
+}
+.agdpevent-edit-toolbar > .agdpevent-tool .close-box,
+.covoiturage-edit-toolbar > .covoiturage-tool .close-box,
+.ajax_action-response .close-box {
+	float: right;
+}
+.ajax_action-response {
+	cursor: pointer;
+}
+.ajax_action_info {
+	text-align: center;
+}
+
+div.ajax_action-response {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
+}
+
+input.wpcf7-form-control[name^="ev-date-"],
+input.wpcf7-form-control[name^="cov-date-"] {
+	width: 11em;
+}
+input.wpcf7-form-control[name^="ev-heure-"],
+input.wpcf7-form-control[name^="cov-heure-"] {
+	width: 5em;
+}
+input.wpcf7-form-control[name="cov-nb-places"] {
+	width: 11em;
+}
+
+.wpcf7-form table {
+	margin-bottom: 0px;
+}
+.wpcf7-form table tr {
+	border: none;
+}
+.wpcf7-form table td {
+	padding-bottom: 0px;
+	vertical-align: top;
+}
+.wpcf7-form table td:first-child {
+	width: 1px;
+}
+
+.wpcf7-form table td:nth-child(2) {
+	padding-left: 1em;
+}
+.wpcf7-form span.required {
+	color: red;
+}
+.wpcf7-form .next-radio-br + .wpcf7-form-control-wrap .wpcf7-list-item{
+	display: block;
+}
+.wpcf7-form .radios-br .wpcf7-form-control-wrap .wpcf7-list-item{
+	display: block;
+}
+.wpcf7-form label[for="nl-user-name"]{
+	margin-left: 1em;
+}
+input.wpcf7-form-control[name="nl-user-name"] {
+    display: inline;
+    width: auto;
+    margin-left: 1em;
+}
+.wpcf7-list-item input[name="nl-period"] + span.wpcf7-list-item-label {
+	font-weight: normal;
+}
+.wpcf7-list-item input[name="nl-period"]:checked + span.wpcf7-list-item-label {
+	font-weight: bold;
+}
+/* hide first radio (no_change) for newsletter period  */
+.wpcf7-form-control-wrap[data-name^="nl-period-"] > .wpcf7-radio > .wpcf7-list-item.first {
+	display: none;
+}
+
+form.wpcf7-form .hidden {
+	display: none;
+}
+form.wpcf7-form .tax_terms_titles {
+	margin-left: 1.2em;
+	cursor: pointer;
+}
+
+/** newsletter **/
+form.wpcf7-form.events_newsletter_register input.wpcf7-email {
+	display: inline-block;
+	width: auto;
+}
+ul.newsletter-change-nl {
+	list-style: none;
+	border: 1px solid gray;
+	margin-top: 2em;
+	padding-left: 1em;
+}
+ul.newsletter-change-nl p {
+	margin: 0;
+}
+
+
+.wpcf7-list-item input[type="radio"]:checked + span.wpcf7-list-item-label,
+div.labels-one-row label.radio-checked {
+	font-weight: bold;
+	text-decoration: underline;
+}
+.wpcf7-form-control.wpcf7-radio.no-label .wpcf7-list-item-label {
+	display: none;
+}
+div.labels-one-row label {
+	display: inline-block;
+}
+div.labels-one-per-row .wpcf7-list-item {
+	display: block;
+}
+
+.entry-title span.cov-intention,
+.agdp-covoiturages span.cov-intention {
+	border: 1px solid;
+	padding: 0 2px 0 2px;
+}
+.entry-title span.cov-intention-1,
+.agdp-covoiturages span.cov-intention {
+	background-color: indianred;
+}
+.entry-title span.cov-intention-2,
+.agdp-covoiturages span.cov-intention-2 {
+	background-color: darkcyan;
+}
+.entry-title span.cov-intention-3,
+.agdp-covoiturages span.cov-intention-3 {
+	background-color: darkgoldenrod;
+}
+.entry-title span.cov-depart, .entry-title span.cov-arrivee,
+.agdp-covoiturages span.cov-depart, .agdp-covoiturages span.cov-arrivee {
+	font-variant-caps: small-caps;
+}
+.entry-title .title-prep,
+.agdp-covoiturages .title-prep {
+	display: inline-block;
+	width: 2em;
+}
+
+.entry-title span.cov-nb-places,
+.agdp-covoiturages span.cov-nb-places {
+	padding-left: 1.5em;
+}
+
+.wpcf7-form .swap-depart-arrivee {
+	float: right;
+	box-shadow: none !important;
+	text-decoration: none;
+	outline: none;
+	cursor: pointer;
+}
+
+.wpcf7-form .labels-one-row.cov-phone-show {
+	position: relative;
+	top: -2em;
+}
+.wpcf7-form .labels-one-row.cov-phone-show > p {
+	margin-bottom: 0;
+}
+
+.wpcf7-form input[name="cov-covsecret"]{
+	width: 8em;
+}
+
+#email4phone-title {
+	box-shadow: none !important;
+	text-decoration: none;
+	outline: none;
+	cursor: pointer;
+}
+#email4phone-form {
+	display: none;
+}
+#email4phone-title.active + #email4phone-form {
+	display: block;
+	margin-left: 3em;
+	padding: 6px;
+	border: 2px solid gray;
+}
+#email4phone-form form {
+	display: inline-flex;
+}
+
+/**
+ * Forum
+ */
+div.agdp-forum-description {
+	white-space: pre-wrap;
+}
+article.use-agdpforum + #comments > h2.comments-title {
+	display: none;
+}
+article.use-agdpforum + #comments li.comment article {
+	border: #d1cde1 solid 5px;
+	margin-bottom: 1em;
+	padding: 5px;
+}
+body.colors-dark article.use-agdpforum + #comments li.comment article {
+	border-color: #331440;
+}
+article.use-agdpforum + #comments li.comment article .comment-content h3 {
+	font-weight: bold;
+	background-color: #d1cde1;
+	padding: 5px;
+}
+body.colors-dark article.use-agdpforum + #comments li.comment article .comment-content h3 {
+	background-color: #331440;
+}
+
+article.use-agdpforum + #comments li.comment article .comment-content > p {
+	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+}
+article.use-agdpforum + #comments li.comment article .reply {
+	padding-left: 3em;
+}
+
+article.use-agdpforum + #comments .comment-list .children {
+	margin-left: 1.5em;
+}
+
+article.use-agdpforum + #comments .comment-list + #respond {
+	margin-top: 2em;
+	padding-top: 0.5em;
+	border-top: 1px solid gray;
+}
+article.use-agdpforum + #comments article + #respond {
+	margin-bottom: 3em;  
+	margin-left: 4em;
+}
+article.use-agdpforum + #comments #respond {
+	margin-top: 1em;
+}
+
+article.use-agdpforum + #comments #respond .if-respond {
+	display: none;
+}
+article.use-agdpforum + #comments article + #respond .if-respond {
+	display: inline-block;
+}
+
+article.use-agdpforum + #comments ul.attachments {
+	list-style: none;
+}
+article.use-agdpforum + #comments ul.attachments img {
+	max-width: 200px;
+}
+
+#commentform > .logged-in-as, #commentform > .comment-notes {
+	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+}
+#commentform > .logged-in-as a {
+	color: rgb(51, 51, 115);
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+}
+body.colors-dark #commentform > .logged-in-as a {
+	color: lightblue;
+}
+
+#comments #reply-title a {
+	margin-left: 1em;
+	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+	color: rgb(51, 51, 115);
+}
+body.colors-dark #comments #reply-title a {
+	color: lightblue;
+}
+
+#comments .comment-agdp-actions {
+	margin-left: 1em;
+}
+#comments .comment-agdp-actions a {
+	margin-left: 1em;
+}
+#comments .comment-agdp-actions .mark_as_ended {
+	font-weight: bold;
+	color: red;
+}
+#comments .comment-content .unapproved-action-links {
+	margin-bottom: 1em;
+}
+#comments .comment-content .unapproved-action-links * {
+	color: red;
+}
