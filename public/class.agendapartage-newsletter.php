@@ -240,6 +240,7 @@ class AgendaPartage_Newsletter {
 			, 'meta_compare' => '='
 			]) as $post)
 			$posts[$post->ID . ''] = $post;
+			
 		return $posts;
 	}
 	

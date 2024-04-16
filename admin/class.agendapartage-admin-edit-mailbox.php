@@ -187,7 +187,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 				if($dispatch['email'] === '*@*')
 					$dispatch['email'] = 'Toutes les autres adresses';
 				echo sprintf('<li>Email : <b>%s</b>', $dispatch['email']);
-				echo sprintf(' - (%s - %s)', $dispatch['rights'], AgendaPartage_Mailbox::get_right_label($dispatch['rights']));
+				echo sprintf(' - (%s - %s)', $dispatch['rights'], AgendaPartage_Forum::get_right_label($dispatch['rights']));
 				echo '</li>';
 			}
 			echo '</ul>';
@@ -202,8 +202,8 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 	
 	public static function get_metabox_dispatch_fields(){
 		$rights = [];
-		foreach(AgendaPartage_Mailbox::get_all_rights() as $right)
-			$rights[] = sprintf('<b>%s</b> %s', $right, AgendaPartage_Mailbox::get_right_label($right));
+		foreach(AgendaPartage_Forum::get_all_rights() as $right)
+			$rights[] = sprintf('<b>%s</b> %s', $right, AgendaPartage_Forum::get_right_label($right));
 		$rights = implode(', ', $rights);
 		
 		$fields = [

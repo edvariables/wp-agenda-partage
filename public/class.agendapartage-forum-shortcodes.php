@@ -170,13 +170,22 @@ class AgendaPartage_Forum_Shortcodes {
 		if($shortcode == 'forum'
 		&& count($atts) > 0){
 			
-			if(array_key_exists('0', $atts))
-				if( ! array_key_exists('info', $atts))
-					$atts['info'] = $atts['0'];
-					
+			$specificInfos = [];
+			if(array_key_exists('info', $atts)
+			&& in_array($atts['info'], $specificInfos))
+				$shortcode .= '-' . $atts['info'];
+			if( ! is_associative_array($atts))
+				if(is_numeric($atts['0']))
+					$atts['post_id'] = $atts['0'];
+				elseif( ! array_key_exists('info', $atts))
+					if(in_array($atts['0'], $specificInfos))
+						$shortcode .= '-' . $atts['0'];
+					else
+						$atts['info'] = $atts['0'];
 		}
 		$no_html = isset($atts['no-html']) && $atts['no-html']
 				|| isset($atts['html']) && $atts['html'] == 'no';
+		
 		
 		switch($shortcode){
 			case 'forum-prop':

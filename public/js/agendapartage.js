@@ -400,5 +400,13 @@ jQuery( function( $ ) {
 				return false;
 			}
 		});
+		
+		// Forum, répondre au commentaire
+		$( 'body' ).on('click', 'a.comment-reply-link', function(e) {
+			var $actionElnt = $(this);
+			var title = $actionElnt.parents('article:first').find('.comment-content .comment-title').text();
+			title = 'Re: ' + title;
+			$('#respond .comment-form-title input').val(title);
+		});
 	});
 });

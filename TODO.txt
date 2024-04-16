@@ -71,3 +71,8 @@ Ecolocos : SMTP
 
 Newsletter : Date du dernier changement parmi les pages
 	c'est bien la date d'importation des messages qui doit être prise en compte et non la date initiale du mail, par exemple
+	
+dans https://pays-de-saint-felicien.agenda-partage.fr/wp-admin/post.php?post=2491&action=edit
+	Abonnements: on voit la même personne abonnée 'toutes les semaines' pour aujourd'hui et pour demain
+	
+Commentaire : répondre à l'auteur : blank...

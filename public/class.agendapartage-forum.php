@@ -28,6 +28,15 @@ class AgendaPartage_Forum {
 			self::init_hooks();
 		}
 	}
+	
+	const rights = [
+		'P' => 'Public',
+		'E' => 'Validation par e-mail',
+		'C' => 'Connexion requise',
+		'CO' => 'Inscription cooptée et connexion requise',
+		'A' => 'Adhésion requise',
+		'AO' => 'Adhésion cooptée requise',
+	];
 
 	/**
 	 * Hook
@@ -114,8 +123,9 @@ class AgendaPartage_Forum {
 				|| in_array($dispatch['rights'], ['P', 'E']) //public ou validation par email
 			)
 				continue;
-			if( $current_user && $dispatch['rights'] = 'C')
+			if( $current_user && $dispatch['rights'] === 'C')
 				continue;
+			// debug_log('user get_subscription', $current_user, $dispatch, self::get_subscription( $current_user, $dispatch['id'] ));
 			if( ! $current_user )
 				$hidden_forums[] = $dispatch['id'];
 			else
@@ -137,6 +147,32 @@ class AgendaPartage_Forum {
 		// debug_log("get_hidden_forums", count($pages), $args, $hidden_forums);
 		return $pages;
 	}
+	
+	
+	/***************************/
+	/******** Droits ***********/
+	
+	/**
+	 * Retourne tous les droits
+	 */
+	public static function get_all_rights( ){
+		return array_keys( self::rights );
+	}
+	/**
+	 * Retourne tous les libellés des droits
+	 */
+	public static function get_all_rights_labels( ){
+		return self::rights;
+	}
+	/**
+	 * Retourne le libellé des droits
+	 */
+	public static function get_right_label( $right ){
+		if( array_key_exists( $right, self::rights ) )
+			return self::rights[$right];
+		return '';
+	}
+	/***************************/
 	
 	/**
 	*/
@@ -489,12 +525,12 @@ class AgendaPartage_Forum {
 		if( $comment->comment_approved == 0
 		&& current_user_can('moderate_comments')){
 			echo sprintf('<div class="unapproved-action-links">%s</div>',
-				self::get_comment_approve_link($comment->comment_ID));
+				implode('&nbsp;&nbsp;&nbsp;', self::get_comment_approve_links($comment->comment_ID)));
 		}
 		
 		if( ! self::get_property_is_value('comment_title', false) ){
 			$title = get_comment_meta($comment->comment_ID, 'title', true);	
-			echo sprintf('<h3>%s</h3>', $title);
+			echo sprintf('<h3 class="comment-title">%s</h3>', $title);
 		}
 		
 		return $comment_text;
@@ -626,7 +662,8 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne le html d'action pour approuver un message 
 	 */
-	private static function get_comment_approve_link($comment_id){
+	private static function get_comment_approve_links($comment_id){
+		$links = [];
 		
 		$data = [
 			'comment_id' => $comment_id
@@ -635,9 +672,22 @@ class AgendaPartage_Forum {
 		$caption = "Approuver";
 		$title = "Approuver ce message";
 		$icon = 'admin-post';
+		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_approve
+		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','approve'], $icon, $caption, $title, true, $data);
 
+		$caption = "Supprimer";
+		$title = "Mettre ce message à la corbeille";
+		$icon = 'trash';
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
-		return AgendaPartage::get_ajax_action_link(false, ['comment','approve'], $icon, $caption, $title, true, $data);
+		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, true, $data);
+
+		$caption = "Supprimer avec message";
+		$title = "Envoyer un message à l'auteur et mettre ce message à la corbeille";
+		$icon = 'email-alt';
+		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_disapprove
+		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','disapprove'], $icon, $caption, $title, true, $data);
+
+		return $links;
 	}
 	
 	// /**
@@ -745,6 +795,12 @@ class AgendaPartage_Forum {
 		return 'Vous n\'êtes pas autorisé à exécuter cette action.';
 	}
 	/**
+	 * Requête Ajax de désapprobation du commentaire avec réponse
+	 */
+	public static function on_ajax_action_disapprove($data) {
+		return self::on_ajax_action_delete($data);
+	}
+	/**
 	 * Requête Ajax de récupération d'un (nouveau) commentaire
 	 */
 	public static function on_ajax_action_get($data) {
@@ -795,11 +851,16 @@ class AgendaPartage_Forum {
 	
 	/**
 	 * Retourne le meta value d'abonnement pour l'utilisateur
+	 * Parameter $user : WP_User | int | email
 	 */
-	public static function get_subscription( $email, $page = false){
+	public static function get_subscription( $user, $page = false){
 		// $page = self::get_page($page);
-		
-		$user_id = email_exists( sanitize_email($email) );
+		if( is_a($user, 'WP_User') )
+			$user_id = $user->ID;
+		elseif( is_int($user) )
+			$user_id = $user;
+		else
+			$user_id = email_exists( sanitize_email($user) );
 		if( ! $user_id)
 			return false;
 		
@@ -979,7 +1040,8 @@ class AgendaPartage_Forum {
 		if( current_user_can('moderate_comments') )
 			return $items;
 		
-		$hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids']);
+		$hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids'] );
+		debug_log('$hidden_forums_ids', $hidden_forums_ids);
 		$hidden_menu_items_ids = [];
 		foreach( $items as $index => $menu_item ){
 			if( in_array($menu_item->menu_item_parent, $hidden_menu_items_ids)

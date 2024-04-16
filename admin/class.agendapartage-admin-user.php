@@ -78,8 +78,9 @@ class AgendaPartage_Admin_User {
 	 * Inscriptions aux newsletters
 	 */
 	public static function forums_subscriptions( $profile_user ) {
+		$current_user_can_moderate_comments = current_user_can('moderate_comments');
 		$user_histories = [];
-		?><br><h2>Abonnements aux forums</h2>
+		?><br><h2>Adhésions aux forums</h2>
 
 		<table class="form-table" role="presentation"><?php
 			$pages = AgendaPartage_Mailbox::get_pages_dispatch();
@@ -98,7 +99,9 @@ class AgendaPartage_Admin_User {
 			];
 				
 			foreach( $pages as $page_id => $dispatches ){
-				$rigths = $dispatches[0]['rights'];
+				$rights = $dispatches[0]['rights'];
+				if( ! in_array( $rights, ['A', 'AO'] ) )
+					continue;
 				$page = get_post($page_id);
 				$user_subscription = AgendaPartage_Forum::get_subscription($profile_user->user_email, $page_id);
 				$meta_key = AgendaPartage_Forum::get_subscription_meta_key($page_id);
@@ -107,12 +110,22 @@ class AgendaPartage_Admin_User {
 					$post_status = $post_statuses[$post_status];
 				?><tr class="agdp-forum-subscription">
 					<th><label>Page "<?php echo htmlentities($page->post_title)?>"</label>
-					<br><?php echo sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">modifier</a>', $page_id)?></label>
-					&nbsp;<?php echo sprintf('<a href="%s">voir</a>', get_permalink($page_id))?></label>
+					<?php if($current_user_can_moderate_comments){?>
+						<br><?php echo sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">modifier</a>', $page_id)?></label>
+						&nbsp;<?php echo sprintf('<a href="%s">voir</a>', get_permalink($page_id))?></label>
+					<?php }?>
 					</th>
 					<td>
-						Règles : <code><?php echo AgendaPartage_Mailbox::get_right_label($rigths); ?></code>
+						Règles : <code><?php echo AgendaPartage_Forum::get_right_label($rights); ?></code>
 						<br>Nouvelle publication : <code><?php echo $post_status; ?></code>
+						<?php if( ! $current_user_can_moderate_comments) {?>
+							<br>Votre adhésion : <code><b><?php 
+								if( isset($subscription_roles[$user_subscription]) )
+									echo $subscription_roles[$user_subscription];
+								else
+									echo "aucune";
+						}
+						else {?></b></code>
 						<br><select name="<?php echo $meta_key?>">
 						<?php 
 							foreach( $subscription_roles as $subscribe_code => $label){
@@ -122,6 +135,7 @@ class AgendaPartage_Admin_User {
 							}
 						?>
 						</select>
+						<?php }?>
 					</td>
 				</tr><?php
 			}?>
@@ -138,6 +152,9 @@ class AgendaPartage_Admin_User {
 		<table class="form-table" role="presentation"><?php
 			$active_newsletters = AgendaPartage_Newsletter::get_active_newsletters();
 			foreach(AgendaPartage_Newsletter::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
+				$meta_name = 'subscription_parent';
+				if( get_post_meta($newsletter_id, $meta_name, true) )
+					continue;
 				$subscription_periods = AgendaPartage_Newsletter::subscription_periods($newsletter_id);		
 				$user_subscription = AgendaPartage_Newsletter::get_subscription($profile_user->user_email, $newsletter_id);
 				$user_history = AgendaPartage_Newsletter::get_user_mailings($profile_user->user_email, $newsletter_id);
