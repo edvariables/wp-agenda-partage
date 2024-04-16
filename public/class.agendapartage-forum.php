@@ -1041,7 +1041,6 @@ class AgendaPartage_Forum {
 			return $items;
 		
 		$hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids'] );
-		debug_log('$hidden_forums_ids', $hidden_forums_ids);
 		$hidden_menu_items_ids = [];
 		foreach( $items as $index => $menu_item ){
 			if( in_array($menu_item->menu_item_parent, $hidden_menu_items_ids)

@@ -76,3 +76,5 @@ dans https://pays-de-saint-felicien.agenda-partage.fr/wp-admin/post.php?post=249
 	Abonnements: on voit la même personne abonnée 'toutes les semaines' pour aujourd'hui et pour demain
 	
 Commentaire : répondre à l'auteur : blank...
+Commentaire à approuver : "Utilisateur adhérent" ou non-adhérent
+Commentaire approuvé : remplace le bloc commentaire par le nouveau

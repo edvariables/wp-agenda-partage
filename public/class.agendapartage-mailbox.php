@@ -529,17 +529,17 @@ class AgendaPartage_Mailbox {
 					else
 						$pages['' . $page_id] = $page;
 					$comment = self::import_message_to_comment( $mailbox, $message, $page );
-					if($comment)
+					if($comment && ! is_wp_error($comment))
 						$imported[] = $comment;
 					break;
 				case 'agdpevent' :
 					$post = self::import_message_to_post( $mailbox, $message, 'AgendaPartage_Evenement' );
-					if($post)
+					if($post && ! is_wp_error($post))
 						$imported[] = $post;
 					break;
 				case 'covoiturage' :
 					$post = self::import_message_to_post( $mailbox, $message, 'AgendaPartage_Covoiturage' );
-					if($post)
+					if($post && ! is_wp_error($post))
 						$imported[] = $post;
 					break;
 				default:
