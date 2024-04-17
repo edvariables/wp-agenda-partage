@@ -57,7 +57,8 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 				if( $meta[0] === '_')
 					continue;
 				if( is_array($value = maybe_unserialize($value[0])) )
-					$value = $value[0];
+					if( is_array($value) && count($value) )
+						$value = $value[0];
 				if($value /* = get_comment_meta($comment->comment_ID, $meta, true) */){
 					if( is_array($value) ) $value = print_r($value, true);
 					?>

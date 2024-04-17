@@ -82,3 +82,8 @@ Non connecté, ecopartage par url, ajout d'un commentaire : ça passe approuvé 
 Non connecté, bloquer l'accès à la page ecopartage via l'url (ou page alternative ?)
 
 Mettre en générique les classes _Shortcodes
+
+
+Edit Event : option de visibilité : public / pour abonné uniquement
+
+L'ajout d'un commentaire, depuis le formulaire de bas de page, affiche la dernière page des commentaires
