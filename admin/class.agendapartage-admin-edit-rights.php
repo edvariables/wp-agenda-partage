@@ -251,9 +251,12 @@ class AgendaPartage_Admin_Edit_Rights {
 	public static function agendapartage_rights_page_html() {
 		// check user capabilities
 		if ( ! current_user_can( 'manage_options' ) ) {
+			?><h1>Désolé, l'accès à cette page est réservée.</h1><?php
 			return;
 		}
 
+		?><h1>Attention, cette page n'est pas opérationnelle et ne doit pas être utilisée.</h1><?php
+			
 		// add error/update messages
 
 		// check if the user have submitted the settings

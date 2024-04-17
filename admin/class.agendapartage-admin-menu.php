@@ -888,7 +888,7 @@ class AgendaPartage_Admin_Menu {
 			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
 			$parent_slug = AGDP_TAG;
-			$page_title =  'Boîtes e-mails';
+			$page_title = get_post_type_object(AgendaPartage_Mailbox::post_type)->labels->menu_name;
 			$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Mailbox::post_type);
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, 1);
 			
@@ -897,6 +897,11 @@ class AgendaPartage_Admin_Menu {
 			$menu_slug = $parent_slug . '-rights';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
 				array(__CLASS__, 'agendapartage_rights_page_html'), 2);
+			
+			$parent_slug = AGDP_TAG;
+			$page_title = get_post_type_object(AgendaPartage_Maillog::post_type)->labels->menu_name;
+			$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Maillog::post_type);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, 3);
 		}
 		
 		//Replace wpcf7 menu title

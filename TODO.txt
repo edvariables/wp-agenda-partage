@@ -51,11 +51,13 @@ https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-su
 	option theme_mods_twentyseventeen
 	get_site_icon_url()
 - import sur nouveau site, il semble qu'il faille le faire 2 fois.
+- Sites voisins
 
 
 ajouter [forum info=url link]
 
 Publier Covoit dans Forum
+Links "Créer un covoiturage" à partir d'un commentaire
 
 Subscription-content : ['new', 'two_weeks', 'two_months']
 
@@ -87,3 +89,11 @@ Mettre en générique les classes _Shortcodes
 Edit Event : option de visibilité : public / pour abonné uniquement
 
 L'ajout d'un commentaire, depuis le formulaire de bas de page, affiche la dernière page des commentaires
+
+Connexion API OVH pour
+- Création des adresses e-mails et alias
+
+EDOC2019 : multisites pour tester les interactions inter-blogs 
+	agdp-nord-ardeche
+	
+User adhésion ecopartage = capability
