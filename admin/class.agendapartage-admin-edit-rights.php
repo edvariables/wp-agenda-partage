@@ -43,7 +43,7 @@ class AgendaPartage_Admin_Edit_Rights {
 			$dispatch = $dispatches[0];
 			$email = $dispatch['email'];
 			$email_esc = str_replace('@', '_', $email);
-			if( is_int($page_id) )
+			if( is_numeric($page_id) )
 				$page = get_post($page_id);
 			else
 				$page = $page_id;

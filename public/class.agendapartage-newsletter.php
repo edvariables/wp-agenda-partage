@@ -443,6 +443,14 @@ class AgendaPartage_Newsletter {
 	 * Initialisation javascript des onglets
 	 */
 	public static function init_js_sections_tabs() {
+		if( $default_tab = self::get_newsletter() ){
+			$field_extension = self::get_form_newsletter_field_extension($default_tab);
+			$input_name = 'nl-period-' . $field_extension;
+			$default_tab = $default_tab->ID;
+		}
+		else
+			$default_tab = $input_name = 0;
+				
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
 		jQuery('form div.agdp-tabs-wrap:first').each(function(){
@@ -454,7 +462,8 @@ class AgendaPartage_Newsletter {
 			var $tabs = jQuery('<div class="' + class_name + '"/>');
 			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
-			
+			var default_tab_input_name = '<?=$input_name?>';
+			var default_tab = 0;
 			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
 				var $hidden_parent;
 				if( ($hidden_parent = jQuery(this).parents('.hidden:first')).length ){
@@ -466,9 +475,12 @@ class AgendaPartage_Newsletter {
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
+				if( default_tab_input_name && $content.find( '[data-name=' + default_tab_input_name + ']').length )
+					default_tab = tabs_counter - 1;
 			});
-			$wrapper.html( $tabs.tabs() )
-			;
+			$wrapper.html( $tabs.tabs({
+				  active: default_tab
+			}));
 		});
 	});</script>
 		<?php
@@ -659,6 +671,21 @@ class AgendaPartage_Newsletter {
 			else
 				$newsletter = $_REQUEST[AGDP_ARG_NEWSLETTERID];
 		}
+		if(is_a($newsletter, 'WP_Post')
+		&& $newsletter->post_type == self::post_type)
+			return $newsletter;
+		//slug
+		if( is_string($newsletter) && ! is_numeric($newsletter) ){
+			if ( $posts = get_posts( array( 
+				'name' => $newsletter, 
+				'post_type' => self::post_type,
+				'posts_per_page' => 1
+			) ) )
+				return $posts[0];
+			else
+				return false;
+		}
+			
 		$newsletter = get_post($newsletter);
 		if(is_a($newsletter, 'WP_Post')
 		&& $newsletter->post_type == self::post_type)
@@ -705,11 +732,17 @@ class AgendaPartage_Newsletter {
 					$newsletter_option = $option;
 					break;
 				}
-			if( ! $newsletter_option)
+			if( ! $newsletter_option){
+				if( ($source = self::get_content_source($newsletter->ID, true))
+				&& count($source) > 1
+				&& ($forum = get_post($source[1])) ){
+					return AgendaPartage_Forum::tag . '-' . $forum->post_name;
+				}
 				throw new Exception('L\'argument $newsletter_option contient une référence inconnue : ' . var_export($newsletter_option, true));
+			}
 		}
 		//Numérique : un forum dont on cherche le nom
-		if( is_int($newsletter_option) ){
+		if( is_numeric($newsletter_option) ){
 			if( $forum = self::get_forum_of_newsletter( $newsletter_option ) )
 				return AgendaPartage_Forum::tag . '-' . $forum->post_name;
 		}
@@ -1050,7 +1083,7 @@ class AgendaPartage_Newsletter {
 			if( ! $found)
 				$period = 'none';
 			
-			if( is_int($newsletter_option) )
+			if( is_numeric($newsletter_option) )
 				$newsletter_name = $newsletter->post_title;
 			else
 				$newsletter_name = AgendaPartage::get_option_label($newsletter_option);

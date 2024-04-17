@@ -95,7 +95,7 @@ class AgendaPartage_Forum {
 		// debug_log("get_forums", count($posts), $args);
 		$pages = [];
 		foreach($posts as $page){
-			if( is_int($page) )
+			if( is_numeric($page) )
 				$pages[] = $page;
 			else {
 				$post_id = $page->ID;
@@ -202,7 +202,7 @@ class AgendaPartage_Forum {
 	 * Appelle la synchronisation IMAP.
 	 */
 	public static function init_page($mailbox, $page = false){
-		if( is_int( $page )){
+		if( is_numeric( $page )){
 			if (!($page = get_post($page)))
 				return false;
 		}
@@ -857,7 +857,7 @@ class AgendaPartage_Forum {
 		// $page = self::get_page($page);
 		if( is_a($user, 'WP_User') )
 			$user_id = $user->ID;
-		elseif( is_int($user) )
+		elseif( is_numeric($user) )
 			$user_id = $user;
 		else
 			$user_id = email_exists( sanitize_email($user) );
@@ -941,7 +941,7 @@ class AgendaPartage_Forum {
 		if(is_a($user, 'WP_User')){
 			$user_id = $user->ID;
 		}
-		elseif( is_int($user) ){
+		elseif( is_numeric($user) ){
 			$user_id = $user;
 			$user = new WP_USER($user_id);
 		}

@@ -78,3 +78,7 @@ dans https://pays-de-saint-felicien.agenda-partage.fr/wp-admin/post.php?post=249
 Commentaire : répondre à l'auteur : blank...
 Commentaire à approuver : "Utilisateur adhérent" ou non-adhérent
 Commentaire approuvé : remplace le bloc commentaire par le nouveau
+Non connecté, ecopartage par url, ajout d'un commentaire : ça passe approuvé !
+Non connecté, bloquer l'accès à la page ecopartage via l'url (ou page alternative ?)
+
+Mettre en générique les classes _Shortcodes

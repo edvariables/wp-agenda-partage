@@ -171,7 +171,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 	public static function get_metabox_dispatch($post, $metabox){
 		echo '<ul style="margin-left: 12em;">';
 		foreach( AgendaPartage_Mailbox::get_pages_dispatch( $post ) as $page_id => $dispatches ){
-			if( is_int($page_id) ){
+			if( is_numeric($page_id) ){
 				if( $page = get_post($page_id))
 					$page_title = $page->post_title;
 				else

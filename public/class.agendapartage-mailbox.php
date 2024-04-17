@@ -361,7 +361,7 @@ class AgendaPartage_Mailbox {
 					$destination_id = false;
 				
 				if( $destination_filter ){
-					if( ! (  (is_int($destination_filter) && $destination_id == $destination_filter)
+					if( ! (  (is_numeric($destination_filter) && $destination_id == $destination_filter)
 						  || (is_a($destination_filter, 'WP_POST') && $destination_id == $destination_filter->ID)
 						  || ($destination_id === false && $destination === $destination_filter)
 					))
