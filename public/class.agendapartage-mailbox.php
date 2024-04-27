@@ -682,6 +682,12 @@ class AgendaPartage_Mailbox {
 				if( ! in_array('comment_duplicate', $comment->get_error_codes())
 				 || get_post_meta($mailbox->ID, 'imap_mark_as_read', true))
 				debug_log('import_message_to_comment !wp_new_comment : ', $comment);
+				if( is_admin()
+				&& class_exists('AgendaPartage_Admin'))
+					AgendaPartage_Admin::add_admin_notice(__CLASS__.'::import_message_to_comment(). wp_new_comment returns ',
+						in_array('comment_duplicate', $comment->get_error_codes()) 
+							? sprintf('Duplication %s : "%s"', $user_email, $commentdata['comment_meta']['title'])
+							: print_r($comment, true));
 			}
 			
 		}

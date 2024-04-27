@@ -795,6 +795,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		$headers[] = 'MIME-Version: 1.0';
 		$headers[] = 'Content-type: text/html; charset=utf-8';
 		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+		$headers[] = sprintf('Reply-to: %s', $email);
 
 		if($success = wp_mail( $dest_email
 			, '=?UTF-8?B?' . base64_encode($subject). '?='

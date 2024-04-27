@@ -171,14 +171,14 @@ class AgendaPartage_Admin {
 ?><script>( function( wp ) {
     wp.data.dispatch('core/notices').createNotice(
         '<?php echo $attrs['type']?>',
-        "<?php echo esc_attr(strip_tags($message))?>",
+        "<?php echo str_replace('"', '\"', strip_tags($message) )?>",
 		{
             isDismissible: true
             <?php if(isset($attrs['actions'])){
 			?>, actions: [
                 {
                     url: '<?php echo $attrs['actions']['url']?>',
-                    label: '<?php echo (empty($attrs['actions']['label']) ? 'Afficher' : $attrs['actions']['label'])?>'
+                    label: "<?php echo str_replace('"', '\"', empty($attrs['actions']['label']) ? 'Afficher' : $attrs['actions']['label'])?>"
                 }
             ]<?php }?>
         }

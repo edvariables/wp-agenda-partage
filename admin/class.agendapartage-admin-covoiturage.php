@@ -236,15 +236,17 @@ class AgendaPartage_Admin_Covoiturage {
 	    global $wp_meta_boxes;
 		//TODO : trier par les derniers ajoutés
 		//TODO : author OR email
-		$covoiturages = self::get_my_covoiturages(5);
-	    if( count($covoiturages) ) {
-			add_meta_box( 'dashboard_my_covoiturages',
-				__('Mes covoiturages', AGDP_TAG),
-				array(__CLASS__, 'dashboard_my_covoiturages_cb'),
-				'dashboard',
-				'normal',
-				'high',
-				array('covoiturages' => $covoiturages) );
+		if( ! current_user_can('manage_options') ){
+			$covoiturages = self::get_my_covoiturages(5);
+			if( count($covoiturages) ) {
+				add_meta_box( 'dashboard_my_covoiturages',
+					__('Mes covoiturages', AGDP_TAG),
+					array(__CLASS__, 'dashboard_my_covoiturages_cb'),
+					'dashboard',
+					'normal',
+					'high',
+					array('covoiturages' => $covoiturages) );
+			}
 		}
 		
 		if(current_user_can('manage_options')

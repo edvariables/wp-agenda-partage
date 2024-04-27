@@ -306,11 +306,9 @@ abstract class AgendaPartage_Post_Abstract {
 	/**
 	 * Clé d'activation depuis le mail pour basculer en 'publish'
 	 */
-	public static function get_activation_key($post, $force_new = false){
-		if(is_numeric($post)){
-			$post = get_post($post);
-		}
-		$post_id = $post->ID;
+	public static function get_activation_key($post_id, $force_new = false){
+		if(is_a($post_id, 'WP_Post'))
+			$post_id = $post_id->ID;
 		$meta_name = 'activation_key';
 		
 		$value = get_post_meta($post_id, $meta_name, true);
@@ -341,11 +339,9 @@ abstract class AgendaPartage_Post_Abstract {
 	/**
 	 * Contrôle de la clé d'activation 
 	 */
-	public static function check_activation_key($post, $value){
-		if(is_numeric($post)){
-			$post = get_post($post);
-		}
-		$post_id = $post->ID;
+	public static function check_activation_key($post_id, $value){
+		if(is_a($post_id, 'WP_Post'))
+			$post_id = $post_id->ID;
 		$meta_name = 'activation_key';
 		$meta_value = get_post_meta($post_id, $meta_name, true);
 		return hash_equals($value, $meta_value);

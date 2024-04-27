@@ -245,15 +245,17 @@ class AgendaPartage_Admin_Evenement {
 	    global $wp_meta_boxes;
 		//TODO : trier par les derniers ajoutés
 		//TODO : author OR email
-		$agdpevents = self::get_my_agdpevents(5);
-	    if( count($agdpevents) ) {
-			add_meta_box( 'dashboard_my_agdpevents',
-				__('Mes évènements', AGDP_TAG),
-				array(__CLASS__, 'dashboard_my_agdpevents_cb'),
-				'dashboard',
-				'normal',
-				'high',
-				array('agdpevents' => $agdpevents) );
+		if( ! current_user_can('manage_options') ){
+			$agdpevents = self::get_my_agdpevents(5);
+			if( count($agdpevents) ) {
+				add_meta_box( 'dashboard_my_agdpevents',
+					__('Mes évènements', AGDP_TAG),
+					array(__CLASS__, 'dashboard_my_agdpevents_cb'),
+					'dashboard',
+					'normal',
+					'high',
+					array('agdpevents' => $agdpevents) );
+			}
 		}
 
 	    if( class_exists('AgendaPartage_Admin_Multisite')
