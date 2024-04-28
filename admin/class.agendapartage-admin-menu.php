@@ -902,21 +902,29 @@ class AgendaPartage_Admin_Menu {
 			$menu_slug = $parent_slug . '&post_status=pending';
 			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
+			//Menu Agenda partagé
 			$parent_slug = AGDP_TAG;
 			$page_title = get_post_type_object(AgendaPartage_Mailbox::post_type)->labels->menu_name;
 			$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Mailbox::post_type);
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, 1);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
 			
 			$parent_slug = AGDP_TAG;
 			$page_title =  'Règles de publications';
 			$menu_slug = $parent_slug . '-rights';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agendapartage_rights_page_html'), 2);
+				array(__CLASS__, 'agendapartage_rights_page_html'), null);
 			
 			$parent_slug = AGDP_TAG;
 			$page_title = get_post_type_object(AgendaPartage_Maillog::post_type)->labels->menu_name;
 			$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Maillog::post_type);
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, 3);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+			
+			//Menu Pages
+			$capability = 'moderate_comments';
+			$parent_slug = 'edit.php?post_type=page';
+			$page_title = 'Forums';
+			$menu_slug = sprintf('edit.php?post_type=%s&orderby=%s&order=asc', AgendaPartage_Forum::post_type, AgendaPartage_Forum::tag);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
 		}
 		
 		//Replace wpcf7 menu title

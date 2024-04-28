@@ -174,6 +174,23 @@ class AgendaPartage_Forum {
 	}
 	
 	
+	
+	/**
+	 * Retourne les newsletters utilisant un forum.
+	 */
+	public static function get_newsletters($forum_id){
+		if( is_a($forum_id, 'WP_Post') )
+			$forum_id = $forum_id->ID;
+		
+		$query = new WP_Query([
+			'post_type' => AgendaPartage_Newsletter::post_type,
+			'meta_key' => 'source',
+			'meta_value' => sprintf('page.%d', $forum_id),
+		]);
+		debug_log('get_newsletters', $query->get_posts());
+		return $query->get_posts();
+	}
+	
 	/***************************/
 	/******** Droits ***********/
 	

@@ -114,6 +114,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	}
 	
 	public static function get_metabox_properties_fields(){
+		global $post;
 		$fields = [];
 		
 		//Boîte imap 
@@ -161,6 +162,15 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'label' => __('Modération de tous les messages', AGDP_TAG),
 			'input' => 'checkbox'
 		];
+		
+		//Newsletters
+		foreach( AgendaPartage_Forum::get_newsletters($post) as $newsletter)
+			$fields[] = [
+				'name' => '',
+				'label' => __('Lettre-info', AGDP_TAG)
+					. sprintf(' <a href="post.php?post=%d&action=edit">%s</a>', $newsletter->ID, $newsletter->post_title),
+				'input' => 'link'
+			];
 		return $fields;
 	}
 	

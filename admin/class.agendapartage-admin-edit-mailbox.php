@@ -124,6 +124,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		
 		$mailbox = get_post();
 		
+		//imap_test_connexion
 		$meta_key = 'imap_test_connexion';
 		$test_connexion = get_post_meta($mailbox->ID, $meta_key, true);
 		if($test_connexion){
@@ -151,6 +152,11 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 			$test_connexion_success = false;
 			$test_connexion_comment = false;
 		}
+		
+		//imap_mark_as_read
+		$meta_key = 'imap_mark_as_read';
+		$imap_mark_as_read = get_post_meta($mailbox->ID, $meta_key, true);
+		
 		$fields = [
 			[	'name' => 'imap_server',
 				'label' => __('Serveur IMAP', AGDP_TAG),
@@ -174,7 +180,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 				'label' => __('Marquer les messages comme étant lus', AGDP_TAG),
 				'type' => 'checkbox',
 				'default' => true,
-				'learn-more' => "Cette option doit être cochée en fonctionnement normal"
+				($imap_mark_as_read ? 'learn-more hidden' : 'warning') => "Cette option doit être cochée en fonctionnement normal"
 			],
 			[	'name' => 'clear_signature',
 				'label' => __('Effacer la signature', AGDP_TAG),
@@ -195,12 +201,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 			[	'name' => 'imap_test_connexion',
 				'label' => __('Tester la connexion', AGDP_TAG),
 				'type' => 'checkbox',
-				$test_connexion_success ? 'learn-more' : 'warning' => $test_connexion_comment
-			],
-			[	'name' => 'emails_dispatch',
-				'label' => __('emails_dispatch (pour migration)', AGDP_TAG),
-				'input' => 'textarea',
-				'warning' => 'pour migration vers les pages'
+				($test_connexion_success ? 'learn-more' : 'warning') => $test_connexion_comment
 			],
 		];
 		return $fields;
