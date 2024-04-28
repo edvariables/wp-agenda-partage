@@ -66,7 +66,7 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		foreach([ 'default_checked', 'download_link' ] as $meta_name)
+		foreach([ 'default_checked', 'download_link', 'connexion' ] as $meta_name)
 			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
 				update_term_meta($term_id, $meta_name, $args[$meta_name]);
 			}
@@ -137,6 +137,17 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 			parent::metabox_html([array('name' => $meta_name,
 									'label' => __('Coché par défaut lors de la création d\'un évènement.', AGDP_TAG),
 									'type' => 'bool',
+									// 'default' => $checked
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+    ?><tr class="form-field">
+        <th scope="row"><label for="default_checked">Paramètres de connexion</label></th>
+        <td><?php
+			$meta_name = 'connexion';
+			parent::metabox_html([array('name' => $meta_name,
+									// 'label' => __('Paramètres.', AGDP_TAG),
+									'type' => 'text',
 									// 'default' => $checked
 								)], $tag, null);
         ?></td>

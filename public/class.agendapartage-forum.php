@@ -271,7 +271,7 @@ class AgendaPartage_Forum {
 		// add_filter('comment_reply_link_args', array(__CLASS__, 'on_comment_reply_link_args'), 10, 3 );
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
 		
-		if( self::get_current_forum_rights( $page ) != 'P' )
+		// if( self::get_current_forum_rights( $page ) != 'P' )
 			add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return $import_result;
