@@ -59,9 +59,9 @@ class AgendaPartage_Mailbox_IMAP {
 				'date' => $email->date,
 				'udate' => $email->udate,
 				'subject' => $email->subject,
-				'to' => strtolower($email->to),
-				'from' => strtolower($email->from),
-				'reply_to' => strtolower($email->reply_to),
+				'to' => $email->to,
+				'from' => $email->from,
+				'reply_to' => $email->reply_to,
 				'attachments' => self::sanitize_attachments($email->attachments),
 				'text_plain' => $email->text_plain,
 				'text_html' => $email->text_html

@@ -146,6 +146,21 @@ class AgendaPartage_Admin_Menu {
 				]
 			);
 
+			// 
+			$field_id = 'forums_parent_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_pages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => 'page'
+				]
+			);
+
 		// register a new section in the "agendapartage" page
 		add_settings_section(
 			'agendapartage_section_agdpevents',
@@ -538,7 +553,7 @@ class AgendaPartage_Admin_Menu {
 						$form.attr('encoding', 'multipart/form-data');
 					}
 				});
-			</script>";<?php
+			</script><?php
 	}
 	
 	/**

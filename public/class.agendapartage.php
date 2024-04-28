@@ -265,6 +265,9 @@ class AgendaPartage {
 				return __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
 			case 'covoiturage_need_validation':
 				return __( 'Les nouveaux covoiturages doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
+				
+			case 'forums_parent_id':
+				return __( 'Page parente des forums', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}

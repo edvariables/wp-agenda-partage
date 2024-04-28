@@ -23,6 +23,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			return;
 		foreach ($fields as $field) {
 			$name = $field['name'];
+			$is_array_field = strpos( $name, '[]' ) !== false;//TODO pour autre que textarea
 			if($parent_field !== null)
 				$name = sprintf($name, $parent_field['name']);
 			if($name == 'post_content')
@@ -31,6 +32,10 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				$meta_value = '';
 			elseif(is_a($post, 'WP_Term'))
 				$meta_value = get_term_meta($post->term_id, $name, true);
+			elseif( $is_array_field ){
+				$meta_key = str_replace('[]', '', $name);
+				$meta_value = get_post_meta($post->ID, $meta_key, false);
+			}
 			else
 				$meta_value = get_post_meta($post->ID, $name, true);
 			$id = ! array_key_exists ( 'id', $field ) || ! $field['id'] ? $name : $field['id'];
@@ -106,6 +111,8 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 
 				////////////////
 				case 'textarea':
+					if( $is_array_field && is_array($val) )
+						$val = implode("\n", $val);
 					echo '<textarea id="'.$id.'" name="'.$name.'"'
 						. ($readonly ? ' readonly ' : '')
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
@@ -280,6 +287,10 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				$name = $field['name'];
 				if($parent_field !== null && isset($parent_field['name']))
 					$name = sprintf($name, $parent_field['name']);//TODO check
+				
+				if( $is_array_field = strpos( $name, '[]' ) !== false){
+					$name = substr($name, 0, strlen($name)-2);
+				}
 				// remember : a checkbox unchecked does not return any value
 				if( array_key_exists($name, $_POST)){
 					$val = $_POST[$name];
@@ -296,7 +307,23 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 					else
 						$val = null;
 				}
-				update_post_meta($post_ID, $name, $val);
+				if( $is_array_field ){
+					delete_post_meta($post_ID, $name);
+					//TODO pour autre que textarea
+					if( isset($field['input']) && $field['input'] === 'textarea' && is_array($val) )
+						$val = $val[0];
+					if( is_string($val) )
+						$val = explode("\n", $val);
+					elseif( ! is_array($val) )
+						$val = [$val];
+					foreach( $val as $value){
+						$value = trim($value, "\r\t ");
+						if($value)
+							add_post_meta($post_ID, $name, $value);
+					}
+				}
+				else
+					update_post_meta($post_ID, $name, $val);
 			}
 
 			//sub fields

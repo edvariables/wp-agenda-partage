@@ -77,7 +77,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 						, ['type' => 'info']);
 				break;
 				
-			// Edition d'une page de forum
+			/* // Edition d'une page de forum
 			case 'page':
 				$meta_key = AGDP_PAGE_META_MAILBOX;
 				if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
@@ -121,7 +121,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 
 				}
 	
-				break;
+				break; */
 				
 		}
 	}

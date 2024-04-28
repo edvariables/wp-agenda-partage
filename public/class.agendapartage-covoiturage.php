@@ -807,11 +807,11 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 			$html = sprintf('<div class="email-send alerte">L\'e-mail n\'a pas pu être envoyé à l\'adresse "%s".</div>', $dest_email);
 		}
 		
-		debug_log($return_html_result, $success, $html
+		/* debug_log($return_html_result, $success, $html
 			, $dest_email
 			, '=?UTF-8?B?' . base64_encode($subject). '?='
 			, $message
-			, $headers, $attachments );
+			, $headers, $attachments ); */
 		
 		if($return_html_result){
 			if($return_html_result === 'bool')

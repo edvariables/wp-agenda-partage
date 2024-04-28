@@ -29,6 +29,9 @@ class AgendaPartage_Admin {
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-mailbox.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Mailbox', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-forum.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Edit_Forum', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Evenement', 'init' ) );

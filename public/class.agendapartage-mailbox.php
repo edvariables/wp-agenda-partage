@@ -124,6 +124,8 @@ class AgendaPartage_Mailbox {
 		$query = [ 'post_type' => self::post_type ];
 		if( $published_only )
 			$query[ 'post_status' ] = 'publish';
+		else
+			$query[ 'post_status' ] = ['publish', 'pending', 'draft'];
 		if( $cron_enable_only )
 			$query = array_merge( $query, [
 				'meta_key' => 'cron-enable'
@@ -574,7 +576,7 @@ class AgendaPartage_Mailbox {
 			// var_dump($message);
 			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
 				$message['reply_to'] = [ $message['from'] ];
-			$user_email = $message['reply_to'][0]->email;
+			$user_email = strtolower($message['reply_to'][0]->email);
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 			if( ($pos = strpos($user_name, '@')) !== false)
 				$user_name = substr( $user_name, 0, $pos);
@@ -600,8 +602,8 @@ class AgendaPartage_Mailbox {
 					'source_email' => $imap_email,
 					'source_id' => $message['id'],
 					'source_no' => $message['msgno'],
-					'from' => $message['from']->email,
-					'to' => $message['to'][0]->email,
+					'from' => strtolower($message['from']->email),
+					'to' => strtolower($message['to'][0]->email),
 					'title' => trim($message['subject']),
 					'attachments' => $message['attachments'],
 					'import_date' => wp_date(DATE_ATOM),
@@ -640,7 +642,7 @@ class AgendaPartage_Mailbox {
 			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
 				$message['reply_to'] = [ $message['from'] ];
 			
-			$user_email = $message['reply_to'][0]->email;
+			$user_email = strtolower($message['reply_to'][0]->email);
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 			
 			if( ($pos = strpos($user_name, '@')) !== false)
@@ -667,8 +669,8 @@ class AgendaPartage_Mailbox {
 					'source_email' => $imap_email,
 					'source_id' => $message['id'],
 					'source_no' => $message['msgno'],
-					'from' => $message['from']->email,
-					'to' => $message['to'][0]->email,
+					'from' => strtolower($message['from']->email),
+					'to' => strtolower($message['to'][0]->email),
 					'title' => trim($message['subject']),
 					'attachments' => $message['attachments'],
 					'import_date' => wp_date(DATE_ATOM),
