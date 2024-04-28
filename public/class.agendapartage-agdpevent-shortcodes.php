@@ -412,37 +412,37 @@ class AgendaPartage_Evenement_Shortcodes {
 				$html = '';
 				$val = isset( $post->post_title ) ? $post->post_title : '';
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 					
 				$meta_name = 'ev-dates'; 
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'ev-organisateur'; 
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'ev-localisation';
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'ev-email';
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= make_mailto($val) . '</br>';
+						$html .= make_mailto($val) . '<br>';
 
 				$meta_name = 'ev-siteweb';
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= make_clickable(esc_html($val)) . '</br>';
+						$html .= make_clickable(esc_html($val)) . '<br>';
 
 				$meta_name = 'ev-phone';
 					$val = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, false);
 					if($val)
-						$html .= antispambot($val) . '</br>';
+						$html .= antispambot($val) . '<br>';
 				
 				if(! $html )
 					return '';

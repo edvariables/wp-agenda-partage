@@ -410,9 +410,19 @@ class AgendaPartage_Mailbox {
 	}
 	
 	/**
+	 * Retourne les droits d'un forum
+	 */
+	public static function get_page_rights( $page_id = false, $mailbox_id = false ){
+		if( $page_dispatch = self::get_page_dispatch( $page_id, $mailbox_id )){
+			return $page_dispatch[0]['rights'];
+		}
+		return [];
+	}
+	
+	/**
 	 * Retourne les paramètres de distribution d'une page (forum / agdpevent / covoiturage)
 	 */
-	public static function get_page_dispatch( $mailbox_id = false, $page_id = false ){
+	public static function get_page_dispatch( $page_id = false, $mailbox_id = false ){
 		if( is_a($page_id, 'WP_POST') )
 			$page_id = $page_id->ID;
 		if( ($pages = self::get_pages_dispatch( $mailbox_id, $page_id ))
@@ -829,7 +839,7 @@ class AgendaPartage_Mailbox {
 			$page = get_post($_POST['_wpcf7_container_post']);
 			$meta_key = AGDP_PAGE_META_MAILBOX;
 			if( $mailbox_id = get_post_meta( $page->ID, $meta_key, true)){
-				if( $dispatch = self::get_page_dispatch( false, $page->ID) ){
+				if( $dispatch = self::get_page_dispatch( $page->ID ) ){
 					return self::import_wpcf7_to_comment($contact_form, $abort, $submission, $mailbox_id, $dispatch, $page);
 				}
 			}

@@ -99,3 +99,6 @@ EDOC2019 : multisites pour tester les interactions inter-blogs
 User adhésion ecopartage = capability
 
 post edit : injection abusive de jQuery('form > div.agdp-tabs-wrap:first').each(function(){
+
+cf class.agendapartage-agdpevent.php //TODO if( self::waiting_for_activation($post) )
+	sinon, pas d'url

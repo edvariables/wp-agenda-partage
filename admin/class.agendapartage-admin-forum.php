@@ -10,10 +10,13 @@
  * Voir aussi AgendaPartage_Forum
  */
 class AgendaPartage_Admin_Forum {
+	
+	public static $forums_parent_id = false;
 
 	public static function init() {
 
 		self::init_hooks();
+		
 	}
 
 	public static function init_hooks() {
@@ -26,6 +29,13 @@ class AgendaPartage_Admin_Forum {
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
 
 	}
+	
+	public static function get_forums_parent_id(){
+		if( ! self::$forums_parent_id )
+			self::$forums_parent_id = AgendaPartage::get_option('forums_parent_id');
+		return self::$forums_parent_id;
+	}
+	
 	/**
 	 * Pots list view
 	 */
@@ -45,8 +55,16 @@ class AgendaPartage_Admin_Forum {
 	public static function manage_custom_columns( $column, $post_id ) {
 		switch ( $column ) {
 			case AgendaPartage_Forum::tag :
-				if( ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $post_id ) ) )
+				if( $post_id == self::get_forums_parent_id() ){
+					echo '<i>Racine des forums<br>&nbsp;&nbsp;réceptacle des commentaires pour e-mail non-attribuable</i>';
 					return;
+				}
+				if( ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $post_id ) ) ){
+					echo sprintf('<div class="row-actions"><span class="edit"><a href="/wp-admin/post.php?post=%d&action=edit&%s=1">Activer un forum</a></span></div>',
+						$post_id, AgendaPartage_Forum::tag
+					);
+					return;
+				}
 				
 				echo sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s</a>', $mailbox->ID, $mailbox->post_title);
 				
@@ -58,7 +76,7 @@ class AgendaPartage_Admin_Forum {
 						, $dispatch['rights'] . ($dispatch['moderate'] && ! in_array($dispatch['rights'], ['X', 'M']) ? ' - modéré' : ''));
 				}
 				if( $emails )
-					echo sprintf('<code>%s</code>', $emails);
+					echo sprintf('%s', $emails);
 				break;
 			default:
 				break;
@@ -76,7 +94,6 @@ class AgendaPartage_Admin_Forum {
 		if(empty($query->query_vars)
 		|| empty($query->query_vars['orderby']))
 			return;
-		debug_log('on_pre_get_posts', $query->query_vars['orderby']);
 		switch( $query->query_vars['orderby']) {
 			case AgendaPartage_Forum::tag:
 				$query->set('meta_key', AGDP_PAGE_META_MAILBOX);  

@@ -318,27 +318,27 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				$html = '';
 				$val = isset( $post->post_title ) ? $post->post_title : '';
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 					
 				$meta_name = 'cov-dates'; 
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 					
 				$meta_name = 'cov-nb-places'; 
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'cov-organisateur'; 
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= esc_html($val) . '</br>';
+						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'cov-email';
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
-						$html .= make_mailto($val) . '</br>';
+						$html .= make_mailto($val) . '<br>';
 
 				$meta_name = 'cov-phone-show';
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
@@ -348,7 +348,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 				if( $show_email ){ //TODO sans contrainte si envoyé à l'auteur
 					$val = AgendaPartage_Covoiturage::get_post_meta($post_id, $meta_name, true, false);
 					if($val)
-						$html .= antispambot($val) . '</br>';
+						$html .= antispambot($val) . '<br>';
 				}
 				
 				if(! $html )

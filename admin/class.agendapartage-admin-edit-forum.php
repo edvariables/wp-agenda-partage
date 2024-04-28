@@ -29,7 +29,8 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	
 	public static function on_use_block_editor_for_post_cb($use_block_editor, $post){
 		
-		if( AgendaPartage_Forum::post_is_forum( $post ) ){
+		if( (isset($_REQUEST[AgendaPartage_Forum::tag]) && $_REQUEST[AgendaPartage_Forum::tag])
+			|| AgendaPartage_Forum::post_is_forum( $post ) ){
 			add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
 			// return false;

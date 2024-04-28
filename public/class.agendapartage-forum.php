@@ -20,7 +20,11 @@ class AgendaPartage_Forum {
 	private static $initiated = false;
 	
 	public static $properties = [];
-
+	
+	private static $current_forum;
+	private static $current_forum_rights;
+		
+		
 	public static function init() {
 		if ( ! self::$initiated ) {
 			self::$initiated = true;
@@ -39,6 +43,14 @@ class AgendaPartage_Forum {
 		'M' => 'Modérateurice',
 		'X' => 'Administrateurice',
 	];
+	
+	const subscription_roles = [
+			'' => '(non défini)',
+			'administrator' => 'Administrateurice',
+			'moderator' => 'Modérateurice',
+			'subscriber' => 'Abonné-e',
+			'banned' => 'Banni-e',
+		];
 
 	/**
 	 * Hook
@@ -74,6 +86,17 @@ class AgendaPartage_Forum {
 	public static function get_property_is_value($key, $value){
 		return isset(self::$properties[$key]) ? self::$properties[$key] == $value : null === $value;
 	}
+	
+	public static function get_current_forum_rights( $page = false ){
+		if( ! self::$current_forum_rights
+		&& $page ){
+			self::$current_forum = $page;
+			if( ! (self::$current_forum_rights = AgendaPartage_Mailbox::get_page_rights( $page )) )
+				self::$current_forum_rights = 'P';
+		}
+		return self::$current_forum_rights;
+	}
+		
 	
 	/**
 	 * Retourne un tableau de pages de forum
@@ -230,6 +253,9 @@ class AgendaPartage_Forum {
 		add_filter('comment_reply_link', array(__CLASS__, 'on_comment_reply_link'), 10, 4 );
 		// add_filter('comment_reply_link_args', array(__CLASS__, 'on_comment_reply_link_args'), 10, 3 );
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
+		
+		if( self::get_current_forum_rights( $page ) != 'P' )
+			add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return $import_result;
 	}
@@ -522,6 +548,8 @@ class AgendaPartage_Forum {
 			echo sprintf('<p>%s<code>Un e-mail a été envoyé : %s</code></p>'
 				, '<span class="dashicons dashicons-email-alt"></span>'
 				, $send_email);
+			
+			delete_comment_meta( $comment_id, 'send-email');
 		}
 		
 		if( $comment->comment_approved == 0
@@ -711,9 +739,47 @@ class AgendaPartage_Forum {
 		 && ! strpos( $comment_author_link, '@' ) ){
 			$comment = get_comment($comment_id);
 			
-			if( $comment->comment_author_email )
+			if( $comment->comment_author_email ) {
 				$comment_author_link = sprintf('<a href="mailto:%s">%s</a>', $comment->comment_author_email, $comment_author);
-		 }
+			}
+		}
+		return $comment_author_link;
+	}
+	/**
+	 * Affichage du statut de l'auteur du commentaire
+	 */
+	public static function on_get_comment_author_status( $comment_author_link, $comment_author, $comment_id ){
+		$status = false;
+		$comment = get_comment($comment_id);
+		
+		if( $comment->comment_author_email 
+		  && ( $user_id = email_exists($comment->comment_author_email) )
+		  && ( $user = new WP_User($user_id) )){
+			if( user_can( $user, 'manage_options' ) ){
+				$status = 'administrateurice';
+			}
+			elseif( user_can( $user, 'moderate_comments' ) ){
+				$status = 'peut modérer';
+			}
+			else {
+				$right = self::get_current_forum_rights();
+				if( in_array($right , ['A', 'AO']) ){
+					switch($subscription = self::get_subscription( $comment->comment_author_email, self::$current_forum )){
+						case false:
+						case '':
+							$status = 'non adhérent-e';
+							break;
+						default:
+							$status = isset(self::subscription_roles[$subscription]) ? strtolower(self::subscription_roles[$subscription]) : '?'.$subscription;
+							break;
+					}
+				}
+			}
+		}
+		else
+			$status = 'inconnu-e';
+		if( $status )
+			$comment_author_link .= sprintf('<span class="comment-user-status">(%s)</span>', $status);
 		return $comment_author_link;
 	}
 	
@@ -842,8 +908,10 @@ class AgendaPartage_Forum {
 	/**
 	 * Option d'abonnement de l'utilisateur
 	 */
-	public static function get_user_subscription($page = false){
-		return self::get_subscription(self::get_user_email(), $page);
+	public static function get_user_subscription($page = false, $user = false){
+		if( ! $user )
+			$user = self::get_user_email();
+		return self::get_subscription($user, $page);
 	}
 	
 	public static function get_subscription_meta_key($page = false){
@@ -922,16 +990,6 @@ class AgendaPartage_Forum {
 		return false;
 	}
 	
-	public static function get_mailbox_of_page( $post ){
-		if($post && $post->post_type === 'page'){
-			$meta_key = AGDP_PAGE_META_MAILBOX;
-			if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
-				return get_post($mailbox_id);
-			}
-		}
-		return false;
-	}
-	
 	/**
 	 * Retourne l'état d'un commentaire à importer selon l'utilisateur lié
 	 */
@@ -953,16 +1011,40 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
+	 * Retourne le paramètre de droit d'un forum
+	 */
+	public static function get_forum_right( $page ) {
+		//Cache sur current_forum
+		if( self::$current_forum ) {
+			if( self::$current_forum === $page )
+				return self::$current_forum_rights;
+			elseif( is_a(self::$current_forum, 'WP_Post') ){
+				if( is_a($page, 'WP_Post') ){
+					if( self::$current_forum->ID === $page->ID )
+						return self::$current_forum_rights;
+				}
+				elseif( self::$current_forum->ID === $page )
+					return self::$current_forum_rights;
+			}
+			else {
+				if( is_a($page, 'WP_Post') ){
+					if( self::$current_forum === $page->ID )
+						return self::$current_forum_rights;
+				}
+				elseif( self::$current_forum === $page )
+					return self::$current_forum_rights;
+			}
+		}
+		return AgendaPartage_Mailbox::get_page_rights( $page );
+	}
+	
+	/**
 	 * Retourne l'état d'un post à importer selon l'utilisateur lié
 	 */
 	 public static function get_forum_post_status($page, $user, $email) {
 		
-		$dispatches = AgendaPartage_Mailbox::get_page_dispatch(false, $page);
-		// debug_log('get_forum_post_status $dispatches', $page->post_title, $dispatches);
-		
-		//Right Public
-		$right = $dispatches ? $dispatches[0]['rights'] : false;
-		if( $right === 'P' )
+		$right = self::get_forum_right( $page );
+		if( ! $right || $right === 'P' )
 			return 'publish';
 		
 		if(is_a($user, 'WP_User')){

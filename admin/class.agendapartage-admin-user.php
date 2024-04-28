@@ -85,13 +85,7 @@ class AgendaPartage_Admin_User {
 		<table class="form-table" role="presentation"><?php
 			$pages = AgendaPartage_Mailbox::get_pages_dispatch();
 			
-			$subscription_roles = [
-				'' => '(non défini)',
-				'administrator' => 'Administrateurice',
-				'moderator' => 'Modérateurice',
-				'subscriber' => 'Abonné-e',
-				'banned' => 'Banni-e',
-			];
+			$subscription_roles = AgendaPartage_Forum::subscription_roles;
 			$post_statuses = [
 				'publish' => 'publié',
 				'pending' => 'en attente de modération',

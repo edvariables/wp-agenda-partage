@@ -492,3 +492,8 @@ body.colors-dark #comments #reply-title a {
 #comments .comment-content .unapproved-action-links * {
 	color: red;
 }
+#comments .comment-user-status {
+	padding-left: 1em;
+	font-size: smaller;
+	font-weight : normal;
+}
