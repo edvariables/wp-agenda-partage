@@ -121,17 +121,27 @@ class AgendaPartage_Admin_Mailbox {
 		switch ( $column ) {
 			case 'associated-page' :
 				$post = get_post( $post_id );
-				if($post->post_status != 'publish')
-					echo 'statut "' . __($post->post_status) . '"' . '<br>';
-				if( $emails_dispatch = get_post_meta($post_id, 'emails_dispatch', true) )
-					echo sprintf('<code>%s</code>', str_replace("\n", '<br>', $emails_dispatch));
+				if($post->post_status != 'publish'){
+					$post_statuses = get_post_statuses();
+					echo sprintf('%sstatut "%s"<br>', AgendaPartage::icon('warning'), $post_statuses[$post->post_status]);
+				}
+				$emails = '';
+				foreach( AgendaPartage_Mailbox::get_emails_dispatch( $post_id ) as $email => $dispatch ){
+					if( $emails ) $emails .= '<br>';
+					$emails .= sprintf('%s > %s (%s)'
+						, $email
+						, sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s</a>', $dispatch['id'], $dispatch['page_title'])
+						, $dispatch['rights'] . ($dispatch['moderate'] ? ' - modéré' : ''));
+				}
+				if( $emails )
+					echo sprintf('<code>%s</code>', $emails);
 				break;
 			case 'imap' :
+				if( ! ($imap_mark_as_read = get_post_meta($post_id, 'imap_mark_as_read', true)) )
+					echo sprintf('%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée.<br>', AgendaPartage::icon('warning'));
 				$imap_server = get_post_meta($post_id, 'imap_server', true);
 				$imap_email = get_post_meta($post_id, 'imap_email', true);
 				echo sprintf('<code>%s@%s</code>', $imap_email, $imap_server);
-				if( ! ($imap_mark_as_read = get_post_meta($post_id, 'imap_mark_as_read', true)) )
-					echo sprintf('<br>%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée.', AgendaPartage::icon('warning'));
 				break;
 			default:
 				break;

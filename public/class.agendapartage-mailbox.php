@@ -321,64 +321,92 @@ class AgendaPartage_Mailbox {
 	 * Retourne les paramètres de distribution des e-mails
 	 */
 	public static function get_emails_dispatch( $mailbox_id = false, $destination_filter = false ){
-		$dispatch = [];
-		if( $mailbox_id === false ){
-			foreach( self::get_mailboxes() as $mailbox )
-				$dispatch = array_merge( $dispatch, self::get_emails_dispatch( $mailbox, $destination_filter) );
-			return $dispatch;
-		}
 		if( is_a($mailbox_id, 'WP_POST') )
 			$mailbox_id = $mailbox_id->ID;
+		if( is_a($destination_filter, 'WP_POST') )
+			$destination_filter = $destination_filter->ID;
 		
-		$meta_name = 'imap_email';
-		$mailbox_email = get_post_meta($mailbox_id, $meta_name, true);
-		$mailbox_domain = trim(substr($mailbox_email, (int) strpos($mailbox_email, '@') + 1));
-		
-		$meta_name = 'emails_dispatch';
-		$dispatch_data = get_post_meta($mailbox_id, $meta_name, true);
-		if( $dispatch_data ){
-			foreach( explode("\n", $dispatch_data) as $dispatch_raw ){
-				$dispatch_raw = trim( $dispatch_raw, "\n\r ");
-				if( strpos($dispatch_raw, '>') === false )
-					continue;
-				$dispatch_raw = explode('>', $dispatch_raw);
-				$email = strtolower(trim($dispatch_raw[0]));
-				if( ! $email )
-					$email .= $mailbox_email; 
-				elseif( strpos($email, '@' ) === false )
-					$email .= '@' . $mailbox_domain; 
-				$destination = trim($dispatch_raw[1]);
-				$rights = 'P';//Public par défaut
-				if( strpos($destination, '|' ) !== false ){
-					$destination = explode('|', $destination);
-					$rights = strtoupper(trim($destination[1]));
-					$destination = trim($destination[0]);
-				}
-				if( strpos($destination, '.' ) !== false ){
-					$destination = explode('.', $destination);
-					$destination_id = $destination[1];
-					$destination = $destination[0];
-				}
-				else
-					$destination_id = false;
-				
-				if( $destination_filter ){
-					if( ! (  (is_numeric($destination_filter) && $destination_id == $destination_filter)
-						  || (is_a($destination_filter, 'WP_POST') && $destination_id == $destination_filter->ID)
-						  || ($destination_id === false && $destination === $destination_filter)
-					))
-						continue;
-				}
-				$dispatch[ $email ] = [
-					'type' => $destination,
-					'id' => $destination_id,
-					'mailbox' => $mailbox_id,
-					'rights' => $rights
-				];
-			}
+	    global $wpdb;
+		$sql = 
+			'SELECT page.ID as page_id, page.post_title as page_title
+				, mailbox.ID AS mailbox_id, mailbox.post_title AS mailbox_title, mailbox_email.meta_value AS mailbox_email
+				, email.meta_value AS email, rights.meta_value AS rights, moderate.meta_value AS moderate 
+			FROM ' . $wpdb->posts . ' AS page
+			INNER JOIN '.$wpdb->postmeta. ' AS mailbox_id
+				ON page.ID = mailbox_id.post_id 
+				AND mailbox_id.meta_key = "' . AGDP_PAGE_META_MAILBOX . '"
+			INNER JOIN '.$wpdb->posts. ' AS mailbox
+				ON mailbox.ID = mailbox_id.meta_value 
+			INNER JOIN '.$wpdb->postmeta. ' AS mailbox_email
+				ON mailbox.ID = mailbox_email.post_id
+				AND mailbox_email.meta_key = "imap_email"
+			LEFT JOIN '.$wpdb->postmeta. ' AS email
+				ON page.ID = email.post_id
+				AND email.meta_key = "forum_email"
+			LEFT JOIN '.$wpdb->postmeta. ' AS rights
+				ON page.ID = rights.post_id
+				AND rights.meta_key = "forum_rights"
+			LEFT JOIN '.$wpdb->postmeta. ' AS moderate
+				ON page.ID = moderate.post_id
+				AND moderate.meta_key = "forum_moderate"
+			WHERE page.post_status != "trash"
+		';
+		if( $mailbox_id !== false ){
+			$sql .= '
+				AND mailbox.ID = ' . $mailbox_id . '
+			';
 		}
+		if( $destination_filter ){
+			$sql .= '
+				AND page.ID  = ' . $destination_filter . '
+			';
+		}
+		$sql .= '
+			ORDER BY page_id, mailbox_id
+		';
 		
-		return $dispatch;
+		$dispatches = [];
+		foreach( $wpdb->get_results( $sql ) as $dbrow )	{
+			$email = $dbrow->email;
+			$mailbox_domain = explode('@', $dbrow->mailbox_email)[1];
+			if( strpos($email, '@') === false )
+				$email .= '@' . $mailbox_domain;
+			elseif( strpos($email, '@*') !== false )
+				$email = str_replace('@*', '@' . $mailbox_domain );
+			if( ! ($rights = $dbrow->rights) )
+				$rights = 'P';
+			if( $dbrow->moderate === '0')
+				$dbrow->moderate = false;
+			$dispatches[ $email ] = [
+				'email' => $email,
+				'type' => 'page',
+				'id' => $dbrow->page_id,
+				'page_title' => $dbrow->page_title,
+				'mailbox' => $dbrow->mailbox_id,
+				'mailbox_title' => $dbrow->mailbox_title,
+				'mailbox_email' => $dbrow->mailbox_email,
+				'mailbox_domain' => $mailbox_domain,
+				'rights' => $rights,
+				'moderate' => $dbrow->moderate
+			];
+		}
+		if( ! $destination_filter )
+			$dispatches[ $email = '*' ] = [
+				'email' => $email,
+				'type' => 'page',
+				'id' => AgendaPartage::get_option('forums_parent_id'),
+				'page_title' => false,
+				'mailbox' => false,
+				'mailbox_title' => false,
+				'mailbox_email' => false,
+				'mailbox_domain' => false,
+				'rights' => 'M',
+				'moderate' => true
+			];
+		
+		// debug_log('get_emails_dispatch', $sql, $dispatches );
+		
+		return $dispatches;
 	}
 	
 	/**
@@ -400,11 +428,12 @@ class AgendaPartage_Mailbox {
 		if( is_a($page_id_only, 'WP_POST') )
 			$page_id_only = $page_id_only->ID;
 		$pages = [];
-		$all_dispatches = self::get_emails_dispatch($mailbox_id);
+		$all_dispatches = self::get_emails_dispatch($mailbox_id, $page_id_only);
 		// debug_log('get_pages_dispatch $all_dispatches', $all_dispatches);
 		foreach( $all_dispatches as $email => $dispatch ){
 			if($dispatch['type'] === 'page')
 				$page_id = $dispatch['id'].'';
+			//TODO
 			elseif( $dispatch['type'] === AgendaPartage_Evenement::post_type ){
 				$page_id = AgendaPartage::get_option('agenda_page_id');
 			}
@@ -512,8 +541,8 @@ class AgendaPartage_Mailbox {
 					break;
 				}
 			if( ! $email_to )
-				if( isset($dispatch['*@*']) )
-					$email_to = '*@*';
+				if( isset($dispatch['*']) )
+					$email_to = '*';
 				else {
 					debug_log(__CLASS__ . '.import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
 					continue;

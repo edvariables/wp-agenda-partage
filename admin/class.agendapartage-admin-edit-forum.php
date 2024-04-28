@@ -29,37 +29,12 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	
 	public static function on_use_block_editor_for_post_cb($use_block_editor, $post){
 		
-		if( self::post_is_forum( $post ) ){
+		if( AgendaPartage_Forum::post_is_forum( $post ) ){
 			add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
 			// return false;
 		}
 		return $use_block_editor;
-	}
-	
-	public static function post_is_forum( $post ){
-		if($post && $post->post_type === 'page'){
-			$field_id = 'forums_parent_id';
-			if( $post->post_parent
-			&& $post->post_parent == AgendaPartage::get_option($field_id) )
-				return true;
-			$meta_key = AGDP_PAGE_META_MAILBOX;
-			if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
-				return true;
-			}
-			
-		}
-		return false;
-	}
-	
-	public static function get_mailbox_of_page( $post ){
-		if($post && $post->post_type === 'page'){
-			$meta_key = AGDP_PAGE_META_MAILBOX;
-			if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
-				return get_post($mailbox_id);
-			}
-		}
-		return false;
 	}
 		
 	/**
@@ -67,12 +42,12 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	 */
 	public static function on_admin_notices_cb(){
 		global $post;
-		if( $mailbox = self::get_mailbox_of_page( $post ) ){
+		if( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $post ) ){
 			$mailbox_id = $mailbox->ID;
 			$emails = '';
 			foreach( AgendaPartage_Mailbox::get_emails_dispatch( false, $post->ID ) as $email=>$dispatch){
 				if( $emails ) $emails .= ', ';
-				if( $email === '*@*' ) $email = '(toutes les autres adresses)';
+				if( $email === '*' ) $email = '(toutes les autres adresses)';
 				$emails .= sprintf('%s (%s)', $email, $dispatch['rights']);
 			}
 			if( is_array($emails) ) 
@@ -186,7 +161,6 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'input' => 'checkbox'
 		];
 		return $fields;
-				
 	}
 	
 	/**

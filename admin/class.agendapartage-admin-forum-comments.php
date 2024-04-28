@@ -23,4 +23,4 @@ class AgendaPartage_Admin_Forum_Comments {
 		}
 		return $comment;
 	}
-}
+}?>

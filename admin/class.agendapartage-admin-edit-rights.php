@@ -208,17 +208,16 @@ class AgendaPartage_Admin_Edit_Rights {
 			
 			$mailboxes = [];
 			foreach( $args['dispatches'] as $dispatch ){
-				$mailbox = get_post($dispatch['mailbox']);
 				if($message)
 					$message .= ', ';
+				if( $dispatch['email'] === '*' ){
+					$message .= 'toutes les adresses';
+					continue;
+				}
+				$mailbox = get_post($dispatch['mailbox']);
 				if( isset($mailboxes[$dispatch['mailbox'].'']) )
 					$message .= 'ou ';
 				$email = $dispatch['email'];
-				if( $email === '*@*'){
-					$meta_key = 'imap_email';
-					$mailbox_email = get_post_meta($mailbox->ID, $meta_key, true);
-					$email = sprintf('toutes les autres adresses dans %s', $mailbox_email);
-				}
 				$message .= sprintf('par l\'e-mail <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $mailbox->ID, $email);
 				
 				if( $mailbox->post_status != 'publish' )
@@ -254,9 +253,7 @@ class AgendaPartage_Admin_Edit_Rights {
 			?><h1>Désolé, l'accès à cette page est réservée.</h1><?php
 			return;
 		}
-
-		?><h1>Attention, cette page n'est pas opérationnelle et ne doit pas être utilisée.</h1><?php
-			
+		
 		// add error/update messages
 
 		// check if the user have submitted the settings
@@ -280,7 +277,8 @@ class AgendaPartage_Admin_Edit_Rights {
 				// (sections are registered for "agendapartage", each field is registered to a specific section)
 				do_settings_sections( self::TAG );
 				// output save settings button
-				submit_button( __('Enregistrer', AGDP_TAG) );
+				//TODO
+				submit_button( __('Enregistrer', AGDP_TAG), 'primary', 'submit', true, $other_attributes = 'disabled="disabled"' );
 				?>
 			</form>
 		</div>

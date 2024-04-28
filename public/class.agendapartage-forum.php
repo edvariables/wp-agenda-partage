@@ -36,6 +36,8 @@ class AgendaPartage_Forum {
 		'CO' => 'Inscription cooptée et connexion requise',
 		'A' => 'Adhésion requise',
 		'AO' => 'Adhésion cooptée requise',
+		'M' => 'Modérateurice',
+		'X' => 'Administrateurice',
 	];
 
 	/**
@@ -904,6 +906,31 @@ class AgendaPartage_Forum {
 	}
 	
 	
+	
+	public static function post_is_forum( $post ){
+		if($post && $post->post_type === 'page'){
+			$field_id = 'forums_parent_id';
+			if( $post->post_parent
+			&& $post->post_parent == AgendaPartage::get_option($field_id) )
+				return true;
+			$meta_key = AGDP_PAGE_META_MAILBOX;
+			if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
+				return true;
+			}
+			
+		}
+		return false;
+	}
+	
+	public static function get_mailbox_of_page( $post ){
+		if($post && $post->post_type === 'page'){
+			$meta_key = AGDP_PAGE_META_MAILBOX;
+			if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
+				return get_post($mailbox_id);
+			}
+		}
+		return false;
+	}
 	
 	/**
 	 * Retourne l'état d'un commentaire à importer selon l'utilisateur lié

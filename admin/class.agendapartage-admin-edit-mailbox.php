@@ -47,9 +47,10 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 						, ['type' => 'warning']);
 						
 				$dispatch = AgendaPartage_Mailbox::get_emails_dispatch($post->ID);
+						
 				$links = [];
 				foreach($dispatch as $email => $destination){
-					if( $email === '*@*')
+					if( $email === '*' )
 						$email = 'toutes les autres adresses';
 					else
 						$email = sprintf('<u>%s</u>', $email);
@@ -57,7 +58,11 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 						case 'page':
 							$page_id = $destination['id'];
 							$page = get_post($page_id);
-							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>.', $email, $page_id, $page->post_title);
+							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">%s</a> (%s).'
+								, $email, $page_id, $page->post_title
+								, AgendaPartage_Forum::get_right_label( $destination['rights'])
+									. ($destination['moderate'] && !in_array($destination['rights'], ['M', 'X']) ? ' - Modération' : '')
+							);
 							break;
 						case AgendaPartage_Evenement::post_type:
 							$post_id = AgendaPartage::get_option('agenda_page_id');
@@ -76,53 +81,6 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 					AgendaPartage_Admin::add_admin_notice_now(sprintf('<ul><li>%s</li></ul>', implode('</li><li>', $links))
 						, ['type' => 'info']);
 				break;
-				
-			/* // Edition d'une page de forum
-			case 'page':
-				$meta_key = AGDP_PAGE_META_MAILBOX;
-				if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
-					$mailbox = get_post($mailbox_id);
-					
-					$emails = '';
-					foreach( AgendaPartage_Mailbox::get_emails_dispatch( false, $post->ID ) as $email=>$dispatch){
-						if( $emails ) $emails .= ', ';
-						if( $email === '*@*' ) $email = '(toutes les autres adresses)';
-						$emails .= sprintf('%s (%s)', $email, $dispatch['rights']);
-					}
-					if( is_array($emails) ) 
-						$emails = implode( ', ', array_keys($emails));
-					
-					if ( ! get_post_meta($mailbox_id, 'imap_mark_as_read', true) )
-						AgendaPartage_Admin::add_admin_notice_now(sprintf('Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée.'
-							. ' pour <a href="/wp-admin/post.php?post=%s&action=edit">la boîte e-mails <u>%s</u></a>.', $mailbox_id, $mailbox->post_title)
-							, ['type' => 'warning', 
-								'actions' => [
-									'url' => sprintf('/wp-admin/post.php?post=%s&action=edit', $mailbox_id)
-								]
-							]);
-						
-					if( $mailbox->post_status != 'publish' )
-						AgendaPartage_Admin::add_admin_notice_now('Attention, la boîte e-mails associée n\'est pas publiée.'
-							. sprintf(' <a href="/wp-admin/post.php?post=%s&action=edit">Cliquez ici pour modifier la boîte e-mails</a>. ', $mailbox_id)
-							. sprintf('<br>E-mail(s) associé(s) : %s.', $emails)
-							, ['type' => 'warning', 
-								'actions' => [
-									'url' => sprintf('/wp-admin/post.php?post=%s&action=edit', $mailbox_id)
-								]
-							]);
-					else
-						AgendaPartage_Admin::add_admin_notice_now(sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">Cliquez ici pour afficher la boîte e-mails associée</a>. ', $mailbox_id)
-								. sprintf('<br>E-mail(s) associé(s) : %s.', $emails)
-							, ['type' => 'info', 
-								'actions' => [
-									'url' => sprintf('/wp-admin/post.php?post=%s&action=edit', $mailbox_id)
-								]
-							]);
-
-				}
-	
-				break; */
-				
 		}
 	}
 		
@@ -132,7 +90,6 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 	public static function register_mailbox_metaboxes($post){
 		add_meta_box('agdp_mailbox-imap', __('Synchronisation depuis une boîte e-mails', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Mailbox::post_type, 'normal', 'high');
 		add_meta_box('agdp_mailbox-cron', __('Automate d\'importation', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Mailbox::post_type, 'normal', 'high');
-		add_meta_box('agdp_mailbox-dispatch', __('Distribution des e-mails reçus en fonction du destinataire de l\'e-mail', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Mailbox::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -142,10 +99,6 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		//var_dump(func_get_args());
 		
 		switch ($metabox['id']) {
-			
-			case 'agdp_mailbox-dispatch':
-				self::get_metabox_dispatch( $post, $metabox );
-				break;
 			
 			case 'agdp_mailbox-imap':
 				parent::metabox_html( self::get_metabox_imap_fields(), $post, $metabox );
@@ -164,68 +117,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		return array_merge(
 			self::get_metabox_imap_fields(),
 			self::get_metabox_cron_fields(),
-			self::get_metabox_dispatch_fields(),
 		);
-	}
-	
-	public static function get_metabox_dispatch($post, $metabox){
-		echo '<ul style="margin-left: 12em;">';
-		foreach( AgendaPartage_Mailbox::get_pages_dispatch( $post ) as $page_id => $dispatches ){
-			if( is_numeric($page_id) ){
-				if( $page = get_post($page_id))
-					$page_title = $page->post_title;
-				else
-					$page_title = sprintf('(page %d inconnue)', $page_id);
-			}
-			else {
-				$page_title = $page_id;
-			}
-			echo sprintf('<li>Page <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $page_id, $page_title);
-			//echo print_r($dispatches);
-			echo '<ul style="margin-left: 1em;">';
-			foreach($dispatches as $dispatch){
-				if($dispatch['email'] === '*@*')
-					$dispatch['email'] = 'Toutes les autres adresses';
-				echo sprintf('<li>Email : <b>%s</b>', $dispatch['email']);
-				echo sprintf(' - (%s - %s)', $dispatch['rights'], AgendaPartage_Forum::get_right_label($dispatch['rights']));
-				echo '</li>';
-			}
-			echo '</ul>';
-			
-			echo '</li>';
-		}
-		echo '</ul>';
-		
-		parent::metabox_html( self::get_metabox_dispatch_fields(), $post, $metabox );
-		
-	}
-	
-	public static function get_metabox_dispatch_fields(){
-		$rights = [];
-		foreach(AgendaPartage_Forum::get_all_rights() as $right)
-			$rights[] = sprintf('<b>%s</b> %s', $right, AgendaPartage_Forum::get_right_label($right));
-		$rights = implode(', ', $rights);
-		
-		$fields = [
-			[	'name' => 'emails_dispatch',
-				'label' => __('Distribution des e-mails', AGDP_TAG),
-				'type' => 'text',
-				'input' => 'textarea',
-				'input_attributes' => ['rows="5"'],
-				'learn-more' => 'Chaque ligne est de la forme <code>%e-mail_to% > %post_type%[.%post_id%][ | %droits%]</code>.',
-				'comments' => ['<code>%e-mail_to%</code> peut ne pas contenir le domaine si c\'est le même que celui de la boîte e-mails.'
-								, 'Par exemple : <code>info-partage.nord-ardeche@agenda-partage.fr > page.3574</code> (création de commentaires)'
-								, 'ou : <code>evenement.nord-ardeche > agdpevent</code>'
-								, 'ou : <code>covoiturage.nord-ardeche@agenda-partage.fr > covoiturage</code>'
-								, 'ou : <code> > page.3255</code> (l\'adresse principale est utilisée)'
-								, 'ou : <code>*@* > page.3255</code> (toutes les adresses)'
-								, 'Droits : <code>* > page.3574 | P</code> ('.$rights.')'
-								
-							]
-			]
-		];
-		return $fields;
-				
 	}
 	
 	public static function get_metabox_imap_fields(){
@@ -304,6 +196,11 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 				'label' => __('Tester la connexion', AGDP_TAG),
 				'type' => 'checkbox',
 				$test_connexion_success ? 'learn-more' : 'warning' => $test_connexion_comment
+			],
+			[	'name' => 'emails_dispatch',
+				'label' => __('emails_dispatch (pour migration)', AGDP_TAG),
+				'input' => 'textarea',
+				'warning' => 'pour migration vers les pages'
 			],
 		];
 		return $fields;
@@ -388,32 +285,7 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		if( $mailbox->post_status == 'trashed' ){
 			return;
 		}
-		
-		self::update_related_pages($mailbox_id, 'delete');
-		
 		self::save_metaboxes($mailbox_id, $mailbox);
-		
-		self::update_related_pages($mailbox_id);
-	}
-	/**
-	 * Efface ou définit les références des pages à cette mailbox.
-	 */
-	public static function update_related_pages ($mailbox_id, $delete = false){
-		$dispatch = AgendaPartage_Mailbox::get_emails_dispatch($mailbox_id);
-		foreach($dispatch as $email => $destination)
-			switch($destination['type']){
-				case 'page':
-					$page_id = $destination['id'];
-	
-					$meta_key = AGDP_PAGE_META_MAILBOX;
-					
-					if($delete){
-						delete_post_meta( $page_id, $meta_key, $mailbox_id );
-					}
-					else
-						update_post_meta( $page_id, $meta_key, $mailbox_id );
-					break;
-			}	
 	}
 }
 ?>
