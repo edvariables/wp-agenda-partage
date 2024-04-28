@@ -477,12 +477,12 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				if(!$status) $status = 'Brouillon';
 				$message .= sprintf('<br><br>Cet évènement n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
 				
-				if( self::waiting_for_activation($post) ){
+				//TODO if( self::waiting_for_activation($post) ){
 					$activation_url = add_query_arg(self::secretcode_argument, $codesecret, $url);
 					$activation_url = add_query_arg('action', 'activation', $activation_url);
 					$activation_url = add_query_arg('ak', self::get_activation_key($post), $activation_url);
 					$activation_url = add_query_arg('etat', 'en-attente', $activation_url);
-				}
+				// }
 				
 				$message .= sprintf('<br><br><a href="%s"><b>Cliquez ici pour rendre cet évènement public dans l\'agenda</b></a>.<br>', $activation_url);
 				break;
