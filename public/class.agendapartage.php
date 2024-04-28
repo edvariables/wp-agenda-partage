@@ -540,7 +540,8 @@ class AgendaPartage {
 	/**
 	 * Retourne un lien html pour une action générique
 	 */
-	public static function get_ajax_action_link($post, $method, $icon = false, $caption = null, $title = false, $confirmation = null, $data = null){
+	public static function get_ajax_action_link($post, $method, $icon = false, $caption = null, $title = false
+												, $confirmation = null, $data = null, $href = '#'){
 		
 		if(is_array($method)){
 			$class = $method[0];
@@ -581,9 +582,15 @@ class AgendaPartage {
 		if($confirmation){
 			$query['confirm'] = $confirmation;
 		}
+		if( ! $href )
+			$href = sprintf('/wp-admin/admin-ajax.php/?action=%s&method=%s&%s'
+				, $query['action']
+				, $method
+				, http_build_query(['data' => $query['data']]) );
 		if($icon)
 			$icon = self::icon($icon);
-		$html .= sprintf('<span><a href="#" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
+		$html .= sprintf('<span><a href="%s" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
+			, $href
 			, $title ? $title : ''
 			, $method
 			, esc_attr( json_encode($query) )

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage Admin -> Edit -> Evenement -> diffusion
+ * AgendaPartage Admin -> Edit -> Evenement/Covoiturage -> diffusion
  * Custom taxonomy term for WordPress in Admin UI.
  * 
  * Edition d'une diffusion
@@ -18,27 +18,26 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 	
 	public static function init_hooks() {
 		
-		// if(basename($_SERVER['PHP_SELF']) === 'edit-tags.php'
-		// && array_key_exists('post_type', $_POST)
-		// && $_POST['post_type'] == AgendaPartage_Evenement::post_type
-		// && array_key_exists('taxonomy', $_POST)
-		// && $_POST['taxonomy'] == AgendaPartage_Evenement::taxonomy_diffusion)
-			add_action( 'saved_' . AgendaPartage_Evenement::taxonomy_diffusion , array(__CLASS__, 'saved_term_cb'), 10, 4 );
+		foreach( [
+			AgendaPartage_Evenement::taxonomy_diffusion
+			, AgendaPartage_Covoiturage::taxonomy_diffusion
+		] as $taxonomy_diffusion){
+			add_action( 'saved_' . $taxonomy_diffusion , array(__CLASS__, 'saved_term_cb'), 10, 4 );
 
-		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_term_new_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
-		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_term_edit_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
-		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
-		add_action( AgendaPartage_Evenement::taxonomy_diffusion . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
+			add_action( $taxonomy_diffusion . '_term_new_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
+			add_action( $taxonomy_diffusion . '_term_edit_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
+			add_action( $taxonomy_diffusion . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
+			add_action( $taxonomy_diffusion . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
 
-		//add custom columns for list view
-		add_filter( 'manage_edit-' . AgendaPartage_Evenement::taxonomy_diffusion . '_columns', array( __CLASS__, 'manage_columns' ) );
-		add_filter( 'manage_' . AgendaPartage_Evenement::taxonomy_diffusion . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
-
+			//add custom columns for list view
+			add_filter( 'manage_edit-' . $taxonomy_diffusion . '_columns', array( __CLASS__, 'manage_columns' ) );
+			add_filter( 'manage_' . $taxonomy_diffusion . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
+		}
 	}
 	/****************/
 	public static function manage_columns($columns){
 		$columns['default_checked'] = 'Coché par défaut';
-		$columns['download_link'] = 'Lien';
+		$columns['properties'] = 'Lien / Connexion';
 		return $columns;
 	}
 	public static function manage_custom_columns($content, string $column_name, int $term_id){
@@ -49,11 +48,19 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 				else
 					echo 'non';
 				break;
-			case 'download_link' :
-				if( get_term_meta( $term_id, $column_name, true ) )
-					echo 'Téléchargement';
+			case 'properties' :
+				$properties = [];
+				$meta_key = 'download_link';
+				if( $value = get_term_meta( $term_id, $meta_key, true ) )
+					$properties[] = 'Téléchargement ' . $value;
 				else
-					echo 'non';
+					$properties[] = 'Sans téléchargement';
+				
+				$meta_key = 'connexion';
+				if( $value = get_term_meta( $term_id, $meta_key, true ) )
+					$properties[] = $value;
+				
+				echo implode('<br>', $properties);
 				break;
 		}
 		return $content;
@@ -128,14 +135,14 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		
     ?><tr class="form-comment">
         <th scope="row">
-        <td><i>La description apparaitra en information complémentaire lors de l'édition d'un évènement.</td>
+        <td><i>La description apparaitra en information complémentaire lors de l'édition.</td>
     </tr><?php
     ?><tr class="form-field">
         <th scope="row"><label for="default_checked">Coché par défaut</label></th>
         <td><?php
 			$meta_name = 'default_checked';
 			parent::metabox_html([array('name' => $meta_name,
-									'label' => __('Coché par défaut lors de la création d\'un évènement.', AGDP_TAG),
+									'label' => __('Coché par défaut lors de la création d\'un enregistrement.', AGDP_TAG),
 									'type' => 'bool',
 									// 'default' => $checked
 								)], $tag, null);

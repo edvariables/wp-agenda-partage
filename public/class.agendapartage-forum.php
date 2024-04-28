@@ -187,7 +187,6 @@ class AgendaPartage_Forum {
 			'meta_key' => 'source',
 			'meta_value' => sprintf('page.%d', $forum_id),
 		]);
-		debug_log('get_newsletters', $query->get_posts());
 		return $query->get_posts();
 	}
 	

@@ -28,8 +28,12 @@ class AgendaPartage_Admin_Menu {
 		//add_action( 'admin_menu', array( __CLASS__, 'init_admin_menu' ), 5 ); 
 		add_action('wp_dashboard_setup', array(__CLASS__, 'init_dashboard_widgets') );
 		
-		add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
-		add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
+		global $pagenow;
+		if ( $pagenow === 'admin.php' && isset($_GET['page'])
+		&& in_array($_GET['page'], [AGDP_TAG, AGDP_TAG . '-rights'] )) {
+			add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
+			add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
+		}
 	}
 
 	public static function init_settings(){
@@ -870,6 +874,7 @@ class AgendaPartage_Admin_Menu {
 		else {
 			$capability = 'manage_options';
 			
+			//Menu Newsletters
 			$option = 'admin_nl_post_id';
 			if ( $post_id = AgendaPartage::get_option($option) ){
 				$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Newsletter::post_type) ;
@@ -892,11 +897,13 @@ class AgendaPartage_Admin_Menu {
 				add_submenu_page( $parent_slug, $page_title, 'Covoiturages à venir', $capability, $menu_slug);
 			}
 			
+			//Menu Evènements
 			$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Evenement::post_type) ;
 			$page_title =  'Evènements en attente de validation';
 			$menu_slug = $parent_slug . '&post_status=pending';
 			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
+			//Menus Covoiturages
 			$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Covoiturage::post_type) ;
 			$page_title =  'Covoiturages en attente de validation';
 			$menu_slug = $parent_slug . '&post_status=pending';

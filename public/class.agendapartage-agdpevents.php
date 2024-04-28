@@ -30,8 +30,12 @@ class AgendaPartage_Evenements {
 	public static function init_hooks() {
 		add_action( 'wp_ajax_'.AgendaPartage_Evenement::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
 		add_action( 'wp_ajax_nopriv_'.AgendaPartage_Evenement::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_agdpevents_show_more_cb') );
+		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_agdpevents_action', array(__CLASS__, 'on_wp_ajax_agdpevents') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_agdpevents_action', array(__CLASS__, 'on_wp_ajax_agdpevents') );
+		
+		add_action( 'wp_ajax_'.AGDP_TAG.'_agdpevents_download_action', array(__CLASS__, 'on_wp_ajax_agdpevents_download') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_agdpevents_download_action', array(__CLASS__, 'on_wp_ajax_agdpevents_download') );
 	}
 	/*
 	 * Hook
@@ -948,7 +952,12 @@ class AgendaPartage_Evenements {
 			$title .= ' filtrés (' . self::$filters_summary . ')';
 			$data['filters'] = $_GET;
 		}
-		$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data);
+		$href = sprintf('/wp-admin/admin-ajax.php/?action=%s_%s_action&%s'
+			, AGDP_TAG
+			, 'agdpevents_download'
+			, http_build_query(['data' => $data]) );
+		$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
+		//$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data, $href);
 		
 		$meta_name = 'download_link';
 		foreach(AgendaPartage_Evenement_Post_type::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion) as $term_id => $term){
@@ -959,7 +968,13 @@ class AgendaPartage_Evenements {
 					'filters' => [ AgendaPartage_Evenement::taxonomy_diffusion => $term_id]
 				];
 				$title = sprintf('Télécharger les évènements pour %s (%s)', $term->name, $file_format);
-				$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data);
+				
+				$href = sprintf('/wp-admin/admin-ajax.php/?action=%s_%s_action&%s'
+					, AGDP_TAG
+					, 'agdpevents_download'
+					, http_build_query(['data' => $data]) );
+				$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
+				//$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data, $href);
 			}
 		}
 		return $html;
@@ -971,7 +986,7 @@ class AgendaPartage_Evenements {
 	public static function on_wp_ajax_agdpevents() {
 		if( ! AgendaPartage::check_nonce()
 		|| empty($_POST['method']))
-			wp_die();
+			wp_die('no-nonce');
 		
 		$ajax_response = '';
 		
@@ -995,9 +1010,32 @@ class AgendaPartage_Evenements {
 	}
 
 	/**
+	 * Requête Ajax
+	 */
+	public static function on_wp_ajax_agdpevents_download(){
+		//debug_log('on_wp_ajax_agdpevents_download', $_REQUEST);
+		if( ! isset($_REQUEST['data']) )
+			wp_die('missing &data');
+		$data = $_REQUEST['data'];
+		$content = self::on_ajax_action_download_file($data, 'data');
+		$filename = sprintf('%s.%s', 'agdpevents', $data['file_format']);
+		
+		header('Content-Description: File Transfer');
+		header('Content-Type: application/octet-stream');
+		header('Content-Disposition: attachment; filename="'.$filename.'"');
+		header('Expires: 0');
+		header('Cache-Control: must-revalidate');
+		header('Pragma: public');
+		header('Content-Length: ' . strlen($content));
+		flush(); // Flush system output buffer
+		echo $content;
+		wp_die();
+	}
+
+	/**
 	 * Requête Ajax de téléchargement de fichier
 	 */
-	public static function on_ajax_action_download_file($data) {
+	public static function on_ajax_action_download_file($data, $return = 'download:url') {
 		
 		$filters = empty($data['filters']) ? false : $data['filters'];
 		$query = array(
@@ -1048,14 +1086,27 @@ class AgendaPartage_Evenements {
 		// }
         // $posts = $result; 
 		
-		if( ! $posts)
-			return sprintf('Aucun évènement à exporter');
-		
+		if( ! $posts){
+			if( $return === 'data' )
+				return '';
+			else
+				return sprintf('Aucun évènement à exporter');
+		}
 		$file_format = $data['file_format'];
 		
 		require_once( dirname(__FILE__) . '/class.agendapartage-agdpevents-export.php');
-		$url = AgendaPartage_Evenements_Export::do_export($posts, $file_format, 'url', $filters);
-		
-		return 'download:' . $url;
+		if( $return === 'download:url' )
+			$return_value = 'url';
+		else
+			$return_value = $return;
+		$value = AgendaPartage_Evenements_Export::do_export($posts, $file_format, $return_value, $filters);
+		switch( $return ){
+			case 'data' :
+			case 'url' :
+			case 'file' :
+				return $value;
+			default:
+				return 'download:' . $value;
+		}
 	}
 }

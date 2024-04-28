@@ -29,26 +29,33 @@ class AgendaPartage_Evenements_Export {
 				break;
 			case 'docx':
 				$encode_to = false;
+				//TODO returns data et non file !
 				$export_data = self::export_posts_docx($posts, $filters);
 				break;
 			default:
 				return sprintf('format inconnu : "%s"', $file_format);
 		}
-
-		if($return === 'data')
-			return $export_data;
 		
-		if( ! $export_data)
-			return sprintf('alert:Aucune donnée à exporter');
-		
+		if( ! $export_data){
+			if($return === 'data')
+				return '';
+			else
+				return sprintf('alert:Aucune donnée à exporter');
+		}
 		if( $encode_to ) {
 			$enc = mb_detect_encoding($export_data);
 			$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
 		}
 		self::clear_export_history();
-		if( strrpos($export_data, '.' . $file_format) === strlen($export_data) - 1 - strlen($file_format) )
+		//TODO see 'export_posts_docx' qui retourne un fichier
+		if( strrpos($export_data, '.' . $file_format) === strlen($export_data) - 1 - strlen($file_format) ){
 			$file = $export_data;
-		else {
+			if($return === 'data')
+				return file_get_contents( $file );
+		} else {
+			if($return === 'data')
+				return $export_data;
+			
 			$file = self::get_export_filename( $file_format );
 
 			$handle = fopen($file, "w");
