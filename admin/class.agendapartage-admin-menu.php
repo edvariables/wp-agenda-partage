@@ -150,21 +150,6 @@ class AgendaPartage_Admin_Menu {
 				]
 			);
 
-			// 
-			$field_id = 'forums_parent_id';
-			add_settings_field(
-				$field_id, 
-				AgendaPartage::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
-				AGDP_TAG,
-				'agendapartage_section_pages',
-				[
-					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
-					'post_type' => 'page'
-				]
-			);
-
 		// register a new section in the "agendapartage" page
 		add_settings_section(
 			'agendapartage_section_agdpevents',
@@ -399,6 +384,30 @@ class AgendaPartage_Admin_Menu {
 									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
 					'class' => 'agendapartage_row',
 					'input_type' => 'checkbox'
+				]
+			);
+			
+		//////////////////////////////////////////
+		// register a new section in the "agendapartage" page
+		add_settings_section(
+			'agendapartage_section_forums',
+			__( 'Forums', AGDP_TAG ),
+			array(__CLASS__, 'settings_sections_cb'),
+			AGDP_TAG, $section_args
+		);
+
+			// 
+			$field_id = 'forums_parent_id';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				AGDP_TAG,
+				'agendapartage_section_forums',
+				[
+					'label_for' => $field_id,
+					'class' => 'agendapartage_row',
+					'post_type' => 'page'
 				]
 			);
 			
@@ -921,10 +930,12 @@ class AgendaPartage_Admin_Menu {
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
 				array(__CLASS__, 'agendapartage_rights_page_html'), null);
 			
-			$parent_slug = AGDP_TAG;
-			$page_title = get_post_type_object(AgendaPartage_Maillog::post_type)->labels->menu_name;
-			$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Maillog::post_type);
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+			if( class_exists('AgendaPartage_Maillog') ){
+				$parent_slug = AGDP_TAG;
+				$page_title = get_post_type_object(AgendaPartage_Maillog::post_type)->labels->menu_name;
+				$menu_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Maillog::post_type);
+				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+			}
 			
 			//Menu Pages
 			$capability = 'moderate_comments';

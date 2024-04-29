@@ -256,9 +256,13 @@ class AgendaPartage_Forum {
 		&& $page->comment_status === 'closed' )
 			return false;
 		
-		$mailbox = AgendaPartage_Mailbox::get_mailbox($mailbox);
-		
-		$import_result = AgendaPartage_Mailbox::synchronize($mailbox, $page);
+		if( $mailbox ){
+			$mailbox = AgendaPartage_Mailbox::get_mailbox($mailbox);
+			
+			$import_result = AgendaPartage_Mailbox::synchronize($mailbox, $page);
+		}
+		else
+			$import_result = true;
 		
 		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
 		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
@@ -271,6 +275,7 @@ class AgendaPartage_Forum {
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
 		
 		// if( self::get_current_forum_rights( $page ) != 'P' )
+			self::get_current_forum_rights( $page );
 			add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return $import_result;
@@ -565,7 +570,7 @@ class AgendaPartage_Forum {
 				, '<span class="dashicons dashicons-email-alt"></span>'
 				, $send_email);
 			
-			delete_comment_meta( $comment_id, 'send-email');
+			delete_comment_meta( $comment->comment_ID, 'send-email');
 		}
 		
 		if( $comment->comment_approved == 0
@@ -727,11 +732,11 @@ class AgendaPartage_Forum {
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
 		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, true, $data);
 
-		$caption = "Supprimer avec message";
-		$title = "Envoyer un message à l'auteur et mettre ce message à la corbeille";
+		$caption = "Envoyer un message";
+		$title = "Envoyer un message à l'auteur";
 		$icon = 'email-alt';
-		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_disapprove
-		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','disapprove'], $icon, $caption, $title, true, $data);
+		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_mailto_author
+		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','mailto_author'], $icon, $caption, $title, false, $data);
 
 		return $links;
 	}
@@ -795,7 +800,11 @@ class AgendaPartage_Forum {
 		else
 			$status = 'inconnu-e';
 		if( $status )
-			$comment_author_link .= sprintf('<span class="comment-user-status">(%s)</span>', $status);
+			if( $user_id )
+				$comment_author_link .= sprintf('<a href="/wp-admin/user-edit.php?user_id=%d#forums" class="comment-user-status">(%s)</a>'
+					, $user_id, $status);
+			else
+				$comment_author_link .= sprintf('<span class="comment-user-status">(%s)</span>', $status);
 		return $comment_author_link;
 	}
 	
@@ -874,7 +883,12 @@ class AgendaPartage_Forum {
 				, sprintf('%s / %s', wp_date(DATE_ATOM), (wp_get_current_user())->name)
 			);
 				
-			return 'replace:<h4 class="text-green">Approuvé</h4>';
+			// return 'replace:<h4 class="text-green">Approuvé</h4>';
+			$comment = get_comment($data['comment_id']);
+			self::init_page(false, $comment->comment_post_ID);
+			return sprintf('js:jQuery("#comment-%d").replaceWith("%s");'
+				, $comment->comment_ID
+				, str_replace("\n", '', str_replace('"', '\"', wp_list_comments(['echo'=>false], [ $comment ]))));
 		}
 		return 'Vous n\'êtes pas autorisé à exécuter cette action.';
 	}
@@ -890,9 +904,100 @@ class AgendaPartage_Forum {
 	public static function on_ajax_action_get($data) {
 		return wp_list_comments(['echo'=>false], [ get_comment($data['comment_id']) ]);
 	}
-	
+	/**
+	 * Requête Ajax d'envoi de message à l'auteur du commentaire
+	 */
+	public static function on_ajax_action_mailto_author($data) {
+		if( current_user_can('moderate_comments') ) {
+			$comment = get_comment($data['comment_id']);
+			$email = $comment->comment_author_email;
+			$title = get_comment_meta($comment->comment_ID, 'title', true);
+			$send_date = get_comment_meta($comment->comment_ID, 'send_date', true);
+			$send_date = date('d/m/Y à H:i', strtotime($send_date));
+			$subject = sprintf('[Modération] %s', $title);
+			$url = get_post_permalink($comment->comment_post_ID, true);
+			$message = sprintf("Bonjour,"
+."\nEn réponse à votre message \"%s\" du %s,"
+."\n"
+."\nCordialement,"
+."\nL'équipe de modération de <a href=\"%s\">%s</a>."
+	, $title, $send_date, $url, get_bloginfo('name'));
+
+			$query = [ 
+				'data' => [
+					'comment_id' => $comment->comment_ID,
+					'email' => $email
+				],
+				'action' => AGDP_TAG . '_comment_action',
+				'method' => 'mailto_author_send'
+			];
+			$html = '<div class="wrapper"><div class="ajax_action-response">'
+				.'Votre message à l\'auteurice :&nbsp;'
+				. '<span class="dashicons dashicons-no-alt close-box" onclick="jQuery(this).parents(\'.wrapper:first\').remove();"></span>'
+				. sprintf('<form class="agdp-ajax-action" data="%s">', esc_attr(json_encode($query)))
+				. wp_nonce_field(AGDP_TAG . '-comment_mailto_author', AGDP_TAG . '-comment_mailto_author_send', true, false)
+				.sprintf('<input type="text" name="mail_subject" size="7" value="%s"/>', esc_attr($subject))
+				.sprintf('<textarea name="mail_body" rows="7">%s</textarea>', $message)
+				.sprintf('<input type="submit" value="Envoyer à %s" />', $email)
+				.'</form></div><br></div>'
+			;
+			return sprintf('js:jQuery(this).parents("article:first").after("%s");$spinner.remove();'
+				, str_replace("\n", '\n', str_replace('"', '\"', $html)));
+		}
+		return 'Vous n\'êtes pas autorisé à exécuter cette action.';
+	}
+	/**
+	 * Envoi du mail à l'auteur
+	 */
+	public static function on_ajax_action_mailto_author_send($data) {
+		if( current_user_can('moderate_comments') ) {
+			$comment = get_comment($data['comment_id']);
+			$email = $data['email'];
+			$subject = $_POST['mail_subject'];
+			$message = $_POST['mail_body'];
+			$message = str_replace("\\'", "'", str_replace('\"', '"', $message));
+			
+			$page = get_post($comment->comment_post_ID);
+			$url = sprintf('<a href="%s#comment-%d">%s</a>', get_post_permalink($page, true), $comment->comment_ID, $page->post_title);
+			
+			$message .= "\n\n-------------\n<i>Votre message original :</i>\n\n"
+				. $comment->comment_content
+				. "\n\n-------------\n"
+				. $url;
+			
+			$message = str_replace("\n",'<br>', $message);
+			
+			$message = '<!DOCTYPE html><html>'
+				. '<head>'
+					. '<title>' . $subject . '</title>'
+				. '</head>'
+				. sprintf('<body style="white-space: pre-line;">%s</body>', $message)
+				. '</html>';
+			$headers = array();
+			$attachments = array();
+			
+			$headers[] = 'MIME-Version: 1.0';
+			$headers[] = 'Content-type: text/html; charset=utf-8';
+			$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+			
+			$headers[] = sprintf('From: %s', get_bloginfo('admin_email'));
+			$headers[] = sprintf('Reply-to: %s', get_bloginfo('admin_email'));
+			
+			$to = $email;
+			if($success = wp_mail( $to
+				, '=?UTF-8?B?' . base64_encode($subject). '?='
+				, $message
+				, $headers, $attachments )){
+				return 'Le message a été envoyé.' . AgendaPartage::icon('success');
+			}
+			else{
+				return "L'e-mail n'a pas pu être envoyé" . AgendaPartage::icon('error');
+			}
+		}
+		return 'Vous n\'êtes pas autorisé à exécuter cette action.';
+	}
+
 	/*************************************************/
-	
 	
 	
 	public static function get_page($page = false){

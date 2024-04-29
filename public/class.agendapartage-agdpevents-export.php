@@ -29,9 +29,9 @@ class AgendaPartage_Evenements_Export {
 				break;
 			case 'docx':
 				$encode_to = false;
-				//TODO returns data et non file !
-				$export_data = self::export_posts_docx($posts, $filters);
-				break;
+				//TODO if empty ?
+				return self::export_posts_docx($posts, $filters, $return);
+				
 			default:
 				return sprintf('format inconnu : "%s"', $file_format);
 		}
@@ -160,7 +160,7 @@ class AgendaPartage_Evenements_Export {
 	/**
 	 * Retourne les données en docx pour le téléchargement de l'export des évènements
 	 */
-	public static function export_posts_docx($posts, $filters){
+	public static function export_posts_docx($posts, $filters, $return = 'file'){
 		$file = self::get_diffusion_docx_model_file( $filters );
 		$fileZip = self::get_export_folder() . '/' . basename($file) . '.zip';
 		if( file_exists($fileZip) )
@@ -280,10 +280,18 @@ class AgendaPartage_Evenements_Export {
 		zip_create_folder_zip($zipDir, $fileZip);
 		//Nettoyage	
 		rrmdir($zipDir);
-		
+		if( $return === 'data' ){
+			$data = file_get_contents($fileZip);
+			unlink($fileZip);
+			return $data;
+		}
 		$file = sprintf( '%s/%s-%s', dirname($fileZip), $date->format('Y-m'), basename($file));
 		rename($fileZip, $file);
 		
+		if( $return === 'url' ){
+			$url = self::get_export_url(basename($file));
+			return $url;
+		}
 		return $file;
 	}
 	

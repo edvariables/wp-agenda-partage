@@ -394,7 +394,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				$form_id = AgendaPartage::get_option('agdpevent_message_contact_form_id');
 				if(!$form_id){
 					return AgendaPartage::icon('warning'
-						, 'Un formulaire de message aux organisteurs d\'évènement n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
+						, 'Un formulaire de message aux organisateurs d\'évènements n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
 				}
 
 				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisateur d\'évènement ***"]', $form_id);

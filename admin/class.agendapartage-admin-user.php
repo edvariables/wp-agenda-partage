@@ -80,7 +80,7 @@ class AgendaPartage_Admin_User {
 	public static function forums_subscriptions( $profile_user ) {
 		$current_user_can_moderate_comments = current_user_can('moderate_comments');
 		$user_histories = [];
-		?><br><h2>Adhésions aux forums</h2>
+		?><br><h2 id="forums">Adhésions aux forums</h2>
 
 		<table class="form-table" role="presentation"><?php
 			$pages = AgendaPartage_Mailbox::get_pages_dispatch();

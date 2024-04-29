@@ -18,7 +18,7 @@ jQuery( function( $ ) {
 				return false;
 			data = JSON.parse( data );
 			if(this.tagName.toUpperCase() == 'FORM'){
-				$actionElnt.find('input[name]').each(function(event){ data[this.attributes['name'].value] = this.value;});
+				$actionElnt.find('input[name],textarea[name],select[name]').each(function(event){ data[this.attributes['name'].value] = this.value;});
 			}
 			if( data.confirm ){
 				var msg;

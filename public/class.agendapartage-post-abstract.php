@@ -604,7 +604,7 @@ abstract class AgendaPartage_Post_Abstract {
 				if( strpos($form_class, ' preventdefault-reset') === false)
 					$form_class .= ' preventdefault-reset';
 				else
-					debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : appels multiples');
+					debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : appels multiples ! TODO');
 				break;
 			default:
 				break;

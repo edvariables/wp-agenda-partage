@@ -24,6 +24,9 @@ h3.info {
 	vertical-align: top;
 	margin-top: 8px;
 }
+.agdp-metabox-row.agdp-metabox-subfields > label {
+	min-width: 0;
+}
 .agdp-metabox-row > input, 
 .agdp-metabox-row > textarea {
 	width: 25em;
@@ -49,6 +52,9 @@ h3.info {
 .agdp-metabox-row.agdp-metabox-subfields {
 	display: inline;
 	margin-left: 1em;
+}
+.agdp-metabox-row.agdp-metabox-subfields.hidden {
+	display: none;
 }
 
 .agdp-metabox-row.description > label {

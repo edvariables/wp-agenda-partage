@@ -621,8 +621,9 @@ class AgendaPartage_Mailbox {
 				$user_name = substr( $user_name, 0, $pos);
 			
 			$dateTime = $message['date'];
-			$date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
-			$date_gmt = $dateTime->format('Y-m-d H:i:s');
+			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
+			$date = wp_date('Y-m-d H:i:s');
+			$date_gmt = date('Y-m-d H:i:s');
 			$postdata = [
 				'post_type' => $post_type,
 				'post_author' => $user_name,
@@ -645,7 +646,7 @@ class AgendaPartage_Mailbox {
 					'to' => strtolower($message['to'][0]->email),
 					'title' => trim($message['subject']),
 					'attachments' => $message['attachments'],
-					'import_date' => wp_date(DATE_ATOM),
+					'send_date' => $email_date,
 					'mailbox_id' => $mailbox->ID,
 				]
 			];
@@ -688,8 +689,10 @@ class AgendaPartage_Mailbox {
 				$user_name = substr( $user_name, 0, $pos);
 			
 			$dateTime = $message['date'];
-			$date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
-			$date_gmt = $dateTime->format('Y-m-d H:i:s');
+			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
+			//On conserve en date de référence la date d'importation (plus logique pour le traitement des newsletters)
+			$date = wp_date('Y-m-d H:i:s');
+			$date_gmt = date('Y-m-d H:i:s');
 			$commentdata = [
 				'comment_post_ID' => $page->ID,
 				'comment_author' => $user_name,
@@ -712,7 +715,7 @@ class AgendaPartage_Mailbox {
 					'to' => strtolower($message['to'][0]->email),
 					'title' => trim($message['subject']),
 					'attachments' => $message['attachments'],
-					'import_date' => wp_date(DATE_ATOM),
+					'send_date' => $email_date,
 					'mailbox_id' => $mailbox->ID,
 				]
 			];

@@ -207,7 +207,24 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 	// }	
 
 	public static function get_metabox_dates_fields(){
+		global $post;
+		$is_periodique = $post ? get_post_meta($post->ID, 'cov-periodique', true) : false;
 		return array(
+			array('name' => 'cov-periodique',
+				'label' => __('Périodique', AGDP_TAG),
+				'input' => 'checkbox',
+				'default' => false,
+				'fields' => array(array(
+					'name' => 'cov-periodique-label',
+					'label' => __('Tous les', AGDP_TAG),
+					'type' => 'text',
+					'container_class' => $is_periodique ? '' : 'hidden',
+				)),
+				'input_attributes' => array(
+					'onchange="'.esc_attr('javascript:var $this = jQuery(this);'
+						.' $this.parents(".agdp-metabox-row:first").find(".agdp-metabox-subfields").toggleClass("hidden", ! $this.is(":checked"));').'"'
+				)
+			),
 			array('name' => 'cov-date-debut',
 				'label' => __('Date', AGDP_TAG),
 				'input' => 'date',

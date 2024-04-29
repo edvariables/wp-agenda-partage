@@ -113,6 +113,7 @@ class AgendaPartage {
 		$vars[] = AGDP_ARG_EVENTID;
 		$vars[] = AGDP_ARG_NEWSLETTERID;
 		$vars[] = AGDP_ARG_COVOITURAGEID;
+		$vars[] = AGDP_ARG_COMMENTID;
 		return $vars;
 	}
 

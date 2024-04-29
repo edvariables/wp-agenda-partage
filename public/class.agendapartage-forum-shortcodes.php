@@ -234,7 +234,7 @@ class AgendaPartage_Forum_Shortcodes {
 					return do_shortcode( $val . wp_kses_post($content));
 				}
 				break;
-
+				
 			default:
 			
 				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';

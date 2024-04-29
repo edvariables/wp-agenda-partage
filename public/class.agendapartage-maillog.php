@@ -93,7 +93,7 @@ class AgendaPartage_Maillog {
 		
 		$maillog = wp_insert_post($postarr, true);
 		if(is_a($maillog, 'WP_Error')){
-			debug_log('wp_mail Error $maillog', $maillog);
+			debug_log(__CLASS__.'::wp_mail Error $maillog', $maillog);
 			return;
 		}
 		array_push(self::$sending_mail, $maillog);

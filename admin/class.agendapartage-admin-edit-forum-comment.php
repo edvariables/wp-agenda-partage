@@ -38,7 +38,7 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 			'source_no',
 			'from',
 			'to',
-			'import_date',
+			'send_date',
 			'mailbox_id',
 			'attachments', 
 		]; */
