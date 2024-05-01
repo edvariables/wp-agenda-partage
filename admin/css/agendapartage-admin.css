@@ -45,6 +45,9 @@ h3.info {
 .agdp-metabox-row > input[placeholder="hh:mm"] {
 	width: 5em;	
 }
+.agdp-metabox-row > input[type="submit"] {
+	width: auto;
+}
 .agdp-metabox-row.is_not_admin.admin_only {
 	display: none;
 }
@@ -185,7 +188,11 @@ body.colors-dark .toggle-trigger a:hover {
 table.form-table.editcomment ul.attachments img {
 	max-width: 200px;
 }
-  
+
+table.forum-subscribers td, table.forum-subscribers th {
+	padding-left: 1em;
+	padding-right: 1em;
+}
 /*
  *******/
  

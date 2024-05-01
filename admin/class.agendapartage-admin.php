@@ -17,6 +17,9 @@ class AgendaPartage_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-user.php' );
 		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_User', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-users.php' );
+		add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Users', 'init' ) );
+
 		if( is_multisite()){
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-multisite.php' );
 			add_action( 'agendapartage-admin_init', array( 'AgendaPartage_Admin_Multisite', 'init' ) );

@@ -80,7 +80,11 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	 * Register Meta Boxes (boite en édition du mailbox)
 	 */
 	public static function register_forum_metaboxes($post){
-		add_meta_box('agdp_forum-properties', __('Forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
+		$box_name = sprintf('<span>%s <a href="%s" class="no-flex">%s</a></span>'
+			, __('Forum', AGDP_TAG)
+			, sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
+			, AgendaPartage::icon('info', self::get_subscribers_counters($post)['label'])) ;
+		add_meta_box('agdp_forum-properties', $box_name, array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -174,6 +178,24 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		return $fields;
 	}
 	
+	
+	public static function get_subscribers_counters($post){
+		$subscription_meta_key = AgendaPartage_Forum::get_subscription_meta_key($post);
+		
+		$subscribers = get_users([ 
+			'meta_key' => $subscription_meta_key,
+			'meta_value' => ['administrator', 'moderator', 'subscriber'],
+		]);
+		// debug_log('$subscribers',$subscribers);
+		if( ! $subscribers ){
+			return [ 'counter' => 0, 'label' => '<i>aucun adhérent</i>' ];
+		}
+		else {
+			return [ 'counter' => count($subscribers), 'label' => sprintf('%d adhérent.e(s)', count($subscribers))];
+		}
+	}
+	
+	
 	/**
 	 * Callback lors de l'enregistrement du post.
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
@@ -182,5 +204,6 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		
 		self::save_metaboxes($forum_id, $forum);
 	}
+	
 }
 ?>

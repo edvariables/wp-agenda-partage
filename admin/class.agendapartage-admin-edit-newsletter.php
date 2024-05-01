@@ -301,6 +301,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 					, 'mailing' => []
 				);
 		}
+		
 		/** En attente d'envoi **/
 		$has_subscribers = false;
 		foreach(['aujourd\'hui' => 0, 'demain' => strtotime(wp_date('Y-m-d') . ' + 1 day')]
@@ -329,6 +330,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			echo '<hr>';
 		
 		/** Nombre d'abonnés **/
+		$subscribers_count = 0;
 		$sql = "SELECT usermeta.meta_value AS period, COUNT(usermeta.umeta_id) AS count"
 			. "\n FROM {$user_prefix}users user"
 			. "\n INNER JOIN {$user_prefix}usermeta usermeta"
@@ -352,8 +354,10 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			. "\n WHERE usermeta.meta_key IS NULL";
 		$dbresults = $wpdb->get_results($sql);
 		foreach($dbresults as $dbresult)
-			if(isset($periods[$dbresult->period]))
+			if(isset($periods[$dbresult->period])){
 				$periods[$dbresult->period]['subscribers_count'] = $dbresult->count;
+				$subscribers_count += $dbresult->count;
+			}
 		
 		/** Liste d'abonnés **/
 		$sql = "SELECT usermeta.meta_value AS period, user.ID, user.user_email, user.user_nicename"
@@ -372,8 +376,12 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			if(isset($periods[$dbresult->period]))
 				$periods[$dbresult->period]['subscribers'][] = $dbresult;
 			
-		echo sprintf("<ul>");
+		echo sprintf('<h4><a href="/wp-admin/users.php?s&action=-1&%s=%d">%s abonné.e%s</a></h4>'
+			, AgendaPartage_Newsletter::post_type
+			, $newsletter_id
+			, $subscribers_count, $subscribers_count > 1 ? '.s' : '' ) ;
 		 // var_dump($periods);
+		echo sprintf("<ul>");
 		foreach($periods as $period => $data){
 			echo sprintf("<li><h3><u>%s</u> : %d %s</h3>"
 				, $data['name']

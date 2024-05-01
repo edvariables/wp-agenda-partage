@@ -141,7 +141,7 @@ class AgendaPartage_Admin_User {
 	 */
 	public static function newsletters_subscriptions( $profile_user ) {
 		$user_histories = [];
-		?><br><h2>Abonnements aux lettres-infos de l'Agenda partagé</h2>
+		?><br><h2 id="newsletters">Abonnements aux lettres-infos de l'Agenda partagé</h2>
 
 		<table class="form-table" role="presentation"><?php
 			$active_newsletters = AgendaPartage_Newsletter::get_active_newsletters();
@@ -217,8 +217,8 @@ class AgendaPartage_Admin_User {
 
 		$user_contact_method['address'] = __( 'Adresse', AGDP_TAG );
 		$user_contact_method['address2'] = __( 'Adresse (suite)', AGDP_TAG );
-		$user_contact_method['city'] = __( 'Code postal et commune', AGDP_TAG );
 */
+		$user_contact_method['city'] = __( 'Code postal et commune', AGDP_TAG );
 		return $user_contact_method;
 
 	}

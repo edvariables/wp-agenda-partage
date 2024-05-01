@@ -149,6 +149,7 @@ class AgendaPartage_Newsletter {
 	 * Retourne les périodes d'abonnement possibles
 	 */
 	public static function subscription_periods($newsletter = false){
+		//TODO cache
 		if($newsletter === false){
 			$terms = get_terms( array( 'taxonomy' => self::taxonomy_period, 'hide_empty' => false) );
 		} else {

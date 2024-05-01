@@ -69,11 +69,6 @@ Import email vers forum : d'après le html
 Page abo Lettres-infos : Activation de l'onglet par l'url
 Forum Rights : un droit en lecture, un droit en écriture
 
-Ecolocos : SMTP
-
-Newsletter : Date du dernier changement parmi les pages
-	c'est bien la date d'importation des messages qui doit être prise en compte et non la date initiale du mail, par exemple
-	
 dans https://pays-de-saint-felicien.agenda-partage.fr/wp-admin/post.php?post=2491&action=edit
 	Abonnements: on voit la même personne abonnée 'toutes les semaines' pour aujourd'hui et pour demain
 	
@@ -98,7 +93,8 @@ EDOC2019 : multisites pour tester les interactions inter-blogs
 	
 User adhésion ecopartage = capability
 
-post edit : injection abusive de jQuery('form > div.agdp-tabs-wrap:first').each(function(){
-
 cf class.agendapartage-agdpevent.php //TODO if( self::waiting_for_activation($post) )
 	sinon, pas d'url
+	
+do_action( “load-{$pagenow}” )
+https://developer.wordpress.org/reference/hooks/load-pagenow/
