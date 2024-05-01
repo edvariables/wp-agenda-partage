@@ -27,7 +27,7 @@ class AgendaPartage_Admin_Users {
 
 	public static function manage_users_extra_tablenav() {
 		
-		echo ''
+		echo '<form method="GET">'
 			. '<div class="alignleft actions custom-user-filters">';
 		
 		$selected_forum_id = isset($_REQUEST[AgendaPartage_Forum::tag] ) ? $_REQUEST[AgendaPartage_Forum::tag] : false;
@@ -52,7 +52,7 @@ class AgendaPartage_Admin_Users {
 		}
 		echo '</select>';
 		echo '<input type="submit" class="button action" value="Filtrer">';
-		echo '</div>';
+		echo '</div></form>';
 	}
 	
 	public static function pre_get_users( $query ) {

@@ -33,7 +33,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			|| AgendaPartage_Forum::post_is_forum( $post ) ){
 			add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
-			return false;
+			// return false;
 		}
 		return $use_block_editor;
 	}
@@ -126,10 +126,10 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	}
 	
 	private static function on_admin_notices_import_result( $post ){
-		debug_log('on_admin_notices_import_result');
+		// debug_log('on_admin_notices_import_result');
 		$meta_key = '_new-subscribers-emails';
 		if( $import_result = get_post_meta( $post->ID, $meta_key, true ) ){
-			debug_log('on_admin_notices_import_result', '$import_result', $import_result);
+			// debug_log('on_admin_notices_import_result', '$import_result', $import_result);
 			delete_post_meta( $post->ID, $meta_key);
 			
 			AgendaPartage_Admin::add_admin_notice_now(sprintf('Résultat de l\'ajout d\adhérent.e(s) : %s', $import_result)
