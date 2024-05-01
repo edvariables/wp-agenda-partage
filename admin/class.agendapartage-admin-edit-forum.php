@@ -33,7 +33,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			|| AgendaPartage_Forum::post_is_forum( $post ) ){
 			add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
-			// return false;
+			return false;
 		}
 		return $use_block_editor;
 	}
@@ -43,6 +43,9 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	 */
 	public static function on_admin_notices_cb(){
 		global $post;
+		
+		self::on_admin_notices_import_result( $post );
+		
 		if( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $post ) ){
 			$mailbox_id = $mailbox->ID;
 			$emails = '';
@@ -85,6 +88,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			, sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
 			, AgendaPartage::icon('info', self::get_subscribers_counters($post)['label'])) ;
 		add_meta_box('agdp_forum-properties', $box_name, array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
+		add_meta_box('agdp_forum-subscribers-add', __('Ajout d\'adhérents au forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -99,6 +103,9 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 				self::check_comment_status( $post );
 				parent::metabox_html( self::get_metabox_properties_fields(), $post, $metabox );
 				break;
+			case 'agdp_forum-subscribers-add':
+				parent::metabox_html( self::get_metabox_subscribers_fields(), $post, $metabox );
+				break;
 			
 			default:
 				break;
@@ -108,12 +115,29 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	public static function get_metabox_all_fields(){
 		return array_merge(
 			self::get_metabox_properties_fields(),
+			self::get_metabox_subscribers_fields(),
 		);
 	}
 	
 	private static function check_comment_status( $post ){
 		if( $post->comment_status !== 'open' ){
 			echo AgendaPartage::icon('warning','Les commentaires de cette page ne sont pas activés.');
+		}
+	}
+	
+	private static function on_admin_notices_import_result( $post ){
+		debug_log('on_admin_notices_import_result');
+		$meta_key = '_new-subscribers-emails';
+		if( $import_result = get_post_meta( $post->ID, $meta_key, true ) ){
+			debug_log('on_admin_notices_import_result', '$import_result', $import_result);
+			delete_post_meta( $post->ID, $meta_key);
+			
+			AgendaPartage_Admin::add_admin_notice_now(sprintf('Résultat de l\'ajout d\adhérent.e(s) : %s', $import_result)
+				, ['type' => 'info', 
+					'actions' => [
+						'url' => sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
+					]
+				]);
 		}
 	}
 	
@@ -178,6 +202,22 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		return $fields;
 	}
 	
+	public static function get_metabox_subscribers_fields(){
+		global $post;
+		
+		$fields = [];
+		
+		$meta_key = '_new-subscribers-emails';
+		$fields[] = [
+			'name' => $meta_key,
+			'label' => __('Adresse(s) e-mail', AGDP_TAG),
+			'input' => 'text',
+			'learn-more' => 'les adresses doivent être séparées d\'une virgule ou d\'un point-virgule.'
+		];
+		
+		return $fields;
+	}
+	
 	
 	public static function get_subscribers_counters($post){
 		$subscription_meta_key = AgendaPartage_Forum::get_subscription_meta_key($post);
@@ -201,8 +241,59 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function save_post_forum_cb ($forum_id, $forum, $is_update){
+		$meta_key = '_new-subscribers-emails';
+		if( isset($_POST[$meta_key]) && $_POST[$meta_key] ){
+			$result = self::add_new_subscribers($forum_id, $forum, $_POST[$meta_key]);
+			// unset($_POST[$meta_key]);
+			
+			// if( $result )
+				// AgendaPartage_Admin::add_admin_notice("Nouvelle(s) adhésion(s) : " . $result, 'success', true); 
+			$_POST[$meta_key] = $result;
+		}
 		
 		self::save_metaboxes($forum_id, $forum);
+	}
+	/**
+	 * Importe de nouveaux emails en tant qu'abonné.e.s
+	 */
+	public static function add_new_subscribers($forum_id, $forum, $emails){
+		$result = '';
+		$subscription_meta_key = AgendaPartage_Forum::get_subscription_meta_key($forum_id);
+		$emails = self::sanitize_emails($emails);
+		foreach($emails as $email => $user_name){
+			if( $user_is_new = ! ($user_id = email_exists($email) ) ){
+				$user = AgendaPartage_Newsletter::create_subscriber_user($email, $user_name, false);
+				$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d">"%s" &lt;%s&gt;</a> a été créé.</li>', $user->ID, $user->display_name, $email);
+			}
+			else{
+				$user = get_user_by('id', $user_id);
+				if( $subscription = get_user_meta( $user_id, $subscription_meta_key, true))
+					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> existe déjà comme "%s".</li>', $user_id, $user->display_name, $email, AgendaPartage_Forum::subscription_roles[$subscription]);
+				else {
+					update_user_meta($user_id, $subscription_meta_key, 'subscriber');
+					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> est désormais adhérent.</li>', $user_id, $user->display_name, $email);
+				}
+			}
+		}
+		if($result)
+			$result = sprintf('<ul>%s</ul>', $result);
+		// debug_log('add_new_subscribers', $emails, $result);
+		return $result;
+	}
+	/**
+	 * Sanitize emails
+	 */
+	public static function sanitize_emails($emails){
+		$sanitized_emails = [];
+		$matches = [];
+		if( preg_match_all('/(\s*("([^,\;\n]*)"\s*)?\<?(([a-zA-Z0-9._-]+)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?\s*([,\;\n]|$))/', $emails, $matches) ){
+			foreach($matches[4] as $index=>$email){
+				if( ! $matches[3][$index] )
+					$matches[3][$index] = $matches[5][$index];
+				$sanitized_emails[ $email ] = trim($matches[3][$index], '\ ');
+			}
+		}
+		return $sanitized_emails;
 	}
 	
 }

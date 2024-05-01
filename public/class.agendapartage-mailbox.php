@@ -872,7 +872,7 @@ class AgendaPartage_Mailbox {
 		//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
 		$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
 		$matches = [];
-		$preg_match_all = preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
+		preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
 		//$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
 		$user_name = $matches[2][0];
 		$email_replyto = $matches[3][0];

@@ -37,7 +37,7 @@ class AgendaPartage_Admin_User {
 		if($update)
 			return $data;
 		//Les administrateurs créés ne peuvent pas avoir d'url associée
-		if($userdata['role'] === 'administrator' && ! empty($userdata['user_url'])){
+		if(isset($userdata['role']) && $userdata['role'] === 'administrator' && ! empty($userdata['user_url'])){
 			debug_log('on_wp_pre_insert_user_data : administrator + user_url = bastard');
 			return false;
 		}
