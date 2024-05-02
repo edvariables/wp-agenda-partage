@@ -33,6 +33,12 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			|| AgendaPartage_Forum::post_is_forum( $post ) ){
 			add_action( 'add_meta_boxes_' . AgendaPartage_Forum::post_type, array( __CLASS__, 'register_forum_metaboxes' ), 10, 1 ); //edit
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
+			if( isset($_REQUEST['block-editor']) && $_REQUEST['block-editor'] == false ){
+				add_filter('wp_redirect', function($location, $status){
+											return $location . '&block-editor=0';}, 10, 2);
+				return false;
+			}
+				
 			// return false;
 		}
 		return $use_block_editor;
@@ -111,6 +117,10 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			
 			default:
 				break;
+		}
+		
+		if( isset($_REQUEST['block-editor']) && $_REQUEST['block-editor'] == false ){
+			echo '<input type="hidden" name="block-editor" value="0">';
 		}
 	}
 	
@@ -273,7 +283,6 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			unset($_POST[$meta_key]);// = $result;
 			unset($_POST['_new-subscribers-newsletter']);
 			
-			$current_screen = get_current_screen();
 			$force_reload = true;
 		}
 		
@@ -305,6 +314,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			if( $user_is_new = ! ($user_id = email_exists($email) ) ){
 				$user = AgendaPartage_Newsletter::create_subscriber_user($email, $user_name, false);
 				$user_id = $user->ID;
+				$emails_added[$email] = $user_id;
 				$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> a été créé.</li>', $user->ID, $user->display_name, $email);
 				update_user_meta($user->ID, $subscription_meta_key, 'subscriber');
 			}
@@ -344,7 +354,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			foreach($matches[4] as $index=>$email){
 				if( ! $matches[3][$index] )
 					$matches[3][$index] = $matches[5][$index];
-				$sanitized_emails[ $email ] = trim($matches[3][$index], '\ ');
+				$sanitized_emails[ strtolower($email) ] = trim($matches[3][$index], '\ ');
 			}
 		}
 		return $sanitized_emails;

@@ -48,7 +48,7 @@ class AgendaPartage_Forum {
 			'' => '(non défini)',
 			'administrator' => 'Administrateurice',
 			'moderator' => 'Modérateurice',
-			'subscriber' => 'Abonné-e',
+			'subscriber' => 'Adhérent-e',
 			'banned' => 'Banni-e',
 		];
 

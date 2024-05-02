@@ -18,7 +18,12 @@ class AgendaPartage_User {
 		}
 
 		if(!$user_login) {
-			$user_login = sanitize_key( $user_name ? $user_name : $email );
+			$user_login = preg_replace( '/[éèêëÉÈÊË]/','e', 
+							preg_replace( '/[àäâÀÄÂ]/','a',
+							preg_replace( '/[ôöÔÖ]/','o',
+							preg_replace( '/[ûüÛÜ]/','u',
+						$user_name ? $user_name : $email ))));
+			$user_login = sanitize_key( $user_login );
 		}
 		if(!$user_id && $user_login) {
 			$i = 2;
