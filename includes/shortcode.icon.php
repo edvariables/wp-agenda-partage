@@ -1,6 +1,5 @@
 <?php
 function icon_shortcode_cb( $atts, $content = null ) {
-debug_log('icon_shortcode_cb', $atts);
 	if( count($atts) === 0 )
 		return $content;
 	$class = 'shortcode-icon';
@@ -79,17 +78,6 @@ debug_log('icon_shortcode_cb', $atts);
 				break;
 		}
 	}
-	debug_log(sprintf('%s<%s class="dashicons-before dashicons-%s %s"%s%s>%s</%s>%s'
-			, $href ? sprintf('<a href="%s">', $href) : ''
-			, $tag
-			, $icon
-			, $class
-			, $title ? ' title="' . esc_attr($title) . '"' : ''
-			, $css ? ' style="' . esc_attr($css) . '"' : ''
-			, $content ? do_shortcode($content) : ''
-			, $tag
-			, $href ? sprintf('</a>', $href) : ''
-	));
 	return sprintf('%s<%s class="dashicons-before dashicons-%s %s"%s%s>%s</%s>%s'
 			, $href ? sprintf('<a href="%s">', $href) : ''
 			, $tag
