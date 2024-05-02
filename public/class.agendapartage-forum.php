@@ -169,7 +169,6 @@ class AgendaPartage_Forum {
 			$args = [];
 		$args['include'] = $hidden_forums;
 		$pages = self::get_forums( $args );
-		// debug_log("get_hidden_forums", count($pages), $args, $hidden_forums);
 		return $pages;
 	}
 	
@@ -253,6 +252,7 @@ class AgendaPartage_Forum {
 	 * Appelle la synchronisation IMAP.
 	 */
 	public static function init_page($mailbox, $page = false){
+	
 		if( is_numeric( $page )){
 			if (!($page = get_post($page)))
 				return false;
@@ -285,7 +285,7 @@ class AgendaPartage_Forum {
 		add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_link'), 10, 3 );
 		
 		// if( self::get_current_forum_rights( $page ) != 'P' )
-			self::get_current_forum_rights( $page );
+			self::get_current_forum_rights( $page );//set current_forum $page
 			add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return $import_result;
@@ -358,6 +358,8 @@ class AgendaPartage_Forum {
 				return;
 			}
 		}
+		
+		
 		/* Dans le paramétrage de WP, Réglages / Commentaires :
 			Diviser les commentaires en pages, avec N commentaires de premier niveau par page et la PREMIERE page affichée par défaut
 			Les commentaires doivent être affichés avec le plus ANCIEN en premier
@@ -1266,6 +1268,7 @@ class AgendaPartage_Forum {
 			//TODO && (! $parent_comment || $parent_comment->comment_author_email != $current_user_email)
 			// && ($posted_data = get_comment_meta($comment->comment_ID, $meta_key, true)) ){
 			&& ( $is_public = get_comment_meta($comment->comment_ID, $meta_key, true) ) !== null 
+			&& $is_public !== ''
 			&& ! $is_public
 			){
 				// if(isset($posted_data['is-public'])
@@ -1297,7 +1300,7 @@ class AgendaPartage_Forum {
 				$hidden_menu_items_ids[] = $menu_item->ID;
 				unset($items[$index]);
 			}
-		}		
+		}
 		return $items;
 	}
 	
