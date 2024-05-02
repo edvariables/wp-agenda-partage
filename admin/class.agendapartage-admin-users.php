@@ -30,16 +30,18 @@ class AgendaPartage_Admin_Users {
 		echo '<form method="GET">'
 			. '<div class="alignleft actions custom-user-filters">';
 		
-		$selected_forum_id = isset($_REQUEST[AgendaPartage_Forum::tag] ) ? $_REQUEST[AgendaPartage_Forum::tag] : false;
-		echo sprintf('<select name="%s">', AgendaPartage_Forum::tag);
-		echo sprintf('<option value="">(tous les forums)</option>');
-		foreach( AgendaPartage_Forum::get_forums() as $forum ){
-			echo sprintf('<option value="%d" %s>%s</option>'
-				, $forum->ID
-				, $selected_forum_id == $forum->ID ? 'selected' : ''
-				, $forum->post_title);
+		if( $forums = AgendaPartage_Forum::get_forums() ) {
+			$selected_forum_id = isset($_REQUEST[AgendaPartage_Forum::tag] ) ? $_REQUEST[AgendaPartage_Forum::tag] : false;
+			echo sprintf('<select name="%s">', AgendaPartage_Forum::tag);
+			echo sprintf('<option value="">(tous les forums)</option>');
+			foreach( $forums as $forum ){
+				echo sprintf('<option value="%d" %s>%s</option>'
+					, $forum->ID
+					, $selected_forum_id == $forum->ID ? 'selected' : ''
+					, $forum->post_title);
+			}
+			echo '</select>';
 		}
-		echo '</select>';
 		
 		$selected_newsletter_id = isset($_REQUEST[AgendaPartage_Newsletter::post_type] ) ? $_REQUEST[AgendaPartage_Newsletter::post_type] : false;
 		echo sprintf('<select name="%s">', AgendaPartage_Newsletter::post_type);

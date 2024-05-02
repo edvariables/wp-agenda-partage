@@ -177,8 +177,9 @@ class AgendaPartage_Forum {
 	
 	/**
 	 * Retourne les newsletters utilisant un forum.
+	 * $exclude_sub_forums exclut les newsletters qui utilise les abonnés d'une autre lettre-info
 	 */
-	public static function get_newsletters($forum_id){
+	public static function get_newsletters($forum_id, $exclude_sub_forums = false){
 		if( is_a($forum_id, 'WP_Post') )
 			$forum_id = $forum_id->ID;
 		
@@ -187,7 +188,16 @@ class AgendaPartage_Forum {
 			'meta_key' => 'source',
 			'meta_value' => sprintf('page.%d', $forum_id),
 		]);
-		return $query->get_posts();
+		$posts = $query->get_posts();
+		if( ! $exclude_sub_forums )
+			return $posts;
+		
+		$meta_key = 'subscription_parent';
+		$newsletters = [];
+		foreach( $posts as $newsletter )
+			if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
+				$newsletters[] = $newsletter;
+		return $newsletters;
 	}
 	
 	/***************************/
@@ -1159,6 +1169,13 @@ class AgendaPartage_Forum {
 		return AgendaPartage_Mailbox::get_page_rights( $page );
 	}
 	
+	/**
+	 * Indique que le droit sur le forum nécessite une adhésion (right A ou AO)
+	 */
+	public static function get_forum_right_need_subscription( $page ) {
+		return in_array( self::get_forum_right( $page ), ['A', 'AO'] );
+	}
+
 	/**
 	 * Retourne l'état d'un post à importer selon l'utilisateur lié
 	 */

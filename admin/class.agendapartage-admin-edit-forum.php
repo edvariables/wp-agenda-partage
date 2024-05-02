@@ -88,7 +88,9 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			, sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
 			, AgendaPartage::icon('info', self::get_subscribers_counters($post)['label'])) ;
 		add_meta_box('agdp_forum-properties', $box_name, array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
-		add_meta_box('agdp_forum-subscribers-add', __('Ajout d\'adhérents au forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
+		
+		if( AgendaPartage_Forum::get_forum_right_need_subscription( $post ) )
+			add_meta_box('agdp_forum-subscribers-add', __('Ajout d\'adhérents au forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -113,10 +115,15 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	}
 	
 	public static function get_metabox_all_fields(){
-		return array_merge(
-			self::get_metabox_properties_fields(),
-			self::get_metabox_subscribers_fields(),
-		);
+		global $post;
+		$fields = self::get_metabox_properties_fields();
+		if( AgendaPartage_Forum::get_forum_right_need_subscription( $post ) )
+			$fields = array_merge(
+				$fields,
+				self::get_metabox_subscribers_fields()
+			);
+			
+		return $fields;
 	}
 	
 	private static function check_comment_status( $post ){
@@ -215,6 +222,19 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'learn-more' => 'les adresses doivent être séparées d\'une virgule ou d\'un point-virgule.'
 		];
 		
+		$newsletters = [ '' => '(aucune)'];
+		$meta_key = '_new-subscribers-newsletter';
+		foreach( AgendaPartage_Forum::get_newsletters($post->ID, true) as $newsletter ) {
+			$newsletters[ $newsletter->ID.''] = $newsletter->post_title;
+		}
+		if( count($newsletters) > 1 )
+			$fields[] = [
+				'name' => $meta_key,
+				'label' => sprintf('Abonner à la lettre-info'),
+				'input' => 'select',
+				'values' => $newsletters,
+			];
+		
 		return $fields;
 	}
 	
@@ -242,22 +262,42 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	 */
 	public static function save_post_forum_cb ($forum_id, $forum, $is_update){
 		$meta_key = '_new-subscribers-emails';
+		$force_reload = false;
 		if( isset($_POST[$meta_key]) && $_POST[$meta_key] ){
-			$result = self::add_new_subscribers($forum_id, $forum, $_POST[$meta_key]);
+			$newsletter = isset($_POST['_new-subscribers-newsletter']) ? $_POST['_new-subscribers-newsletter'] : false;
+			$result = self::add_new_subscribers($forum_id, $forum, $_POST[$meta_key], $newsletter);
 			// unset($_POST[$meta_key]);
 			
-			// if( $result )
-				// AgendaPartage_Admin::add_admin_notice("Nouvelle(s) adhésion(s) : " . $result, 'success', true); 
-			$_POST[$meta_key] = $result;
+			if( $result )
+				AgendaPartage_Admin::add_admin_notice("Nouvelle(s) adhésion(s) : " . $result, 'success', true); 
+			unset($_POST[$meta_key]);// = $result;
+			unset($_POST['_new-subscribers-newsletter']);
+			
+			$current_screen = get_current_screen();
+			$force_reload = true;
 		}
 		
 		self::save_metaboxes($forum_id, $forum);
+		
+		debug_log('save_post_forum_cb TODO', $force_reload, admin_url(sprintf('post.php?post=%d&action=edit', $forum_id) ) );
+		if( $force_reload ){
+			wp_redirect(admin_url(sprintf('post.php?post=%d&action=edit', $forum_id) ), 302);
+			exit;
+		}
 	}
 	/**
-	 * Importe de nouveaux emails en tant qu'abonné.e.s
+	 * Importe de nouveaux emails en tant qu'adhérent.e.s du forum et abonné.e.s de la lettre-info
 	 */
-	public static function add_new_subscribers($forum_id, $forum, $emails){
+	public static function add_new_subscribers($forum_id, $forum, $emails, $newsletter_id){
 		$result = '';
+		
+		if( $newsletter_id ){
+			$nl_subscription_meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter_id);
+			$nl_periods = AgendaPartage_Newsletter::subscription_periods($newsletter_id);
+		}
+		else
+			$nl_subscription_meta_key = false;
+		
 		$subscription_meta_key = AgendaPartage_Forum::get_subscription_meta_key($forum_id);
 		$emails = self::sanitize_emails($emails);
 		foreach($emails as $email => $user_name){
@@ -272,6 +312,17 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 				else {
 					update_user_meta($user_id, $subscription_meta_key, 'subscriber');
 					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> est désormais adhérent.</li>', $user_id, $user->display_name, $email);
+				}
+			}
+			if( $nl_subscription_meta_key ){
+				if( $subscription = get_user_meta( $user_id, $nl_subscription_meta_key, true)){
+					$subscription = isset($nl_periods[$subscription]) ? $nl_periods[$subscription] : $subscription;
+					$result .= sprintf("\n".'<li><a href="/wp-admin/user-edit.php?user_id=%d#newsletters">L\'abonnement à la lettre-info</a> est déjà "%s".</li>', $user_id, $subscription);
+				} else {
+					$subscription = PERIOD_DAYLY;
+					update_user_meta($user_id, $nl_subscription_meta_key, $subscription);
+					$subscription = isset($nl_periods[$subscription]) ? $nl_periods[$subscription] : $subscription;
+					$result .= sprintf("\n".'<li><a href="/wp-admin/user-edit.php?user_id=%d#newsletters">L\'abonnement à la lettre-info</a> est désormais "%s".</li>', $user_id, $subscription);
 				}
 			}
 		}
