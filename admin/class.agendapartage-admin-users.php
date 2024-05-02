@@ -12,7 +12,6 @@ class AgendaPartage_Admin_Users {
 	}
 
 	public static function init_hooks() {
-		
 		if( ! is_network_admin()
 		&& (basename($_SERVER['PHP_SELF']) === 'users.php')) {
 
@@ -20,15 +19,18 @@ class AgendaPartage_Admin_Users {
 			add_filter( 'manage_users_columns', array( __CLASS__, 'manage_columns' ) );
 			add_action( 'manage_users_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
 			add_action( 'manage_users_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ), 10, 3 );
-			add_action( 'manage_users_extra_tablenav', array( __CLASS__, 'manage_users_extra_tablenav') );
+			add_action( 'manage_users_extra_tablenav', array( __CLASS__, 'manage_users_extra_tablenav'), 10, 1 );
 			add_action( 'pre_get_users', array( __CLASS__, 'pre_get_users'), 99, 1 );
+			
 		}
 	}
-
-	public static function manage_users_extra_tablenav() {
+	
+	public static function manage_users_extra_tablenav($which) {
 		
-		echo '<form method="GET">'
-			. '<div class="alignleft actions custom-user-filters">';
+		if ($which !== 'top') 
+			return;
+		
+		echo '<div class="alignleft actions custom-user-filters">';
 		
 		if( $forums = AgendaPartage_Forum::get_forums() ) {
 			$selected_forum_id = isset($_REQUEST[AgendaPartage_Forum::tag] ) ? $_REQUEST[AgendaPartage_Forum::tag] : false;
@@ -54,7 +56,7 @@ class AgendaPartage_Admin_Users {
 		}
 		echo '</select>';
 		echo '<input type="submit" class="button action" value="Filtrer">';
-		echo '</div></form>';
+		echo '</div>';
 	}
 	
 	public static function pre_get_users( $query ) {

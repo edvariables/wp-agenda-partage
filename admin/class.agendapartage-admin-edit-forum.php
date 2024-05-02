@@ -222,7 +222,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'learn-more' => 'les adresses doivent être séparées d\'une virgule ou d\'un point-virgule.'
 		];
 		
-		$newsletters = [ '' => '(aucune)'];
+		$newsletters = [ '' => ''];
 		$meta_key = '_new-subscribers-newsletter';
 		foreach( AgendaPartage_Forum::get_newsletters($post->ID, true) as $newsletter ) {
 			$newsletters[ $newsletter->ID.''] = $newsletter->post_title;
