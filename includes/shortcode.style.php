@@ -12,7 +12,7 @@ function style_shortcode_cb( $atts, $content = null ) {
 	if( $content )
 		$content = do_shortcode($content);
 	foreach($atts as $att=>$value){
-		if( $att == 0)
+		if( $att === 0)
 			$att = 'visible';
 		switch($att){
 			case 'css':
@@ -80,17 +80,21 @@ function style_shortcode_cb( $atts, $content = null ) {
 				if( $value )
 					$attributes = $value;
 				break;
+			default:
+				$attributes .= sprintf(' %s=%s', $att, $value);
+				break;
 		}
 	}
-	return sprintf('<%s class="%s"%s%s %s>%s</%s>'
+	$html = sprintf('<%s class="%s"%s%s %s>%s</%s>'
 			, $tag
 			, trim($class)
 			, $title ? ' title="' . esc_attr($title) . '"' : ''
-			, $css ? ' style="' . $css . '"' : ''
+			, $css ? ' style="' . esc_attr($css) . '"' : ''
 			, $attributes
 			, $content
 			, $tag
 	);
+	return $html;
 
 }
 add_shortcode( 'style', 'style_shortcode_cb' );

@@ -8,6 +8,7 @@ function icon_shortcode_cb( $atts, $content = null ) {
 	$title = '';
 	$css = '';
 	$href = '';
+	$attributes = '';
 	foreach($atts as $att=>$value){
 		if( $att == 0)
 			$att = 'icon';
@@ -76,15 +77,23 @@ function icon_shortcode_cb( $atts, $content = null ) {
 						break;
 					}
 				break;
+			case 'attributes':
+				if( $value )
+					$attributes = $value;
+				break;
+			default:
+				$attributes .= sprintf(' %s=%s', $att, $value);
+				break;
 		}
 	}
-	return sprintf('%s<%s class="dashicons-before dashicons-%s %s"%s%s>%s</%s>%s'
+	return sprintf('%s<%s class="dashicons-before dashicons-%s %s"%s%s%s>%s</%s>%s'
 			, $href ? sprintf('<a href="%s">', $href) : ''
 			, $tag
 			, $icon
 			, $class
 			, $title ? ' title="' . esc_attr($title) . '"' : ''
 			, $css ? ' style="' . esc_attr($css) . '"' : ''
+			, $attributes
 			, $content ? do_shortcode($content) : ''
 			, $tag
 			, $href ? sprintf('</a>', $href) : ''
