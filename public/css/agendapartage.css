@@ -54,6 +54,12 @@ body.colors-dark .agdp-error-light {
 body.logged-in .if-not-connected {
 	display:none;
 }
+.if-connected {
+	display:none;
+}
+body.logged-in .if-connected {
+	display:inherit;
+}
 
 /* Masque la navigation
  * Géré par code /hook on_navigation_markup_template_cb

@@ -40,12 +40,45 @@ function style_shortcode_cb( $atts, $content = null ) {
 			case 'label':
 				$content = sprintf('<label>%s</label>%s', $value, $content);
 				break;
+			case 'hidden':
+				switch($value){
+					case 'if-not-connected':
+					case 'si-non-connecte':
+					case 'si-non-connecté':
+					case 'si-non-connecté-e':
+						if( $value )
+							$class .= ' if-connected';
+						break;
+					}
+				break;
+			case 'visible':
+				if( ! $value )
+					$class .= ' hidden';
+				else switch($value){
+					case 'if-not-connected':
+					case 'si-non-connecte':
+					case 'si-non-connecté':
+					case 'si-non-connecté-e':
+						$class .= ' if-not-connected';
+						break;
+					case 'if-admin':
+					case 'si-admin':
+						$class .= ' admin-user-only';
+						break;
+					}
+				break;
 			case 'if-not-connected':
 			case 'si-non-connecte':
 			case 'si-non-connecté':
 			case 'si-non-connecté-e':
 				if( $value )
 					$class .= ' if-not-connected';
+				break;
+			case 'if-admin':
+			case 'si-admin':
+			case 'admin-user-only':
+				if( $value )
+					$class .= ' admin-user-only';
 				break;
 			case 'attributes':
 				if( $value )
