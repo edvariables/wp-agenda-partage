@@ -9,6 +9,8 @@ function style_shortcode_cb( $atts, $content = null ) {
 	$attributes = '';
 	$css = '';
 	$title = false;
+	if( $content )
+		$content = do_shortcode($content);
 	foreach($atts as $att=>$value){
 		if( $att == 0)
 			$att = 'visible';
@@ -39,10 +41,12 @@ function style_shortcode_cb( $atts, $content = null ) {
 				break;
 			case 'icon':
 			case 'icone':
-				$content = sprintf('<span class="dashicons-before dashicons-%s"></span>%s', $value, $content);
+				if( $value )
+					$content = sprintf('<span class="dashicons-before dashicons-%s"></span>%s', $value, $content);
 				break;
 			case 'label':
-				$content = sprintf('<label>%s</label>%s', $value, $content);
+				if( $value )
+					$content = sprintf('<label>%s</label>%s', $value, $content);
 				break;
 			case 'hidden':
 				switch($value){
@@ -78,13 +82,13 @@ function style_shortcode_cb( $atts, $content = null ) {
 				break;
 		}
 	}
-	return sprintf('<%s class="%s" style="%s"%s%s>%s</%s>'
+	return sprintf('<%s class="%s"%s%s %s>%s</%s>'
 			, $tag
 			, trim($class)
 			, $title ? ' title="' . esc_attr($title) . '"' : ''
-			, $css ? ' style="' . esc_attr($css) . '"' : ''
+			, $css ? ' style="' . $css . '"' : ''
 			, $attributes
-			, do_shortcode($content)
+			, $content
 			, $tag
 	);
 
