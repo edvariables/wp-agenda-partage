@@ -279,7 +279,8 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		
 		self::save_metaboxes($forum_id, $forum);
 		
-		debug_log('save_post_forum_cb TODO', $force_reload, admin_url(sprintf('post.php?post=%d&action=edit', $forum_id) ) );
+		//TODO block-editor ne recharge pas la page et les notifications ne sont pas affichées
+		//debug_log('save_post_forum_cb TODO', $force_reload, admin_url(sprintf('post.php?post=%d&action=edit', $forum_id) ) );
 		if( $force_reload ){
 			wp_redirect(admin_url(sprintf('post.php?post=%d&action=edit', $forum_id) ), 302);
 			exit;
@@ -303,7 +304,9 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		foreach($emails as $email => $user_name){
 			if( $user_is_new = ! ($user_id = email_exists($email) ) ){
 				$user = AgendaPartage_Newsletter::create_subscriber_user($email, $user_name, false);
-				$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d">"%s" &lt;%s&gt;</a> a été créé.</li>', $user->ID, $user->display_name, $email);
+				$user_id = $user->ID;
+				$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> a été créé.</li>', $user->ID, $user->display_name, $email);
+				update_user_meta($user->ID, $subscription_meta_key, 'subscriber');
 			}
 			else{
 				$user = get_user_by('id', $user_id);
@@ -322,7 +325,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 					$subscription = PERIOD_DAYLY;
 					update_user_meta($user_id, $nl_subscription_meta_key, $subscription);
 					$subscription = isset($nl_periods[$subscription]) ? $nl_periods[$subscription] : $subscription;
-					$result .= sprintf("\n".'<li><a href="/wp-admin/user-edit.php?user_id=%d#newsletters">L\'abonnement à la lettre-info</a> est désormais "%s".</li>', $user_id, $subscription);
+					$result .= sprintf("\n".'<li><a href="/wp-admin/user-edit.php?user_id=%d#newsletters">- Abonnement à la lettre-info</a> : %s.</li>', $user_id, $subscription);
 				}
 			}
 		}
