@@ -193,6 +193,10 @@ table.forum-subscribers td, table.forum-subscribers th {
 	padding-left: 1em;
 	padding-right: 1em;
 }
+div.edit-post-layout__metaboxes {
+  margin-left:auto;
+  margin-right:auto
+}
 /*
  *******/
  

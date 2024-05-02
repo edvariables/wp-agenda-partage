@@ -56,7 +56,7 @@ class AgendaPartage_Admin_User {
 		}
 		
 		
-		$pages = AgendaPartage_Mailbox::get_pages_dispatch();
+		$pages = AgendaPartage_Mailbox::get_pages_dispatches();
 		foreach( $pages as $page_id => $dispatches ){
 			$meta_key = AgendaPartage_Forum::get_subscription_meta_key($page_id);
 			if( array_key_exists($meta_key, $_POST))
@@ -83,7 +83,7 @@ class AgendaPartage_Admin_User {
 		?><br><h2 id="forums">Adhésions aux forums</h2>
 
 		<table class="form-table" role="presentation"><?php
-			$pages = AgendaPartage_Mailbox::get_pages_dispatch();
+			$pages = AgendaPartage_Mailbox::get_pages_dispatches();
 			
 			$subscription_roles = AgendaPartage_Forum::subscription_roles;
 			$post_statuses = [
@@ -94,7 +94,7 @@ class AgendaPartage_Admin_User {
 				
 			foreach( $pages as $page_id => $dispatches ){
 				$rights = $dispatches[0]['rights'];
-				if( ! in_array( $rights, ['A', 'AO'] ) )
+				if( ! AgendaPartage_Forum::get_forum_right_need_subscription( false, $rights ) )
 					continue;
 				$page = get_post($page_id);
 				$user_subscription = AgendaPartage_Forum::get_subscription($profile_user->user_email, $page_id);

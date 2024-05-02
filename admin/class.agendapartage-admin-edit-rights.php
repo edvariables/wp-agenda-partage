@@ -37,7 +37,7 @@ class AgendaPartage_Admin_Edit_Rights {
 		);
 		
 		$publish_all_rights = AgendaPartage_Forum::get_all_rights_labels();
-		$pages = AgendaPartage_Mailbox::get_pages_dispatch();
+		$pages = AgendaPartage_Mailbox::get_pages_dispatches();
 		
 		foreach( $pages as $page_id => $dispatches ){
 			$dispatch = $dispatches[0];

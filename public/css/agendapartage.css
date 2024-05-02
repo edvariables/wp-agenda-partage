@@ -48,6 +48,13 @@ body.colors-dark .agdp-error-light {
   color: rgb(208, 208, 208);
 }
 
+.if-not-connected {
+	display:inherit;
+}
+body.logged-in .if-not-connected {
+	display:none;
+}
+
 /* Masque la navigation
  * Géré par code /hook on_navigation_markup_template_cb
 article.type-agdpevent ~ nav.post-navigation {
@@ -497,3 +504,4 @@ body.colors-dark #comments #reply-title a {
 	font-size: smaller;
 	font-weight : normal;
 }
+

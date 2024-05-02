@@ -90,8 +90,6 @@ Connexion API OVH pour
 
 EDOC2019 : multisites pour tester les interactions inter-blogs 
 	agdp-nord-ardeche
-	
-User adhésion ecopartage = capability
 
 cf class.agendapartage-agdpevent.php //TODO if( self::waiting_for_activation($post) )
 	sinon, pas d'url

@@ -425,7 +425,7 @@ class AgendaPartage_Mailbox {
 	public static function get_page_dispatch( $page_id = false, $mailbox_id = false ){
 		if( is_a($page_id, 'WP_POST') )
 			$page_id = $page_id->ID;
-		if( ($pages = self::get_pages_dispatch( $mailbox_id, $page_id ))
+		if( ($pages = self::get_pages_dispatches( $mailbox_id, $page_id ))
 		&& isset($pages[$page_id.'']) )
 			return $pages[$page_id.''];
 		return [];
@@ -434,12 +434,12 @@ class AgendaPartage_Mailbox {
 	/**
 	 * Retourne les paramètres de distribution par page (forum + agdpevent + covoiturage)
 	 */
-	public static function get_pages_dispatch( $mailbox_id = false, $page_id_only = false ){
+	public static function get_pages_dispatches( $mailbox_id = false, $page_id_only = false ){
 		if( is_a($page_id_only, 'WP_POST') )
 			$page_id_only = $page_id_only->ID;
 		$pages = [];
 		$all_dispatches = self::get_emails_dispatch($mailbox_id, $page_id_only);
-		// debug_log('get_pages_dispatch $all_dispatches', $all_dispatches);
+		// debug_log('get_pages_dispatches $all_dispatches', $all_dispatches);
 		foreach( $all_dispatches as $email => $dispatch ){
 			if($dispatch['type'] === 'page')
 				$page_id = $dispatch['id'].'';
@@ -451,7 +451,7 @@ class AgendaPartage_Mailbox {
 				$page_id = AgendaPartage::get_option('covoiturages_page_id');
 			}
 			else {
-				debug_log(__CLASS__ . '::get_pages_dispatch'
+				debug_log(__CLASS__ . '::get_pages_dispatches'
 					, sprintf('Erreur de configuration de la mailbox %s, le type "%s" est inconnu.'
 						, is_a($mailbox_id, 'WP_Post') ? $mailbox_id->post_title : $mailbox_id
 						, $dispatch['type']));
@@ -462,10 +462,10 @@ class AgendaPartage_Mailbox {
 				continue;
 				
 			$dispatch['email'] = $email;
-			if( ! isset($pages[$page_id]) )
-				$pages[$page_id] = [ $dispatch ];
+			if( ! isset($pages[$page_id.'']) )
+				$pages[$page_id.''] = [ $dispatch ];
 			else
-				$pages[$page_id][] = $dispatch;
+				$pages[$page_id.''][] = $dispatch;
 		}
 		return $pages;
 	}
@@ -504,7 +504,8 @@ class AgendaPartage_Mailbox {
 			return true;
 		
 		try {
-			require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-mailbox-imap.php");
+			if( ! class_exists('AgendaPartage_Mailbox_IMAP') )
+				require_once( AGDP_PLUGIN_DIR . "/public/class.agendapartage-mailbox-imap.php");
 			
 			if( ! ($messages = AgendaPartage_Mailbox_IMAP::get_imap_messages($mailbox))){
 				return $messages;

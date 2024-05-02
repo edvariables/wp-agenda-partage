@@ -286,55 +286,13 @@ class AgendaPartage_Forum {
 		
 		// if( self::get_current_forum_rights( $page ) != 'P' )
 			self::get_current_forum_rights( $page );//set current_forum $page
-			if( self::user_can_see_details() )
+			if( self::user_can_see_forum_details( $page ) )
 				add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return $import_result;
 	}
 	
-	/**
-	 * Teste l'autorisation de modifier un commentaire selon l'utilisateur connecté
-	 */
-	public static function user_can_change_comment($comment){
-		if(!$comment)
-			return false;
-		if(is_numeric($comment))
-			$comment = get_comment($comment);
-		
-		if($comment->comment_approved == 'trash'){
-			return false;
-		}
-		
-		//Admin : ok 
-		//TODO check is_admin === interface ou user
-		//TODO user can edit only his own posts
-		if( is_admin() && !wp_doing_ajax()){
-			return true;
-		}		
-		
-		if(is_user_logged_in()){
-			global $current_user;
-			//Rôle autorisé
-			if(	$current_user->has_cap( 'edit_posts' ) ){
-				return true;
-			}
-			
-			//Utilisateur associé
-			if(	$current_user->ID == $comment->comment_author ){
-				return true;
-			}
-			
-			$user_email = $current_user->user_email;
-			if( is_email($user_email)
-			 && $user_email == $comment->comment_author_email ){
-				return true;
-			}
-			
-		// debug_log( $current_user->has_cap( 'edit_posts' ), $user_email, $comment->comment_author, $comment->comment_author_email );
-		}
-		
-		return false;
-	}
+
 	
 	/**
 	 * 
@@ -595,7 +553,7 @@ class AgendaPartage_Forum {
 			$title = get_comment_meta($comment->comment_ID, 'title', true);	
 			echo sprintf('<h3 class="comment-title">%s</h3>', $title);
 		}
-		if( ! self::user_can_see_details() )
+		if( ! self::user_can_see_forum_details() )
 			return '';
 		
 		return $comment_text;
@@ -654,7 +612,7 @@ class AgendaPartage_Forum {
 	 * Affichage du commentaire, lien "Répondre"
 	 */
 	public static function on_comment_reply_link($comment_reply_link, $args, $comment, $post ){
-		if( ! self::user_can_see_details() )
+		if( ! self::user_can_see_forum_details() )
 			return '';
 		
 		$attachments_links = self::get_attachments_links($comment);
@@ -772,7 +730,7 @@ class AgendaPartage_Forum {
 	 * Affichage de l'auteur du commentaire
 	 */
 	public static function on_get_comment_author_link( $comment_author_link, $comment_author, $comment_id ){
-		if( ! self::user_can_see_details() )
+		if( ! self::user_can_see_forum_details() )
 			return '';
 		
 		if( ! strpos( $comment_author_link, ' href=' ) 
@@ -802,8 +760,7 @@ class AgendaPartage_Forum {
 				$status = 'peut modérer';
 			}
 			else {
-				$right = self::get_current_forum_rights();
-				if( in_array($right , ['A', 'AO']) ){
+				if( self::get_forum_right_need_subscription() ){
 					switch($subscription = self::get_subscription( $comment->comment_author_email, self::$current_forum )){
 						case false:
 						case '':
@@ -1048,18 +1005,11 @@ class AgendaPartage_Forum {
 		}
 		return false;
 	}
-	/**
-	 * Option d'abonnement de l'utilisateur
-	 */
-	public static function get_user_subscription($page = false, $user = false){
-		if( ! $user )
-			$user = self::get_user_email();
-		return self::get_subscription($user, $page);
-	}
+	
 	/**
 	 * L'utilisateur peut voir le détail des commentaires
 	 */
-	public static function user_can_see_details($page = false, $user = false){
+	public static function user_can_see_forum_details($page = false, $user = false){
 		if( ! current_user_can('moderate_comments')
 		&& self::get_forum_right_need_subscription()
 		&& ( ! ($subscription = self::get_user_subscription() )
@@ -1067,6 +1017,55 @@ class AgendaPartage_Forum {
 			return false;
 		}
 		return true;
+	}
+	/**
+	 * Teste l'autorisation de modifier un commentaire selon l'utilisateur connecté
+	 */
+	public static function user_can_change_comment($comment){
+		if(!$comment)
+			return false;
+		if(is_numeric($comment))
+			$comment = get_comment($comment);
+		
+		if($comment->comment_approved == 'trash'){
+			return false;
+		}
+		
+		//Admin : ok 
+		//TODO check is_admin === interface ou user
+		//TODO user can edit only his own posts
+		if( is_admin() && !wp_doing_ajax()){
+			return true;
+		}		
+		
+		if(is_user_logged_in()){
+			global $current_user;
+			//Rôle autorisé
+			if(	$current_user->has_cap( 'moderate_comments' ) ){
+				return true;
+			}
+			
+			//Utilisateur associé
+			if(	$current_user->ID == $comment->comment_author ){
+				return true;
+			}
+			
+			$user_email = $current_user->user_email;
+			if( is_email($user_email)
+			 && $user_email == $comment->comment_author_email ){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	/**
+	 * Option d'abonnement de l'utilisateur
+	 */
+	public static function get_user_subscription($page = false, $user = false){
+		if( ! $user )
+			$user = self::get_user_email();
+		return self::get_subscription($user, $page);
 	}
 	
 	public static function get_subscription_meta_key($page = false){
@@ -1200,8 +1199,10 @@ class AgendaPartage_Forum {
 	/**
 	 * Indique que le droit sur le forum nécessite une adhésion (right A ou AO)
 	 */
-	public static function get_forum_right_need_subscription( $page = false ) {
-		return in_array( self::get_forum_right( $page ), ['A', 'AO'] );
+	public static function get_forum_right_need_subscription( $page = false, $right = false ) {
+		if( ! $right )
+			$right = self::get_forum_right( $page );
+		return in_array( $right, ['A', 'AO'] );
 	}
 
 	/**

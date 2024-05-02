@@ -34,6 +34,8 @@ class AgendaPartage {
 			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.antispam.php' );
 		if(!function_exists('toggle_shortcode_cb'))
 			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.toggle.php' );
+		if(!function_exists('style_shortcode_cb'))
+			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.style.php' );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-user.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_User', 'init' ) );
