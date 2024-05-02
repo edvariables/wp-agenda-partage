@@ -30,13 +30,17 @@ class AgendaPartage {
 		add_action( 'agendapartage-init', array( __CLASS__, 'register_post_types' ) );
 		// self::register_post_types();
 
-		if(!function_exists('antispam_shortcode_cb'))
-			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.antispam.php' );
 		if(!function_exists('toggle_shortcode_cb'))
 			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.toggle.php' );
-		if(!function_exists('style_shortcode_cb'))
-			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.style.php' );
-
+		if( ! is_admin() ){
+			if(!function_exists('antispam_shortcode_cb'))
+				require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.antispam.php' );
+			if(!function_exists('style_shortcode_cb'))
+				require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.style.php' );
+			if(!function_exists('icon_shortcode_cb'))
+				require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.icon.php' );
+		}
+		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-user.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_User', 'init' ) );
 
@@ -514,13 +518,13 @@ class AgendaPartage {
 	/**
 	 * HTML icon
 	 */
-	public static function icon($icon, $inner = '', $class = '', $tag = 'span', $title = false){
+	public static function icon($icon, $content = '', $class = '', $tag = 'span', $title = false){
 		 return sprintf('<%s class="dashicons-before dashicons-%s %s"%s>%s</%s>'
 			, $tag
 			, $icon
 			, $class
 			, $title ? ' title="' . esc_attr($title) . '"' : ''
-			, $inner
+			, $content
 			, $tag);
 	 }
 	 

@@ -48,6 +48,7 @@ body.colors-dark .agdp-error-light {
   color: rgb(208, 208, 208);
 }
 
+/* shortcode style */
 .if-not-connected {
 	display:inherit;
 }

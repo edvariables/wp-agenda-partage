@@ -1,17 +1,17 @@
 <?php
-
-function style_shortcode_cb( $atts, $content = null ) {
-
+function icon_shortcode_cb( $atts, $content = null ) {
+debug_log('icon_shortcode_cb', $atts);
 	if( count($atts) === 0 )
 		return $content;
-	$class = 'shortcode-style';
-	$tag = 'p';
-	$attributes = '';
+	$class = 'shortcode-icon';
+	$tag = 'span';
+	$icon = 'info';
+	$title = '';
 	$css = '';
-	$title = false;
+	$href = '';
 	foreach($atts as $att=>$value){
 		if( $att == 0)
-			$att = 'visible';
+			$att = 'icon';
 		switch($att){
 			case 'css':
 			case 'style':
@@ -28,18 +28,23 @@ function style_shortcode_cb( $atts, $content = null ) {
 				if( $value )
 					$class .= ' ' . $value;
 				break;
-			case 'title':
-			case 'titre':
-				if( $value )
-					$title = $value;
-				break;
 			case 'tag':
 			case 'balise':
 				$tag = trim($value);
 				break;
 			case 'icon':
 			case 'icone':
-				$content = sprintf('<span class="dashicons-before dashicons-%s"></span>%s', $value, $content);
+				if( $value )
+					$icon = $value;
+				break;
+			case 'href':
+				if( $value )
+					$href = $value;
+				break;
+			case 'title':
+			case 'titre':
+				if( $value )
+					$title = $value;
 				break;
 			case 'label':
 				$content = sprintf('<label>%s</label>%s', $value, $content);
@@ -72,21 +77,30 @@ function style_shortcode_cb( $atts, $content = null ) {
 						break;
 					}
 				break;
-			case 'attributes':
-				if( $value )
-					$attributes = $value;
-				break;
 		}
 	}
-	return sprintf('<%s class="%s" style="%s"%s%s>%s</%s>'
+	debug_log(sprintf('%s<%s class="dashicons-before dashicons-%s %s"%s%s>%s</%s>%s'
+			, $href ? sprintf('<a href="%s">', $href) : ''
 			, $tag
-			, trim($class)
+			, $icon
+			, $class
 			, $title ? ' title="' . esc_attr($title) . '"' : ''
 			, $css ? ' style="' . esc_attr($css) . '"' : ''
-			, $attributes
-			, do_shortcode($content)
+			, $content ? do_shortcode($content) : ''
 			, $tag
+			, $href ? sprintf('</a>', $href) : ''
+	));
+	return sprintf('%s<%s class="dashicons-before dashicons-%s %s"%s%s>%s</%s>%s'
+			, $href ? sprintf('<a href="%s">', $href) : ''
+			, $tag
+			, $icon
+			, $class
+			, $title ? ' title="' . esc_attr($title) . '"' : ''
+			, $css ? ' style="' . esc_attr($css) . '"' : ''
+			, $content ? do_shortcode($content) : ''
+			, $tag
+			, $href ? sprintf('</a>', $href) : ''
 	);
 
 }
-add_shortcode( 'style', 'style_shortcode_cb' );
+add_shortcode( 'icon', 'icon_shortcode_cb' );
