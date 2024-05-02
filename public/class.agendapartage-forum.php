@@ -286,7 +286,8 @@ class AgendaPartage_Forum {
 		
 		// if( self::get_current_forum_rights( $page ) != 'P' )
 			self::get_current_forum_rights( $page );//set current_forum $page
-			add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
+			if( self::user_can_see_details() )
+				add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return $import_result;
 	}
@@ -590,11 +591,12 @@ class AgendaPartage_Forum {
 			echo sprintf('<div class="unapproved-action-links">%s</div>',
 				implode('&nbsp;&nbsp;&nbsp;', self::get_comment_approve_links($comment->comment_ID)));
 		}
-		
 		if( ! self::get_property_is_value('comment_title', false) ){
 			$title = get_comment_meta($comment->comment_ID, 'title', true);	
 			echo sprintf('<h3 class="comment-title">%s</h3>', $title);
 		}
+		if( ! self::user_can_see_details() )
+			return '';
 		
 		return $comment_text;
 	}
@@ -652,6 +654,9 @@ class AgendaPartage_Forum {
 	 * Affichage du commentaire, lien "Répondre"
 	 */
 	public static function on_comment_reply_link($comment_reply_link, $args, $comment, $post ){
+		if( ! self::user_can_see_details() )
+			return '';
+		
 		$attachments_links = self::get_attachments_links($comment);
 		echo $attachments_links;
 		
@@ -767,6 +772,8 @@ class AgendaPartage_Forum {
 	 * Affichage de l'auteur du commentaire
 	 */
 	public static function on_get_comment_author_link( $comment_author_link, $comment_author, $comment_id ){
+		if( ! self::user_can_see_details() )
+			return '';
 		
 		if( ! strpos( $comment_author_link, ' href=' ) 
 		 && ! strpos( $comment_author_link, '@' ) ){
@@ -1013,8 +1020,11 @@ class AgendaPartage_Forum {
 	
 	
 	public static function get_page($page = false){
+		if( ! $page )
+			$page = self::$current_forum;
 		if(is_a($page, 'WP_Post'))
 			return $page;
+		
 		return get_post($page);
 	}
 	
@@ -1045,6 +1055,18 @@ class AgendaPartage_Forum {
 		if( ! $user )
 			$user = self::get_user_email();
 		return self::get_subscription($user, $page);
+	}
+	/**
+	 * L'utilisateur peut voir le détail des commentaires
+	 */
+	public static function user_can_see_details($page = false, $user = false){
+		if( ! current_user_can('moderate_comments')
+		&& self::get_forum_right_need_subscription()
+		&& ( ! ($subscription = self::get_user_subscription() )
+			|| $subscription === 'banned')){
+			return false;
+		}
+		return true;
 	}
 	
 	public static function get_subscription_meta_key($page = false){
@@ -1146,10 +1168,10 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne le paramètre de droit d'un forum
 	 */
-	public static function get_forum_right( $page ) {
+	public static function get_forum_right( $page = false ) {
 		//Cache sur current_forum
 		if( self::$current_forum ) {
-			if( self::$current_forum === $page )
+			if( ! $page || (self::$current_forum === $page) )
 				return self::$current_forum_rights;
 			elseif( is_a(self::$current_forum, 'WP_Post') ){
 				if( is_a($page, 'WP_Post') ){
@@ -1168,24 +1190,29 @@ class AgendaPartage_Forum {
 					return self::$current_forum_rights;
 			}
 		}
+		if( ! $page )
+			return false;
 		return AgendaPartage_Mailbox::get_page_rights( $page );
 	}
 	
 	/**
 	 * Indique que le droit sur le forum nécessite une adhésion (right A ou AO)
 	 */
-	public static function get_forum_right_need_subscription( $page ) {
+	public static function get_forum_right_need_subscription( $page = false ) {
 		return in_array( self::get_forum_right( $page ), ['A', 'AO'] );
 	}
 
 	/**
 	 * Retourne l'état d'un post à importer selon l'utilisateur lié
 	 */
-	 public static function get_forum_post_status($page, $user, $email) {
+	 public static function get_forum_post_status($page = false, $user = false, $email = false) {
 		
 		$right = self::get_forum_right( $page );
 		if( ! $right || $right === 'P' )
 			return 'publish';
+		
+		if( ! $user && ! $email )
+			$user = self::get_current_user();
 		
 		if(is_a($user, 'WP_User')){
 			$user_id = $user->ID;
@@ -1209,7 +1236,7 @@ class AgendaPartage_Forum {
 		if( user_can( $user, 'moderate_comments') )
 			return 'publish';
 		
-		$user_subscription = AgendaPartage_Forum::get_subscription($user->user_email, $page);
+		$user_subscription = self::get_subscription($user->user_email, $page);
 		// debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
 		switch($user_subscription){
 			case 'administrator' :
@@ -1289,18 +1316,18 @@ class AgendaPartage_Forum {
 		// debug_log('on_wp_get_nav_menu_items', $items/* , $menu, $args */ );
 		if( current_user_can('moderate_comments') )
 			return $items;
-		
-		$hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids'] );
-		$hidden_menu_items_ids = [];
-		foreach( $items as $index => $menu_item ){
-			if( in_array($menu_item->menu_item_parent, $hidden_menu_items_ids)
-			|| ( $menu_item->object === 'page' 
-				&& in_array($menu_item->object_id, $hidden_forums_ids))
-			){
-				$hidden_menu_items_ids[] = $menu_item->ID;
-				unset($items[$index]);
-			}
-		}
+		// on cherche plutôt à afficher les seuls titres de Commentaires
+		// $hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids'] );
+		// $hidden_menu_items_ids = [];
+		// foreach( $items as $index => $menu_item ){
+			// if( in_array($menu_item->menu_item_parent, $hidden_menu_items_ids)
+			// || ( $menu_item->object === 'page' 
+				// && in_array($menu_item->object_id, $hidden_forums_ids))
+			// ){
+				// $hidden_menu_items_ids[] = $menu_item->ID;
+				// unset($items[$index]);
+			// }
+		// }
 		return $items;
 	}
 	
