@@ -452,16 +452,16 @@ class AgendaPartage_Forum {
 	 * Vérifie les données lors de l'enregistrement du commentaire
 	 */
 	public static function on_pre_comment_approved( $approved, $commentdata ){
-		
 		if( ! ($mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) ))
 			return $approved;
+		if( ! self::get_forum_comment_approved($commentdata['comment_post_ID']) )
+			return 0;
 		
 		if( empty( $_POST['title'] )
 		&& empty($commentdata['comment_meta'])
 		&& empty($commentdata['comment_meta']['title']) )
 			return new WP_Error( 'require_valid_comment', __( '<strong>Erreur :</strong> Veuillez indiquer un titre à votre message.' ), 200 );
 
-		
 		return $approved;
 	}
 	
@@ -1148,7 +1148,7 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne l'état d'un commentaire à importer selon l'utilisateur lié
 	 */
-	public static function get_forum_comment_approved($page, $user, $email) {
+	public static function get_forum_comment_approved($page = false, $user = false, $email = false) {
 		$post_status = self::get_forum_post_status($page, $user, $email);
 		switch( $post_status ){
 			case 'publish':
@@ -1171,8 +1171,9 @@ class AgendaPartage_Forum {
 	public static function get_forum_right( $page = false ) {
 		//Cache sur current_forum
 		if( self::$current_forum ) {
-			if( ! $page || (self::$current_forum === $page) )
+			if( ! $page || (self::$current_forum === $page) ){
 				return self::$current_forum_rights;
+			}
 			elseif( is_a(self::$current_forum, 'WP_Post') ){
 				if( is_a($page, 'WP_Post') ){
 					if( self::$current_forum->ID === $page->ID )
@@ -1191,7 +1192,8 @@ class AgendaPartage_Forum {
 			}
 		}
 		if( ! $page )
-			return false;
+			if( ! ( $page = get_post() ) )
+				return false;
 		return AgendaPartage_Mailbox::get_page_rights( $page );
 	}
 	
