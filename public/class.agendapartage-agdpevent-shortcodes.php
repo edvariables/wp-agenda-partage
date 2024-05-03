@@ -405,7 +405,7 @@ class AgendaPartage_Evenement_Shortcodes {
 
 			case 'agdpevent-modifier-evenement':
 
-				return AgendaPartage_Evenement_Edit::get_post_edit_content();
+				return AgendaPartage_Evenement_Edit::get_agdpevent_edit_content();
 
 			case 'agdpevent-details':
 

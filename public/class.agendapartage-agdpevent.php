@@ -276,7 +276,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				$meta_name = 'ev-email' ;
 				$email = self::get_post_meta($post, $meta_name, true);
 				$email_parts = explode('@', $email);
-				$email_trunc = substr($email, 0, 3) . str_repeat('*', strlen($email_parts[0])-min(strlen($email_parts[0]),3));
+				$email_trunc = substr($email, 0, 3) . str_repeat('*', strlen($email_parts[0])-3);
 				if($caption === null){
 					$caption = 'E-mail de validation';
 					$title = sprintf('Cliquez ici pour envoyer un e-mail de validation de l\'évènement à l\'adresse %s@%s', $email_trunc, $email_parts[1]);

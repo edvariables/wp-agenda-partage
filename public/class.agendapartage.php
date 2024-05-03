@@ -45,7 +45,6 @@ class AgendaPartage {
 		add_action( 'agendapartage-init', array( 'AgendaPartage_User', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
-		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-edit-abstract.php' );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-mailbox.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Mailbox', 'init' ) );
