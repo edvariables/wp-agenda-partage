@@ -311,7 +311,7 @@ class AgendaPartage_Covoiturage_Shortcodes {
 
 			case 'covoiturage-modifier-covoiturage':
 
-				return AgendaPartage_Covoiturage_Edit::get_covoiturage_edit_content();
+				return AgendaPartage_Covoiturage_Edit::get_post_edit_content();
 
 			case 'covoiturage-details':
 
