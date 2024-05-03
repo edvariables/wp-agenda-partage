@@ -896,8 +896,9 @@ class AgendaPartage_Covoiturage_Edit {
 					$abort = true;
 					$error_message = sprintf('Erreur d\'enregistrement des catégories (%s). %s. \r\n%s', $tax_name, $error_message, var_export($tax_inputs, true));
 					$submission->set_response($error_message);
-					return false;
+					return false; //TODO
 				}
+				debug_log('$tax_inputs', $tax_inputs);
 			}
 		}
 				

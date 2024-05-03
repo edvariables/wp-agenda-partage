@@ -840,7 +840,8 @@ class AgendaPartage_Mailbox {
 		if($abort)
 			return;
 		if( isset($_POST['_wpcf7_container_post']) ){
-			$page = get_post($_POST['_wpcf7_container_post']);
+			if( ! ($page = get_post($_POST['_wpcf7_container_post']) ) )
+				return;
 			$meta_key = AGDP_PAGE_META_MAILBOX;
 			if( $mailbox_id = get_post_meta( $page->ID, $meta_key, true)){
 				if( $dispatch = self::get_page_dispatch( $page->ID ) ){
