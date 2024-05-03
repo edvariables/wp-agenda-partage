@@ -1,5 +1,26 @@
 <?php
+/* shortcode style
+[style if-not-connected tag=code]code blabla for not connected user[/style]
+[style icon="info" color="green"] green info iconed [/style]
 
+Default values :
+	tag : p
+	
+<style>
+	.if-not-connected {
+		display:inherit;
+	}
+	body.logged-in .if-not-connected {
+		display:none;
+	}
+	.if-connected {
+		display:none;
+	}
+	body.logged-in .if-connected {
+		display:inherit;
+	}
+</style>
+*/
 function style_shortcode_cb( $atts, $content = null ) {
 
 	if( count($atts) === 0 )

@@ -96,7 +96,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		add_meta_box('agdp_forum-properties', $box_name, array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
 		
 		if( AgendaPartage_Forum::get_forum_right_need_subscription( $post ) )
-			add_meta_box('agdp_forum-subscribers-add', __('Ajout d\'adhérents au forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
+			add_meta_box('agdp_forum-subscribers-add', __('Ajout de membres au forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -149,7 +149,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			// debug_log('on_admin_notices_import_result', '$import_result', $import_result);
 			delete_post_meta( $post->ID, $meta_key);
 			
-			AgendaPartage_Admin::add_admin_notice_now(sprintf('Résultat de l\'ajout d\adhérent.e(s) : %s', $import_result)
+			AgendaPartage_Admin::add_admin_notice_now(sprintf('Résultat de l\'ajout de membre(s) : %s', $import_result)
 				, ['type' => 'info', 
 					'actions' => [
 						'url' => sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
@@ -258,10 +258,10 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		]);
 		// debug_log('$subscribers',$subscribers);
 		if( ! $subscribers ){
-			return [ 'counter' => 0, 'label' => '<i>aucun adhérent</i>' ];
+			return [ 'counter' => 0, 'label' => '<i>aucun membre</i>' ];
 		}
 		else {
-			return [ 'counter' => count($subscribers), 'label' => sprintf('%d adhérent.e(s)', count($subscribers))];
+			return [ 'counter' => count($subscribers), 'label' => sprintf('%d membre(s)', count($subscribers))];
 		}
 	}
 	
@@ -296,7 +296,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		}
 	}
 	/**
-	 * Importe de nouveaux emails en tant qu'adhérent.e.s du forum et abonné.e.s de la lettre-info
+	 * Importe de nouveaux emails en tant que membres du forum et abonné.e.s de la lettre-info
 	 */
 	public static function add_new_subscribers($forum_id, $forum, $emails, $newsletter_id){
 		$result = '';
@@ -324,7 +324,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> existe déjà comme "%s".</li>', $user_id, $user->display_name, $email, AgendaPartage_Forum::subscription_roles[$subscription]);
 				else {
 					update_user_meta($user_id, $subscription_meta_key, 'subscriber');
-					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> est désormais adhérent.</li>', $user_id, $user->display_name, $email);
+					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> est désormais membre de la liste.</li>', $user_id, $user->display_name, $email);
 				}
 			}
 			if( $nl_subscription_meta_key ){

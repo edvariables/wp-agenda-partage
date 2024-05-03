@@ -48,7 +48,7 @@ class AgendaPartage_Forum {
 			'' => '(non défini)',
 			'administrator' => 'Administrateurice',
 			'moderator' => 'Modérateurice',
-			'subscriber' => 'Adhérent-e',
+			'subscriber' => 'Membre',
 			'banned' => 'Banni-e',
 		];
 
@@ -764,7 +764,7 @@ class AgendaPartage_Forum {
 					switch($subscription = self::get_subscription( $comment->comment_author_email, self::$current_forum )){
 						case false:
 						case '':
-							$status = 'non adhérent-e';
+							$status = 'non-membre';
 							break;
 						default:
 							$status = isset(self::subscription_roles[$subscription]) ? strtolower(self::subscription_roles[$subscription]) : '?'.$subscription;

@@ -525,7 +525,7 @@ class AgendaPartage_Newsletter {
 					, $html);
 		}
 		
-		//$hidden_newsletters : Selon le droit de certains forums, il faut être connecté et adhérent pour voir certains onglets
+		//$hidden_newsletters : Selon le droit de certains forums, il faut être connecté et membre pour voir certains onglets
 		if( ! current_user_can('moderate_comments') ){
 			global $current_user;
 			foreach( $newsletters as $newsletter_id => $newsletter)
