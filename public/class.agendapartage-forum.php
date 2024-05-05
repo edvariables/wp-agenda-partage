@@ -290,6 +290,7 @@ class AgendaPartage_Forum {
 		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
 		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
 		add_filter('comment_form_defaults', array(__CLASS__, 'on_comment_text_before') );
+		// add_filter('comment_form_default_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('comment_text', array(__CLASS__, 'on_comment_text'), 10, 3 );
 		add_filter('get_comment_time', array(__CLASS__, 'on_get_comment_time'), 10, 5 );
@@ -442,27 +443,27 @@ class AgendaPartage_Forum {
 	/**
 	 * Ajout du champ Titre au formulaire de commentaire
 	 */
-	public static function on_comment_form_fields($fields){	
-		
+	public static function on_comment_form_fields($fields){
 		if( $comment_css = self::get_property('comment_css') ){
 			echo '<style>'.  $comment_css . '</style>';
 		}
 		
-		if( self::get_property_is_value('comment_form', false)
+		if( ( ! isset($_REQUEST['replytocom']) && self::get_property_is_value('comment_form', false))
 		|| ! self::user_can_post_comment()	){
 			$fields['comment'] = '<script>jQuery("#respond.comment-respond").remove();</script>';
 			return $fields;
 		}
-			
+		
 		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></p>';
-		$send_email_field = '<div class="comment-form-send-email if-respond"><label for="send-email">'
+		//ED240505 suppression de la classe .if-respond masquée en css.
+		$send_email_field = '<div class="comment-form-send-email"><label for="send-email">'
 			. '<input id="send-email" name="send-email" type="checkbox">'
 			. ' Envoyez votre réponse par e-mail à l\'auteur du message</label></div>';
-		$is_private_field = '<p class="comment-form-is-private if-respond"><label for="is-private">'
+		$is_private_field = '<p class="comment-form-is-private"><label for="is-private">'
 			. '<input id="is-private" name="is-private" type="checkbox">'
 			. ' Ce message est privé, entre vous et l\'auteur du message. Sinon, il est visible par tous sur ce site.</label></p>';
 		$fields['comment'] = $title_field
-							. $fields['comment']
+							. (isset($fields['comment']) ? $fields['comment'] : '')
 							. $send_email_field
 							. $is_private_field;
 		unset($fields['url']);
@@ -603,7 +604,7 @@ class AgendaPartage_Forum {
 		
 		$send_email = get_comment_meta($comment->comment_ID, 'send-email', true);
 		if( $send_email ) {
-			echo sprintf('<p>%s<code>Un e-mail a été envoyé : %s</code></p>'
+			echo sprintf('<p class="agdp-notif">%s<code>Un e-mail a été envoyé : %s</code></p>'
 				, '<span class="dashicons dashicons-email-alt"></span>'
 				, $send_email);
 			

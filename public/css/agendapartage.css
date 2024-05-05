@@ -511,4 +511,11 @@ body.colors-dark #comments #reply-title a {
 	font-size: smaller;
 	font-weight : normal;
 }
-
+.agdp-notif {
+	border-left: 3px solid green;
+	padding-left: 4px;
+	color: darkgreen;
+}
+body.colors-dark .agdp-notif {
+	color: lightgreen;
+}
