@@ -253,7 +253,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		//Afficher le formulaire
 		$fields[] = [
 			'name' => 'forum_comment_form',
-			'label' => __('Formulaire Laisser un message', AGDP_TAG),
+			'label' => __('Formulaire "Laisser un message"', AGDP_TAG),
 			'input' => 'checkbox',
 			'default' => true,
 		];
@@ -285,7 +285,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		//Style css
 		$fields[] = [
 			'name' => 'forum_comment_css',
-			'label' => __('Style au format css', AGDP_TAG),
+			'label' => __('Styles au format css', AGDP_TAG),
 			'input' => 'textarea'
 		];
 		
