@@ -77,16 +77,29 @@ class AgendaPartage_Forum {
 	/*
 	 **/
 	
+	/**
+	 * Properties
+	 */
 	public static function set_property($key, $value){
 		self::$properties[$key] = $value;
 	}
 	public static function get_property($key){
-		return isset(self::$properties[$key]) ? self::$properties[$key] : null;
+		if( isset(self::$properties[$key]) )
+			return self::$properties[$key];
+		$meta_key = 'forum_' . $key;
+		if( ! ($forum = self::get_page() ) )
+			return null;
+		self::set_property( $key, $meta_value = get_post_meta($forum->ID, $meta_key, true));
+		return $meta_value;
 	}
 	public static function get_property_is_value($key, $value){
-		return isset(self::$properties[$key]) ? self::$properties[$key] == $value : null === $value;
+		$property_value = self::get_property($key, $value);
+		return $property_value == $value;
 	}
 	
+	/**
+	 * get_current_forum_rights
+	 */
 	public static function get_current_forum_rights( $page = false ){
 		if( ! self::$current_forum_rights
 		&& $page ){
@@ -292,7 +305,60 @@ class AgendaPartage_Forum {
 		return $import_result;
 	}
 	
-
+	/**
+	 * show_comments
+	 */
+	public static function user_can_see_comments( $forum = false, $user = null, $show_comments = null, $user_subscription = null){
+		if( ! ($forum = self::get_page( $forum ) ) )
+			return null; //TODO
+			
+		if( $show_comments === null ){
+			$meta_key = 'forum_show_comments';
+			$show_comments = get_post_meta( $forum->ID, $meta_key, true );
+		}
+				
+		switch($show_comments){
+			case 'never':// => 'Jamais',
+				return false;
+			case 'admin':// => 'Les administrateurices',
+				if( $user === null) $user = wp_get_current_user();
+				if( ! $user ) return false;
+				if( user_can( $user, 'manage_options') )
+					return true;
+				//If forum subscriber as admin
+				$user_subscription = self::get_user_subscription( $forum, $user );
+				return $user_subscription === 'administrator';
+				
+			case 'moderator':// => 'Les modérateurices',
+				if( $user === null) $user = wp_get_current_user();
+				if( ! $user ) return false;
+				if( user_can( $user, 'moderate_comments') )
+					return true;
+				//If forum subscriber as moderator or admin
+				$user_subscription = self::get_user_subscription( $forum, $user );
+				return in_array( $user_subscription, [ 'administrator', 'moderator' ] );
+				
+				break;
+			case 'subscribers':// => 'Les membres du forum',
+				if( $user === null) $user = wp_get_current_user();
+				if( ! $user ) return false;
+				if( user_can( $user, 'moderate_comments') )
+					return true;
+				$user_subscription = self::get_user_subscription( $forum, $user );
+				return in_array( $user_subscription, [ 'administrator', 'moderator', 'subscriber' ] );
+			
+			case 'connected':// => 'Les utilisateurs connectés',
+		
+				if( $user === null) $user = get_current_user_id();
+				
+				return !! $user;
+				
+			case 'public':
+				return true;
+			case '':// '(par défaut)',
+			default:
+		}
+	}
 	
 	/**
 	 * 
@@ -305,17 +371,16 @@ class AgendaPartage_Forum {
 			return;
 		}
 		
+		if( ! self::user_can_see_comments() ){
+			$wp_query->query_vars['post__in'] = [ 0 ];
+			return;
+		}
+
 		$current_user_can_moderate_comments = current_user_can('moderate_comments');
 		// debug_log('on_pre_get_comments IN', "current_user_can_moderate_comments $current_user_can_moderate_comments", $wp_query->query_vars);
 		if( $current_user_can_moderate_comments ) {
 			//Adds pending comments
 			$wp_query->query_vars['status'] = ['0', '1'];
-		}
-		else {
-			if( self::get_property('hide_comments') ){
-				$wp_query->query_vars['ID'] = -1;
-				return;
-			}
 		}
 		
 		
@@ -334,7 +399,7 @@ class AgendaPartage_Forum {
 		// debug_log('on_comments_pre_query IN', $comment_data, "current_user_can_moderate_comments $current_user_can_moderate_comments");
 		if( $current_user_can_moderate_comments ) {
 		}
-		elseif( self::get_property('hide_comments') )
+		elseif( ! self::user_can_see_comments() )
 			return [];
 		
 		if( ! empty($wp_query->query_vars['parent__in'] ) ){
@@ -383,7 +448,8 @@ class AgendaPartage_Forum {
 			echo '<style>'.  $comment_css . '</style>';
 		}
 		
-		if( self::get_property_is_value('comment_form', false) ){
+		if( self::get_property_is_value('comment_form', false)
+		|| ! self::user_can_post_comment()	){
 			$fields['comment'] = '<script>jQuery("#respond.comment-respond").remove();</script>';
 			return $fields;
 		}
@@ -612,8 +678,9 @@ class AgendaPartage_Forum {
 	 * Affichage du commentaire, lien "Répondre"
 	 */
 	public static function on_comment_reply_link($comment_reply_link, $args, $comment, $post ){
-		if( ! self::user_can_see_forum_details() )
+		if( ! self::user_can_see_forum_details() ){
 			return '';
+		}
 		
 		$attachments_links = self::get_attachments_links($comment);
 		echo $attachments_links;
@@ -629,13 +696,14 @@ class AgendaPartage_Forum {
 		
 		$comment_actions = sprintf('<span class="comment-agdp-actions">%s</span>', $comment_actions);
 		
-		if( self::get_property_is_value('mark_as_ended', false) )
+		if( self::get_property_is_value('reply_link', false) )
 			$comment_reply_link = $comment_actions;
 		else
 			$comment_reply_link = preg_replace('/(\<\/div>)$/', $comment_actions . '$1', $comment_reply_link);
 		
 		return $comment_reply_link;
 	}
+	
 	/**
 	 * Retourne le html d'action pour marqué un message comme étant terminé
 	 */
@@ -1007,16 +1075,23 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
-	 * L'utilisateur peut voir le détail des commentaires
+	 * user_can_post_comment
 	 */
-	public static function user_can_see_forum_details($page = false, $user = false){
+	public static function user_can_post_comment( $page = false, $user = false){
 		if( ! current_user_can('moderate_comments')
-		&& self::get_forum_right_need_subscription()
-		&& ( ! ($subscription = self::get_user_subscription() )
+		&& self::get_forum_right_need_subscription($page)
+		&& ( ! ($subscription = self::get_user_subscription( $page, $user) )
 			|| $subscription === 'banned')){
 			return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * L'utilisateur peut voir le détail des commentaires
+	 */
+	public static function user_can_see_forum_details($page = false, $user = false){
+		return self::user_can_post_comment( $page, $user );
 	}
 	/**
 	 * Teste l'autorisation de modifier un commentaire selon l'utilisateur connecté

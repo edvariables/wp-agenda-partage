@@ -94,9 +94,13 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			, sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
 			, AgendaPartage::icon('info', self::get_subscribers_counters($post)['label'])) ;
 		add_meta_box('agdp_forum-properties', $box_name, array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
-		
+
 		if( AgendaPartage_Forum::get_forum_right_need_subscription( $post ) )
 			add_meta_box('agdp_forum-subscribers-add', __('Ajout de membres au forum', AGDP_TAG), array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
+		
+		add_meta_box('agdp_forum-render', 'Affichage du forum', array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
+		
+		
 	}
 
 	/**
@@ -114,6 +118,9 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			case 'agdp_forum-subscribers-add':
 				parent::metabox_html( self::get_metabox_subscribers_fields(), $post, $metabox );
 				break;
+			case 'agdp_forum-render':
+				parent::metabox_html( self::get_metabox_render_fields(), $post, $metabox );
+				break;
 			
 			default:
 				break;
@@ -126,7 +133,10 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	
 	public static function get_metabox_all_fields(){
 		global $post;
-		$fields = self::get_metabox_properties_fields();
+		$fields = array_merge(
+				self::get_metabox_properties_fields(),
+				self::get_metabox_render_fields()
+			);
 		if( AgendaPartage_Forum::get_forum_right_need_subscription( $post ) )
 			$fields = array_merge(
 				$fields,
@@ -216,6 +226,69 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 					. sprintf(' <a href="post.php?post=%d&action=edit">%s</a>', $newsletter->ID, $newsletter->post_title),
 				'input' => 'link'
 			];
+		return $fields;
+	}
+		
+	public static function get_metabox_render_fields(){
+		global $post;
+		$fields = [];
+		
+		//Visibilité les messages
+		$fields[] = [
+			'name' => 'forum_show_comments',
+			'label' => __('Visibilité des messages ?', AGDP_TAG),
+			'input' => 'select',
+			'values' => [
+				'' => '(par défaut)',
+				'never' => 'Jamais, personne.',
+				'admin' => 'Les administrateurices seul-es',
+				'moderator' => '+ Les modérateurices',
+				'subscribers' => '+ Les membres du forum (non banni-es)',
+				'connected' => '+ Les utilisateurices connecté-es',
+				'public' => 'Tout le monde',
+			],
+			'learn-more' => 'Dans le cas des forums avec Adhésion, l\'affichage aux non-membres se limite aux titres des messages.'
+		];
+		
+		//Afficher le formulaire
+		$fields[] = [
+			'name' => 'forum_comment_form',
+			'label' => __('Formulaire Laisser un message', AGDP_TAG),
+			'input' => 'checkbox',
+			'default' => true,
+		];
+		
+		//Affichage du titre
+		$fields[] = [
+			'name' => 'forum_comment_title',
+			'label' => __('Afficher le titre', AGDP_TAG),
+			'input' => 'checkbox',
+			'default' => true,
+		];
+		
+		//Affichage du lien mark_as_ended
+		$fields[] = [
+			'name' => 'forum_mark_as_ended',
+			'label' => __('Afficher le bouton "Toujours d\'actualité ?"', AGDP_TAG),
+			'input' => 'checkbox',
+			'default' => true,
+		];
+		
+		//Affichage du lien reply
+		$fields[] = [
+			'name' => 'forum_reply_link',
+			'label' => __('Afficher le bouton "Répondre"', AGDP_TAG),
+			'input' => 'checkbox',
+			'default' => true,
+		];
+		
+		//Style css
+		$fields[] = [
+			'name' => 'forum_comment_css',
+			'label' => __('Style au format css', AGDP_TAG),
+			'input' => 'textarea'
+		];
+		
 		return $fields;
 	}
 	

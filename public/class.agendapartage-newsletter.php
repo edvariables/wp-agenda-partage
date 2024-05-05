@@ -582,11 +582,11 @@ class AgendaPartage_Newsletter {
 		
 		// foreach newsletter type (agdpevent, covoiturage, forums, admin)
 		foreach($newsletters as $newsletter_option => $newsletter){
-			$user_subscription = null;
 			$field_extension = self::get_form_newsletter_field_extension($newsletter_option);
 			/** périodicité de l'abonnement **/
 			$input_name = 'nl-period-' . $field_extension;
 			$subscription_periods = self::subscription_periods($newsletter);
+			$user_subscription = isset($_REQUEST[$input_name]) ? $_REQUEST[$input_name] : null;
 			
 			if(isset($_REQUEST['action']))
 				switch($_REQUEST['action']){
@@ -623,7 +623,7 @@ class AgendaPartage_Newsletter {
 								, $html);
 		}
 		
-		//Administrateurice masqué : wpcf7 râle car aucune option sélectionnée. On en ajoute une, cochée.
+		//Administrateurice masqué : wpcf7 râle car aucune option sélectionnée. On en ajoute une, cochée : AGDP_WPCF7_RADIO_NO_CHANGE.
 		$option_id = 'admin_nl_post_id';
 		if( ! isset($newsletters[$option_id]) ){
 			$field_extension = self::get_form_newsletter_field_extension($option_id);

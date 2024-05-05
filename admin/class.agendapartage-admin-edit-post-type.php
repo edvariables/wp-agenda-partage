@@ -42,6 +42,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			if($parent_field !== null)
 				$id = sprintf('%s.%s', $id, array_key_exists('id', $parent_field) ? $parent_field['id'] : $parent_field['name']); //TODO A vérifier à l'enregistrement
 			$val = ! array_key_exists ( 'value', $field ) || ! $field['value'] ? $meta_value : $field['value'];
+			$default_val = ! array_key_exists ( 'default', $field ) || ! $field['default'] ? null : $field['default'];
 			$label = ! array_key_exists ( 'label', $field ) || ! $field['label'] ? false : $field['label'];
 			$input = ! array_key_exists ( 'input', $field ) || ! $field['input'] ? '' : $field['input'];
 			$input_type = ! array_key_exists ( 'type', $field ) || ! $field['type'] ? 'text' : $field['type'];
@@ -159,7 +160,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'checkbox':
 					echo '<label>';
 					echo '<input id="'.$id.'" type="checkbox" name="'.$name.'" '
-						. ($val && $val !== 'unchecked' ? ' checked="checked"' : '')
+						. (($val && $val !== 'unchecked') || ( $val === '' && $default_val) ? ' checked="checked"' : '')
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($readonly ? '  onclick="return false" ' : '')
