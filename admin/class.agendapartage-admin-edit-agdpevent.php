@@ -120,8 +120,8 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			//AgendaPartage_Admin::add_admin_notice(debug_print_backtrace(), 'warning');
 			AgendaPartage_Admin::add_admin_notice("Désormais, l'auteur de la page est {$user->display_name}", 'success');
 		}
-
-		return $data; */
+		*/
+		return $data; 
 	}
 
 	/**
@@ -324,14 +324,14 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				$user_email = false;
 		}
  		if(self::$the_post_is_new
-		|| $user_email != get_post_meta($post->ID, 'ev-email', true) ) {
-			$fields[] = array(
+		|| ($user_email != get_post_meta($post->ID, 'ev-email', true)) ) {
+			/* TODO $fields[] = array(
 				'name' => 'ev-create-user',
 				'label' => __('Créer l\'utilisateur d\'après l\'e-mail', AGDP_TAG),
 				'input' => 'checkbox',
 				'default' => 'checked',
 				'container_class' => 'side-box'
-			);
+			); */
 			/*$fields[] = array(
 				'name' => 'ev-create-user-slug',
 				'label' => __('Identifiant du nouvel utilisateur', AGDP_TAG),

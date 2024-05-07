@@ -455,11 +455,10 @@ class AgendaPartage_Forum {
 		}
 		
 		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></p>';
-		//ED240505 suppression de la classe .if-respond masquée en css.
-		$send_email_field = '<div class="comment-form-send-email"><label for="send-email">'
+		$send_email_field = '<div class="comment-form-send-email if-respond"><label for="send-email">'
 			. '<input id="send-email" name="send-email" type="checkbox">'
 			. ' Envoyez votre réponse par e-mail à l\'auteur du message</label></div>';
-		$is_private_field = '<p class="comment-form-is-private"><label for="is-private">'
+		$is_private_field = '<p class="comment-form-is-private if-respond"><label for="is-private">'
 			. '<input id="is-private" name="is-private" type="checkbox">'
 			. ' Ce message est privé, entre vous et l\'auteur du message. Sinon, il est visible par tous sur ce site.</label></p>';
 		$fields['comment'] = $title_field

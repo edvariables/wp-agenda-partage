@@ -458,7 +458,8 @@ article.use-agdpforum + #comments #respond {
 article.use-agdpforum + #comments #respond .if-respond {
 	display: none;
 }
-article.use-agdpforum + #comments article + #respond .if-respond {
+article.use-agdpforum + #comments article + #respond .if-respond,
+article.use-agdpforum + #comments > #respond .if-respond {
 	display: inline-block;
 }
 
