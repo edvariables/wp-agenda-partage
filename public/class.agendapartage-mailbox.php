@@ -544,6 +544,7 @@ class AgendaPartage_Mailbox {
 		$pages = [];//cache
 		
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+		add_filter('comment_flood_filter', '__return_false');
 		foreach( $messages as $message ){
 			$email_to = false;
 			foreach($message['to'] as $to)
