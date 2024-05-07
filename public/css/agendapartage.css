@@ -508,9 +508,11 @@ body.colors-dark #comments #reply-title a {
 	color: red;
 }
 #comments .comment-user-status {
-	padding-left: 1em;
 	font-size: smaller;
 	font-weight : normal;
+}
+#comments a + .comment-user-status {
+	padding-left: 1em;
 }
 .agdp-notif {
 	border-left: 3px solid green;

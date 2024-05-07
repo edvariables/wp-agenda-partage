@@ -843,12 +843,17 @@ class AgendaPartage_Forum {
 		}
 		else
 			$status = 'inconnu-e';
-		if( $status )
+		if( $status ){
 			if( $user_id )
-				$comment_author_link .= sprintf('<a href="/wp-admin/user-edit.php?user_id=%d#forums" class="comment-user-status">(%s)</a>'
+				$status = sprintf('<a href="/wp-admin/user-edit.php?user_id=%d#forums" class="comment-user-status">(%s)</a>'
 					, $user_id, $status);
 			else
-				$comment_author_link .= sprintf('<span class="comment-user-status">(%s)</span>', $status);
+				$status = sprintf('<span class="comment-user-status">(%s)</span>', $status);
+			if ( '0' == $comment->comment_approved )
+				echo $status . ' ';
+			else
+				$comment_author_link .= $status;
+		}
 		return $comment_author_link;
 	}
 	
