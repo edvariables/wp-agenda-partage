@@ -80,7 +80,7 @@ class AgendaPartage_Admin_User {
 	public static function forums_subscriptions( $profile_user ) {
 		$current_user_can_moderate_comments = current_user_can('moderate_comments');
 		$user_histories = [];
-		?><br><h2 id="forums">Adhésions aux forums</h2>
+		?><br><h2 id="forums">Adhésions aux forums / listes</h2>
 
 		<table class="form-table" role="presentation"><?php
 			$pages = AgendaPartage_Mailbox::get_pages_dispatches();
@@ -91,19 +91,22 @@ class AgendaPartage_Admin_User {
 				'pending' => 'en attente de modération',
 				'draft' => 'brouillon',
 			];
-				
+			$forum_counter = 0;
 			foreach( $pages as $page_id => $dispatches ){
 				$rights = $dispatches[0]['rights'];
 				if( ! AgendaPartage_Forum::get_forum_right_need_subscription( false, $rights ) )
 					continue;
 				$page = get_post($page_id);
 				$user_subscription = AgendaPartage_Forum::get_subscription($profile_user->user_email, $page_id);
+				if( ! $current_user_can_moderate_comments
+				&& ! $user_subscription)
+					continue;
 				$meta_key = AgendaPartage_Forum::get_subscription_meta_key($page_id);
 				$post_status = AgendaPartage_Forum::get_forum_post_status($page, $profile_user, $profile_user->user_email);
 				if(isset($post_statuses[$post_status]))
 					$post_status = $post_statuses[$post_status];
 				?><tr class="agdp-forum-subscription">
-					<th><label>Page "<?php echo htmlentities($page->post_title)?>"</label>
+					<th><label>Forum/Liste "<?php echo htmlentities($page->post_title)?>"</label>
 					<?php if($current_user_can_moderate_comments){?>
 						<br><?php echo sprintf('<a href="/wp-admin/post.php?post=%s&action=edit">modifier</a>', $page_id)?></label>
 						&nbsp;<?php echo sprintf('<a href="%s">voir</a>', get_permalink($page_id))?></label>
@@ -132,6 +135,10 @@ class AgendaPartage_Admin_User {
 						<?php }?>
 					</td>
 				</tr><?php
+				$forum_counter++;
+			}
+			if( $forum_counter === 0 ){
+				echo '<tr><td><i>Aucun forum disponible</i></td></tr>';
 			}?>
 		</table><?php
 	}
@@ -141,11 +148,18 @@ class AgendaPartage_Admin_User {
 	 */
 	public static function newsletters_subscriptions( $profile_user ) {
 		$user_histories = [];
+		$admin_nl_post_id = AgendaPartage::get_option('admin_nl_post_id');
+		
 		?><br><h2 id="newsletters">Abonnements aux lettres-infos de l'Agenda partagé</h2>
 
 		<table class="form-table" role="presentation"><?php
 			$active_newsletters = AgendaPartage_Newsletter::get_active_newsletters();
+			$newsletter_counter = 0;
 			foreach(AgendaPartage_Newsletter::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
+				if( ! current_user_can('manage_options')
+				 && ( $newsletter_id == $admin_nl_post_id
+					|| empty($active_newsletters[$newsletter_id])) )
+					continue;
 				$meta_name = 'subscription_parent';
 				if( get_post_meta($newsletter_id, $meta_name, true) )
 					continue;
@@ -169,7 +183,12 @@ class AgendaPartage_Admin_User {
 						?></ul>
 					</td>
 				</tr><?php
+				$newsletter_counter++;
 			}
+			if( $newsletter_counter === 0 ){
+				echo '<i>Aucune lettre-info disponible</i>';
+			}
+			
 			if( count($user_histories) ){?>
 			<tr id="agdp-newsletter-history">
 				<th><label>Derniers envois</label></th>

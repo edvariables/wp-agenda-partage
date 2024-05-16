@@ -289,7 +289,7 @@ class AgendaPartage_Forum {
 		
 		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
 		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
-		add_filter('comment_form_defaults', array(__CLASS__, 'on_comment_text_before') );
+		add_filter('comment_form_defaults', array(__CLASS__, 'on_comment_form_defaults') );
 		// add_filter('comment_form_default_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('comment_form_fields', array(__CLASS__, 'on_comment_form_fields') );
 		add_filter('comment_text', array(__CLASS__, 'on_comment_text'), 10, 3 );
@@ -432,11 +432,12 @@ class AgendaPartage_Forum {
 	/**
 	 * Adaptation du formulaire de commentaire
 	 */
-	public static function on_comment_text_before($defaults){
+	public static function on_comment_form_defaults($defaults){
 		foreach($defaults as $key=>$value)
 			$defaults[$key] = str_replace('Commentaire', 'Message', 
 							 str_replace('commentaire', 'message', $value));
 		$defaults['class_form'] .= ' agdp-forum';
+		$defaults['label_submit'] = 'Envoyer';
 		return $defaults;
 	}
 	
@@ -454,13 +455,16 @@ class AgendaPartage_Forum {
 			return $fields;
 		}
 		
-		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label> <input id="title" name="title" type="text" maxlength="255" required></p>';
+		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label>'
+			// . '<label><input name="title-prefix" type="radio">Je propose</label>'
+			// . '<label><input name="title-prefix" type="radio">Je cherche</label>'
+			. '<input id="title" name="title" type="text" maxlength="255" required></p>';
 		$send_email_field = '<div class="comment-form-send-email if-respond"><label for="send-email">'
 			. '<input id="send-email" name="send-email" type="checkbox">'
 			. ' Envoyez votre réponse par e-mail à l\'auteur du message</label></div>';
 		$is_private_field = '<p class="comment-form-is-private if-respond"><label for="is-private">'
 			. '<input id="is-private" name="is-private" type="checkbox">'
-			. ' Ce message est privé, entre vous et l\'auteur du message. Sinon, il est visible par tous sur ce site.</label></p>';
+			. ' Ce message est privé, entre vous et l\'auteur du message. Sinon, il est visible par tous les membres sur ce site.</label></p>';
 		$fields['comment'] = $title_field
 							. (isset($fields['comment']) ? $fields['comment'] : '')
 							. $send_email_field
@@ -1055,7 +1059,15 @@ class AgendaPartage_Forum {
 		if(is_a($page, 'WP_Post'))
 			return $page;
 		
-		return get_post($page);
+		if( ! ($page = get_post($page)) ){
+			//Ajax
+			if( isset($_REQUEST['data']) && isset($_REQUEST['data']['comment_id']) ){
+				$comment = get_comment($_REQUEST['data']['comment_id']);
+				return get_post($comment->comment_post_ID);
+			}
+		}
+		
+		return $page;
 	}
 	
 	/**

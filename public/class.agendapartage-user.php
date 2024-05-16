@@ -2,7 +2,14 @@
 class AgendaPartage_User {
 
 	public static function init() {
-		
+		self::init_hooks();
+	}
+
+	public static function init_hooks() {
+		if( is_login() && ! isset($_REQUEST['action']) ){
+			if( ! isset($_REQUEST['redirect_to']) )
+				$_REQUEST['redirect_to'] = $_GET['redirect_to'] = get_bloginfo( 'url' );
+		}
 	}
 
 	public static function create_user_for_agdpevent($email = false, $user_name = false, $user_login = false, $data = false, $user_role = false){
@@ -127,7 +134,7 @@ class AgendaPartage_User {
 	}
 
 
-	 
+	
 	 
 
 	/**

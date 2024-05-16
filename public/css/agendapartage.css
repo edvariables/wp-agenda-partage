@@ -455,11 +455,11 @@ article.use-agdpforum + #comments #respond {
 	margin-top: 1em;
 }
 
-article.use-agdpforum + #comments #respond .if-respond {
+article.use-agdpforum + #comments .if-respond {
 	display: none;
 }
-article.use-agdpforum + #comments article + #respond .if-respond,
-article.use-agdpforum + #comments > #respond .if-respond {
+
+article.use-agdpforum + #comments .comment-list .if-respond {
 	display: inline-block;
 }
 
