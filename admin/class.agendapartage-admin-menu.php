@@ -1012,6 +1012,9 @@ class AgendaPartage_Admin_Menu {
 			remove_meta_box( 'dashboard_right_now', 'dashboard', 'normal' );
 		}
 		remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
+		
+		if( ! current_user_can('moderate_comments') )
+			remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
 	}
 
 	/**

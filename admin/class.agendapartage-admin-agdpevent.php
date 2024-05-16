@@ -226,7 +226,6 @@ class AgendaPartage_Admin_Evenement {
 			. "\n WHERE post.post_type = '".AgendaPartage_Evenement::post_type."'"
 			. "\n AND post.post_status IN ('publish', 'pending', 'draft')"
 			. "\n AND GREATEST(post_date_debut.meta_value, post_date_fin.meta_value) >= CURRENT_DATE()"
-			. "\n AND post.post_author = {$user_id}"
 			. "\n AND ( post.post_author = {$user_id}"
 				. "\n OR post_email.meta_value = '{$user_email}')"
 			. "\n ORDER BY post.post_modified DESC"
@@ -239,7 +238,7 @@ class AgendaPartage_Admin_Evenement {
 	}
 	
 	/**
-	 * Init
+	 * Init dashboard_widgets
 	 */
 	public static function add_dashboard_widgets() {
 	    global $wp_meta_boxes;
