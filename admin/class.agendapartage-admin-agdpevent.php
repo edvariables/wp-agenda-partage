@@ -217,6 +217,9 @@ class AgendaPartage_Admin_Evenement {
 			. "\n INNER JOIN {$blog_prefix}postmeta post_email"
 			. "\n ON post_email.post_id = post.ID"
 			. "\n AND post_email.meta_key = 'ev-email'"
+			. "\n LEFT JOIN {$blog_prefix}postmeta post_user_email"
+			. "\n ON post_user_email.post_id = post.ID"
+			. "\n AND post_user_email.meta_key = 'ev-user-email'"
 			. "\n INNER JOIN {$blog_prefix}postmeta post_date_debut"
 			. "\n ON post_date_debut.post_id = post.ID"
 			. "\n AND post_date_debut.meta_key = 'ev-date-debut'"
@@ -227,7 +230,8 @@ class AgendaPartage_Admin_Evenement {
 			. "\n AND post.post_status IN ('publish', 'pending', 'draft')"
 			. "\n AND GREATEST(post_date_debut.meta_value, post_date_fin.meta_value) >= CURRENT_DATE()"
 			. "\n AND ( post.post_author = {$user_id}"
-				. "\n OR post_email.meta_value = '{$user_email}')"
+				. "\n OR post_email.meta_value = '{$user_email}'"
+				. "\n OR post_user_email.meta_value = '{$user_email}')"
 			. "\n ORDER BY post.post_modified DESC"
 			. "\n LIMIT {$num_posts}"
 			;
@@ -364,8 +368,7 @@ class AgendaPartage_Admin_Evenement {
 			if($agdpevent->post_status != 'publish')
 				$html .= sprintf('<br><b>%s</b>', AgendaPartage::icon( 'warning', $post_statuses[$agdpevent->post_status])) ;
 			
-			$meta_key = 'ev-email';
-			$value = AgendaPartage_Evenement::get_post_meta($agdpevent, $meta_key, true);
+			$value = AgendaPartage_Evenement_Edit::get_agdpevent_email_address($agdpevent);
 			if($value)
 				$html .= sprintf(' - %s', $value);
 			

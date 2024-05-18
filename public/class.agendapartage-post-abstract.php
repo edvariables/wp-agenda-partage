@@ -209,7 +209,6 @@ abstract class AgendaPartage_Post_Abstract {
 							//Ne fonctionne pas en 'pending', il faut l'id
 							$post = get_page_by_path(static::post_type . '/' . $query->query[$key]);
 						}
-						debug_log('$post', $post , $query->query);
 						if(!$post)
 							return false;
 		

@@ -96,7 +96,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function create_user_on_save ($data, $postarr){
-		/* $email = array_key_exists('ev-email', $postarr) ? $postarr['ev-email'] : false;
+		/* $email = array_key_exists('ev-user-email', $postarr) ? $postarr['ev-user-email'] : false;
 		if(!$email || !is_email($email)) {
 			AgendaPartage_Admin::add_admin_notice("Il manque l'adresse e-mail de l\'organisateur de l\'évènement ou elle est incorrecte.", 'error');
 			return $data;
@@ -265,9 +265,13 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				'type' => 'text'
 			),
 			array('name' => 'ev-email',
-				'label' => __('Email', AGDP_TAG),
+				'label' => __('Email de l\'organisateur', AGDP_TAG),
 				'type' => 'email',
 				'fields' => array($field_show)
+			),
+			array('name' => 'ev-user-email',
+				'label' => __('Email de validation', AGDP_TAG),
+				'type' => 'email'
 			),
 			/*,
 			array('name' => 'ev-gps',
@@ -324,7 +328,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				$user_email = false;
 		}
  		if(self::$the_post_is_new
-		|| ($user_email != get_post_meta($post->ID, 'ev-email', true)) ) {
+		|| ($user_email != get_post_meta($post->ID, 'ev-user-email', true)) ) {
 			/* TODO $fields[] = array(
 				'name' => 'ev-create-user',
 				'label' => __('Créer l\'utilisateur d\'après l\'e-mail', AGDP_TAG),

@@ -273,7 +273,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				break;
 			case 'send_email':
 				$need_can_user_change = false;
-				$meta_name = 'ev-email' ;
+				$meta_name = 'ev-user-email' ;
 				$email = self::get_post_meta($post, $meta_name, true);
 				$email_parts = explode('@', $email);
 				$email_trunc = substr($email, 0, 3) . str_repeat('*', strlen($email_parts[0])-min(strlen($email_parts[0]),3));
@@ -450,7 +450,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		
 		$codesecret = self::get_post_meta($post, self::field_prefix . self::secretcode_argument, true);
 		
-		$meta_name = 'ev-email' ;
+		$meta_name = 'ev-user-email' ;
 		$email = self::get_post_meta($post, $meta_name, true);
 		$to = $email;
 		

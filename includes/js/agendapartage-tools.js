@@ -48,8 +48,6 @@ jQuery( function( $ ) {
 									response = response.substring(action.length + 1);
 									$msg = $('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
 									$spinner.after($msg);
-									// $msg.get(0).scrollIntoView();
-									response = response.substring('redir:'.length);
 									document.location = response;
 									return;
 								case 'js' :

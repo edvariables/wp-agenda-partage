@@ -20,7 +20,8 @@ class AgendaPartage_Evenement_Edit {
 	public static $revision_fields = [ 
 				'ev-date-debut',
 				'ev-organisateur', 
-				'ev-email',
+				'ev-email', 
+				'ev-user-email',
 				'ev-localisation',
 				'ev-description'
 				];
@@ -128,6 +129,7 @@ class AgendaPartage_Evenement_Edit {
 					return $user->user_nicename;
 				return '';
 			case 'ev-email' :
+			case 'ev-user-email' :
 				if(($user = wp_get_current_user())
 				&& $user->ID !== 0)
 					return $user->user_email;
@@ -152,7 +154,7 @@ class AgendaPartage_Evenement_Edit {
 		
 		$attrs = [];
 		$post = self::get_post();
-		
+
 		//Action
 		$duplicate_from_id = false;
  		if( ! $post && array_key_exists('action', $_GET) ){
@@ -169,7 +171,7 @@ class AgendaPartage_Evenement_Edit {
 				return self::get_agdpevent_edit_content_forbidden( $post );
 			}
 			$agdpevent_exists = ! $duplicate_from_id;
-			$meta_name = 'ev-email' ;
+			$meta_name = 'ev-user-email' ;
 			$email = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, false);
 			
 			/*if(!$email) {
@@ -177,7 +179,7 @@ class AgendaPartage_Evenement_Edit {
 					, 'Vous ne pouvez pas modifier cet évènement, l\'évènement n\'a pas indiqué d\'adresse email.'
 					, 'agdp-error-light', 'div');
 			}*/
-			$attrs['ev-email'] = $email;
+			$attrs['ev-user-email'] = $email;
 			$attrs['ev-titre'] = $post->post_title;
 			$attrs['ev-description'] = $post->post_content;
 			
@@ -190,6 +192,7 @@ class AgendaPartage_Evenement_Edit {
 					'ev-siteweb',
 					'ev-phone',
 					'ev-organisateur',
+					'ev-email',
 					'ev-message-contact']
 					as $meta_name){
 				$attrs[$meta_name] = AgendaPartage_Evenement::get_post_meta($post_id, $meta_name, true, false);
@@ -204,13 +207,16 @@ class AgendaPartage_Evenement_Edit {
 				// var_dump($user);
 				$meta_name = 'ev-organisateur';
 				$attrs[$meta_name] = $user->user_nicename;
+				$meta_name = 'ev-user-email';
+				$attrs[$meta_name] = $user->user_email;
 				$meta_name = 'ev-email';
 				$attrs[$meta_name] = $user->user_email;
 			}
 			
 			foreach( [
 				'ev-organisateur',
-				'ev-email'
+				'ev-email',
+				'ev-user-email'
 			] as $meta_name)
 				$attrs[$meta_name] = self::get_default_value($meta_name);
 		}
@@ -639,11 +645,11 @@ class AgendaPartage_Evenement_Edit {
 			return false;
 
 		// Change l'adresse du destinataire
-		$email = get_post_meta($post_id, 'ev-email', true);
+		$email = get_post_meta($post_id, 'ev-user-email', true);
 
 		// 2ème email ?
 		if( ! is_email($email)){
-			$email = get_post_meta($post_id, 'ev-email2', true);
+			$email = get_post_meta($post_id, 'ev-email', true);
 		}
 
 		if( ! is_email($email)){
@@ -695,6 +701,7 @@ class AgendaPartage_Evenement_Edit {
 				'ev-heure-fin' => 1,
 				'ev-organisateur' => 1,
 				'ev-email' => 1,
+				'ev-user-email' => 1,
 				'ev-phone' => 1,
 				'ev-siteweb' => 1,
 				'ev-localisation' => 1,
@@ -752,6 +759,11 @@ class AgendaPartage_Evenement_Edit {
 
 		$data['ev-organisateur-show'] = 1;//TODO
 		$data['ev-email-show'] = 0;//TODO
+		
+		if( ! $data['ev-user-email'] )
+			$data['ev-user-email'] = $data['ev-email'];
+		elseif( ! $data['ev-email'] )
+			$data['ev-email'] = $data['ev-user-email'];
 		
 		$meta_name = 'ev-'.AGDP_EVENT_SECRETCODE;
 		if( $post && get_post_meta($post->ID, $meta_name, true))
@@ -834,7 +846,7 @@ class AgendaPartage_Evenement_Edit {
 			}
 			else{
 				
-				$prev_email = get_post_meta($post->ID, 'ev-email', true);
+				$prev_email = get_post_meta($post->ID, 'ev-user-email', true);
 				
 				self::save_post_revision($post, $postarr);
 				
@@ -879,7 +891,7 @@ class AgendaPartage_Evenement_Edit {
 		AgendaPartage::$skip_mail = true;
 		
 		if( $post_is_new && ! is_user_logged_in()){
-			if( $data['ev-email']) {
+			if( $data['ev-user-email']) {
 				$result = AgendaPartage_Evenement::send_validation_email($post_id, false, false, 'bool');
 				//TODO what to do if mail problem ?
 				
@@ -895,7 +907,7 @@ class AgendaPartage_Evenement_Edit {
 		// Modification d'un post en attente et qui n'avait pas d'e-mail associé
 		elseif( ! $post_is_new && ! is_user_logged_in()
 		&& $post->post_status === 'pending'
-		&& $data['ev-email'] && empty($prev_email)
+		&& $data['ev-user-email'] && empty($prev_email)
 		&& AgendaPartage_Evenement::waiting_for_activation($post)){
 			$result = AgendaPartage_Evenement::send_validation_email($post_id, false, false, 'bool');
 			
