@@ -392,6 +392,8 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 				update_user_meta($user->ID, $subscription_meta_key, 'subscriber');
 			}
 			else{
+				if( ! is_user_member_of_blog($user_id) )
+					add_existing_user_to_blog(['user_id'=>$user_id, 'role'=>'subscriber']);
 				$user = get_user_by('id', $user_id);
 				if( $subscription = get_user_meta( $user_id, $subscription_meta_key, true))
 					$result .= sprintf("\n".'<li>L\'utilisateur <a href="/wp-admin/user-edit.php?user_id=%d#forums">"%s" &lt;%s&gt;</a> existe déjà comme "%s".</li>', $user_id, $user->display_name, $email, AgendaPartage_Forum::subscription_roles[$subscription]);
