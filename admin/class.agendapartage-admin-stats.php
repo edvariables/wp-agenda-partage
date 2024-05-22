@@ -27,7 +27,7 @@ class AgendaPartage_Admin_Stats {
 		?><style>
 		ul.agdp-stats { list-style: none; }
 		.agdp-stats h4 { margin-top: 1em; }
-		.agdp-stats td { padding-right: 3em; padding-top: 0em; }
+		.agdp-stats td { padding-right: 3em; padding-top: 0em; width: 50%; }
 		.agdp-stats .entry-header { padding: 0em !important; }
 		</style><?php
 	}
@@ -174,6 +174,8 @@ class AgendaPartage_Admin_Stats {
 						, $posts->found_posts > 1 ? 's' : ''
 						, strtolower( $post_type_labels->singular_name));
 				}
+				else
+					echo '&nbsp;';
 				?></header><?php
 				echo '</td>';
 				
@@ -242,6 +244,8 @@ class AgendaPartage_Admin_Stats {
 						, count($comments->comments) > 1 ? 's' : ''
 					);
 				}
+				else
+					echo '&nbsp;';
 				?></header><?php
 				echo '</td>';
 				
