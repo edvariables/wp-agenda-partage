@@ -151,7 +151,7 @@ class AgendaPartage_Forum_Shortcodes {
 	* [forum-prop hide_comments=0 mark_as_ended=0 reply_link=0 comment_form=0]
 	*/
 	private static function shortcodes_forum_callback($atts, $content = '', $shortcode = null){
-		$page = get_post();
+		$page = AgendaPartage_Forum::get_page();
 		if( ! ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($page) ) ){
 			return $content;
 		}
@@ -270,9 +270,7 @@ class AgendaPartage_Forum_Shortcodes {
 	*/
 	public static function shortcodes_messages_callback($atts, $content = '', $shortcode = null){
 		
-		$page = get_post();
-		if( ! $page )
-			$page = AgendaPartage_Newsletter::is_sending_email();
+		$page = AgendaPartage_Forum::get_page();
 		if( ! $page )
 			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).']. Page courante inconnue.</div>';
 		if( $page->post_type === AgendaPartage_Newsletter::post_type )

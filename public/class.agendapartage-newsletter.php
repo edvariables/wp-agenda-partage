@@ -125,6 +125,12 @@ class AgendaPartage_Newsletter {
 	 * Retourne l'adresse de réponse à laquelle on envoie les mails 
 	 */
 	public static function get_replyto_mail_sender(){
+		
+		if( $forum = self::get_forum_of_newsletter() ){
+			$emails = AgendaPartage_Forum::get_forum_source_emails($forum);
+			if( count($emails) )
+				return $emails[0];
+		}
 		$email = self::get_mail_sender();
 		return $email;
 	}
@@ -668,9 +674,10 @@ class AgendaPartage_Newsletter {
 	public static function get_newsletter($newsletter = false){
 		if( ! $newsletter || $newsletter === true){
 			if( empty($_REQUEST[AGDP_ARG_NEWSLETTERID]))
-				$newsletter = AgendaPartage::get_option('events_nl_post_id');
-			else
-				$newsletter = $_REQUEST[AGDP_ARG_NEWSLETTERID];
+				if( empty($_REQUEST['post_ID']))
+					$newsletter = AgendaPartage::get_option('events_nl_post_id');
+				else
+					$newsletter = get_post($_REQUEST['post_ID']);
 		}
 		if(is_a($newsletter, 'WP_Post')
 		&& $newsletter->post_type == self::post_type)
@@ -698,7 +705,9 @@ class AgendaPartage_Newsletter {
 	/**
 	 * Retourne le forum associé à une newsletter.
 	 */
-	public static function get_forum_of_newsletter($newsletter_id){
+	public static function get_forum_of_newsletter($newsletter_id = false){
+		if( ! $newsletter_id )
+			$newsletter_id = self::get_newsletter();
 		if( is_a($newsletter_id, 'WP_Post') ){
 			if($newsletter_id->post_type != AgendaPartage_Newsletter::post_type)
 				return false;

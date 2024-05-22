@@ -318,7 +318,8 @@ class AgendaPartage_Mailbox {
 	}
 	
 	/**
-	 * Retourne les paramètres de distribution des e-mails
+	 * Retourne les paramètres de distribution des e-mails.
+	 * $destination_filter est une page de forum
 	 */
 	public static function get_emails_dispatch( $mailbox_id = false, $destination_filter = false ){
 		if( is_a($mailbox_id, 'WP_POST') )
@@ -856,7 +857,7 @@ class AgendaPartage_Mailbox {
 	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
 	 */
 	public static function import_wpcf7_to_comment($contact_form, &$abort, $submission, $mailbox_id, $dispatch, $page){
-		debug_log('import_wpcf7_to_comment');
+		// debug_log('import_wpcf7_to_comment');
 		
 		$properties = $contact_form->get_properties();
 		$posted_data = $submission->get_posted_data();

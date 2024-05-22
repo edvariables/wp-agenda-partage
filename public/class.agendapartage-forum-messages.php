@@ -156,7 +156,7 @@ class AgendaPartage_Forum_Messages {
 	public static function on_get_comments_clauses_cb($clauses, $query){
 		global $wpdb;
 		// debug_log('on_get_comments_clauses_cb', $clauses);
-		$status_meta_alias = 'commmeta_status';
+		$status_meta_alias = 'comm_meta_status';
 		$clauses['join'] .= " LEFT JOIN {$wpdb->commentmeta} {$status_meta_alias}"
 						. " ON ( {$wpdb->comments}.comment_ID = {$status_meta_alias}.comment_id AND {$status_meta_alias}.meta_key = 'status' )";
 		$clauses['where'] .= " AND ({$status_meta_alias}.comment_id IS NULL OR {$status_meta_alias}.meta_value != 'ended')";
@@ -170,7 +170,7 @@ class AgendaPartage_Forum_Messages {
 	public static function get_comments_weeks( $page, $options = false ){
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		$status_meta_alias = 'commmeta_status';
+		$status_meta_alias = 'comm_meta_status';
 		
 		if( is_array($options) && ! empty($options['since']) )
 			$since_date = $options['since'];
@@ -325,8 +325,8 @@ class AgendaPartage_Forum_Messages {
 	public static function get_list_for_email($mailbox, $page, $content = '', $options = false){
 		$page = AgendaPartage_Mailbox::get_forum_page($page);
 		$init = AgendaPartage_Forum::init_page($mailbox, $page);
-		if( ! $init || is_a($init, 'Exception')){
-			debug_log('get_list_for_email', $init);
+		if( $init === false || is_a($init, 'Exception')){
+			debug_log(__CLASS__.'::get_list_for_email', $init);
 		}
 		
 		if(!isset($options) || !is_array($options))
@@ -414,8 +414,8 @@ class AgendaPartage_Forum_Messages {
 		$html = $css . $html;
 
 		foreach([
-			'agdp-agdpforummsgs'=> 'aevs'
-			, 'agdpforummsgs'=> 'evs'
+			'agdp-agdpforummsgs'=> 'afmsg'
+			, 'agdpforummsgs'=> 'fmsg'
 			, 'agdpcomment-'=> 'agc-'
 			, 'agdpcomment '=> 'agc '
 			, 'comment-edit'=> 'c-e '
@@ -502,14 +502,14 @@ class AgendaPartage_Forum_Messages {
 		else
 			$format_date_debut = 'l j M Y';
 		
-		$value = get_comment_meta($comment->comment_ID, 'title', true);
+		$title = get_comment_meta($comment->comment_ID, 'title', true);
 		$html .= sprintf(
 				'<div class="date">%s à %s</div>'
 				.'<div class="titre">%s</div>'
 			.''
 			, str_replace(' mar ', ' mars ', strtolower(mysql2date( $format_date_debut, $date_debut)))
 			, date('H:i', strtotime($date_debut))
-			, htmlentities($value));
+			, htmlentities($title));
 		
 		$html .= '</div>';
 		
@@ -535,9 +535,16 @@ class AgendaPartage_Forum_Messages {
 		
 		$value = $comment->comment_author;
 		if($value){
-			if($comment->comment_author_email && $comment->comment_author != $comment->comment_author_email);
-				$value .= sprintf(' <%s>', $comment->comment_author_email);
-			$html .= sprintf('<div>Publié par : %s</div>',  htmlentities($value) );
+			if($comment->comment_author_email){
+				if($comment->comment_author != $comment->comment_author_email)
+					$value .= sprintf(' <%s>', $comment->comment_author_email);
+				$html .= sprintf('<div>Répondre à <a href="mailto:%s?body=Bonjour,&subject=%s">%s</a></div>'
+					, $comment->comment_author_email
+					, str_replace('&', '%20', str_replace(' ', '%20', str_replace("'", '%27', 'Re: ' . $title)))
+					, htmlentities($value) );
+			}
+			else
+				$html .= sprintf('<div>Publié par : %s</div>',  htmlentities($value) );
 		}
 		
 		$html .= date_diff_text($comment->comment_date, true, '<div class="created-since">', '</div>');
@@ -553,9 +560,10 @@ class AgendaPartage_Forum_Messages {
 
 			$html .= sprintf(
 				'<td class="comment-edit"><a href="%s">'
-					.'Afficher le message'
+					.'Afficher le message (et vérifier qu\'il est toujours d\'actualité)'
 					. ($email_mode  ? '' : AgendaPartage::icon('media-default'))
-				.'</a></td>'
+					.'</a>'
+				.'</td>'
 				, $url);
 				
 			$html .= '</tr></tbody></table>';

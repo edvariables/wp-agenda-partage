@@ -215,7 +215,9 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 				
 	}
 	
-	
+	/**
+	 * Metabox des champs Source
+	 */
 	public static function get_metabox_source_fields(){
 		$newsletter = get_post();
 		
@@ -228,7 +230,8 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		//Mailboxes
 		foreach(get_posts([ 'post_type' => AgendaPartage_Mailbox::post_type]) as $mailbox){
 			foreach( AgendaPartage_Mailbox::get_emails_dispatch($mailbox->ID) as $email_to => $destination)
-				if( $destination['type'] === 'page'){
+				if( $destination['type'] === 'page'
+				&& ! isset($sources[ 'page.' . $destination['id'] ])){
 					if( $page = get_post($destination['id']) ){
 						$title = $page->post_title . ' ('. $email_to . ')';
 						if( stripos($title, 'forum') === false)

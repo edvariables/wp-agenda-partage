@@ -1081,8 +1081,11 @@ class AgendaPartage_Forum {
 				$comment = get_comment($_REQUEST['data']['comment_id']);
 				return get_post($comment->comment_post_ID);
 			}
+			else
+				$page = AgendaPartage_Newsletter::is_sending_email();
 		}
-		
+		if( $page->post_type === AgendaPartage_Newsletter::post_type)
+			$page = AgendaPartage_Mailbox::get_forum_page($page);
 		return $page;
 	}
 	
@@ -1384,6 +1387,16 @@ class AgendaPartage_Forum {
 				}
 		}
 		return false;
+	}
+	
+	/**
+	 * Retourne les adresses email associées comme source du forum
+	 */
+	public static function get_forum_source_emails($forum_id){
+		if( is_a($forum_id, 'WP_Post') )
+			$forum_id = $forum_id->ID;
+		$mailbox_id = get_post_meta( $forum_id, AGDP_PAGE_META_MAILBOX, true);
+		return array_keys(AgendaPartage_Mailbox::get_emails_dispatch( $mailbox_id, $forum_id ));
 	}
 	
 	/**
