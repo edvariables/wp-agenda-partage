@@ -12,6 +12,7 @@ class AgendaPartage_Admin_Stats {
 		self::stats_css();
 		self::agdpevents_stats();
 		self::covoiturages_stats();
+		self::forums_stats();
 		self::newsletter_stats();
 		self::maillog_stats();
 		
@@ -133,6 +134,9 @@ class AgendaPartage_Admin_Stats {
 	public static function posts_stats($post_type) {
 		$post_type_object = get_post_type_object($post_type);
 		$post_type_labels = $post_type_object->labels;
+		
+		ob_start();
+		$found_posts = 0;
 		?><ul class="agdp-stats">
 		<header class="entry-header"><?php 
 			echo sprintf('<h3 class="entry-title">%s</h3>', $post_type_labels->name);
@@ -160,11 +164,88 @@ class AgendaPartage_Admin_Stats {
 				if( ! is_a($posts, 'WP_Query'))
 					continue;
 				//;
-				$url = wp_login_url(get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=%s', $post_status, $post_type)));
 				echo '<td>';
-				echo sprintf('<h5 class="entry-title">%s</h5><a href="%s">%d %s(s)</a>', $status_name, $url, $posts->found_posts, strtolower( $post_type_labels->singular_name));
+				echo sprintf('<h5 class="entry-title">%s</h5>', $status_name);
+				if( $posts->found_posts ){
+					$url = wp_login_url(get_admin_url(null, sprintf('/edit.php?post_status=%s&post_type=%s', $post_status, $post_type)));
+					echo sprintf('<a href="%s">%d %s%s</a>'
+						, $url
+						, $posts->found_posts
+						, $posts->found_posts > 1 ? 's' : ''
+						, strtolower( $post_type_labels->singular_name));
+				}
 				?></header><?php
 				echo '</td>';
+				
+				$found_posts += $posts->found_posts;
+			}
+		
+			?></tr></table></li><?php
+		}
+		?></ul><hr>
+		<?php
+		if( $found_posts )
+			ob_end_flush();
+		else
+			ob_end_clean();
+	}
+	
+	/**
+	 * Retourne les stats sur les forums
+	 */
+	public static function forums_stats() {
+		foreach(AgendaPartage_Forum::get_forums() as $forum)
+			self::forum_stats($forum);
+	}
+
+	/**
+	 * Retourne les stats d'un forum
+	 */
+	public static function forum_stats($forum) {
+		ob_start();
+		$found_comments = 0;
+		?><ul class="agdp-stats">
+		<header class="entry-header"><?php 
+			echo sprintf('<h3 class="entry-title">%s</h3>', $forum->post_title);
+		?></header><?php
+		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
+			
+			?><li>
+			<header class="entry-header"><?php 
+				echo sprintf('<h4 class="entry-title">%s</h4>', $time_name);
+			?></header>
+			<table><tr><?php
+			
+			foreach(['1' => 'Publié', '0' => 'En attente'] as $comment_approved => $status_name){
+				$comments = new WP_Comment_Query( array( 
+					'post_id' => $forum->ID,
+					'fields' => 'ids',
+					'status' => $comment_approved,
+					'date_query' => array(
+						'column'  => 'comment_date',
+						'after' => date('Y-m-d', strtotime(date('Y-m-d') . ' ' . $timelaps)),
+						'inclusive' => true
+					),
+					'nopaging' => true,
+				));
+				// var_dump($comments);
+				if( ! is_a($comments, 'WP_Comment_Query'))
+					continue;
+				//;
+				echo '<td>';
+				echo sprintf('<h5 class="entry-title">%s</h5>', $status_name);
+				if( count($comments->comments) ){
+					$url = wp_login_url(get_admin_url(null, sprintf('/edit-comments.php?p=%d&comment_status=%s', $forum->ID, $comment_approved)));
+					echo sprintf('<a href="%s">%d message%s</a>'
+						, $url
+						, count($comments->comments)
+						, count($comments->comments) > 1 ? 's' : ''
+					);
+				}
+				?></header><?php
+				echo '</td>';
+				
+				$found_comments += count($comments->comments);
 				
 			}
 		
@@ -172,10 +253,22 @@ class AgendaPartage_Admin_Stats {
 		}
 		?></ul><hr>
 		<?php
+		if( $found_comments )
+			ob_end_flush();
+		else
+			ob_end_clean();
 	}
 
 	public static function posts_stats_counters() {
-		return self::stats_postcounters( [ AgendaPartage_Evenement::post_type, AgendaPartage_Covoiturage::post_type ] );
+		$postcounters = explode('|', self::stats_postcounters( [ AgendaPartage_Evenement::post_type, AgendaPartage_Covoiturage::post_type ] ) );
+		$commentscounters = explode('|', self::stats_forumscounters());
+		for( $i = 0; $i < max(count($postcounters), count($commentscounters)); $i++){
+			if( count($postcounters) < $i )
+				$postcounters[ $i ] = 0;
+			if( count($commentscounters) > $i )
+				$postcounters[ $i ] += $commentscounters[ $i ];
+		}
+		return implode('|', $postcounters);
 	}
 
 	public static function agdpevents_stats_counters() {
@@ -186,6 +279,10 @@ class AgendaPartage_Admin_Stats {
 		return self::stats_postcounters(AgendaPartage_Covoiturage::post_type);
 	}
 
+	public static function forums_stats_counters() {
+		return self::stats_postcounters(AgendaPartage_Covoiturage::post_type);
+	}
+
 	/**
 	* Compteurs sur un ou plusieurs types de post
 	**/
@@ -193,7 +290,7 @@ class AgendaPartage_Admin_Stats {
 		$sCounters = '';
 		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
 			foreach(['publish' => 'Publié', 'pending' => 'En attente'] as $post_status => $status_name){
-				$agdpevents = new WP_Query( array( 
+				$posts = new WP_Query( array( 
 					'post_type' => $post_type,
 					'fields' => 'ids',
 					'post_status' => $post_status,
@@ -204,11 +301,53 @@ class AgendaPartage_Admin_Stats {
 					),
 					'nopaging' => true,
 				));
-				if( ! is_a($agdpevents, 'WP_Query'))
+				if( ! is_a($posts, 'WP_Query'))
 					continue;
 				if( strlen($sCounters) !== 0 )
 					$sCounters .= '|';
-				$sCounters .= $agdpevents->found_posts;
+				$sCounters .= $posts->found_posts;
+				
+			}
+		}
+		return $sCounters;
+	}
+
+	/**
+	* Compteurs sur tous les forums
+	**/
+	public static function stats_forumscounters() {
+		$forums = [];
+		foreach(AgendaPartage_Forum::get_forums() as $forum)
+			$forums[] = $forum->ID;
+		return self::stats_forumcounters($forums);
+		
+	}
+	
+	/**
+	* Compteurs sur un ou plusieurs forums
+	**/
+	public static function stats_forumcounters($forum_id) {
+		if( ! is_array($forum_id) )
+			$forum_id = [ $forum_id ];
+		$sCounters = '';
+		foreach(array('' => 'Aujourd\'hui', '- 7 day' => 'Sur 7 jours') as $timelaps => $time_name){
+			foreach(['1' => 'Publié', '0' => 'En attente'] as $comment_approved => $status_name){
+				$comments = new WP_Comment_Query( array( 
+					'post__in' => $forum_id,
+					'fields' => 'ids',
+					'status' => $comment_approved,
+					'date_query' => array(
+						'column'  => 'comment_date',
+						'after' => date('Y-m-d', strtotime(date('Y-m-d') . ' ' . $timelaps)),
+						'inclusive' => true
+					),
+					'nopaging' => true,
+				));
+				if( ! is_a($comments, 'WP_Comment_Query'))
+					continue;
+				if( strlen($sCounters) !== 0 )
+					$sCounters .= '|';
+				$sCounters .= count($comments->comments);
 				
 			}
 		}
