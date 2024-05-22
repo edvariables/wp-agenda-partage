@@ -63,11 +63,11 @@ class AgendaPartage_Forum {
 		}
 		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
-		
+		add_filter('pre_comment_approved', array(__CLASS__, 'on_pre_comment_approved'), 10, 2 );
 		if ( $pagenow === 'wp-comments-post.php' ) {
-			add_filter('pre_comment_approved', array(__CLASS__, 'on_pre_comment_approved'), 10, 2 );
 			add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
 			add_filter('comment_post', array(__CLASS__, 'on_comment_post'), 10, 3 );
+			add_filter('comment_post_redirect', array(__CLASS__, 'on_comment_post_redirect'), 10, 2 );
 		}
 		
 		add_filter('wp_get_nav_menu_items', array(__CLASS__, 'on_wp_get_nav_menu_items'), 10, 3);
@@ -468,7 +468,8 @@ class AgendaPartage_Forum {
 		$fields['comment'] = $title_field
 							. (isset($fields['comment']) ? $fields['comment'] : '')
 							. $send_email_field
-							. $is_private_field;
+							. $is_private_field
+							;
 		unset($fields['url']);
 		return $fields;
 	}
@@ -538,6 +539,21 @@ class AgendaPartage_Forum {
 		|| $commentdata['comment_meta']['send-email'] === 'done')
 			return;
 		self::send_response_email($comment_id );
+	}
+	/**
+	 * Après l'enregistrement du commentaire, lien de redirection.
+	 * WP::get_page_of_comment() est buggué si 'oldest' === get_option( 'default_comments_page' )
+	 */
+	public static function on_comment_post_redirect($location, $comment ){
+		// debug_log('on_comment_post_redirect', $location, $comment->comment_parent, get_option( 'default_comments_page' ), preg_replace('/\/comment-page-[0-9]+/', '', $location));
+		if('oldest' === get_option( 'default_comments_page' )){
+			if( $comment->comment_parent == 0) //not integer
+				return preg_replace('/\/comment-page-[0-9]+/', '', $location);
+			//TODO en cas de réponse
+			return preg_replace('/\/comment-page-[0-9]+/', '', $location);
+		}
+		// debug_log('on_comment_post_redirect DEFAULT' );
+		return $location;
 	}
 	/**
 	 * Envoie l'email de réponse

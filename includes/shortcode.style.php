@@ -69,6 +69,8 @@ function style_shortcode_cb( $atts, $content = null ) {
 				if( $value )
 					$content = sprintf('<label>%s</label>%s', $value, $content);
 				break;
+			case 'masque':
+			case 'masqué':
 			case 'hidden':
 				switch($value){
 					case 'if-not-connected':
@@ -77,6 +79,13 @@ function style_shortcode_cb( $atts, $content = null ) {
 					case 'si-non-connecté-e':
 						if( $value )
 							$class .= ' if-connected';
+						break;
+					case 'if-connected':
+					case 'si-connecte':
+					case 'si-connecté':
+					case 'si-connecté-e':
+						if( $value )
+							$class .= ' if-not-connected';
 						break;
 					}
 				break;
@@ -89,6 +98,13 @@ function style_shortcode_cb( $atts, $content = null ) {
 					case 'si-non-connecté':
 					case 'si-non-connecté-e':
 						$class .= ' if-not-connected';
+						break;
+					case 'if-connected':
+					case 'si-connecte':
+					case 'si-connecté':
+					case 'si-connecté-e':
+						if( $value )
+							$class .= ' if-connected';
 						break;
 					case 'if-admin':
 					case 'si-admin':

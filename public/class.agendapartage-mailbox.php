@@ -756,12 +756,10 @@ class AgendaPartage_Mailbox {
 	 * Force l'approbation du commentaire pendant la boucle d'importation
 	 */
 	public static function on_import_pre_comment_approved($approved, $commentdata){
-		// debug_log('on_import_pre_comment_approved', "approved $approved");
 		$meta_key = 'forum_moderate';
-		if( ! get_post_meta($commentdata['comment_post_ID'], $meta_key, true) )//TODO cache
+		if( get_post_meta($commentdata['comment_post_ID'], $meta_key, true) )//TODO cache
 			return 0;
 		$user_email_approved = self::user_email_approved( $commentdata['comment_author_email'], $commentdata['comment_meta']['mailbox_id'], $commentdata['comment_meta']['to'] );
-		// debug_log('on_import_pre_comment_approved', "user_email_approved $user_email_approved");
 		if ( ! $user_email_approved )
 			return 0;
 		return $user_email_approved;
@@ -858,7 +856,8 @@ class AgendaPartage_Mailbox {
 	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
 	 */
 	public static function import_wpcf7_to_comment($contact_form, &$abort, $submission, $mailbox_id, $dispatch, $page){
-					
+		debug_log('import_wpcf7_to_comment');
+		
 		$properties = $contact_form->get_properties();
 		$posted_data = $submission->get_posted_data();
 		$mail_properties = $properties['mail'];
