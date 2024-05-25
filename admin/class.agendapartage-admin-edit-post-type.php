@@ -149,7 +149,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						foreach($values as $item_key => $item_label){
 							if( ! $is_associative )
 								$item_key = $item_label;
-							echo '<option ' . selected( $val, $item_key ) . ' value="' . $item_key . '">'. htmlentities($item_label) . '</option>';
+							echo sprintf('<option %s value="%s">%s</option>', selected( $val, $item_key, false ), $item_key, htmlentities($item_label));
 						}
 					}
 					echo '</select>'

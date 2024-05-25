@@ -210,15 +210,15 @@ class AgendaPartage_Evenements {
 		
 		$sql_filters = self::get_filters_query(true);
 		
-		//Find this in other blog 
-		$sql = "SELECT DISTINCT DATE_FORMAT(meta.meta_value, '%Y') as year
-				, DATE_FORMAT(meta.meta_value, '%m') as month
+		//TODO Find this in other blog 
+		$sql = "SELECT DISTINCT DATE_FORMAT(date_debut.meta_value, '%Y') as year
+				, DATE_FORMAT(date_debut.meta_value, '%m') as month
 				, COUNT(post_id) as count
 				FROM {$blog_prefix}posts posts
-				INNER JOIN {$blog_prefix}postmeta meta
-					ON posts.ID = meta.post_id
-					AND meta.meta_key = 'ev-date-debut'
-					AND meta.meta_value >= CURDATE()
+				INNER JOIN {$blog_prefix}postmeta date_debut
+					ON posts.ID = date_debut.post_id
+					AND date_debut.meta_key = 'ev-date-debut'
+					AND date_debut.meta_value >= CURDATE()
 				WHERE posts.post_status = 'publish'
 					AND posts.post_type = '". AgendaPartage_Evenement::post_type ."'
 		";
@@ -234,6 +234,7 @@ class AgendaPartage_Evenements {
 		$prev_row = false;
 		foreach($result as $row){
 			if($prev_row)
+				//Complète les mois manquants
 				if($prev_row->year === $row->year){
 					for($m = (int)$prev_row->month + 1; $m < (int)$row->month; $m++)
 						$months[$prev_row->year . '-' . sprintf("%02d",$m)] = 0;
@@ -244,6 +245,7 @@ class AgendaPartage_Evenements {
 					for($m = 1; $m < (int)$row->month; $m++)
 						$months[$row->year . '-' . sprintf("%02d",$m)] = 0;
 				}
+				//More than one year
 				elseif((int)$prev_row->year < (int)$row->year - 1)
 					break;
 			$months[$row->year . '-' . $row->month] = (int)$row->count;
@@ -398,9 +400,9 @@ class AgendaPartage_Evenements {
 				'ajax' => true,
 				'start_ajax_at_month_index' => 2,
 				'max_events' => 30,
-				'months' => -1,
 				'mode' => 'list' //list|email|text|calendar|TODO...
 			), $options);
+		$options = self::filter_anteriority_option($options, ANTERIORITY_ALL);
 		if( $options['mode'] == 'email' ){
 			$options['ajax'] = false;
 		}
@@ -409,8 +411,14 @@ class AgendaPartage_Evenements {
 		
 		$months = self::get_posts_months();
 		
-		if($options['months'] > 0 && count($months) > $options['months'])
+		if(isset($options['months']) && $options['months'] !== ANTERIORITY_ALL && $options['months'] > 0 && count($months) > $options['months'])
 			$months = array_slice($months, 0, $options['months'], true);
+		elseif(isset($options['weeks']) && $options['weeks'] > 0 && count($months) > $options['weeks']/4)
+			$months = array_slice($months, 0, 1, true);
+		elseif(isset($options['days']) && $options['days'] > 0 && count($months) > 1)
+			$months = array_slice($months, 0, 1, true);
+		elseif(isset($options['hours']) && $options['hours'] > 0 && count($months) > 1)
+			$months = array_slice($months, 0, 1, true);
 		
 		//Si le premier mois est déjà gros, on diffère le chargement du suivant par ajax
 		$events_count = 0;
@@ -494,6 +502,17 @@ class AgendaPartage_Evenements {
 	}
 	
 	/**
+	* Affecte l'option d'anteriorité
+	*
+	*/
+	public static function filter_anteriority_option($options, $anteriority = false, $newsletter = false){
+		return AgendaPartage_Newsletter::filter_anteriority_option($options, $anteriority
+			, date('d') < 10 ? ANTERIORITY_ONEMONTH : ANTERIORITY_TWOMONTHS
+			, $newsletter
+		);
+	}
+	
+	/**
 	* Rendu Html des évènements destinés au corps d'un email (newsletter)
 	*
 	*/
@@ -503,10 +522,9 @@ class AgendaPartage_Evenements {
 		$options = array_merge(
 			array(
 				'ajax' => false,
-				'months' => date('d') < 10 ? 1 : 2, //à partir du 10, on met le mois suivant aussi
 				'mode' => 'email'
-			), $options);
-		
+			), self::filter_anteriority_option($options));
+				
 		if(AgendaPartage_Evenement_Post_type::is_diffusion_managed()){
 			$term_id = AgendaPartage::get_option('newsletter_diffusion_term_id');
 			self::add_tax_filter(AgendaPartage_Evenement::taxonomy_diffusion, $term_id);

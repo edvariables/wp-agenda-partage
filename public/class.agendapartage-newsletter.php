@@ -42,6 +42,15 @@ class AgendaPartage_Newsletter {
 			define('PERIOD_BIWEEKLY', '2w');
 			define('PERIOD_MONTHLY', 'm');
 			
+			define('ANTERIORITY_ALL', ALL_PERIODS);
+			define('ANTERIORITY_ONEDAY', PERIOD_DAYLY);
+			define('ANTERIORITY_TWODAYS', '2'.ANTERIORITY_ONEDAY);
+			define('ANTERIORITY_ONEWEEK', PERIOD_WEEKLY);
+			define('ANTERIORITY_TWOWEEKS', '2'.PERIOD_WEEKLY);
+			define('ANTERIORITY_THREEWEEKS', '3'.PERIOD_WEEKLY);
+			define('ANTERIORITY_ONEMONTH', PERIOD_MONTHLY);
+			define('ANTERIORITY_TWOMONTHS', '2'.ANTERIORITY_ONEMONTH);
+			
 			self::init_hooks();
 		}
 	}
@@ -105,6 +114,106 @@ class AgendaPartage_Newsletter {
 	/*
 	 **********/
 	 
+	 /**
+	  * Antériorité des messages
+	  */
+	public static function get_anteriorities(){
+		return [
+			ANTERIORITY_ALL => 'Tous',
+			ANTERIORITY_ONEDAY => 'Un jour (24h)',
+			ANTERIORITY_TWODAYS => 'Deux jours',
+			ANTERIORITY_ONEWEEK => 'Une semaine',
+			ANTERIORITY_TWOWEEKS => 'Deux semaines',
+			ANTERIORITY_THREEWEEKS => 'Trois semaines',
+			ANTERIORITY_ONEMONTH => 'Un mois',
+			ANTERIORITY_TWOMONTHS => 'Deux mois',
+		];
+	}
+	
+	/**
+	* Affecte l'option d'anteriorité
+	*
+	*/
+	public static function filter_anteriority_option($options, $anteriority = false, $default_anteriority = ANTERIORITY_ALL, $newsletter = false){
+		debug_log(__CLASS__.'::filter_anteriority_option', $options);
+		if( ! (isset($options['months']) || isset($options['weeks']) || isset($options['days']) || isset($options['hours'])) ){
+			if( ! $newsletter )
+				$newsletter = AgendaPartage_Newsletter::get_newsletter();
+			if( ! $anteriority )
+				if( ! ($anteriority = AgendaPartage_Newsletter::get_anteriority_max($newsletter)) )
+					$anteriority = $default_anteriority;
+			switch( $anteriority ){
+				case ANTERIORITY_ALL:
+					$options['months'] = 24;
+					break;
+				case ANTERIORITY_ONEDAY:
+					$options['hours'] = 24;
+					break;
+				case ANTERIORITY_TWODAYS:
+					$options['days'] = 2;
+					break;
+				case ANTERIORITY_ONEWEEK:
+					$options['weeks'] = 1;
+					break;
+				case ANTERIORITY_TWOWEEKS:
+					$options['weeks'] = 2;
+					break;
+				case ANTERIORITY_THREEWEEKS:
+					$options['weeks'] = 3;
+					break;
+				case ANTERIORITY_ONEMONTH:
+					$options['months'] = 1;
+					break;
+				case ANTERIORITY_TWOMONTHS:
+					$options['months'] = 2;
+					break;
+				default:
+					$options['months'] = 2; 
+			}
+			debug_log('filter_anteriority_option AFTER', !!$newsletter, AgendaPartage_Newsletter::get_anteriority_max($newsletter), $options);
+		}
+		return $options;
+	}
+	
+	/**
+	* Affecte l'option d'anteriorité
+	*
+	*/
+	public static function get_anteriority_date( $newsletter = false, $min_date = false ){
+		if( ! $newsletter )
+			$newsletter = AgendaPartage_Newsletter::get_newsletter();
+		$anteriority = AgendaPartage_Newsletter::get_anteriority_max($newsletter);
+		switch( $anteriority ){
+			case ANTERIORITY_ALL:
+				$date = date('Y-m-d',strtotime("-2 Year"));
+				break;
+			case ANTERIORITY_ONEDAY:
+				$date = date('Y-m-d',strtotime("-24 Hour"));
+				break;
+			case ANTERIORITY_TWODAYS:
+				$date = date('Y-m-d',strtotime("-2 Day"));
+				break;
+			case ANTERIORITY_ONEWEEK:
+				$date = date('Y-m-d',strtotime("-1 Week"));
+				break;
+			case ANTERIORITY_TWOWEEKS:
+				$date = date('Y-m-d',strtotime("-2 Week"));
+				break;
+			case ANTERIORITY_THREEWEEKS:
+				$date = date('Y-m-d',strtotime("-3 Week"));
+				break;
+			case ANTERIORITY_ONEMONTH:
+				$date = date('Y-m-d',strtotime("-1 Month"));
+				break;
+			case ANTERIORITY_TWOMONTHS:
+			default:
+				$date = date('Y-m-d',strtotime("-2 Month"));
+		}
+		if( $min_date && $min_date < $date )
+			return $min_date;
+		return $date;
+	}
+	 
 	/**
 	 * Retourne l'adresse d'expéditeur des mails 
 	 */
@@ -149,6 +258,16 @@ class AgendaPartage_Newsletter {
 			return explode('.', $source);
 	
 		return $source;
+	}
+	
+	/**
+	 * Retourne l'antériorité maximale des messages à publier de la newsletter.
+	 */
+	public static function get_anteriority_max($newsletter_id){
+		if( is_a($newsletter_id, 'WP_Post') )
+			$newsletter_id = $newsletter_id->ID;
+				
+		return get_post_meta( $newsletter_id, 'anteriority_max', true);
 	}
 	
 	/**
@@ -673,14 +792,22 @@ class AgendaPartage_Newsletter {
 	
 	public static function get_newsletter($newsletter = false){
 		if( ! $newsletter || $newsletter === true){
-			if( empty($_REQUEST[AGDP_ARG_NEWSLETTERID]))
-				if( empty($_REQUEST['post_ID']))
-					$newsletter = AgendaPartage::get_option('events_nl_post_id');
+			$newsletter = self::is_sending_email();
+			if( ! $newsletter
+			 && empty($_REQUEST[AGDP_ARG_NEWSLETTERID])){
+				if( empty($_REQUEST['post_ID'])){
+					if( ! ($newsletter = get_post())
+					|| $newsletter->post_type !== self::post_type){
+						debug_log('get_newsletter !?', 'default newsletter : events_nl_post_id');
+						$newsletter = AgendaPartage::get_option('events_nl_post_id');
+					}
+				}
 				else
 					$newsletter = get_post($_REQUEST['post_ID']);
+			}
 		}
 		if(is_a($newsletter, 'WP_Post')
-		&& $newsletter->post_type == self::post_type)
+		&& $newsletter->post_type === self::post_type)
 			return $newsletter;
 		//slug
 		if( is_string($newsletter) && ! is_numeric($newsletter) ){
@@ -693,7 +820,7 @@ class AgendaPartage_Newsletter {
 			else
 				return false;
 		}
-			
+		
 		$newsletter = get_post($newsletter);
 		if(is_a($newsletter, 'WP_Post')
 		&& $newsletter->post_type == self::post_type)

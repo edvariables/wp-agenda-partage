@@ -269,28 +269,28 @@ class AgendaPartage_Covoiturages {
 				";
 		$result = $wpdb->get_results($sql);
 		// debug_log('get_posts_weeks', $sql);
-		$months = [];
+		$weeks = [];
 		$prev_row = false;
 		foreach($result as $row){
 			if($prev_row){
 				if($prev_row->year === $row->year){
 					for($m = (int)$prev_row->week + 1; $m < (int)$row->week; $m++)
-						$months[$prev_row->year . '-' . sprintf("%02d",$m)] = 0;
+						$weeks[$prev_row->year . '-' . sprintf("%02d",$m)] = 0;
 				}
 				elseif((int)$prev_row->year === (int)$row->year - 1){
 					$max_year_week = get_last_week($prev_row->year);
 					for($m = (int)$prev_row->week + 1; $m <= $max_year_week; $m++)
-						$months[$prev_row->year . '-' . $m] = 0;
+						$weeks[$prev_row->year . '-' . $m] = 0;
 					for($m = 1; $m < (int)$row->week; $m++)
-						$months[$row->year . '-' . sprintf("%02d",$m)] = 0;
+						$weeks[$row->year . '-' . sprintf("%02d",$m)] = 0;
 				}
 				elseif((int)$prev_row->year < (int)$row->year - 1)
 					break;
 			}
-			$months[$row->year . '-' . $row->week] = (int)$row->count;
+			$weeks[$row->year . '-' . $row->week] = (int)$row->count;
 			$prev_row = $row;
 		}
-		return $months;
+		return $weeks;
     }
 
 	/**
@@ -454,9 +454,9 @@ class AgendaPartage_Covoiturages {
 				'ajax' => true,
 				'start_ajax_at_month_index' => 2,
 				'max_events' => 30,
-				'months' => -1,
 				'mode' => 'list' //list|email|text|calendar|TODO...
 			), $options);
+		$options = self::filter_anteriority_option($options, ANTERIORITY_ALL);
 		if( $options['mode'] == 'email' ){
 			$options['ajax'] = false;
 		}
@@ -464,20 +464,26 @@ class AgendaPartage_Covoiturages {
 		$option_ajax = (bool)$options['ajax'];
 		
 		//Semaines avec indicateurs du nombre de covoiturages, sans les périodiques.
-		$months = self::get_posts_weeks();
+		$weeks = self::get_posts_weeks();
 		
-		if($options['months'] > 0 && count($months) > $options['months'])
-			$months = array_slice($months, 0, $options['months'], true);
+		if(isset($options['months']) && $options['months'] !== ANTERIORITY_ALL && $options['months'] > 0 && count($weeks) > $options['months']*4)
+			$weeks = array_slice($weeks, 0, $options['months'] * 4, true);
+		elseif(isset($options['weeks']) && $options['weeks'] > 0 && count($weeks) > $options['weeks'])
+			$weeks = array_slice($weeks, 0, $options['weeks'], true);
+		elseif(isset($options['days']) && $options['days'] > 0 && count($weeks) > 1)
+			$weeks = array_slice($weeks, 0, 1, true);
+		elseif(isset($options['hours']) && $options['hours'] > 0 && count($weeks) > 1)
+			$weeks = array_slice($weeks, 0, 1, true);
 		
 		//Si le premier mois est déjà gros, on diffère le chargement du suivant par ajax
 		$events_count = 0;
-		$months_count = 0;
-		foreach($months as $month => $month_events_count) {
-			$events_count += $month_events_count;
-			$months_count++;
+		$weeks_count = 0;
+		foreach($weeks as $week => $week_events_count) {
+			$events_count += $week_events_count;
+			$weeks_count++;
 			if($events_count >= $options['max_events']){
-				if($options['start_ajax_at_month_index'] > $months_count)
-					$options['start_ajax_at_month_index'] = $months_count;
+				if($options['start_ajax_at_month_index'] > $weeks_count)
+					$options['start_ajax_at_month_index'] = $weeks_count;
 				break;
 			}
 		}
@@ -520,10 +526,10 @@ class AgendaPartage_Covoiturages {
 			$filters = self::get_filters();
 		
 		$html .= '<ul>';
-		foreach($months as $week => $month_events_count) {
+		foreach($weeks as $week => $week_events_count) {
 			if( $option_ajax
 			&& ($not_empty_month_index >= $options['start_ajax_at_month_index'])
-			&& $month_events_count > 0
+			&& $week_events_count > 0
 			&& $week !== $requested_month) {
 				$data = [ 'month' => $week ];
 				if($filters && count($filters))
@@ -537,7 +543,7 @@ class AgendaPartage_Covoiturages {
 			} else
 				$ajax = false;
 			
-			$month_summary = '';
+			$week_summary = '';
 			
 			$week_dates = get_week_dates(substr($week, 0,4), substr($week, 5,2));
 			if( substr($week_dates['start'], 5,2) === substr($week_dates['end'], 5,2)){
@@ -558,23 +564,23 @@ class AgendaPartage_Covoiturages {
 			$html .= sprintf(
 				'<li><div class="month-title toggle-trigger %s %s" %s>%s <span class="nb-items">(%d)</span>%s</div>
 				<ul id="month-%s" class="covoiturages-month toggle-container">'
-				, $month_events_count === 0 ? 'no-items' : ''
-				, !$ajax && $month_events_count ? 'active' : ''
+				, $week_events_count === 0 ? 'no-items' : ''
+				, !$ajax && $week_events_count ? 'active' : ''
 				, $ajax ? $ajax : ''
 				, $week_label
-				, $month_events_count
-				, $month_summary
+				, $week_events_count
+				, $week_summary
 				, $week
 			);
-			if(!$ajax && $month_events_count){
+			if(!$ajax && $week_events_count){
 				$html .= self::get_week_posts_list_html( $week, $requested_id, $options );
 			}
 		
 			$html .= '</ul></li>';
 			
-			if($month_events_count > 0)
+			if($week_events_count > 0)
 				$not_empty_month_index++;
-			$events_count += $month_events_count;
+			$events_count += $week_events_count;
 		}
 		
 		if( count($periodique_posts) ){
@@ -601,6 +607,17 @@ class AgendaPartage_Covoiturages {
 	}
 	
 	/**
+	* Affecte l'option d'anteriorité
+	*
+	*/
+	public static function filter_anteriority_option($options, $anteriority = false, $newsletter = false){
+		return AgendaPartage_Newsletter::filter_anteriority_option($options, $anteriority
+			, ANTERIORITY_THREEWEEKS
+			, $newsletter
+		);
+	}
+	
+	/**
 	* Rendu Html des covoiturages destinés au corps d'un email (newsletter)
 	*
 	*/
@@ -610,9 +627,8 @@ class AgendaPartage_Covoiturages {
 		$options = array_merge(
 			array(
 				'ajax' => false,
-				'months' => 3, //weeks
 				'mode' => 'email'
-			), $options);
+			), self::filter_anteriority_option($options));
 		
 		if(AgendaPartage_Covoiturage_Post_type::is_diffusion_managed()){
 			$term_id = AgendaPartage::get_option('newsletter_diffusion_term_id');
@@ -854,9 +870,9 @@ class AgendaPartage_Covoiturages {
 	/**
 	* Rendu Html des covoiturages d'un mois sous forme de liste
 	*/
-	public static function get_week_posts_list_html($month, $requested_id = false, $options = false){
+	public static function get_week_posts_list_html($week, $requested_id = false, $options = false){
 		
-		$events = self::get_week_posts($month);
+		$events = self::get_week_posts($week);
 		
 		if(is_wp_error( $events)){
 			$html = sprintf('<p class="alerte no-events">%s</p>%s', __('Erreur lors de la recherche de covoiturages.', AGDP_TAG), var_export($events, true));

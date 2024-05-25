@@ -135,7 +135,6 @@ class AgendaPartage_Forum_Messages {
 			'nopaging' => true
 			
 		);
-		
 		$comments = self::get_comments($query);
 		
 		return $comments;
@@ -147,10 +146,13 @@ class AgendaPartage_Forum_Messages {
 	public static function get_comments(...$queries){
 		$query = self::get_comments_query(...$queries);
 		
+		debug_log('get_comments', $query);
+		
 		add_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10, 2);
         $the_query = new WP_Comment_Query( $query );
 		remove_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10);
-        
+        // debug_log('get_comments', $the_query);
+		
 		return $the_query->comments; 
     }
 	public static function on_get_comments_clauses_cb($clauses, $query){
@@ -236,17 +238,27 @@ class AgendaPartage_Forum_Messages {
 		
 		$options = array_merge(
 			array(
+				'ajax' => false,
 				'max_messages' => 30,
-				'weeks' => -1,
 				'mode' => 'list' //list|email|text|calendar|TODO...
 			), $options);
+		$options = self::filter_anteriority_option($options, ANTERIORITY_ALL);
 		if( $options['mode'] == 'email' ){
+			$options['ajax'] = false;
 		}
+		$option_ajax = (bool)$options['ajax'];
 		
 		$weeks = self::get_comments_weeks( $page, $options );
-		
-		if($options['weeks'] > 0 && count($weeks) > $options['weeks'])
+		debug_log('get_list_html', $options, count($weeks), $weeks);
+		if(isset($options['months']) && ($options['months'] !== ANTERIORITY_ALL) && ($options['months'] > 0) && count($weeks) > $options['months']*4)
+			$weeks = array_slice($weeks, 0, $options['months'] * 4, true);
+		elseif(isset($options['weeks']) && $options['weeks'] > 0 && count($weeks) > $options['weeks'])
 			$weeks = array_slice($weeks, 0, $options['weeks'], true);
+		elseif(isset($options['days']) && $options['days'] > 0 && count($weeks) > 1)
+			$weeks = array_slice($weeks, 0, 1, true);
+		elseif(isset($options['hours']) && $options['hours'] > 0 && count($weeks) > 1)
+			$weeks = array_slice($weeks, 0, 1, true);
+		debug_log('get_list_html', count($weeks));
 		
 		$messages_count = 0;
 		$weeks_count = 0;
@@ -319,29 +331,40 @@ class AgendaPartage_Forum_Messages {
 	}
 	
 	/**
+	* Affecte l'option d'anteriorité
+	*
+	*/
+	public static function filter_anteriority_option($options, $anteriority = false, $newsletter = false){
+		return AgendaPartage_Newsletter::filter_anteriority_option($options, $anteriority
+			, ANTERIORITY_ONEDAY
+			, $newsletter
+		);
+	}
+	
+	/**
 	* Rendu Html des messages destinés au corps d'un email (newsletter)
 	*
 	*/
 	public static function get_list_for_email($mailbox, $page, $content = '', $options = false){
 		$page = AgendaPartage_Mailbox::get_forum_page($page);
-		$init = AgendaPartage_Forum::init_page($mailbox, $page);
-		if( $init === false || is_a($init, 'Exception')){
-			debug_log(__CLASS__.'::get_list_for_email', $init);
-		}
+		// $init = AgendaPartage_Forum::init_page($mailbox, $page);
+		// if( $init === false || is_a($init, 'Exception')){
+			// debug_log(__CLASS__.'::get_list_for_email', $init);
+		// }
 		
 		if(!isset($options) || !is_array($options))
 			$options = array();
 		$options = array_merge(
 			array(
-				'weeks' => 2, 
+				'ajax' => false,
 				'mode' => 'email'
-			), $options);
+			), self::filter_anteriority_option($options));
 		
 		// Limite les messages à ceux publiés depuis le dernier envoi aux destinataires
 		if( ( $newsletter = AgendaPartage_Newsletter::is_sending_email() )
 		&& ( $newsletter_to_emails = AgendaPartage_Newsletter::is_sending_email_to() )){
 			//Jamais plus d'un mois
-			$min_date = date('Y-m-d',strtotime("-1 Month"));
+			$min_date = AgendaPartage_Newsletter::get_anteriority_date( $newsletter, date('Y-m-d',strtotime("-1 Month")) );
 			$since_date = AgendaPartage_Newsletter::get_user_mailing_date( $newsletter_to_emails, $newsletter, $min_date );
 			if( $since_date )
 				$options['since'] = $since_date;

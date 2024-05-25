@@ -171,8 +171,8 @@ class AgendaPartage_Admin_Stats {
 					echo sprintf('<a href="%s">%d %s%s</a>'
 						, $url
 						, $posts->found_posts
-						, $posts->found_posts > 1 ? 's' : ''
-						, strtolower( $post_type_labels->singular_name));
+						, strtolower( $post_type_labels->singular_name)
+						, $posts->found_posts > 1 ? 's' : '');
 				}
 				else
 					echo '&nbsp;';

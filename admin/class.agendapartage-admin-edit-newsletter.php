@@ -136,6 +136,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		else
 			$cron_comment = '';
 		
+		$periods = array_keys(AgendaPartage_Newsletter::subscription_periods( $newsletter ));
 		$fields = [
 			[ 
 				'name' => 'mailing-enable',
@@ -167,22 +168,26 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			[	'name' => 'mailing-month-day',
 				'label' => __('Jour du mois', AGDP_TAG),
 				'unit' => 'entre 1 et 28, pour l\'abonnement "Tous les mois"',
-				'type' => 'number'
+				'type' => 'number',
+				'container_class' => in_array(PERIOD_MONTHLY, $periods) ? '' : 'hidden',
 			],
 			[	'name' => 'mailing-2W1-day',
 				'label' => __('Jour de 1ère quinzaine', AGDP_TAG),
 				'unit' => 'entre 1 et 14, pour l\'abonnement "Tous les quinze jours"',
-				'type' => 'number'
+				'type' => 'number',
+				'container_class' => in_array(PERIOD_BIWEEKLY, $periods) ? '' : 'hidden',
 			],
 			[	'name' => 'mailing-2W2-day',
 				'label' => __('Jour de 2ème quinzaine', AGDP_TAG),
 				'unit' => 'entre 15 et 28, pour l\'abonnement "Tous les quinze jours"',
-				'type' => 'number'
+				'type' => 'number',
+				'container_class' => in_array(PERIOD_BIWEEKLY, $periods) ? '' : 'hidden',
 			],
 			[	'name' => 'mailing-week-day',
 				'label' => __('Jour de la semaine', AGDP_TAG),
 				'unit' => 'pour l\'abonnement "Toutes les semaines"',
 				'input' => 'select',
+				'container_class' => in_array(PERIOD_WEEKLY, $periods) ? '' : 'hidden',
 				'values' => ['1'=>'lundi', '2'=>'mardi', '3'=>'mercredi', '4'=>'jeudi', '5'=>'vendredi', '6'=>'samedi', '0'=>'dimanche']
 			],
 			[	'name' => 'mailing-hour',
@@ -264,6 +269,17 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 						'values' => $sources,
 						'learn-more' => 'Permet d\'utiliser les abonnements d\'une autre lettre-info'
 		);
+		
+		//Anteriority
+		$meta_name = 'anteriority_max';
+		$values = array_merge(['' => '(par défaut)'], AgendaPartage_Newsletter::get_anteriorities());
+		$fields[] = array('name' => $meta_name,
+						'label' => __('Amplitude des dates', AGDP_TAG),
+						'input' => 'select',
+						'values' => $values,
+						'learn-more' => 'Amplitude maximale des dates des messages à publier.'
+		);
+		
 		return $fields;
 				
 	}

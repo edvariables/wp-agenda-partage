@@ -56,9 +56,8 @@ class AgendaPartage_Forum {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		
 		global $pagenow;
-		if ( $pagenow !== 'edit.php' && $pagenow !== 'post.php' ) {
+		if ( $pagenow !== 'edit.php' && $pagenow !== 'post.php') {
 			add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
 		}
 		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
@@ -240,6 +239,9 @@ class AgendaPartage_Forum {
 	/**
 	*/
 	public static function on_post_class_cb( $classes, $css_class, $post_id ){
+		if( get_post_type($post_id) !== self::post_type )
+			return $classes;
+		
 		$mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($post_id);
 		if ( $mailbox ){
 			$classes[] = self::page_class;
@@ -265,7 +267,7 @@ class AgendaPartage_Forum {
 	 * Appelle la synchronisation IMAP.
 	 */
 	public static function init_page($mailbox, $page = false){
-	
+		debug_log_callstack(__CLASS__ . '::init_page');
 		if( is_numeric( $page )){
 			if (!($page = get_post($page)))
 				return false;
@@ -310,6 +312,7 @@ class AgendaPartage_Forum {
 	 * show_comments
 	 */
 	public static function user_can_see_comments( $forum = false, $user = null, $show_comments = null, $user_subscription = null){
+		
 		if( ! ($forum = self::get_page( $forum ) ) )
 			return null; //TODO
 			
@@ -317,7 +320,7 @@ class AgendaPartage_Forum {
 			$meta_key = 'forum_show_comments';
 			$show_comments = get_post_meta( $forum->ID, $meta_key, true );
 		}
-				
+		debug_log('user_can_see_comments $show_comments', $show_comments);
 		switch($show_comments){
 			case 'never':// => 'Jamais',
 				return false;
