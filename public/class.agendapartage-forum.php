@@ -267,7 +267,6 @@ class AgendaPartage_Forum {
 	 * Appelle la synchronisation IMAP.
 	 */
 	public static function init_page($mailbox, $page = false){
-		debug_log_callstack(__CLASS__ . '::init_page');
 		if( is_numeric( $page )){
 			if (!($page = get_post($page)))
 				return false;
@@ -320,7 +319,6 @@ class AgendaPartage_Forum {
 			$meta_key = 'forum_show_comments';
 			$show_comments = get_post_meta( $forum->ID, $meta_key, true );
 		}
-		debug_log('user_can_see_comments $show_comments', $show_comments);
 		switch($show_comments){
 			case 'never':// => 'Jamais',
 				return false;

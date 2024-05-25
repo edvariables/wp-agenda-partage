@@ -135,7 +135,6 @@ class AgendaPartage_Newsletter {
 	*
 	*/
 	public static function filter_anteriority_option($options, $anteriority = false, $default_anteriority = ANTERIORITY_ALL, $newsletter = false){
-		debug_log(__CLASS__.'::filter_anteriority_option', $options);
 		if( ! (isset($options['months']) || isset($options['weeks']) || isset($options['days']) || isset($options['hours'])) ){
 			if( ! $newsletter )
 				$newsletter = AgendaPartage_Newsletter::get_newsletter();
@@ -170,47 +169,51 @@ class AgendaPartage_Newsletter {
 				default:
 					$options['months'] = 2; 
 			}
-			debug_log('filter_anteriority_option AFTER', !!$newsletter, AgendaPartage_Newsletter::get_anteriority_max($newsletter), $options);
 		}
 		return $options;
 	}
 	
 	/**
-	* Affecte l'option d'anteriorité
-	*
+	* Retourne la date correspondant au paramètre d'anteriorité.
+	* Parameter $is_posterity : si true, retourne une date dans le futur, sinon dans le passé. (pour agdevents)
 	*/
-	public static function get_anteriority_date( $newsletter = false, $min_date = false ){
+	public static function get_anteriority_date( $newsletter = false, $limit_date = false, $is_posterity = false ){
 		if( ! $newsletter )
 			$newsletter = AgendaPartage_Newsletter::get_newsletter();
 		$anteriority = AgendaPartage_Newsletter::get_anteriority_max($newsletter);
+		$direction = $is_posterity ? '+' : '-';
 		switch( $anteriority ){
 			case ANTERIORITY_ALL:
-				$date = date('Y-m-d',strtotime("-2 Year"));
+				$date = date('Y-m-d',strtotime($direction."2 Year"));
 				break;
 			case ANTERIORITY_ONEDAY:
-				$date = date('Y-m-d',strtotime("-24 Hour"));
+				$date = date('Y-m-d',strtotime($direction."24 Hour"));
 				break;
 			case ANTERIORITY_TWODAYS:
-				$date = date('Y-m-d',strtotime("-2 Day"));
+				$date = date('Y-m-d',strtotime($direction."2 Day"));
 				break;
 			case ANTERIORITY_ONEWEEK:
-				$date = date('Y-m-d',strtotime("-1 Week"));
+				$date = date('Y-m-d',strtotime($direction."1 Week"));
 				break;
 			case ANTERIORITY_TWOWEEKS:
-				$date = date('Y-m-d',strtotime("-2 Week"));
+				$date = date('Y-m-d',strtotime($direction."2 Week"));
 				break;
 			case ANTERIORITY_THREEWEEKS:
-				$date = date('Y-m-d',strtotime("-3 Week"));
+				$date = date('Y-m-d',strtotime($direction."3 Week"));
 				break;
 			case ANTERIORITY_ONEMONTH:
-				$date = date('Y-m-d',strtotime("-1 Month"));
+				$date = date('Y-m-d',strtotime($direction."1 Month"));
 				break;
 			case ANTERIORITY_TWOMONTHS:
 			default:
-				$date = date('Y-m-d',strtotime("-2 Month"));
+				$date = date('Y-m-d',strtotime($direction."2 Month"));
 		}
-		if( $min_date && $min_date < $date )
-			return $min_date;
+		if( $limit_date
+			&& ($is_posterity && ($limit_date < $date )
+			 || ! $is_posterity && ($limit_date > $date ))
+		){
+			return $limit_date;
+		}
 		return $date;
 	}
 	 

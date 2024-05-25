@@ -146,12 +146,9 @@ class AgendaPartage_Forum_Messages {
 	public static function get_comments(...$queries){
 		$query = self::get_comments_query(...$queries);
 		
-		debug_log('get_comments', $query);
-		
 		add_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10, 2);
         $the_query = new WP_Comment_Query( $query );
 		remove_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10);
-        // debug_log('get_comments', $the_query);
 		
 		return $the_query->comments; 
     }
@@ -249,7 +246,6 @@ class AgendaPartage_Forum_Messages {
 		$option_ajax = (bool)$options['ajax'];
 		
 		$weeks = self::get_comments_weeks( $page, $options );
-		debug_log('get_list_html', $options, count($weeks), $weeks);
 		if(isset($options['months']) && ($options['months'] !== ANTERIORITY_ALL) && ($options['months'] > 0) && count($weeks) > $options['months']*4)
 			$weeks = array_slice($weeks, 0, $options['months'] * 4, true);
 		elseif(isset($options['weeks']) && $options['weeks'] > 0 && count($weeks) > $options['weeks'])
@@ -258,7 +254,6 @@ class AgendaPartage_Forum_Messages {
 			$weeks = array_slice($weeks, 0, 1, true);
 		elseif(isset($options['hours']) && $options['hours'] > 0 && count($weeks) > 1)
 			$weeks = array_slice($weeks, 0, 1, true);
-		debug_log('get_list_html', count($weeks));
 		
 		$messages_count = 0;
 		$weeks_count = 0;
@@ -347,10 +342,10 @@ class AgendaPartage_Forum_Messages {
 	*/
 	public static function get_list_for_email($mailbox, $page, $content = '', $options = false){
 		$page = AgendaPartage_Mailbox::get_forum_page($page);
-		// $init = AgendaPartage_Forum::init_page($mailbox, $page);
-		// if( $init === false || is_a($init, 'Exception')){
-			// debug_log(__CLASS__.'::get_list_for_email', $init);
-		// }
+		$init = AgendaPartage_Forum::init_page($mailbox, $page);
+		if( $init === false || is_a($init, 'Exception')){
+			debug_log(__CLASS__.'::get_list_for_email init_page failed', $init);
+		}
 		
 		if(!isset($options) || !is_array($options))
 			$options = array();
@@ -366,6 +361,7 @@ class AgendaPartage_Forum_Messages {
 			//Jamais plus d'un mois
 			$min_date = AgendaPartage_Newsletter::get_anteriority_date( $newsletter, date('Y-m-d',strtotime("-1 Month")) );
 			$since_date = AgendaPartage_Newsletter::get_user_mailing_date( $newsletter_to_emails, $newsletter, $min_date );
+			
 			if( $since_date )
 				$options['since'] = $since_date;
 		}
