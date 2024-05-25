@@ -342,11 +342,13 @@ class AgendaPartage_Forum_Messages {
 	*/
 	public static function get_list_for_email($mailbox, $page, $content = '', $options = false){
 		$page = AgendaPartage_Mailbox::get_forum_page($page);
-		$init = AgendaPartage_Forum::init_page($mailbox, $page);
-		if( $init === false || is_a($init, 'Exception')){
-			debug_log(__CLASS__.'::get_list_for_email init_page failed', $init);
+		if( $mailbox
+		|| ($page && ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page($page) ))){
+			$synchronize = AgendaPartage_Mailbox::synchronize($mailbox);
+			if( $synchronize === false || is_a($synchronize, 'Exception')){
+				debug_log(__CLASS__.'::get_list_for_email init_page failed', $synchronize);
+			}
 		}
-		
 		if(!isset($options) || !is_array($options))
 			$options = array();
 		$options = array_merge(

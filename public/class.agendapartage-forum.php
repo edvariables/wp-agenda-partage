@@ -281,9 +281,7 @@ class AgendaPartage_Forum {
 			return false;
 		
 		if( $mailbox ){
-			$mailbox = AgendaPartage_Mailbox::get_mailbox($mailbox);
-			
-			$import_result = AgendaPartage_Mailbox::synchronize($mailbox, $page);
+			$import_result = AgendaPartage_Mailbox::synchronize($mailbox);
 		}
 		else
 			$import_result = true;
