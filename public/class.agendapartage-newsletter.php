@@ -18,7 +18,8 @@ class AgendaPartage_Newsletter {
 	const post_type = 'agdpnl';
 	const taxonomy_period = 'period';
 
-	const cron_hook = 'agdpnl_cron_hook';
+	private const cron_hook = 'agdpnl_cron_hook';
+	private static $cron_hook = false;
 
 	const default_mailing_hour = 2;
 	
@@ -67,7 +68,7 @@ class AgendaPartage_Newsletter {
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		
-		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
+		add_action( self::get_cron_hook(), array(__CLASS__, 'on_cron_exec') );
 		
 		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas. Pblm de multisite ?
 	}
@@ -79,6 +80,12 @@ class AgendaPartage_Newsletter {
 	}
 	/*
 	 **/
+	 
+	public static function get_cron_hook(){
+		if( self::$cron_hook )
+			return self::$cron_hook;
+		return self::$cron_hook = self::cron_hook . get_current_blog_id();
+	}
 
 	/**
 	 * Registers js files.
@@ -1286,7 +1293,7 @@ class AgendaPartage_Newsletter {
 	 */
 	public static function get_cron_state(){
 		if( ! self::$cron_state){
-			$cron_time = wp_next_scheduled( self::cron_hook );
+			$cron_time = wp_next_scheduled( self::get_cron_hook() );
 			if( $cron_time === false )
 				self::$cron_state = sprintf('0|'); 
 			else
@@ -1295,11 +1302,11 @@ class AgendaPartage_Newsletter {
 		return self::$cron_state;
 	}
 	public static function get_cron_time(){
-		return wp_next_scheduled( self::cron_hook );
+		return wp_next_scheduled( self::get_cron_hook() );
 	}
 	public static function get_cron_time_str($cron_time = false){
 		if( ! $cron_time )
-			$cron_time = wp_next_scheduled( self::cron_hook );
+			$cron_time = wp_next_scheduled( self::get_cron_hook() );
 		if( $cron_time === false )
 			return '(cron inactif)'; 
 		else{
@@ -1322,19 +1329,19 @@ class AgendaPartage_Newsletter {
 	 * $next_time in seconds or timestamp
 	 */
 	public static function init_cron($next_time = false){
-		$cron_time = wp_next_scheduled( self::cron_hook );
+		$cron_time = wp_next_scheduled( self::get_cron_hook() );
 		if($next_time){
 			if( $cron_time !== false )
-				wp_unschedule_event( $cron_time, self::cron_hook );
+				wp_unschedule_event( $cron_time, self::get_cron_hook() );
 			if( $next_time < 1024 )
 				$cron_time = strtotime( date('Y-m-d H:i:s') . ' + ' . $next_time . ' second');
 			else
 				$cron_time = $next_time;
-			$result = wp_schedule_single_event( $cron_time, self::cron_hook, [], true );
+			$result = wp_schedule_single_event( $cron_time, self::get_cron_hook(), [], true );
 			// debug_log('[agdpnl-init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
 		}
 		if( $cron_time === false ){
-			$cron_time = wp_schedule_event( time(), 'hourly', self::cron_hook );
+			$cron_time = wp_schedule_event( time(), 'hourly', self::get_cron_hook() );
 			// debug_log('[agdpnl-init_cron] wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
 		}
@@ -1348,8 +1355,8 @@ class AgendaPartage_Newsletter {
 	 * Désactive le cron
 	 */
 	public static function deactivate_cron(){
-		$timestamp = wp_next_scheduled( self::cron_hook );
-		wp_unschedule_event( $timestamp, self::cron_hook );
+		$timestamp = wp_next_scheduled( self::get_cron_hook() );
+		wp_unschedule_event( $timestamp, self::get_cron_hook() );
 		self::$cron_state = sprintf('0|Désactivé'); 
 	}
 	/**
