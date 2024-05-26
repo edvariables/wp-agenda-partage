@@ -273,6 +273,7 @@ class AgendaPartage_Mailbox {
 		if( ! $mailboxes || count($mailboxes) === 0){
 			self::deactivate_cron();
 			self::$cron_state = '0|Aucune boîte e-mails active';
+			self::log_cron_state();
 			return;
 		}
 				

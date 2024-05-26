@@ -84,7 +84,7 @@ class AgendaPartage_Newsletter {
 	public static function get_cron_hook(){
 		if( self::$cron_hook )
 			return self::$cron_hook;
-		return self::$cron_hook = self::cron_hook . get_current_blog_id();
+		return self::$cron_hook = self::cron_hook . '.' . get_current_blog_id();
 	}
 
 	/**
@@ -1357,7 +1357,7 @@ class AgendaPartage_Newsletter {
 	public static function deactivate_cron(){
 		$timestamp = wp_next_scheduled( self::get_cron_hook() );
 		wp_unschedule_event( $timestamp, self::get_cron_hook() );
-		self::$cron_state = sprintf('0|Désactivé'); 
+		self::$cron_state = '0|Désactivé'; 
 	}
 	/**
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
@@ -1374,6 +1374,7 @@ class AgendaPartage_Newsletter {
 		if( ! $newsletters || count($newsletters) === 0){
 			self::deactivate_cron();
 			self::$cron_state = '0|Aucune lettre-info active';
+			self::log_cron_state();
 			return;
 		}
 		$today = strtotime(wp_date('Y-m-d'));
