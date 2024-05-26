@@ -305,9 +305,6 @@ class AgendaPartage_Covoiturage_Edit {
 		/** e-mail non-obligatoire si connecté **/
 		if(($user = wp_get_current_user())
 			&& $user->ID !== 0){
-			// $html = preg_replace('/' . preg_quote('<span class="required">*</span>') . '(\s*\[email)\*/', '$1', $html);
-			// var_dump(substr( preg_replace('/(\[email)\*/', '$1', $html), strpos($html, '[email')-30));
-			// die();
 			$html = preg_replace('/(\[email)\*/', '$1', $html);
 		}
 		
@@ -815,7 +812,6 @@ class AgendaPartage_Covoiturage_Edit {
 					$submission->set_response($error_message);
 					return false; //TODO
 				}
-				debug_log('$tax_inputs', $tax_inputs);
 			}
 		}
 				

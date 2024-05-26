@@ -90,8 +90,9 @@ class AgendaPartage_WPCF7 {
 	 * Affectation des valeurs par défaut.
 	 */
  	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
-			
+		global $post;
 		$form = WPCF7_ContactForm::get_current();
+		// debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : ', $form->title());
 		
 		$preventdefault_reset = false;
 		switch($form->id()){
@@ -99,11 +100,19 @@ class AgendaPartage_WPCF7 {
 			case AgendaPartage::get_option('agdpevent_message_contact_form_id') :
 			case AgendaPartage::get_option('contact_form_id') :
 			case AgendaPartage::get_option('admin_message_contact_form_id') :
-				debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : contact_form_id');
+				// debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : contact_form_id');
 				if( isset($_REQUEST[AgendaPartage_Evenement::postid_argument]) )
 					AgendaPartage_Evenement::wpcf7_contact_form_init_tags( $form );
 				elseif( isset($_REQUEST[AgendaPartage_Covoiturage::postid_argument]) )
 					AgendaPartage_Covoiturage::wpcf7_contact_form_init_tags( $form );
+				elseif( $post ){
+					if( $post->post_type === AgendaPartage_Evenement::post_type )
+						AgendaPartage_Evenement::wpcf7_contact_form_init_tags( $form );
+					elseif( $post->post_type === AgendaPartage_Covoiturage::post_type )
+						AgendaPartage_Covoiturage::wpcf7_contact_form_init_tags( $form );
+				}
+				// else
+					// debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : BUT NONE', $_REQUEST);
 				$preventdefault_reset = true;
 				break;
 			default:
