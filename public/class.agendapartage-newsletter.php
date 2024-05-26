@@ -801,7 +801,7 @@ class AgendaPartage_Newsletter {
 				if( empty($_REQUEST['post_ID'])){
 					if( ! ($newsletter = get_post())
 					|| $newsletter->post_type !== self::post_type){
-						debug_log('get_newsletter !?', 'default newsletter : events_nl_post_id');
+						debug_log_callstack('get_newsletter !?', 'default newsletter : events_nl_post_id');
 						$newsletter = AgendaPartage::get_option('events_nl_post_id');
 					}
 				}
