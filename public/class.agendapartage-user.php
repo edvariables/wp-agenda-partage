@@ -6,13 +6,20 @@ class AgendaPartage_User {
 	}
 
 	public static function init_hooks() {
+		//TODO semble abusif
 		if( is_login() && ! isset($_REQUEST['action']) ){
 			if( ! isset($_REQUEST['redirect_to']) )
 				$_REQUEST['redirect_to'] = $_GET['redirect_to'] = get_bloginfo( 'url' );
 		}
+		
+		//Fenêtre de réinitialisation de mot de passe
+		add_action( 'resetpass_form', array(__CLASS__, 'resetpass_form' ));
 	}
 
-	public static function create_user_for_agdpevent($email = false, $user_name = false, $user_login = false, $data = false, $user_role = false){
+	/**
+	 *
+	 */
+	public static function create_user($email = false, $user_name = false, $user_login = false, $data = false, $user_role = false){
 
 		if( ! $email){
 			$post = get_post();
@@ -133,10 +140,6 @@ class AgendaPartage_User {
 		return $blog_id;
 	}
 
-
-	
-	 
-
 	/**
 	 * Dans un email à un utilisateur, ajoute une invitation à saisir un nouveau mot de passe.
 	 * Returns a string to add to email for user to reset his password.
@@ -235,5 +238,21 @@ class AgendaPartage_User {
 		}
 		echo $html;
 	}
-	
+
+	/**
+	 * Fenêtre de réinitialisation de mot de passe
+	 */
+	public static function resetpass_form( $user ){
+		//insert html code
+		// redirect_to
+		if ( isset( $_REQUEST['redirect_to'] ) ) {
+			$url = $_REQUEST['redirect_to'];
+		}
+		else
+			$url = false;
+		if( ! $url) {
+			$url = get_home_url( self::get_current_or_default_blog_id($user), sprintf("wp-admin/"), 'admin' );
+		}
+		echo sprintf('<input type="hidden" name="%s" value="%s"/>', 'redirect_to', $url );
+	}	
 }

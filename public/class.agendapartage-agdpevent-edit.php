@@ -41,22 +41,12 @@ class AgendaPartage_Evenement_Edit {
 	 */
 	public static function init_hooks() {
 		
-		//wp_mail depuis Contact Form 7
-		add_filter( 'wp_mail', array(__CLASS__, 'wp_mail'), 10,1);
-		//Maintient de la connexion de l'utilisateur pendant l'envoi du mail
-		// add_filter( 'wpcf7_verify_nonce', array(__CLASS__, 'wpcf7_verify_nonce_cb' ));	
-		add_filter( 'wpcf7_verify_nonce', '__return_true' );
-		
 		//Validation des valeurs
 		add_filter( 'wpcf7_validate_text', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_validate_text*', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_validate_date', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_validate_date*', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_posted_data_text', array(__CLASS__, 'wpcf7_posted_data_fields_cb'), 10, 3);
-		add_filter( 'wpcf7_spam', array(__CLASS__, 'wpcf7_spam_cb'), 10, 2);
-		
-		//Fenêtre de réinitialisation de mot de passe
-		add_action( 'resetpass_form', array(__CLASS__, 'resetpass_form' ));
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_EVENT_SECRETCODE, array(__CLASS__, 'on_wp_ajax_agdpevent_code_secret_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_EVENT_SECRETCODE, array(__CLASS__, 'on_wp_ajax_agdpevent_code_secret_cb') );
@@ -427,44 +417,13 @@ class AgendaPartage_Evenement_Edit {
  	
 
  	/////////////////////
- 	// redirect email //
-
-	/**
-	 * Interception des envois de mail
-	 */
-	public static function wp_mail($args){
-		if(array_key_exists('_wpcf7', $_POST))
-			return self::wp_mail_wpcf7($args);
-		
-		return $args;
-	}
-	
-	/**
-	 * Interception des envois de mail du plugin wpcf7
-	 */
-	public static function wp_mail_wpcf7($args){
-
-		$args = self::email_specialchars($args);
-		
-		$form_id = $_POST['_wpcf7'];
-		
-		switch($form_id){
-			//Formulaire spécifique pour les évènements
-			case AgendaPartage::get_option('agdpevent_edit_form_id') :
-				return self::wp_mail_emails_fields($args);
-				
-			default:
-				break;
-		}
-		
-		return $args;
-	}
+ 	// email //
 	
 	/**
 	 * Redéfinit les adresses emails des pages d'évènements vers le mail de l'organisateur d'évènement ou, à défaut, vers l'auteur de la page.
 	 * Le email2, email de copie, ne subit pas la redirection.
 	 */
-	private static function wp_mail_emails_fields($args){
+	public static function wp_mail_emails_fields($args){
 		if( ! ($post = self::get_post()))
 			return $args;
 		$to_emails = parse_emails($args['to']);
@@ -575,61 +534,11 @@ class AgendaPartage_Evenement_Edit {
 
 
 		if($post
-		&& $password_message = self::new_password_link($post->post_author)){
+		&& $password_message = AgendaPartage_User::new_password_link($post->post_author)){
 			$args['message'] .= "\r\n<br>" . $password_message;
 		}
 		return $args;
 	}
-
-	/**
-	 * Dans un email au contact d'évènement, ajoute une invitation à saisir un nouveau mot de passe.
-	 * Returns a string to add to email for user to reset his password.
-	 */
-	private static function new_password_link($user_id){
-		if(! array_key_exists( "new-password", $_POST)
-		|| is_super_admin($user_id)
-		|| $user_id == AgendaPartage_User::get_blog_admin_id()
-		)
-			return;
-		$user = new WP_USER($user_id);
-		$redirect_to = get_home_url( get_current_blog_id(), sprintf("%s?login=%s", wp_login_url(), rawurlencode( $user->user_login )), 'login' );
-		$message = AgendaPartage_User::new_password_link($user, $redirect_to);
-		return $message;
-	}
-
-	/**
-	 * Fenêtre de réinitialisation de mot de passe
-	 */
-	public static function resetpass_form( $user ){
-		//insert html code
-		// redirect_to
-		if ( isset( $_REQUEST['redirect_to'] ) ) {
-			$url = $_REQUEST['redirect_to'];
-		}
-		else
-			$url = false;
-		if( ! $url) {
-			$url = get_home_url( AgendaPartage_User::get_current_or_default_blog_id($user), sprintf("wp-admin/"), 'admin' );
-		}
-		echo sprintf('<input type="hidden" name="%s" value="%s"/>', 'redirect_to', $url );
-	}
-
-
-	/**
-	 * Correction de caractères spéciaux
-	 */
-	public static function email_specialchars($args){
-		$args['subject'] = str_replace('&#039;', "'", $args['subject']);
-		return $args;
-	}
-
-	// public static function wpcf7_verify_nonce_cb($is_active){
-		//TODO
-		// keep connected at mail send time
-			// return is_user_logged_in();
-		// }
- 	// redirect email //
-	///////////////////
 
 	/**
 	 * Email de l'organisateur d'évènement ou de l'auteur de la page Évènement
@@ -716,7 +625,7 @@ class AgendaPartage_Evenement_Edit {
 				) as $field){
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) )
-						$data[$field] = $inputs[$field][0];
+						$data[$field] = count($inputs[$field]) ? $inputs[$field][0] : false;
 					else
 						$data[$field] = $inputs[$field];
 				}
@@ -1212,21 +1121,5 @@ class AgendaPartage_Evenement_Edit {
 			$where .= ' AND ' . $wpdb->posts . '.post_title = '.$search_term;
 		}
 		return $where;
-	}
-	
-	/**
-	 * Modifie le texte d'erreur 'spam' du wpcf7
-	 * Le composant wpcf7-recaptacha  provoque une indication de spam lors de requêtes trop rapprochées.
-	 */
-	public static function wpcf7_spam_cb($spam, $submission){
-		if($spam){
-			$contact_form = $submission->get_contact_form();
-			$messages = ($contact_form->get_properties())['messages'];
-		
-			$messages['spam'] = __("Désolé vous avez peut-être été trop rapide. Veuillez essayer à nouveau.", AGDP_TAG);
-				
-			$contact_form->set_properties(array('messages' => $messages));
-		}
-		return $spam;
 	}
 }

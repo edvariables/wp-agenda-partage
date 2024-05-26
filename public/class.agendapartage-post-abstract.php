@@ -52,8 +52,6 @@ abstract class AgendaPartage_Post_Abstract {
 		// debug_log(static::post_type . ' init_hooks', AgendaPartage::get_current_post_type());
 		
 		add_filter( 'navigation_markup_template', array(static::class, 'on_navigation_markup_template_cb'), 10, 2 );
-		
-		add_filter( 'wpcf7_form_class_attr', array(static::class, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 	}
 	
 	/**
@@ -588,30 +586,6 @@ abstract class AgendaPartage_Post_Abstract {
 	}
 	
 	/**
-	 * Interception du formulaire avant que les shortcodes ne soient analysés.
-	 * Affectation des valeurs par défaut.
-	 */
- 	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
-			
-		$form = WPCF7_ContactForm::get_current();
-		
-		switch($form->id()){
-			case AgendaPartage::get_option('agdpevent_message_contact_form_id') :
-			case AgendaPartage::get_option('contact_form_id') :
-			case AgendaPartage::get_option('admin_message_contact_form_id') :
-				static::wpcf7_contact_form_init_tags( $form );
-				if( strpos($form_class, ' preventdefault-reset') === false)
-					$form_class .= ' preventdefault-reset';
-				else
-					debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : appels multiples ! TODO');
-				break;
-			default:
-				break;
-		}
-		return $form_class;
-	}	
-	
-	/**
 	 * Complète le html d'un formulaire WPCF7 avec les radios et checkboxes à jour en fonction des taxonomies
 	 * Si $post est fourni, modifie les valeurs sélectionnées.
 	 */
@@ -653,7 +627,7 @@ abstract class AgendaPartage_Post_Abstract {
 			else
 				//cf agendapartage.js
 				$titles = sprintf('<span class="tax_terms_titles hidden" input="%s" titles="%s"></span>'
-							, 'cov-' . $tax_name . 's[]'
+							, self::field_prefix . $tax_name . 's[]'
 							, esc_attr(json_encode($titles))
 				);
 			

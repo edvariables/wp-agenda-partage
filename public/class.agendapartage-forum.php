@@ -37,9 +37,9 @@ class AgendaPartage_Forum {
 		'P' => 'Public',
 		'E' => 'Validation par e-mail',
 		'C' => 'Connexion requise',
-		'CO' => 'Inscription cooptée et connexion requise',
+		'CO' => 'Inscription cooptée (todo) et connexion requise',
 		'A' => 'Adhésion requise',
-		'AO' => 'Adhésion cooptée requise',
+		'AO' => 'Adhésion cooptée (todo) requise',
 		'M' => 'Modérateurice',
 		'X' => 'Administrateurice',
 	];

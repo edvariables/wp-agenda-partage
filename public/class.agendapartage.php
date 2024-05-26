@@ -7,6 +7,15 @@ class AgendaPartage {
 	);
 	
 	public static $skip_mail = false;
+	
+	private static $options_cache = false;
+
+	public static function admin_init() {
+		if(! class_exists('AgendaPartage_Admin')){
+			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin.php' );
+			AgendaPartage_Admin::init();
+		}
+	}
 
 	public static function init() {
 		self::update_db();//TODO : trop fréquent
@@ -15,13 +24,6 @@ class AgendaPartage {
 		self::load_modules();
 
 		do_action( 'agendapartage-init' );
-	}
-
-	public static function admin_init() {
-		if(! class_exists('AgendaPartage_Admin')){
-			require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin.php' );
-			AgendaPartage_Admin::init();
-		}
 	}
 
 	public static function init_includes() {
@@ -96,7 +98,10 @@ class AgendaPartage {
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum_Shortcodes', 'init' ) );
 		
 	}
-
+	
+	/**
+	 * init_hooks
+	 */
 	public static function init_hooks() {
 
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_styles'));
@@ -108,9 +113,56 @@ class AgendaPartage {
 		//Définit les paramètres d'url autorisés
 		add_filter( 'query_vars', array(__CLASS__, 'on_query_var_cb' ), 10, 1 );
 		
-		
 		add_filter( 'wp_nav_menu_items', array(__CLASS__, 'register_custom_menus' ), 10, 2 );
+		
+		add_action( 'agendapartage-init', array(__CLASS__, 'do_action_on_queried_object' ) );
 	}
+	
+	/******************
+	 * queried_object
+	 */
+	/**
+	 * Ajoute un hook pour une page ou autre
+	 * Param $object_id : post_id ou nom d'option
+	 */
+	public static function add_action_on_queried_object( $object_type, $object_id, $callback, int $priority = 10, int $accepted_args = 1 ){
+		if( ! is_numeric($object_id) )
+			$object_id = self::get_option($object_id);
+		$do_action = AGDP_TAG.'_queried_object_';
+		return add_action( $do_action . $object_type . '_' . $object_id, $callback, $priority, $accepted_args );
+	}
+	/**
+	 *
+	 */
+	public static function do_action_on_queried_object(){
+						
+		$do_action = AGDP_TAG.'_queried_object_';
+		$queried_object = get_queried_object();
+		
+		if( is_a($queried_object, 'WP_Post') ){
+			$queried_object_id = $queried_object->ID;
+			$queried_object_type = $queried_object->post_type;
+		}
+		else {
+			$current_url = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+			$queried_object_id = url_to_postid(set_url_scheme($current_url));
+		}
+		if( $queried_object_id ){
+			 if( ! isset($queried_object_type) || ! $queried_object_type ){
+				if( $queried_object = get_post($queried_object_id) )
+					$queried_object_type = $queried_object->post_type;
+				else
+					$queried_object_type = false;
+			 }
+			if( $queried_object_type ){
+				// debug_log('do_action_on_queried_object', "do_action( $do_action . $option )");
+				do_action( $do_action . $queried_object_type . '_' . $queried_object_id, $queried_object_id, $queried_object );
+			}
+		}
+	}
+	/**
+	 * queried_object
+	 *****************/
  	
 	/**
 	 * Définit les paramètres d'url autorisés
@@ -200,28 +252,10 @@ class AgendaPartage {
 			, 'check_nonce' => wp_create_nonce('agdp-nonce')) );
 		
 	}
-
-
-	/**
-	 * Retourne la valeur d'un paramétrage.
-	 * Cf AgendaPartage_Admin_Menu
+	
+	/********************************
+	 * Options
 	 */
-	public static function get_option( $name = false, $default = false ) {
-			
-		$options = get_option( AGDP_TAG );
-
-		if ( false === $options ) {
-			return $default;
-		}
-
-		if ( $name === false ) {
-			return $options;
-		} elseif ( isset( $options[$name] ) ) {
-			return $options[$name];
-		} else {
-			return $default;
-		}
-	}
 
 	/**
 	 * Retourne le libellé  d'un paramétrage.
@@ -284,6 +318,47 @@ class AgendaPartage {
 	 * Enregistre la valeur d'un paramétrage.
 	 * Cf AgendaPartage_Admin_Menu
 	 */
+	public static function get_options( ) {
+		if( self::$options_cache )
+			return self::$options_cache;
+		return self::$options_cache = get_option( AGDP_TAG );
+	}
+
+	/**
+	 * Enregistre la valeur d'un paramétrage.
+	 * Cf AgendaPartage_Admin_Menu
+	 */
+	private static function update_options( $options ) {
+		self::$options_cache = $options;
+		return update_option( AGDP_TAG, $options );
+	}
+
+
+	/**
+	 * Retourne la valeur d'un paramétrage.
+	 * Cf AgendaPartage_Admin_Menu
+	 */
+	public static function get_option( $name = false, $default = false ) {
+			
+		$options = self::get_options( );
+
+		if ( false === $options ) {
+			return $default;
+		}
+
+		if ( $name === false ) {
+			return $options;
+		} elseif ( isset( $options[$name] ) ) {
+			return $options[$name];
+		} else {
+			return $default;
+		}
+	}
+
+	/**
+	 * Enregistre la valeur d'un paramétrage.
+	 * Cf AgendaPartage_Admin_Menu
+	 */
 	public static function update_option( $name, $value ) {
 		$options = get_option( AGDP_TAG );
 		$options = ( false === $options ) ? array() : (array) $options;
@@ -294,7 +369,7 @@ class AgendaPartage {
 		else
 			$options = array_merge( $options, array( $name => $value ) );
 		
-		$result = update_option( AGDP_TAG, $options );
+		$result = self::update_options( $options );
 	}
 		
 	/**

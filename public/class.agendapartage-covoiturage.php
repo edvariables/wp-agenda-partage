@@ -624,7 +624,7 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		return self::get_post_terms( self::taxonomy_diffusion, $post_id, $args);
 	}
 	
- 	protected static function wpcf7_contact_form_init_tags( $form ) { 
+ 	public static function wpcf7_contact_form_init_tags( $form ) { 
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$requested_id = isset($_REQUEST[self::postid_argument]) ? $_REQUEST[self::postid_argument] : false;
 		$covoiturage = self::get_post($requested_id);

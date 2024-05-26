@@ -22,10 +22,14 @@ class AgendaPartage_WPCF7 {
 	public static function init_hooks() {
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
 		
+		add_filter( 'wpcf7_form_class_attr', array(static::class, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
+		
 		if( self::may_skip_recaptcha() ){
 			// add_filter( 'wpcf7_load_js', '__return_false' );
 			// add_filter( 'wpcf7_load_css', '__return_false' );
 		}
+		
+		add_filter( 'wpcf7_spam', array(__CLASS__, 'wpcf7_spam_cb'), 10, 2);
 		
 		//wpcf7_before_send_mail : mise à jour des données avant envoi (ou annulation) de mail
 		add_filter( 'wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
@@ -35,6 +39,8 @@ class AgendaPartage_WPCF7 {
 
 		//Contact Form 7 hooks
 		add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_check_headers_cb'), 10,1);
+		
+		add_filter( 'wp_mail', array(__CLASS__, 'wp_mail'), 10,1);
 
 		//Contrôle de l'envoi effectif des mails	
 		add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail'), 10, 2);
@@ -43,6 +49,10 @@ class AgendaPartage_WPCF7 {
 		if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
 			// add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_localhost'), 100, 1);
 		}
+		
+		//Maintient de la connexion de l'utilisateur pendant l'envoi du mail
+		// add_filter( 'wpcf7_verify_nonce', array(__CLASS__, 'wpcf7_verify_nonce_cb' ));	
+		add_filter( 'wpcf7_verify_nonce', '__return_true' );
 	}
 	
 	// define the wpcf7_skip_mail callback 
@@ -74,6 +84,39 @@ class AgendaPartage_WPCF7 {
 			}
 		}
 	}
+	
+	/**
+	 * Interception du formulaire avant que les shortcodes ne soient analysés.
+	 * Affectation des valeurs par défaut.
+	 */
+ 	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
+			
+		$form = WPCF7_ContactForm::get_current();
+		
+		$preventdefault_reset = false;
+		switch($form->id()){
+			//formulaires de contact à propos d'un évènement ou d'un covoiturage
+			case AgendaPartage::get_option('agdpevent_message_contact_form_id') :
+			case AgendaPartage::get_option('contact_form_id') :
+			case AgendaPartage::get_option('admin_message_contact_form_id') :
+				debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : contact_form_id');
+				if( isset($_REQUEST[AgendaPartage_Evenement::postid_argument]) )
+					AgendaPartage_Evenement::wpcf7_contact_form_init_tags( $form );
+				elseif( isset($_REQUEST[AgendaPartage_Covoiturage::postid_argument]) )
+					AgendaPartage_Covoiturage::wpcf7_contact_form_init_tags( $form );
+				$preventdefault_reset = true;
+				break;
+			default:
+				break;
+		}
+		if( $preventdefault_reset ){
+			if( strpos($form_class, ' preventdefault-reset') === false)
+				$form_class .= ' preventdefault-reset';
+			else
+				debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : appels multiples ! TODO');
+		}
+		return $form_class;
+	}	
 	
 	// 
 	public static function may_skip_recaptcha( ){ 
@@ -325,5 +368,66 @@ class AgendaPartage_WPCF7 {
 		}
 		else
 			debug_log('[Abuse] log_email_abuse', $submission->get_posted_data());
+	}
+	
+	
+	/**
+	 * Modifie le texte d'erreur 'spam' du wpcf7
+	 * Le composant wpcf7-recaptacha  provoque une indication de spam lors de requêtes trop rapprochées.
+	 */
+	public static function wpcf7_spam_cb($spam, $submission){
+		if($spam){
+			$contact_form = $submission->get_contact_form();
+			$messages = ($contact_form->get_properties())['messages'];
+		
+			$messages['spam'] = __("Désolé vous avez peut-être été trop rapide. Veuillez essayer à nouveau.", AGDP_TAG);
+				
+			$contact_form->set_properties(array('messages' => $messages));
+		}
+		return $spam;
+	}
+
+
+	/**
+	 * Correction de caractères spéciaux
+	 */
+	public static function email_specialchars($args){
+		$args['subject'] = str_replace('&#039;', "'", $args['subject']);
+		return $args;
+	}
+	
+
+	/**
+	 * Interception des envois de mail
+	 */
+	public static function wp_mail($args){
+		if(array_key_exists('_wpcf7', $_POST))
+			return self::wp_mail_wpcf7($args);
+		
+		return $args;
+	}
+	
+	/**
+	 * Interception des envois de mail du plugin wpcf7
+	 */
+	public static function wp_mail_wpcf7($args){
+
+		$args = self::email_specialchars($args);
+		
+		$form_id = $_POST['_wpcf7'];
+		
+		switch($form_id){
+			//Formulaire spécifique pour les évènements
+			case AgendaPartage::get_option('agdpevent_edit_form_id') :
+				return AgendaPartage_Evenement_Edit::wp_mail_emails_fields($args);
+			//Formulaire spécifique pour les covoiturages
+			case AgendaPartage::get_option('covoiturage_edit_form_id') :
+				return AgendaPartage_Covoiturage_Edit::wp_mail_emails_fields($args);
+				
+			default:
+				break;
+		}
+		
+		return $args;
 	}
 }

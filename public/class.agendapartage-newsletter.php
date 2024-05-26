@@ -59,19 +59,23 @@ class AgendaPartage_Newsletter {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
 		
-		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
+		AgendaPartage::add_action_on_queried_object( 'page', 'newsletter_subscribe_page_id', array(__CLASS__, 'on_page_newsletter_subscribe'), 10, 2 );
+		
+		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
 		
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
 		
+		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas. Pblm de multisite ?
+	}
+	
+	public static function on_page_newsletter_subscribe( $page_id, $page ){
+		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
 		add_action('wp_head', array(__CLASS__, 'init_js_sections_tabs'));
-		
-		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas
 	}
 	/*
 	 **/
@@ -136,11 +140,12 @@ class AgendaPartage_Newsletter {
 	*/
 	public static function filter_anteriority_option($options, $anteriority = false, $default_anteriority = ANTERIORITY_ALL, $newsletter = false){
 		if( ! (isset($options['months']) || isset($options['weeks']) || isset($options['days']) || isset($options['hours'])) ){
-			if( ! $newsletter )
-				$newsletter = AgendaPartage_Newsletter::get_newsletter();
-			if( ! $anteriority )
+			if( ! $anteriority ){
+				if( ! $newsletter )
+					$newsletter = AgendaPartage_Newsletter::get_newsletter();
 				if( ! ($anteriority = AgendaPartage_Newsletter::get_anteriority_max($newsletter)) )
 					$anteriority = $default_anteriority;
+			}
 			switch( $anteriority ){
 				case ANTERIORITY_ALL:
 					$options['months'] = 24;
@@ -942,7 +947,7 @@ class AgendaPartage_Newsletter {
 			return new WP_User($user_id);
 		}
 		
-		$user = AgendaPartage_User::create_user_for_agdpevent($email, $user_name, false, false, 'subscriber');
+		$user = AgendaPartage_User::create_user($email, $user_name, false, false, 'subscriber');
 		
 		if( ! $user)
 			return false;

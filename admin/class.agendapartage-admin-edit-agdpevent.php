@@ -107,7 +107,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		$user_data = array(
 			'description' => 'Évènement ' . $data['post_title'],
 		);
-		$user = AgendaPartage_User::create_user_for_agdpevent($email, $user_name, $user_login, $user_data, 'subscriber');
+		$user = AgendaPartage_User::create_user($email, $user_name, $user_login, $user_data, 'subscriber');
 		if( is_wp_error($user)) {
 			AgendaPartage_Admin::add_admin_notice($user, 'error');
 			return;
