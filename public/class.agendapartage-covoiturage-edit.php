@@ -218,8 +218,6 @@ class AgendaPartage_Covoiturage_Edit {
 			 && ($agdpevent_id = $_REQUEST[AGDP_ARG_EVENTID])){
 				foreach([
 					'cov-date-debut' => 'ev-date-debut',
-					'cov-organisateur' => 'ev-organisateur',
-					'cov-phone' => 'ev-phone',
 				] as $dest_field => $src_field)
 					$attrs[$dest_field] = get_post_meta( $agdpevent_id, $src_field, true );
 				$url = get_post_permalink( $agdpevent_id );
