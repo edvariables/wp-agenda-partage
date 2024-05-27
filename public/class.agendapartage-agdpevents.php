@@ -782,15 +782,8 @@ class AgendaPartage_Evenements {
 			, esc_attr( json_encode(['id'=> $event->ID, 'date' => $date_debut]) )
 		);
 		
-		$cities = AgendaPartage_Evenement::get_event_cities ($event, 'names');
-		
-		$value = $event->post_title;
-		$localisation = htmlentities(get_post_meta($event->ID, 'ev-localisation', true));
-		if($cities){
-			$cities = htmlentities(implode(', ', $cities));
-			if(self::cities_in_localisation( $cities, $localisation ) === false)
-				$localisation .= sprintf('<div class="agdpevent-cities" title="%s"><i>%s</i></div>', 'Communes', $cities);
-		}
+		$title = $event->post_title;
+		$localisation = AgendaPartage_Evenement::get_event_localisation_and_cities($event->ID);
 		$dates = AgendaPartage_Evenement::get_event_dates_text($event->ID);
 		$covoiturages = self::get_agdpevent_covoiturages( $event, false );
 		
@@ -800,7 +793,7 @@ class AgendaPartage_Evenements {
 				.'<div class="localisation">%s</div>'
 				.'<div class="covoiturage">%s</div>'
 			.''
-			, htmlentities($dates), htmlentities($value), $localisation, $covoiturages);
+			, htmlentities($dates), htmlentities($title), $localisation, $covoiturages);
 		
 		$categories = AgendaPartage_Evenement::get_event_categories ($event, 'names');
 		// var_dump($categories); die();
@@ -874,21 +867,6 @@ class AgendaPartage_Evenements {
 		$html .= '</div>';
 		
 		return $html;
-	}
-	
-	/**
-	 * Vérifie si la commune est déjà ennoncé dans la localisation
-	 */
-	public static function cities_in_localisation( $cities, $localisation ){
-		//$terms_like = AgendaPartage_Evenement_Post_type::get_terms_like($tax_name, $tax_data['IN']);
-		$cities = str_ireplace('saint', 'st'
-					, preg_replace('/\s|-/', '', $cities)
-		);
-		$localisation = str_ireplace('saint', 'st'
-					, preg_replace('/\s|-/', '', $localisation)
-		);
-		//TODO accents ?
-		return stripos( $localisation, $cities );
 	}
 
 	/**

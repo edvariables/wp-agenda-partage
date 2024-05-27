@@ -675,6 +675,40 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	public static function get_event_diffusions( $post_id, $args = 'names' ) {
 		return self::get_post_terms( self::taxonomy_diffusion, $post_id, $args);
 	}
+	/**
+	 * Retourne la localisation complète d'un évènement
+	 */
+	public static function get_event_localisation_and_cities($post_id, $html = true){
+		$localisation = get_post_meta($post_id, 'ev-localisation', true);
+		if( $html )
+			$localisation = htmlentities($localisation);
+		if($cities = AgendaPartage_Evenement::get_event_cities ($post_id, 'names')){
+			$cities = implode(', ', $cities);
+			if( $html )
+				$cities = htmlentities($cities);
+			if(self::cities_in_localisation( $cities, $localisation ) === false)
+				if( $html ) 
+					$localisation .= sprintf('<div class="agdpevent-cities" title="%s"><i>%s</i></div>', 'Communes', $cities);
+				else
+					$localisation .= sprintf(', %s', $cities);
+		}
+		return $localisation;
+	}
+	
+	/**
+	 * Vérifie si la commune est déjà ennoncé dans la localisation
+	 */
+	public static function cities_in_localisation( $cities, $localisation ){
+		//$terms_like = AgendaPartage_Evenement_Post_type::get_terms_like($tax_name, $tax_data['IN']);
+		$cities = str_ireplace('saint', 'st'
+					, preg_replace('/\s|-/', '', $cities)
+		);
+		$localisation = str_ireplace('saint', 'st'
+					, preg_replace('/\s|-/', '', $localisation)
+		);
+		//TODO accents ?
+		return stripos( $localisation, $cities );
+	}
 	
  	/**
 	 * Filtre le html avant affichage d'un formulaire de contact wpcf7.

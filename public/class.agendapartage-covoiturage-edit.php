@@ -220,10 +220,10 @@ class AgendaPartage_Covoiturage_Edit {
 					'cov-date-debut' => 'ev-date-debut',
 					'cov-organisateur' => 'ev-organisateur',
 					'cov-phone' => 'ev-phone',
-					'cov-arrivee' => 'ev-localisation',
 				] as $dest_field => $src_field)
 					$attrs[$dest_field] = get_post_meta( $agdpevent_id, $src_field, true );
 				$url = get_post_permalink( $agdpevent_id );
+				$attrs['cov-arrivee'] = AgendaPartage_Evenement::get_event_localisation_and_cities( $agdpevent_id, false );
 				$attrs['cov-description'] = sprintf('En lien avec l\'évènement "%s" (<a href="%s">%s</a>).'
 					, AgendaPartage_Evenement::get_post_title( $agdpevent_id, true  )
 					, $url
