@@ -929,6 +929,10 @@ class AgendaPartage_Covoiturages {
 		// $dates = AgendaPartage_Covoiturage::get_covoiturage_dates_text($post->ID);
 		$html .= sprintf('<div class="titre">%s</div>', $title);
 		
+		if( $agdpevents = self::get_covoiturage_agdpevents( $post, false )){
+			$html .= sprintf('<div class="agdpevents">%s</div>', $agdpevents);
+		}
+		
 		$html .= date_diff_text($post->post_date, true, '<div class="created-since">', '</div>');
 		
 		$html .= '</div>';
@@ -953,6 +957,10 @@ class AgendaPartage_Covoiturages {
 			else
 				$value = AgendaPartage_Covoiturage::get_phone_html($post->ID);
 			$html .= sprintf('<div class="cov-phone">Téléphone : %s</div>',  $value);
+		}
+		
+		if( $agdpevents = self::get_covoiturage_agdpevents( $post, true )){
+			$html .= sprintf('<div class="agdevents">%s</div>', $agdpevents);
 		}
 		
 		$html .= '<div class="footer">';
@@ -992,6 +1000,85 @@ class AgendaPartage_Covoiturages {
 
 		$html .= '</div>';
 		
+		return $html;
+	}
+	
+ 	/**
+ 	 * Retourne les évènements liés au covoiturage
+ 	 */
+	public static function get_covoiturage_agdpevents( $covoiturage, $details = true ) {
+		
+		if( ! $covoiturage )
+			return '';
+		if( ! AgendaPartage::get_option('covoiturage_managed') )
+			return '';
+		
+		$meta_name = 'cov-periodique';
+		if( $is_periodique = get_post_meta($covoiturage->ID, $meta_name, true) )
+			return '';
+		
+		//cache
+		static $agdpevents_covoiturage_id;
+		static $agdpevents;
+		if( ! $agdpevents_covoiturage_id || $agdpevents_covoiturage_id !== $covoiturage->ID ){
+			$agdpevents_covoiturage_id = $covoiturage->ID;
+		
+			$meta_name = 'related_' . AgendaPartage_Evenement::post_type;
+			
+			$related_agdpevents = get_post_meta( $covoiturage->ID, $meta_name, false );
+			if( count($related_agdpevents) === 1 && !$related_agdpevents[0] )
+				$related_agdpevents = [];
+			
+			if( count($related_agdpevents) )
+				$agdpevents = [get_post($related_agdpevents[0])];
+			else
+				$agdpevents = [];
+		}
+		
+		if( $details ) {
+			$html = sprintf('<ul class="agdp-agdpevents-list">');
+			if( count($agdpevents) === 1 ){
+				$agdpevent = $agdpevents[0];
+				$html .= sprintf('<label><a href="%s?%s=%d">%s Évènement associé : %s</a></label>'
+						, get_post_permalink($agdpevent)
+						, AGDP_ARG_COVOITURAGEID, $covoiturage->ID
+						, AgendaPartage::icon('calendar-alt')
+						, AgendaPartage_Evenement::get_post_title($agdpevent, true)
+				);
+			}
+			elseif( count($agdpevents) ){
+				$html .= sprintf('<label>%s %s évènement%s associé%s</label>', AgendaPartage::icon('calendar-alt'), count($agdpevents), count($agdpevents) > 1 ? 's' : '', count($agdpevents) > 1 ? 's' : '');
+				foreach($agdpevents as $agdpevent){
+					$html .= sprintf('<li><a href="%s?%s=%d">%s</a></li>'
+						, get_post_permalink($agdpevent)
+						, AGDP_ARG_COVOITURAGEID, $covoiturage->ID
+						, $agdpevent->post_title
+					);
+				}
+			}
+			
+			$html .= '</ul>';
+		}
+		else {
+			$html = '';
+			if( count($agdpevents) === 1 ){
+				$agdpevent = $agdpevents[0];
+				$html .= sprintf('<span>%s Évènement associé : %s</span>'
+						, AgendaPartage::icon('calendar-alt')
+						, AgendaPartage_Evenement::get_post_title($agdpevent, true)
+				);
+			}
+			elseif( count($agdpevents) ){
+				$html .= sprintf('<span>%s %s évènement%s associé%s</span>', AgendaPartage::icon('calendar-alt'), count($agdpevents), count($agdpevents) > 1 ? 's' : '', count($agdpevents) > 1 ? 's' : '');
+				foreach($agdpevents as $agdpevent){
+					$html .= sprintf('<span title="%s">%s</span>'
+						, AgendaPartage_Evenement::get_post_title($agdpevent, true)
+						, AgendaPartage::icon('calendar-alt')
+					);
+				}
+			}
+			
+		}
 		return $html;
 	}
 

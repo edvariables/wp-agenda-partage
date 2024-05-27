@@ -53,6 +53,10 @@ body.colors-dark .agdp-agdpevents-list .toggle-trigger {
 	background-color: #272727;
 }
 
+.agdp-agdpevents-list .agdp-covoiturages-list {
+	margin-top: 1em;
+}
+
 .agdp-agdpevents-list > ul > li > .toggle-container {
 	border-radius: 2mpx;
 	padding: 2px 0px;

@@ -769,13 +769,13 @@ class AgendaPartage_Evenements {
 		$url = AgendaPartage_Evenement::get_post_permalink( $event );
 		$html = '';
 		
-		if( ! $email_mode )
+		if( ! $email_mode ){
 			$html .= sprintf(
 					'<div class="show-post"><a href="%s">%s</a></div>'
 				, $url
 				, AgendaPartage::icon('media-default')
 			);
-			
+		}
 		$html .= sprintf('<div id="%s%d" class="agdpevent toggle-trigger %s" agdpevent="%s">'
 			, AGDP_ARG_EVENTID, $event->ID
 			, $event->ID == $requested_id ? 'active' : ''
@@ -792,12 +792,15 @@ class AgendaPartage_Evenements {
 				$localisation .= sprintf('<div class="agdpevent-cities" title="%s"><i>%s</i></div>', 'Communes', $cities);
 		}
 		$dates = AgendaPartage_Evenement::get_event_dates_text($event->ID);
+		$covoiturages = self::get_agdpevent_covoiturages( $event, false );
+		
 		$html .= sprintf(
 				'<div class="dates">%s</div>'
 				.'<div class="titre">%s</div>'
 				.'<div class="localisation">%s</div>'
+				.'<div class="covoiturage">%s</div>'
 			.''
-			, htmlentities($dates), htmlentities($value), $localisation);
+			, htmlentities($dates), htmlentities($value), $localisation, $covoiturages);
 		
 		$categories = AgendaPartage_Evenement::get_event_categories ($event, 'names');
 		// var_dump($categories); die();
@@ -827,6 +830,9 @@ class AgendaPartage_Evenements {
 		if($value){
 			$html .= sprintf('<div class="ev-siteweb">%s</div>',  make_clickable( esc_html($value) ) );
 		}
+		
+		if( $covoiturages = self::get_agdpevent_covoiturages( $event, true ))
+			$html .= sprintf('<div class="ev-covoiturages">%s</div>',  $covoiturages );
 		
 		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
 		
@@ -959,6 +965,75 @@ class AgendaPartage_Evenements {
 	} */
 	
 	
+	
+ 	/**
+ 	 * Retourne le Content de la page de l'évènement
+ 	 */
+	public static function get_agdpevent_covoiturages( $agdpevent = null, $details = false ) {
+		if( ! AgendaPartage::get_option('covoiturage_managed') )
+			return '';
+		
+		global $post;
+ 		if( ! isset($agdpevent) || ! is_a($agdpevent, 'WP_Post')){
+			$agdpevent = $post;
+		}
+		
+		static $covoiturages_agdevent_id;
+		static $covoiturages;
+		if( ! $covoiturages_agdevent_id || $covoiturages_agdevent_id !== $agdpevent->ID ){
+			$covoiturages_agdevent_id = $agdpevent->ID;
+			$covoiturages = get_posts([
+				'post_type' => AgendaPartage_Covoiturage::post_type,
+				'post_status' => 'publish',
+				'meta_key' => 'related_'.AgendaPartage_Evenement::post_type,
+				'meta_value' => $agdpevent->ID,
+				'meta_compare' => '=',
+			]);
+		}
+		if( count($covoiturages) === 0 && !$details ) return false;
+		
+		if( $details ){
+			$html = sprintf('<ul class="agdp-covoiturages-list">');
+			if( count($covoiturages) )
+				$html .= sprintf('<label>%s covoiturage%s associé%s</label>'
+					, count($covoiturages), count($covoiturages) > 1 ? 's' : '', count($covoiturages) > 1 ? 's' : '');
+			foreach($covoiturages as $covoiturage){
+				$title = AgendaPartage_Covoiturage::get_post_title( $covoiturage, true );
+				$html .= sprintf('<li><a href="%s">%s %s</a></li>'
+					, get_post_permalink($covoiturage->ID)
+					, AgendaPartage::icon('car')
+					, $title
+				);
+			}
+			//Ajouter
+			$new_link = sprintf('<a href="%s&%s=%d">ajouter un nouveau covoiturage</a>'
+				, get_post_permalink(AgendaPartage::get_option('new_covoiturage_page_id'))
+				, AGDP_ARG_EVENTID, $agdpevent->ID
+			);
+			$html .= sprintf('<li>%s%s</li>'
+				, AgendaPartage::icon(count($covoiturages) ? 'welcome-add-page' : 'car')
+				, $new_link);
+		}
+		else {
+			$html = '';
+			foreach($covoiturages as $covoiturage){
+				$title = AgendaPartage_Covoiturage::get_post_title( $covoiturage, true );
+				$html .= sprintf('<span title="Covoiturage : %s">%s</span>'
+					, $title
+					, AgendaPartage::icon('car')
+				);
+			}
+			// $html .= sprintf('<small>%s covoiturage%s associé%s</small>'
+				// , count($covoiturages), count($covoiturages) > 1 ? 's' : '', count($covoiturages) > 1 ? 's' : '');
+			
+		}
+			
+		
+		if($details)
+			$html .= '</ul>';
+		
+		return $html;
+	}
 	
 	public static function download_links(){
 		$html = '';

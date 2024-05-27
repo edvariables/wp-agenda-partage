@@ -293,6 +293,8 @@ class AgendaPartage {
 			case 'newsletter_diffusion_term_id':
 				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 				
+			case 'covoiturage_managed':
+				return __( 'Gestion du covoiturage', AGDP_TAG );
 			case 'covoiturage_edit_form_id':
 				return __( 'Formulaire d\'ajout et de modification de covoiturage', AGDP_TAG );
 			case 'new_covoiturage_page_id':

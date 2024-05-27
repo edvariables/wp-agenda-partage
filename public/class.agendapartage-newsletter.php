@@ -1341,7 +1341,8 @@ class AgendaPartage_Newsletter {
 			// debug_log('[agdpnl-init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
 		}
 		if( $cron_time === false ){
-			$cron_time = wp_schedule_event( time(), 'hourly', self::get_cron_hook() );
+			$next_time = strtotime( date('Y-m-d H:i:s') . ' + 1 Hour');
+			$cron_time = wp_schedule_event( $next_time, 'hourly', self::get_cron_hook() );
 			// debug_log('[agdpnl-init_cron] wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
 		}

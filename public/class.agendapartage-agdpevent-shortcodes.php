@@ -53,6 +53,7 @@ class AgendaPartage_Evenement_Shortcodes {
 		add_shortcode( 'agdpevent-cree-depuis', array(__CLASS__, 'shortcodes_callback') );
 		
 		add_shortcode( 'agdpevent-modifier-evenement', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'agdpevent-covoiturage', array(__CLASS__, 'shortcodes_callback') );
 		
 		add_shortcode( 'agdpevents', array(__CLASS__, 'shortcodes_callback') );
 		
@@ -396,16 +397,20 @@ class AgendaPartage_Evenement_Shortcodes {
 					return AgendaPartage::icon('warning'
 						, 'Un formulaire de message aux organisateurs d\'évènements n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
 				}
-
+				
 				$val = sprintf('[contact-form-7 id="%s" title="*** message à l\'organisateur d\'évènement ***"]', $form_id);
 				return '<div class="agdp-agdpevent agdp-'. $shortcode .'">'
 					. do_shortcode( $val)
 					. '</div>';
 
-
 			case 'agdpevent-modifier-evenement':
 
 				return AgendaPartage_Evenement_Edit::get_agdpevent_edit_content();
+
+
+			case 'agdpevent-covoiturage':
+
+				return AgendaPartage_Evenement::get_agdpevent_covoiturage();
 
 			case 'agdpevent-details':
 

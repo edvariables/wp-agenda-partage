@@ -50,7 +50,9 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
  	 * Retourne le titre de la page
  	 */
 	public static function get_post_title( $agdpevent = null, $no_html = false) {
- 		if( ! isset($agdpevent) || ! is_object($agdpevent)){
+ 		if( is_numeric($agdpevent))
+			$agdpevent = get_post($agdpevent);
+		if( ! isset($agdpevent) || ! is_object($agdpevent)){
 			global $post;
 			$agdpevent = $post;
 		}
@@ -82,7 +84,13 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		[agdpevent info="siteweb"]';
 		if( AgendaPartage_Evenement_Post_type::is_diffusion_managed() )
 			$html .='[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
+		
 
+		$html .= sprintf('[agdpevent-covoiturage no-ajax post_id="%d" %s]'
+			, $agdpevent->ID
+			, $codesecret ? self::secretcode_argument . '=' . $codesecret : ''
+		);
+		
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
 		if(is_email($email)){
@@ -178,6 +186,56 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 					$html .= '<p>créé par "' . $user_name . '"</p>';
 			}
 		}
+		return $html;
+	}
+	
+ 	/**
+ 	 * Retourne le Content de la page de l'évènement
+ 	 */
+	public static function get_agdpevent_covoiturage( $agdpevent = null ) {
+		if( ! AgendaPartage::get_option('covoiturage_managed') )
+			return '';
+		global $post;
+ 		if( ! isset($agdpevent) || ! is_a($agdpevent, 'WP_Post')){
+			$agdpevent = $post;
+		}
+		
+		$covoiturages = get_posts([
+			'post_type' => AgendaPartage_Covoiturage::post_type,
+			'post_status' => 'publish',
+			'meta_key' => 'related_'.self::post_type,
+			'meta_value' => $agdpevent->ID,
+			'meta_compare' => '=',
+		]);
+		$html = sprintf('<ul class="agdp-covoiturages-list">');
+		//Ajouter
+		$new_link = sprintf('<a href="%s&%s=%d">Cliquez ici pour créer un %s covoiturage associé</a>'
+			, get_post_permalink(AgendaPartage::get_option('new_covoiturage_page_id'))
+			, AGDP_ARG_EVENTID, $agdpevent->ID
+			, count($covoiturages) ? 'autre' : 'nouveau'
+		);
+		if( count($covoiturages) ){
+			$html .= sprintf('<label>%s %s covoiturage%s associé%s</label>', AgendaPartage::icon('car'), count($covoiturages), count($covoiturages) > 1 ? 's' : '', count($covoiturages) > 1 ? 's' : '');
+			foreach($covoiturages as $covoiturage){
+				$html .= sprintf('<li><a href="%s">%s %s</a></li>'
+					, get_post_permalink($covoiturage)
+					, AgendaPartage::icon('controls-play')
+					, AgendaPartage_Covoiturage::get_post_title( $covoiturage, true )
+				);
+			}
+			$html .= sprintf('<li>%s%s</li>'
+				, AgendaPartage::icon('welcome-add-page')
+				, $new_link);
+		}
+		else
+			$html .= sprintf('<label>%s %s</label>'
+				, AgendaPartage::icon('car')
+				, $new_link
+			);
+			
+		
+		$html .= '</ul>';
+		
 		return $html;
 	}
 		

@@ -308,10 +308,26 @@ class AgendaPartage_Admin_Menu {
 		);
 
 			// 
+			$field_id = 'covoiturage_managed';
+			add_settings_field(
+				$field_id, 
+				AgendaPartage::get_option_label($field_id),
+				array(__CLASS__, 'agendapartage_input_cb'),
+				AGDP_TAG,
+				'agendapartage_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'label' => AgendaPartage::get_option_label($field_id),
+					'class' => 'agendapartage_row',
+					'input_type' => 'checkbox'
+				]
+			);
+
+			// 
 			$field_id = 'covoiturages_page_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Page des covoiturages', AGDP_TAG ),
+				AgendaPartage::get_option_label($field_id),
 				array(__CLASS__, 'agendapartage_combos_posts_cb'),
 				AGDP_TAG,
 				'agendapartage_section_covoiturages',

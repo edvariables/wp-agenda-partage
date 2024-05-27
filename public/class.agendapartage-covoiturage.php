@@ -127,6 +127,8 @@ class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
 		if( AgendaPartage_Covoiturage_Post_type::is_diffusion_managed() )
 			$html .='[covoiturage-diffusions label="Diffusion (sous réserve) : "]';
 
+		$html .= AgendaPartage_Covoiturage_Edit::get_agdpevents_list( $covoiturage );
+		
 		$meta_name = 'cov-email' ;
 		$email = get_post_meta($covoiturage->ID, $meta_name, true);
 		if( ! is_email($email))

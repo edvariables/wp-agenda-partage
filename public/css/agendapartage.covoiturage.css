@@ -67,6 +67,15 @@ body.colors-dark .agdp-covoiturages-list .toggle-trigger {
   right: 16px;
 }
 
+.agdp-covoiturages-list .agdp-agdpevents-list {
+	margin-top: 1em;
+}
+.agdp-covoiturages-list .covoiturage.toggle-trigger .agdpevents  {
+	margin-top: 0.7em;
+	font-size: smaller;
+}
+
+
 .agdp-covoiturages-list a {
   box-shadow: none !important;
 }

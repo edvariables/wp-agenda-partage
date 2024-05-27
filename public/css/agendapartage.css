@@ -522,3 +522,16 @@ body.colors-dark #comments #reply-title a {
 body.colors-dark .agdp-notif {
 	color: lightgreen;
 }
+
+article.agdpevent ul.agdp-covoiturages-list,
+article.covoiturage ul.agdp-agdpevents-list {
+	list-style: none;
+}
+article.agdpevent ul.agdp-covoiturages-list > li,
+article.covoiturage ul.agdp-agdpevents-list > li {
+	margin-left: 1em;
+}
+article.agdpevent ul.agdp-covoiturages-list label,
+article.covoiturage ul.agdp-agdpevents-list label {
+	font-weight: normal;
+}
