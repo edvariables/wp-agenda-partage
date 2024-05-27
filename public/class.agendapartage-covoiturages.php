@@ -645,6 +645,7 @@ class AgendaPartage_Covoiturages {
 	font-size: larger;
 	padding-left: 10px;
 	background-color: #F5F5F5;
+	white-space: collapse;
 } 
 .toggle-trigger a {
 	color: #333;
@@ -660,6 +661,9 @@ class AgendaPartage_Covoiturages {
 	color: #333;
 	white-space: pre-line;
 }
+.toggle-container .agdevents {
+	white-space: collapse;
+} 
 .agdp-covoiturages-email .month-title {
 	margin-top: 1em;
 	margin-bottom: 1em;
@@ -699,6 +703,7 @@ class AgendaPartage_Covoiturages {
 .footer {
 	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
+	white-space: collapse;
 }
 '
 			. '</style>';
@@ -959,7 +964,7 @@ class AgendaPartage_Covoiturages {
 			$html .= sprintf('<div class="cov-phone">Téléphone : %s</div>',  $value);
 		}
 		
-		if( $agdpevents = self::get_covoiturage_agdpevents( $post, true )){
+		if( ! $email_mode && ($agdpevents = self::get_covoiturage_agdpevents( $post, true ))){
 			$html .= sprintf('<div class="agdevents">%s</div>', $agdpevents);
 		}
 		
@@ -986,7 +991,11 @@ class AgendaPartage_Covoiturages {
 				$html .= '<td class="trigger-collapser"><a href="#replier">'
 					.AgendaPartage::icon('arrow-up-alt2')
 					.'</a></td>';
-
+					
+			if( $email_mode && ($agdpevents = self::get_covoiturage_agdpevents( $post, true ))){
+				$html .= sprintf('</td></tr><tr><td class="agdevents">%s</td></tr><tr>',  $agdpevents );
+			}
+			
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page du covoiturage'
@@ -1039,7 +1048,7 @@ class AgendaPartage_Covoiturages {
 			$html = sprintf('<ul class="agdp-agdpevents-list">');
 			if( count($agdpevents) === 1 ){
 				$agdpevent = $agdpevents[0];
-				$html .= sprintf('<label><a href="%s?%s=%d">%s Évènement associé : %s</a></label>'
+				$html .= sprintf('<span><a href="%s?%s=%d">%s Évènement associé : %s</a></span>'
 						, get_post_permalink($agdpevent)
 						, AGDP_ARG_COVOITURAGEID, $covoiturage->ID
 						, AgendaPartage::icon('calendar-alt')
@@ -1047,7 +1056,7 @@ class AgendaPartage_Covoiturages {
 				);
 			}
 			elseif( count($agdpevents) ){
-				$html .= sprintf('<label>%s %s évènement%s associé%s</label>', AgendaPartage::icon('calendar-alt'), count($agdpevents), count($agdpevents) > 1 ? 's' : '', count($agdpevents) > 1 ? 's' : '');
+				$html .= sprintf('<span>%s %s évènement%s associé%s</span>', AgendaPartage::icon('calendar-alt'), count($agdpevents), count($agdpevents) > 1 ? 's' : '', count($agdpevents) > 1 ? 's' : '');
 				foreach($agdpevents as $agdpevent){
 					$html .= sprintf('<li><a href="%s?%s=%d">%s</a></li>'
 						, get_post_permalink($agdpevent)

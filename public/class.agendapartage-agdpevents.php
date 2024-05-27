@@ -540,11 +540,12 @@ class AgendaPartage_Evenements {
 	font-size: larger;
 	padding-left: 10px;
 	background-color: #F5F5F5;
+	white-space: collapse;
 } 
 .toggle-trigger a {
 	color: #333;
 	text-decoration: none;
-	display: block;
+	display: block; 
 }
 .toggle-container {
 	overflow: hidden;
@@ -555,6 +556,9 @@ class AgendaPartage_Evenements {
 	color: #333;
 	white-space: pre-line;
 }
+.toggle-container .ev-covoiturages {
+	white-space: collapse;
+} 
 .agdp-agdpevents-email .month-title {
 	margin-top: 1em;
 	margin-bottom: 1em;
@@ -584,6 +588,7 @@ class AgendaPartage_Evenements {
 .footer {
 	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
+	white-space: collapse;
 }
 '
 			. '</style>';
@@ -823,8 +828,7 @@ class AgendaPartage_Evenements {
 		if($value){
 			$html .= sprintf('<div class="ev-siteweb">%s</div>',  make_clickable( esc_html($value) ) );
 		}
-		
-		if( $covoiturages = self::get_agdpevent_covoiturages( $event, true ))
+		if( ! $email_mode && ($covoiturages = self::get_agdpevent_covoiturages( $event, true )))
 			$html .= sprintf('<div class="ev-covoiturages">%s</div>',  $covoiturages );
 		
 		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
@@ -853,6 +857,10 @@ class AgendaPartage_Evenements {
 					.AgendaPartage::icon('arrow-up-alt2')
 					.'</a></td>';
 
+		
+			if( $email_mode && ($covoiturages = self::get_agdpevent_covoiturages( $event, true )))
+				$html .= sprintf('</td></tr><tr><td class="ev-covoiturages">%s</td></tr><tr>',  $covoiturages );
+			
 			$html .= sprintf(
 				'<td class="post-edit"><a href="%s">'
 					.'Afficher la page de l\'évènement'
@@ -984,7 +992,7 @@ class AgendaPartage_Evenements {
 				);
 			}
 			//Ajouter
-			$new_link = sprintf('<a href="%s&%s=%d">ajouter un nouveau covoiturage</a>'
+			$new_link = sprintf('<a href="%s&%s=%d">Ajouter un nouveau covoiturage</a>'
 				, get_post_permalink(AgendaPartage::get_option('new_covoiturage_page_id'))
 				, AGDP_ARG_EVENTID, $agdpevent->ID
 			);
