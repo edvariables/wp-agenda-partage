@@ -1103,7 +1103,7 @@ class AgendaPartage_Newsletter {
 				if($subscription !== false)
 					$subscriptions[$newsletter_option] = [
 						'subscription' => $subscription
-						// , 'subscription_name' => $subscription//self::subscription_period_name($subscription)
+						, 'subscription_name' => self::subscription_period_name($subscription)
 						, 'field_extension' => $field_extension
 						, 'input_prefixe' => 'nl-period'
 					];
