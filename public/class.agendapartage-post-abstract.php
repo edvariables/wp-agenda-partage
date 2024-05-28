@@ -8,8 +8,6 @@
  */
 abstract class AgendaPartage_Post_Abstract {
 
-	const user_role = 'author';
-
 	const post_type = false; //Must override
 	const secretcode_argument = false; //Must override
 	const field_prefix = false; //Must override

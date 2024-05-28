@@ -314,10 +314,25 @@ jQuery( function( $ ) {
 						if(typeof response === 'object'){
 							for(const nloption in response){
 								var subscription = response[nloption];
-								if( ! subscription || ! subscription.subscription_name)
+								if( ! subscription )
 									continue;
-								$form.find('input[name="nl-period-' + subscription.field_extension + '"][value="' + subscription.subscription_name + '"]')
-									.prop("checked", true);
+								if( ! subscription.subscription_name)
+									subscription.subscription_name = subscription.subscription;
+								if( ! subscription.input_prefixe )
+									subscription.input_prefixe = 'nl-period';
+								if( ! subscription.input_type )
+									subscription.input_type = 'checkbox';
+								switch( subscription.input_type ){
+									case 'radio':
+									case 'checkbox':
+										$form.find('input[name="' + subscription.input_prefixe + '-' + subscription.field_extension + '"][value="' + subscription.subscription_name + '"]')
+											.prop("checked", true);
+										break;
+									case 'select':
+										$form.find('select[name="' + subscription.input_prefixe + '-' + subscription.field_extension + '"]')
+											.val(subscription.subscription_name, true);
+										break;
+								}
 							}
 							is_user = response.is_user;
 						}

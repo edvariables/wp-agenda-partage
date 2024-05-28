@@ -1123,6 +1123,48 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
+	 * user_can_moderate
+	 */
+	public static function user_can_moderate( $page = false, $user = false){
+		if( ! current_user_can('moderate_comments')
+		&& self::get_forum_right_need_subscription($page)
+		&& ( ! ($subscription = self::get_user_subscription( $page, $user) )
+			|| $subscription === 'subscriber'
+			|| $subscription === 'banned')){
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * user_can_update_subcription
+	 */
+	public static function user_can_update_subcription( $page = false, $current_user = false, $user = false, $new_role = 'subscriber'){
+		if( current_user_can('moderate_comments') )
+			return true;
+		$current_user_subscription = self::get_user_subscription( $page, $current_user );		
+		switch( $current_user_subscription ){
+			case 'administrator' :
+				return true;
+			case 'moderator' :
+				$user_current_subscription = self::get_user_subscription( $page, $user );
+				return $user_current_subscription !== 'administrator'
+					&& $new_role !== 'administrator';
+			case 'banned' :
+				return ! AgendaPartage_User::is_same_user( $current_user, $user )
+						/* && current_user_can('moderate_comments') */;
+			case 'subscriber' :
+			default :
+				if( ! self::get_forum_right_need_subscription($page) )
+					return true;
+				return AgendaPartage_User::is_same_user( $current_user, $user )
+					&& ( ! $new_role || in_array($new_role, ['none', 'subscriber']) );
+		}
+		
+		return true;
+	}
+	
+	/**
 	 * L'utilisateur peut voir le détail des commentaires
 	 */
 	public static function user_can_see_forum_details($page = false, $user = false){
@@ -1220,20 +1262,26 @@ class AgendaPartage_Forum {
 	/**
 	 * Ajoute ou met à jour le meta value d'abonnement pour l'utilisateur
 	 */
-	public static function update_subscription($email, $period, $page = false){
-		// $page = self::get_page($page);
+	public static function update_subscription($email, $role, $page = false){
+		if( ! self::user_can_update_subcription( $page, true, $email, $role ) ){
+			debug_log(__CLASS__ . '::update_subscription ! user_can_update_subcription', $email, get_current_user_id(), $page ? $page->post_tile : 'no page');
+			return false;
+		}
 		
 		$user_id = email_exists( $email );
 		if( ! $user_id){
-			if( ! $period || $period == 'none')
+			if( ! $role || $role == 'none')
 				return true;
 			$user = self::create_subscriber_user($email, false, false);
 			if( ! $user )
 				return false;
 			$user_id = $user->ID;
+		} else {
+				$user = new WP_User( $user_id );
+				AgendaPartage_User::promote_user_to_blog($user);
 		}
 		$meta_name = self::get_subscription_meta_key($page);
-		update_user_meta($user_id, $meta_name, $period);
+		update_user_meta($user_id, $meta_name, $role);
 		return true;
 	}
 	

@@ -86,7 +86,7 @@ class AgendaPartage_User {
 		return self::promote_user_to_blog($user);
 	}
 
-	private static function promote_user_to_blog( WP_User $user, $blog = false ){
+	public static function promote_user_to_blog( WP_User $user, $blog = false, $role = 'subscriber' ){
 		if( ! $blog )
 			$blog_id = get_current_blog_id();
 		elseif(is_object($blog))//TODO
@@ -102,7 +102,7 @@ class AgendaPartage_User {
 				$result = add_existing_user_to_blog(
 					array(
 						'user_id' => $user->ID,
-						'role'    => AgendaPartage_Evenement::user_role,
+						'role'    => $role,
 					)
 				);
 				if(is_wp_error($result)){
@@ -254,5 +254,31 @@ class AgendaPartage_User {
 			$url = get_home_url( self::get_current_or_default_blog_id($user), sprintf("wp-admin/"), 'admin' );
 		}
 		echo sprintf('<input type="hidden" name="%s" value="%s"/>', 'redirect_to', $url );
-	}	
+	}
+	
+	/**
+	 * Compare des utilisateurs.
+	 *	is_same_user( WP_Post|int|email|current|true $user1, WP_Post|int|email|current|true $user2 )
+	 */
+	public static function is_same_user( ...$users ) {
+		$first_user_id = false;
+		foreach($users as $user){
+			if( ! $user || $user === true || $user === 'current' )
+				$user_id = get_current_user_id();
+			elseif( is_a($user, 'WP_User') )
+				$user_id = $user->ID;
+			elseif( is_numeric( $user ) )
+				$user_id = $user;
+			elseif( ! ($user_id = email_exists( $user ) ) )
+				return false;
+				
+			if( $first_user_id ){
+				if( $first_user_id != $user_id )
+					return false;
+			}
+			else
+				$first_user_id = $user_id;
+		}
+		return true;
+	}
 }
