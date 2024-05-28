@@ -915,7 +915,7 @@ class AgendaPartage_Admin_Menu {
 				add_submenu_page( $parent_slug, $page_title, 'Evènements à venir', $capability, $menu_slug);
 			}
 			$option = 'covoiturages_nl_post_id';
-			if( AgendaPartage::get_option('covoiturage_managed') &&
+			if( AgendaPartage::get_option('covoiturage_managed')
 			 && ( $post_id = AgendaPartage::get_option($option) )){
 				$parent_slug = sprintf('edit.php?post_type=%s', AgendaPartage_Newsletter::post_type) ;
 				$page_title =  AgendaPartage::get_option_label($option);
