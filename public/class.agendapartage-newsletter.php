@@ -1124,6 +1124,14 @@ class AgendaPartage_Newsletter {
 							, 'input_type' => 'select'
 						];
 					}
+					else {
+						$subscriptions[$forum_option] = [
+							'subscription' => 'none'
+							, 'field_extension' => $field_extension
+							, 'input_prefixe' => 'forum-subscription'
+							, 'input_type' => 'select'
+						];
+					}
 				}
 			}
 			$ajax_response = $subscriptions;
