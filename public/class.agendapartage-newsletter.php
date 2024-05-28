@@ -915,10 +915,14 @@ class AgendaPartage_Newsletter {
 		$newsletters = array();
 		
 		$option_id = 'events_nl_post_id';
-		$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
+		if( $post = get_post(AgendaPartage::get_option($option_id)) )
+			$newsletters[ $option_id ] = $post;
 		
-		$option_id = 'covoiturages_nl_post_id';
-		$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
+		if( AgendaPartage::get_option('covoiturage_managed') ){
+			$option_id = 'covoiturages_nl_post_id';
+			if( $post = get_post(AgendaPartage::get_option($option_id)) )
+				$newsletters[ $option_id ] = $post;
+		}
 		
 		//Forums
 		$all_newsletters = get_posts([
@@ -938,7 +942,8 @@ class AgendaPartage_Newsletter {
 		/** admin **/
 		if( current_user_can('manage_options')){
 			$option_id = 'admin_nl_post_id';
-			$newsletters[ $option_id ] = get_post(AgendaPartage::get_option($option_id));
+			if( $post = get_post(AgendaPartage::get_option($option_id)) )
+				$newsletters[ $option_id ] = $post;
 		}
 		
 		return $newsletters;
@@ -1329,20 +1334,26 @@ class AgendaPartage_Newsletter {
 	 * $next_time in seconds or timestamp
 	 */
 	public static function init_cron($next_time = false){
-		$cron_time = wp_next_scheduled( self::get_cron_hook() );
+		//clear
+		// foreach(['agdpnl_cron_hook', 'agdpnl_cron_hook'.get_current_blog_id()] as $cron_hook)
+			// if( $cron_time = wp_next_scheduled( $cron_hook ) )
+				// wp_unschedule_event( $cron_time, $cron_hook );
+
+		$cron_hook = self::get_cron_hook();
+		$cron_time = wp_next_scheduled( $cron_hook );
 		if($next_time){
 			if( $cron_time !== false )
-				wp_unschedule_event( $cron_time, self::get_cron_hook() );
+				wp_unschedule_event( $cron_time, $cron_hook );
 			if( $next_time < 1024 )
 				$cron_time = strtotime( date('Y-m-d H:i:s') . ' + ' . $next_time . ' second');
 			else
 				$cron_time = $next_time;
-			$result = wp_schedule_single_event( $cron_time, self::get_cron_hook(), [], true );
+			$result = wp_schedule_single_event( $cron_time, $cron_hook, [], true );
 			// debug_log('[agdpnl-init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
 		}
 		if( $cron_time === false ){
 			$next_time = strtotime( date('Y-m-d H:i:s') . ' + 1 Hour');
-			$cron_time = wp_schedule_event( $next_time, 'hourly', self::get_cron_hook() );
+			$cron_time = wp_schedule_event( $next_time, 'hourly', $cron_hook );
 			// debug_log('[agdpnl-init_cron] wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
 		}
@@ -1356,8 +1367,9 @@ class AgendaPartage_Newsletter {
 	 * Désactive le cron
 	 */
 	public static function deactivate_cron(){
-		$timestamp = wp_next_scheduled( self::get_cron_hook() );
-		wp_unschedule_event( $timestamp, self::get_cron_hook() );
+		$cron_hook = self::get_cron_hook();
+		if( $timestamp = wp_next_scheduled( $cron_hook ) )
+		wp_unschedule_event( $timestamp, $cron_hook );
 		self::$cron_state = '0|Désactivé'; 
 	}
 	/**
