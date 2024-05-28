@@ -661,20 +661,20 @@ class AgendaPartage_Newsletter {
 		if( ! isset($newsletters[$option_id]) ){
 			//Hide tab (javascript skips hidden elements)
 			$html = preg_replace('/\<div\s+class="admin-user-only/'
-					, '$0 hidden'
+					, '$0 hidden ' . AGDP_JS_SKIP_FIELD
 					, $html);
 		}
 		
 		if( ! current_user_can('moderate_comments') ){
 			//Hide tab (javascript skips hidden elements)
 			$html = preg_replace('/\<div\s+class="(admin(istrator)?|moderator)-user-only/'
-					, '$0 hidden'
+					, '$0 hidden ' . AGDP_JS_SKIP_FIELD
 					, $html);
 		}
 		elseif( ! current_user_can('manage_options') ){
 			//Hide tab (javascript skips hidden elements)
 			$html = preg_replace('/\<div\s+class="admin(istrator)?-user-only/'
-					, '$0 hidden'
+					, '$0 hidden ' . AGDP_JS_SKIP_FIELD
 					, $html);
 		}
 		
@@ -1306,13 +1306,14 @@ class AgendaPartage_Newsletter {
 				$forum = false;
 			$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
 			
-			if( empty($inputs['nl-period-' . $field_extension]) )
+			$field_name = 'nl-period-' . $field_extension;
+			if( empty($inputs[$field_name]) )
 				continue;
 			
-			$period = $inputs['nl-period-' . $field_extension];
-			
-			if( $period !== AGDP_WPCF7_RADIO_NO_CHANGE ){
-			
+			$period = $inputs[$field_name];
+			if( empty($inputs[$field_name . AGDP_JS_SKIP_FIELD])
+			 && $period !== AGDP_WPCF7_RADIO_NO_CHANGE ){
+				 
 				if(is_array($period))
 					$period = count($period) && $period[0] ? $period[0] : 'none';//wpcf7 is strange with first radio option
 				
@@ -1363,23 +1364,27 @@ class AgendaPartage_Newsletter {
 			
 			if( $forum ){
 				$field_name = 'forum-subscription-' . $field_extension;
-				$subscription_role = isset($inputs[$field_name]) && count($inputs[$field_name]) ? $inputs[$field_name][0] : false;
-				if($subscription_role){
-					AgendaPartage_Forum::update_subscription( $email, $subscription_role, $forum);
+				if( empty($inputs[$field_name . AGDP_JS_SKIP_FIELD]) ){
+					$subscription_role = isset($inputs[$field_name]) && count($inputs[$field_name]) ? $inputs[$field_name][0] : false;
+					if($subscription_role){
+						AgendaPartage_Forum::update_subscription( $email, $subscription_role, $forum);
+					}
 				}
 			}
 			
 			$field_name = 'nl-send_newsletter-now-' . $field_extension;
-			$send_newsletter_now = isset($inputs[$field_name]) && count($inputs[$field_name]) && $inputs[$field_name][0];
-			if($send_newsletter_now){
-				if(self::send_email($newsletter, $email))
-					$messages['mail_sent_ok'] .= sprintf("\r\n\"%s\" a été envoyée à %s.", $newsletter_name, $email);
-				elseif( self::content_is_empty() ) {
-					$post_type_obj = get_post_type_object( self::get_newsletter_posts_post_type( $newsletter ) );					
-					$messages['mail_sent_ok'] .= sprintf("\r\nLe message n'a pas été envoyé car la liste des \"%s\" est vide.", $post_type_obj->labels->name);
+			if( empty($inputs[$field_name . AGDP_JS_SKIP_FIELD]) ){
+				$send_newsletter_now = isset($inputs[$field_name]) && count($inputs[$field_name]) && $inputs[$field_name][0];
+				if($send_newsletter_now){
+					if(self::send_email($newsletter, $email))
+						$messages['mail_sent_ok'] .= sprintf("\r\n\"%s\" a été envoyée à %s.", $newsletter_name, $email);
+					elseif( self::content_is_empty() ) {
+						$post_type_obj = get_post_type_object( self::get_newsletter_posts_post_type( $newsletter ) );					
+						$messages['mail_sent_ok'] .= sprintf("\r\nLe message n'a pas été envoyé car la liste des \"%s\" est vide.", $post_type_obj->labels->name);
+					}
+					else
+						$messages['mail_sent_ok'] .= sprintf("\r\nDésolé, \"%s\" n'a pas pu être envoyée à %s.", $newsletter_name, $email);
 				}
-				else
-					$messages['mail_sent_ok'] .= sprintf("\r\nDésolé, \"%s\" n'a pas pu être envoyée à %s.", $newsletter_name, $email);
 			}
 		}
 		

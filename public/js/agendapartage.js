@@ -9,6 +9,8 @@ jQuery( function( $ ) {
 	 */
 	$( document ).ready(function() {
 		$( 'body' ).on('wpcf7_form_fields-init', function(){
+			
+			//Evènements et covoiturages
 			$("input.agdpevent_edit_form_data, input.covoiturage_edit_form_data").each(	function(){
 				/** Complète les champs de formulaires avec les valeurs fournies **/
 				var $agdpDataInput = $(this);
@@ -117,6 +119,18 @@ jQuery( function( $ ) {
 					.find('input[name="cov-periodique"]:checked').change();
 				
 				
+			});
+			
+			
+			;
+			//Ajoute des champs d'échappement
+			$('form.wpcf7-form .' + AGDP_JS_SKIP_FIELD + ' :input[name]').each(function(){
+				var name = this.getAttribute('name');
+				if( name.length > 3 && name.substr( name.length - 2 ) === '[]' )
+					name = name.substr( 0, name.length - 2) + AGDP_JS_SKIP_FIELD + '[]';
+				else
+					name = name + AGDP_JS_SKIP_FIELD;
+				$('<input name="' + name + '" value="1"/>').insertBefore(this);
 			});
 			
 			//Forum comments
@@ -280,8 +294,8 @@ jQuery( function( $ ) {
 		}); 
 		
 		/**
-		 * Abonnement à la lettre-info
-		 * la saisie d'une adresse email met à jour les options d'abonnement), masque ou affiche la création de compte
+		 * Abonnements aux lettres-infos et aux forums
+		 * La saisie d'une adresse email met à jour les options d'abonnement, masque ou affiche la création de compte
 		 */
 		$('form.wpcf7-form input[name="nl-email"]').on('change', function(event){
 			var $actionElnt = $(this);
@@ -294,7 +308,10 @@ jQuery( function( $ ) {
 			$form
 				.removeClass('sent')
 				.attr('data-status', 'init')
-				.find('.wpcf7-response-output').html('');
+				.find('.wpcf7-response-output')
+					.html('')
+					.end()
+			
 			var post_id = $actionElnt.parents('article[id]:first').attr('id');
 			if( ! post_id || ! post_id.startsWith('post-'))
 				return;
@@ -303,7 +320,7 @@ jQuery( function( $ ) {
 				url : agendapartage_ajax.ajax_url,
 				type : 'post',
 				data : {
-					'action' : 'agdpnl_get_subscription',
+					'action' : 'agdpnl_get_subscription', //newsletters + forums
 					'post_id' : post_id,
 					'email' : email,
 					'_nonce' : agendapartage_ajax.check_nonce

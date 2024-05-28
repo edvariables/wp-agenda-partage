@@ -22,12 +22,12 @@
  * Tags: 
  * License: GPLv3
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
- * Version: 1.2.9
+ * Version: 1.2.10
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AGDP_VERSION', '1.2.9' );
+define( 'AGDP_VERSION', '1.2.10' );
 define( 'AGDP_MINIMUM_WP_VERSION', '5.0' );
 
 define( 'AGDP_PLUGIN', __FILE__ );
@@ -55,6 +55,7 @@ define( 'AGDP_PAGE_META_MAILBOX', 'agdpmailbox' );
 define( 'AGDP_FORUM_META_PAGE', 'comments-page' ); 
 
 define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');
+define( 'AGDP_JS_SKIP_FIELD', '_js_skip_field');
 
 // see translate_level_to_role()
 define( 'USER_LEVEL_ADMIN', 8 ); 

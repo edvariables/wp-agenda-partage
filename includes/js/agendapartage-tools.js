@@ -1,5 +1,6 @@
  
 const AGDP_TAG = 'agendapartage';
+const AGDP_JS_SKIP_FIELD = '_js_skip_field';
 
 jQuery( function( $ ) {
 	
