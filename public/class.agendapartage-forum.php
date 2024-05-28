@@ -45,7 +45,7 @@ class AgendaPartage_Forum {
 	];
 	
 	const subscription_roles = [
-			'' => '(non défini)',
+			'' => '(non membre)',
 			'administrator' => 'Administrateurice',
 			'moderator' => 'Modérateurice',
 			'subscriber' => 'Membre',
@@ -1267,20 +1267,24 @@ class AgendaPartage_Forum {
 			debug_log(__CLASS__ . '::update_subscription ! user_can_update_subcription', $email, get_current_user_id(), $page ? $page->post_tile : 'no page');
 			return false;
 		}
-		
+		// debug_log(__CLASS__ . '::update_subscription', $email, $role, get_current_user_id(), $page ? $page->post_tile : 'no page');
+			
 		$user_id = email_exists( $email );
 		if( ! $user_id){
 			if( ! $role || $role == 'none')
-				return true;
+				return false;
 			$user = self::create_subscriber_user($email, false, false);
 			if( ! $user )
 				return false;
 			$user_id = $user->ID;
-		} else {
+		} elseif( $role ) {
 				$user = new WP_User( $user_id );
 				AgendaPartage_User::promote_user_to_blog($user);
 		}
 		$meta_name = self::get_subscription_meta_key($page);
+		$previous_role = get_user_meta($user_id, $meta_name, true);
+		if( $previous_role === $role )
+			return false;
 		update_user_meta($user_id, $meta_name, $role);
 		return true;
 	}

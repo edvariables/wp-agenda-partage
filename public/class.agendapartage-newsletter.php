@@ -657,24 +657,17 @@ class AgendaPartage_Newsletter {
 		
 		$html = self::init_wpcf7_form_html( $html, $newsletters, $email );
 		
-		$option_id = 'admin_nl_post_id';
-		if( ! isset($newsletters[$option_id]) ){
-			//Hide tab (javascript skips hidden elements)
-			$html = preg_replace('/\<div\s+class="admin-user-only/'
-					, '$0 hidden ' . AGDP_JS_SKIP_FIELD
-					, $html);
-		}
-		
 		if( ! current_user_can('moderate_comments') ){
 			//Hide tab (javascript skips hidden elements)
 			$html = preg_replace('/\<div\s+class="(admin(istrator)?|moderator)-user-only/'
-					, '$0 hidden ' . AGDP_JS_SKIP_FIELD
+					, '$0 hidden ' . AGDP_JS_SKIP_FIELD //cf .js
 					, $html);
 		}
-		elseif( ! current_user_can('manage_options') ){
+		elseif( ! current_user_can('manage_options')
+			 || ! isset($newsletters['admin_nl_post_id'])){
 			//Hide tab (javascript skips hidden elements)
 			$html = preg_replace('/\<div\s+class="admin(istrator)?-user-only/'
-					, '$0 hidden ' . AGDP_JS_SKIP_FIELD
+					, '$0 hidden ' . AGDP_JS_SKIP_FIELD //cf .js
 					, $html);
 		}
 		
@@ -708,7 +701,7 @@ class AgendaPartage_Newsletter {
 		/** Create account **/
 		if( self::get_current_user()){
 			$html = preg_replace('/\<div\s+class="if-not-connected"/'
-								, '$0 style="display: none"'
+								, '$0 style="display: none"' //cf .js
 								, $html);
 		}
 		
@@ -1366,8 +1359,9 @@ class AgendaPartage_Newsletter {
 				$field_name = 'forum-subscription-' . $field_extension;
 				if( empty($inputs[$field_name . AGDP_JS_SKIP_FIELD]) ){
 					$subscription_role = isset($inputs[$field_name]) && count($inputs[$field_name]) ? $inputs[$field_name][0] : false;
-					if($subscription_role){
-						AgendaPartage_Forum::update_subscription( $email, $subscription_role, $forum);
+					if($subscription_role !== false){
+						if( AgendaPartage_Forum::update_subscription( $email, $subscription_role, $forum))
+							$messages['mail_sent_ok'] .= "\r\n".sprintf('L\'adhésion à "%s" est désormais : %s.', $newsletter_name, empty(AgendaPartage_Forum::subscription_roles[$subscription_role]) ? '?' : AgendaPartage_Forum::subscription_roles[$subscription_role]);
 					}
 				}
 			}
