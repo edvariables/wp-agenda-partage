@@ -46,9 +46,9 @@ class AgendaPartage_Forum {
 	
 	const subscription_roles = [
 			'' => '(non membre)',
-			'administrator' => 'Administrateurice',
-			'moderator' => 'Modérateurice',
 			'subscriber' => 'Membre',
+			'moderator' => 'Modérateurice',
+			'administrator' => 'Administrateurice',
 			'banned' => 'Banni-e',
 		];
 
