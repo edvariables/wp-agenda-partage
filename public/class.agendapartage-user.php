@@ -161,7 +161,7 @@ class AgendaPartage_User {
 		if(!$redirect_to)
 			$redirect_to = get_home_url();
 		$url = sprintf("%s?action=rp&key=%s&login=%s&redirect_to=%s", wp_login_url(), $password_key, rawurlencode( $user->user_login ), esc_url($redirect_to));
-		$url = network_site_url( $url );
+		// $url = network_site_url( $url );
 		$message = sprintf(__( 'Pour définir votre mot de passe, <a href="%s">vous devez cliquer ici</a>.', AGDP_TAG) , $url ) . "\r\n";
 		return $message;
 	}
