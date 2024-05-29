@@ -22,8 +22,15 @@ class AgendaPartage_Admin_User {
 		
 		//Email de validation d'un nouvel utilisateur
 		add_filter( 'invited_user_email', array(__CLASS__, 'on_invited_user_email' ), 20, 4);
+		add_filter( 'wpmu_signup_user_notification_subject', array(__CLASS__, 'wpmu_signup_user_notification_subject' ), 20, 5);
 	}
 
+	/**
+	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
+	 */
+	public static function wpmu_signup_user_notification_subject( string $subject, string $user_login, string $user_email, string $key, array $meta ){
+		return preg_replace('/^\[.*\]/', '[' . get_option('blogname') . ']', $subject);
+	}
 	/**
 	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
 	 */
