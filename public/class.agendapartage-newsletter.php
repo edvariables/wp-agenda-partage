@@ -1244,7 +1244,7 @@ class AgendaPartage_Newsletter {
 		$error_message = false;
 		
 		$inputs = $submission->get_posted_data();
-		// nl-email, nl-period-{newsletter_option}, nl-create-user, nl-user-name
+		// nl-email, nl-period-{newsletter_option}, nl-create-user, nl-user-name, nl-user-city
 				
 		$newsletters = self::get_newsletters();
 		
@@ -1278,6 +1278,11 @@ class AgendaPartage_Newsletter {
 					$error_message = sprintf('Désolé, une erreur est survenue, nous n\'avons pas pu créer votre compte (%s).', $email);
 					$submission->set_response($error_message);
 					return false;
+				}
+				$user_id = $user->ID;
+				if( ! empty($inputs['nl-user-city']) ){
+					$meta_name = 'city';
+					update_user_meta( $user_id, $meta_name, $inputs['nl-user-city']);
 				}
 			}
 		}

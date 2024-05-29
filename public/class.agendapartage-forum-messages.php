@@ -44,23 +44,6 @@ class AgendaPartage_Forum_Messages {
 			'status' => '1',
 			'hierarchical' => 'threaded',
 			
-			// Echec de LEFT JOIN : cf on_get_comments_clauses_cb()
-			// 'meta_query' => [ 
-				// [
-					// 'relation' => 'OR', [
-						// [
-							// 'key' => 'status',
-							// 'value' => 'ended',
-							// 'compare' => '!='
-						// ],
-						// [
-							// 'key' => 'status',
-							// 'value'   => 'completely',
-							// 'compare' => 'NOT EXISTS'
-						// ]
-					// ]
-				// ]
-			// ],
 			'orderby' => [
 				'comment_date' => 'DESC'
 			],

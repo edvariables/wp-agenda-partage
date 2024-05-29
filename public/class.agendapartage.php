@@ -77,6 +77,9 @@ class AgendaPartage {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum', 'init' ) );
 		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum-message.php' );
+		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum_Message', 'init' ) );
+		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-forum-messages.php' );
 		add_action( 'agendapartage-init', array( 'AgendaPartage_Forum_Messages', 'init' ) );
 		

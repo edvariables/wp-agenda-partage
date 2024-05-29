@@ -220,6 +220,7 @@ abstract class AgendaPartage_Post_Abstract {
 					}
 				}
 			}
+			return false;
 		}
 	}
 	
