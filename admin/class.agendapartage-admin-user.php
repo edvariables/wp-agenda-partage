@@ -2,12 +2,16 @@
 class AgendaPartage_Admin_User {
 
 	public static function init() {
+		self::init_hooks();
+	}
+	
+	public static function init_hooks() {
 		//Add custom user contact Methods
 		add_filter( 'user_contactmethods', array( __CLASS__, 'custom_user_contact_methods' ), 10, 2);
 		
 		if( ! is_network_admin()
-		&& (basename($_SERVER['PHP_SELF']) === 'profile.php' 
-		|| basename($_SERVER['PHP_SELF']) === 'user-edit.php')) {
+		&& ( basename($_SERVER['PHP_SELF']) === 'profile.php' 
+		  || basename($_SERVER['PHP_SELF']) === 'user-edit.php' ) ) {
 			add_action( 'show_user_profile', array(__CLASS__, 'on_custom_user_profil'), 10, 1 );
 			add_action( 'edit_user_profile', array(__CLASS__, 'on_custom_user_profil'), 10, 1 );
 			add_action( 'insert_custom_user_meta', array(__CLASS__, 'on_insert_custom_user_meta'), 10, 4);
@@ -15,6 +19,17 @@ class AgendaPartage_Admin_User {
 		}
 		add_action( 'wp_pre_insert_user_data', array(__CLASS__, 'on_wp_pre_insert_user_data'), 10, 4);
 		
+		
+		//Email de validation d'un nouvel utilisateur
+		add_filter( 'invited_user_email', array(__CLASS__, 'on_invited_user_email' ), 20, 4);
+	}
+
+	/**
+	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
+	 */
+	public static function on_invited_user_email( $new_user_email, $user_id, $role, $newuser_key ){
+		$new_user_email['subject'] = preg_replace('/^\[.*\]/', '[' . get_option('blogname') . ']');
+		return $new_user_email;
 	}
 	
 	/**

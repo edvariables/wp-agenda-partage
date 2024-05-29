@@ -202,12 +202,17 @@ class AgendaPartage_User {
 		
 		$message .= "<br><br>" . self::new_password_link($user_id);
 		
-		$message .= '<br>';
+		$subscriptions = [];
+		foreach( AgendaPartage_Newsletter::get_newsletters() as $newsletter){
+			$subscription_period_name = AgendaPartage_Newsletter::subscription_period_name(AgendaPartage_Newsletter::get_subscription($email), $newsletter);
+			if($subscription_period_name)
+				$subscriptions[] = sprintf('<br>Votre abonnement à la lettre-info %s : %s.', $subscription_period_name);
+		}
+		if( count($subscriptions) )
+			$message .= '<br>' . implode("\n", $subscriptions);
+		
 		$url = get_permalink(AgendaPartage::get_option('newsletter_subscribe_page_id'));
 		$url = add_query_arg('email', $email, $url);
-		$subscription_period_name = AgendaPartage_Newsletter::subscription_period_name(AgendaPartage_Newsletter::get_subscription($email), true);
-		if($subscription_period_name)
-			$message .= sprintf('<br>Votre inscription actuelle aux lettres-infos est "%s".', $subscription_period_name);
 		$message .= sprintf('<br>Vous pouvez modifier votre inscription aux lettres-infos en <a href="%s">cliquant ici</a>.', $url);
 
 		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';
