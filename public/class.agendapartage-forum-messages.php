@@ -42,6 +42,7 @@ class AgendaPartage_Forum_Messages {
 			'post_id' => $page->ID,
 			'comment_type' => 'comment',
 			'status' => '1',
+			'hierarchical' => 'threaded',
 			
 			// Echec de LEFT JOIN : cf on_get_comments_clauses_cb()
 			// 'meta_query' => [ 
