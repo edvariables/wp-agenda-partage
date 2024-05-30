@@ -14,6 +14,46 @@ class AgendaPartage_User {
 		
 		//Fenêtre de réinitialisation de mot de passe
 		add_action( 'resetpass_form', array(__CLASS__, 'resetpass_form' ));
+		
+		//Email de validation d'un nouvel utilisateur
+		add_filter( 'invited_user_email', array(__CLASS__, 'on_invited_user_email' ), 20, 4);
+		if( is_multisite() ) {
+			add_filter( 'wpmu_signup_user_notification_subject', array(__CLASS__, 'wpmu_signup_user_notification_subject' ), 20, 5);
+			add_filter( 'update_welcome_user_subject', array(__CLASS__, 'on_update_welcome_user_subject' ), 20, 1);
+		}
+	}
+
+	/**
+	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
+	 */
+	public static function wpmu_signup_user_notification_subject( string $subject, string $user_login, string $user_email, string $key, array $meta ){
+		add_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail_set_reply_to' ), 10, 1);
+		return preg_replace('/^\[.*\]/', '[' . get_option('blogname') . ']', $subject);
+	}
+	/**
+	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
+	 */
+	public static function on_invited_user_email( $new_user_email, $user_id, $role, $newuser_key ){
+		$new_user_email['subject'] = preg_replace('/^\[.*\]/', '[' . get_option('blogname') . ']');
+		if( empty($new_user_email['headers']['Reply-to']) )
+			$new_user_email['headers']['Reply-to'] = get_option('admin_email');
+		return $new_user_email;
+	}
+	/**
+	 * Filtre avant envoi de l'email l'adresse de réponse
+	 */
+	public static function on_update_welcome_user_subject($subject){
+		$current_network = get_network();
+		$subject = str_replace( $current_network->site_name, get_option('blogname'), $subject);
+		add_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail_set_reply_to' ), 10, 1);
+		return $subject;
+	}
+	/**
+	 * Filtre avant envoi de l'email l'adresse de réponse
+	 */
+	public static function on_wp_mail_set_reply_to($args){
+		$args['headers']['Reply-to'] = get_option('admin_email');
+		return $args;
 	}
 
 	/**
