@@ -1,3 +1,6 @@
+ 
+const AGDP_TAG = 'agendapartage';
+const AGDP_JS_SKIP_FIELD = '_js_skip_field';
 
 jQuery( function( $ ) {
 	
@@ -416,10 +419,10 @@ jQuery( function( $ ) {
 				var msg;
 				if( data.status == 'ended')
 					msg = "Ce message est marqué comme n'étant plus d'actualité."
-						+ "\n\nEn cliquant sur 'Ok', vous rétablirez ce message comme étant toujours d'actualité.";
+						+"\nPour rétablir ce message comme étant toujours d'actualité, cliquez sur OK.";
 				else
-					msg = "En cliquant sur 'Ok', vous indiquerez que ce message n'est plus d'actualité."
-						+ "\n\nÊtes-vous sûr de vouloir marquer ce message ?";
+					msg = "Ce message est marqué comme toujours d'actualité."
+						+"\nSi ce message a expiré, cliquez sur OK.";
 				
 				if( ! confirm( msg )){
 					cancel_ajax = true;

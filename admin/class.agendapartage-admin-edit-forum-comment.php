@@ -72,7 +72,7 @@ class AgendaPartage_Admin_Edit_Forum_Comment {
 						<td><?php 
 							switch( $meta ) {
 								case 'attachments' :
-									echo AgendaPartage_Forum::get_attachments_links($comment);
+									echo AgendaPartage_Forum_Message::get_attachments_links($comment);
 									break;
 								case 'mailbox_id' :
 									if( $value && ( $mailbox = get_post($value) ) )

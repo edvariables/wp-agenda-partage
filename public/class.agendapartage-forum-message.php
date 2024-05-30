@@ -454,7 +454,8 @@ class AgendaPartage_Forum_Message {
 		$icon = 'trash';
 
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
-		return AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, true, $data);
+		$confirm = 'Etes-vous sûr de vouloir supprimer ce message ?';
+		return AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, $confirm, $data);
 	}
 	/**
 	 * Retourne le html d'action pour approuver un message 
@@ -470,13 +471,15 @@ class AgendaPartage_Forum_Message {
 		$title = "Approuver ce message";
 		$icon = 'admin-post';
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_approve
-		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','approve'], $icon, $caption, $title, true, $data);
+		$confirm = 'Approuver ce message ?';
+		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','approve'], $icon, $caption, $title, $confirm, $data);
 
 		$caption = "Supprimer";
 		$title = "Mettre ce message à la corbeille";
 		$icon = 'trash';
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
-		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, true, $data);
+		$confirm = 'Etes-vous sûr de vouloir supprimer ce message ?';
+		$links[] = AgendaPartage::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, $confirm, $data);
 
 		$caption = "Envoyer un message";
 		$title = "Envoyer un message à l'auteur";
