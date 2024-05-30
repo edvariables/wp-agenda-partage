@@ -542,3 +542,7 @@ article.agdpevent ul.agdp-covoiturages-list label,
 article.covoiturage ul.agdp-agdpevents-list label {
 	font-weight: normal;
 }
+
+.wp-block-page-list li {
+  list-style: none;
+}

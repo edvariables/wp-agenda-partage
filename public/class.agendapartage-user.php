@@ -28,15 +28,15 @@ class AgendaPartage_User {
 	 */
 	public static function wpmu_signup_user_notification_subject( string $subject, string $user_login, string $user_email, string $key, array $meta ){
 		add_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail_set_reply_to' ), 10, 1);
-		return preg_replace('/^\[.*\]/', '[' . get_option('blogname') . ']', $subject);
+		return preg_replace('/^\[.*\]/', '[' . get_bloginfo('blogname') . ']', $subject);
 	}
 	/**
 	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
 	 */
 	public static function on_invited_user_email( $new_user_email, $user_id, $role, $newuser_key ){
-		$new_user_email['subject'] = preg_replace('/^\[.*\]/', '[' . get_option('blogname') . ']');
-		if( empty($new_user_email['headers']['Reply-to']) )
-			$new_user_email['headers']['Reply-to'] = get_option('admin_email');
+		$new_user_email['subject'] = preg_replace('/^\[.*\]/', '[' . get_bloginfo('blogname') . ']');
+		if( stripos($new_user_email['headers'], 'Reply-to:') === false )
+			$new_user_email['headers'] .= "\n".sprintf('Reply-to: "%s"<%s>', get_bloginfo('blogname'), get_bloginfo('admin_email'));
 		return $new_user_email;
 	}
 	/**
@@ -44,7 +44,7 @@ class AgendaPartage_User {
 	 */
 	public static function on_update_welcome_user_subject($subject){
 		$current_network = get_network();
-		$subject = str_replace( $current_network->site_name, get_option('blogname'), $subject);
+		$subject = str_replace( $current_network->site_name, get_bloginfo('blogname'), $subject);
 		add_filter( 'wp_mail', array(__CLASS__, 'on_wp_mail_set_reply_to' ), 10, 1);
 		return $subject;
 	}
@@ -52,7 +52,20 @@ class AgendaPartage_User {
 	 * Filtre avant envoi de l'email l'adresse de réponse
 	 */
 	public static function on_wp_mail_set_reply_to($args){
-		$args['headers']['Reply-to'] = get_option('admin_email');
+		if( is_multisite() ){
+			$current_network = get_network();
+			if( stripos($args['headers'], 'From:') !== false ){
+				$args['headers'] = preg_replace( '/From\:.*(\n|$)/i', sprintf('From: "%s" <%s>$1', get_bloginfo('blogname'), get_bloginfo('admin_email')), $args['headers']);
+			}
+			else {
+				$args['headers'].= "\n".sprintf('From: "%s" <%s>', get_bloginfo('blogname'), get_bloginfo('admin_email'));
+			}
+		}
+		
+		if( stripos($args['headers'], 'Reply-to:') == false )
+			$args['headers'] .= "\n".sprintf('Reply-to: "%s" <%s>', get_bloginfo('blogname'), get_bloginfo('admin_email'));
+		$args['headers'] = str_replace("\n\n", "\n", $args['headers']);
+		debug_log_callstack('on_wp_mail_set_reply_to', $args);
 		return $args;
 	}
 
@@ -258,13 +271,14 @@ class AgendaPartage_User {
 		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';
 		
 		
-		
 		$message = quoted_printable_encode(str_replace('\n', '<br>', $message));
 
 		$headers[] = 'MIME-Version: 1.0';
 		$headers[] = 'Content-type: text/html; charset=utf-8';
 		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
-
+		$headers[] = sprintf('From: %s<%s>', $site, get_bloginfo('admin_email'));
+		$headers[] = sprintf('Reply-to: %s<%s>', $site, get_bloginfo('admin_email'));
+		
 		if($success = wp_mail( $to
 			, '=?UTF-8?B?' . base64_encode($subject). '?='
 			, $message

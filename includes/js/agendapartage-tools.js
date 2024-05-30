@@ -95,6 +95,24 @@ jQuery( function( $ ) {
 			.on('submit', "form.agdp-ajax-action", agdp_ajax_action);
 
 /**
+ * wp-block-page-list Toggler
+ */
+		$( 'body' ).on('toggle-init', function() {
+			$('ul.wp-block-page-list.toggle')
+				.find('li > a').each(function(){
+					var active = $(this).nextAll('ul').length === 0;
+					$(this)
+						.before('<span class="toggle-trigger ' + (active ? 'active' : '') + '"></span>')
+						.next('ul')
+							.addClass('toggle-container')
+							.end()
+						.end()
+					;
+				})
+			;
+		});
+		
+/**
  * Toggler
  */
 		$( 'body' ).on('toggle-init', function() {
@@ -147,7 +165,7 @@ jQuery( function( $ ) {
 											})
 								;
 								$toggler
-									.toggleClass( "active" ).next(".toggle-container").slideDown( "normal" );
+									.toggleClass( "active" ).nextAll(".toggle-container").slideDown( "normal" );
 							}
 						}
 					},
@@ -165,13 +183,13 @@ jQuery( function( $ ) {
 								.appendTo($toggler.children(':first'));
 			}
 			else if(isActive) {
-				$toggler.removeClass( "active" ).next(".toggle-container").slideUp( "normal" );
+				$toggler.removeClass( "active" ).nextAll(".toggle-container").slideUp( "normal" );
 				//Si la touche Control est enfoncé, redéplie (et recharge ajax si besoin est)
 				 if( event.ctrlKey )
 					$toggler.click( );
 			}
 			else {
-				$toggler.addClass( "active" ).next(".toggle-container").slideDown( "normal" );
+				$toggler.addClass( "active" ).nextAll(".toggle-container").slideDown( "normal" );
 			}
 			return false;
 		} );
@@ -183,9 +201,9 @@ jQuery( function( $ ) {
 		} );
 		$( 'body' ).on('toggle-active', '.toggle-trigger', function(activate = true) {
 			if(activate)
-				$(this).addClass( "active" ).next(".toggle-container").slideDown( "normal" );
+				$(this).addClass( "active" ).nextAll(".toggle-container").slideDown( "normal" );
 			else
-				$(this).removeClass( "active" ).next(".toggle-container").slideUp( "normal" );
+				$(this).removeClass( "active" ).nextAll(".toggle-container").slideUp( "normal" );
 		} );
 	} );
 } );
