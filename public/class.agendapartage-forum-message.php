@@ -138,16 +138,30 @@ class AgendaPartage_Forum_Message {
 			return $fields;
 		}
 		
+		
 		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label>'
 			// . '<label><input name="title-prefix" type="radio">Je propose</label>'
 			// . '<label><input name="title-prefix" type="radio">Je cherche</label>'
 			. '<input id="title" name="title" type="text" maxlength="255" required></p>';
-		$send_email_field = '<div class="comment-form-send-email if-respond"><label for="send-email">'
-			. '<input id="send-email" name="send-email" type="checkbox">'
+		
+		$visible = AgendaPartage_Forum::get_property_is_value('reply_email', true);
+		$checked = AgendaPartage_Forum::get_property_is_value('reply_email_default', true);
+		$send_email_field 
+			= sprintf('<div class="comment-form-send-email if-respond %s"><label for="send-email">'
+				, $visible ? '' : 'hidden cache')
+			. sprintf('<input id="send-email" name="send-email" type="checkbox" %s>'
+				, $checked ? ' checked="checked"' : '')
 			. ' Envoyez votre réponse par e-mail à l\'auteur du message</label></div>';
-		$is_private_field = '<p class="comment-form-is-private if-respond"><label for="is-private">'
-			. '<input id="is-private" name="is-private" type="checkbox">'
+		
+		$visible = AgendaPartage_Forum::get_property_is_value('reply_is_private', true);
+		$checked = AgendaPartage_Forum::get_property_is_value('reply_is_private_default', true);
+		$is_private_field 
+			= sprintf('<p class="comment-form-is-private if-respond %s"><label for="is-private">'
+				, $visible ? '' : 'hidden')
+			. sprintf('<input id="is-private" name="is-private" type="checkbox" %s>'
+				, $checked ? ' checked="checked"' : '')
 			. ' Ce message est privé, entre vous et l\'auteur du message. Sinon, il est visible par tous les membres sur ce site.</label></p>';
+		
 		$fields['comment'] = $title_field
 							. (isset($fields['comment']) ? $fields['comment'] : '')
 							. $send_email_field

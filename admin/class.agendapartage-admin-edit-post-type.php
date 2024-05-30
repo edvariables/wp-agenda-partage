@@ -26,7 +26,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			$is_array_field = strpos( $name, '[]' ) !== false;//TODO pour autre que textarea
 			if($parent_field !== null)
 				$name = sprintf($name, $parent_field['name']);
-			if($name == 'post_content')
+			if($name === 'post_content')
 				$meta_value = $post->post_content;
 			elseif( ! $post )
 				$meta_value = '';
@@ -39,8 +39,11 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			else
 				$meta_value = get_post_meta($post->ID, $name, true);
 			$id = ! array_key_exists ( 'id', $field ) || ! $field['id'] ? $name : $field['id'];
-			if($parent_field !== null)
-				$id = sprintf('%s.%s', $id, array_key_exists('id', $parent_field) ? $parent_field['id'] : $parent_field['name']); //TODO A vérifier à l'enregistrement
+			if($parent_field !== null){
+				$parent_id = array_key_exists('id', $parent_field) ? $parent_field['id'] : $parent_field['name'];
+				if( $parent_id )
+					$id = sprintf('%s.%s', $id, $parent_id); //TODO A vérifier à l'enregistrement
+			}
 			$val = ! array_key_exists ( 'value', $field ) || ! $field['value'] ? $meta_value : $field['value'];
 			$default_val = ! array_key_exists ( 'default', $field ) || ! $field['default'] ? null : $field['default'];
 			$label = ! array_key_exists ( 'label', $field ) || ! $field['label'] ? false : $field['label'];
@@ -98,6 +101,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'label':
 					echo '<label id="'.$id.'" for="'.$name.'"'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
 						. '>' . htmlentities($label).'</label>';
 					break;
@@ -106,6 +110,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'link':
 					echo '<label id="'.$id.'" for="'.$name.'"'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
 						. '>' . $label.'</label>';
 					break;
@@ -117,6 +122,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 					echo '<textarea id="'.$id.'" name="'.$name.'"'
 						. ($readonly ? ' readonly ' : '')
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
 						.'>'
 						. htmlentities($val).'</textarea>'
@@ -138,6 +144,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				case 'select':
 					echo '<select id="'.$id.'"'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
+						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						.' name="' . $name
 						. ($readonly ? ' readonly ' : '')
 						. ($input_attributes ? ' '.$input_attributes : '')

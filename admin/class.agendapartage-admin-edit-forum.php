@@ -282,11 +282,58 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'default' => true,
 		];
 		
+		//Affichage de la case à cocher  Envoyez votre réponse par e-mail à l'auteur du message
+		$fields[] = [
+			'name' => '',
+			'label' => __('En réponse, option "Envoyez votre réponse par e-mail..."', AGDP_TAG),
+			'input' => 'label',
+			'fields' => [
+				//Affichage de la case à cocher
+				[
+					'name' => 'forum_reply_email',
+					'label' => __('Afficher', AGDP_TAG),
+					'input' => 'checkbox',
+					'default' => true,
+				],
+				//Valeur par défault de la case à cocher
+				[
+					'name' => 'forum_reply_email_default',
+					'label' => __('Cocher par défaut', AGDP_TAG),
+					'input' => 'checkbox',
+					'default' => true,
+				],
+			],
+		];
+		
+		//Affichage de la case à cocher Ce message est privé...
+		$fields[] = [
+			'name' => '',
+			'label' => __('En réponse, option "Ce message est privé..."', AGDP_TAG),
+			'input' => 'label',
+			'fields' => [
+				//Affichage de la case à cocher
+				[
+					'name' => 'forum_reply_is_private',
+					'label' => __('Afficher', AGDP_TAG),
+					'input' => 'checkbox',
+					'default' => true,
+				],
+				//Valeur par défault de la case à cocher
+				[
+					'name' => 'forum_reply_is_private_default',
+					'label' => __('Cocher par défaut', AGDP_TAG),
+					'input' => 'checkbox',
+					'default' => true,
+				],
+			],
+		];
+		
 		//Style css
 		$fields[] = [
 			'name' => 'forum_comment_css',
 			'label' => __('Styles au format css', AGDP_TAG),
-			'input' => 'textarea'
+			'input' => 'textarea',
+			'style' => 'margin-top: 1.2em;',
 		];
 		
 		return $fields;

@@ -302,8 +302,8 @@ input.wpcf7-form-control[name="nl-user-name"], input.wpcf7-form-control[name="nl
 	display: none;
 }
 
-form.wpcf7-form .hidden {
-	display: none;
+/* form.wpcf7-form  */.hidden {
+	display: none !important;
 }
 form.wpcf7-form .tax_terms_titles {
 	margin-left: 1.2em;
