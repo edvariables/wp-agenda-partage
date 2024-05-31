@@ -30,14 +30,16 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				$meta_value = $post->post_content;
 			elseif( ! $post )
 				$meta_value = '';
-			elseif(is_a($post, 'WP_Term'))
-				$meta_value = get_term_meta($post->term_id, $name, true);
-			elseif( $is_array_field ){
-				$meta_key = str_replace('[]', '', $name);
-				$meta_value = get_post_meta($post->ID, $meta_key, false);
+			elseif( $name ){
+				if( is_a($post, 'WP_Term'))
+					$meta_value = get_term_meta($post->term_id, $name, true);
+				elseif( $name && $is_array_field ){
+					$meta_key = str_replace('[]', '', $name);
+					$meta_value = get_post_meta($post->ID, $meta_key, false);
+				}
+				else
+					$meta_value = get_post_meta($post->ID, $name, true);
 			}
-			else
-				$meta_value = get_post_meta($post->ID, $name, true);
 			$id = ! array_key_exists ( 'id', $field ) || ! $field['id'] ? $name : $field['id'];
 			if($parent_field !== null){
 				$parent_id = array_key_exists('id', $parent_field) ? $parent_field['id'] : $parent_field['name'];
@@ -103,7 +105,8 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
-						. '>' . htmlentities($label).'</label>';
+						. '>' . htmlentities($label).'</label>'
+						. ($val ? $val : '');
 					break;
 
 				////////////////

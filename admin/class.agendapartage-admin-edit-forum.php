@@ -11,6 +11,8 @@
  */
 class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type {
 
+	private static $block_editor_is_used;
+
 	public static function init() {
 		parent::init();
 
@@ -36,12 +38,12 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			if( isset($_REQUEST['block-editor']) && $_REQUEST['block-editor'] == false ){
 				add_filter('wp_redirect', function($location, $status){
 											return $location . '&block-editor=0';}, 10, 2);
-				return false;
+				return self::$block_editor_is_used = false;
 			}
 				
 			// return false;
 		}
-		return $use_block_editor;
+		return self::$block_editor_is_used = $use_block_editor;
 	}
 		
 	/**
@@ -344,12 +346,24 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		
 		$fields = [];
 		
+		if( self::$block_editor_is_used )
+			$fields[] = [
+				'name' => false,
+				'label' => __('Suggestion', AGDP_TAG),
+				'input' => 'label',
+				'value' => sprintf('Vous visualiserez mieux le résultat de la création des membres en passant <a href="%s">par cet affichage</a>.'
+									, get_edit_post_link( $post ) . '&block-editor=0'),
+			];
+		
 		$meta_key = '_new-subscribers-emails';
 		$fields[] = [
 			'name' => $meta_key,
 			'label' => __('Adresse(s) e-mail', AGDP_TAG),
 			'input' => 'text',
-			'learn-more' => 'les adresses doivent être séparées d\'une virgule ou d\'un point-virgule.'
+			'learn-more' => 'les adresses doivent être séparées d\'une virgule ou d\'un point-virgule.',
+			'comments' => ! self::$block_editor_is_used ? false :
+							sprintf('Suggestion : vous visualiserez mieux le résultat de la création des membres en passant <a href="%s">par cet affichage</a>.'
+								, get_edit_post_link( $post ) . '&block-editor=0')
 		];
 		
 		$newsletters = [ '' => ''];
