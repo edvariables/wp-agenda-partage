@@ -35,6 +35,9 @@ class AgendaPartage_User {
 		if(current_user_can('manage_network'))
 			return;
 		
+		//See wp-includes/class-wp-admin-bar.php, function add_menus(). $priority must match to be removed.
+		remove_action('admin_bar_menu', 'wp_admin_bar_wp_menu', 10 );
+		
 		$blogs = get_blogs_of_user(get_current_user_id());
 		if( count($blogs) <= 1 )
 			remove_action('admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20 );
