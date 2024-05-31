@@ -21,7 +21,25 @@ class AgendaPartage_User {
 			add_filter( 'wpmu_signup_user_notification_subject', array(__CLASS__, 'wpmu_signup_user_notification_subject' ), 20, 5);
 			add_filter( 'update_welcome_user_subject', array(__CLASS__, 'on_update_welcome_user_subject' ), 20, 1);
 		}
+		
+		// Masque le menu Mes sites
+		if( is_multisite() ) {
+			add_action( 'add_admin_bar_menus', array(__CLASS__, 'on_add_admin_bar_menus'), 1 );
+		}
 	}
+
+	/**
+	 * Masque le menu Mes sites
+	 */
+	public static function on_add_admin_bar_menus( ){
+		if(current_user_can('manage_network'))
+			return;
+		
+		$blogs = get_blogs_of_user(get_current_user_id());
+		if( count($blogs) <= 1 )
+			remove_action('admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20 );
+	}
+
 
 	/**
 	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur

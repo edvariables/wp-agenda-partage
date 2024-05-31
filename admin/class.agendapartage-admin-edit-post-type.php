@@ -40,6 +40,8 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 				else
 					$meta_value = get_post_meta($post->ID, $name, true);
 			}
+			else
+				$meta_value = '';
 			$id = ! array_key_exists ( 'id', $field ) || ! $field['id'] ? $name : $field['id'];
 			if($parent_field !== null){
 				$parent_id = array_key_exists('id', $parent_field) ? $parent_field['id'] : $parent_field['name'];
@@ -106,7 +108,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
 						. '>' . htmlentities($label).'</label>'
-						. ($val ? $val : '');
+					;
 					break;
 
 				////////////////

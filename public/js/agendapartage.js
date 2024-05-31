@@ -11,9 +11,12 @@ jQuery( function( $ ) {
 	 * Les valeurs des champs sont dans un input.agdpevent_edit_form_data hidden
 	 */
 	$( document ).ready(function() {
+		// on wpcf7_form_fields-init
 		$( 'body' ).on('wpcf7_form_fields-init', function(){
 			
-			//Evènements et covoiturages
+			/****************
+			 *	Evènements et covoiturages
+			 *******************************/
 			$("input.agdpevent_edit_form_data, input.covoiturage_edit_form_data").each(	function(){
 				/** Complète les champs de formulaires avec les valeurs fournies **/
 				var $agdpDataInput = $(this);
@@ -125,7 +128,11 @@ jQuery( function( $ ) {
 			});
 			
 			
-			;
+			
+			/****************
+			 *	Forums et commentaires
+			 ****************************/
+			
 			//Ajoute des champs d'échappement
 			$('form.wpcf7-form .' + AGDP_JS_SKIP_FIELD + ' :input[name]').each(function(){
 				var name = this.getAttribute('name');
@@ -192,6 +199,7 @@ jQuery( function( $ ) {
 		/**
 		 * A cause du reCaptcha, désactivation de la validation du formulaire par la touche Enter pour la remplacer par un Tab
 		 */
+		//on keypress return
 		$('body').on('keypress', 'form.wpcf7-form input', function(e) {
 			if(e.keyCode == 13) {
 				var input = this;
@@ -211,13 +219,13 @@ jQuery( function( $ ) {
 			}
 		});
 		
-		//
+		// preventdefault-reset
 		$( 'body' ).on('reset', 'form.wpcf7-form.preventdefault-reset', function(e) {
 			e.preventDefault();
 		});
 
 		/**
-		 * Scroll jusqu'au #hash de la forme #eventid%d (correction de la hauteur du menu)
+		 * Scroll jusqu'au #hash de la forme #(event|covoiturage)id%d (correction de la hauteur du menu)
 		 */
 		if( window.location.hash
 		&& /(event|covoiturage)id[0-9]+/.test(window.location.hash)) {
@@ -297,9 +305,18 @@ jQuery( function( $ ) {
 		}); 
 		
 		/**
-		 * Abonnements aux lettres-infos et aux forums
-		 * La saisie d'une adresse email met à jour les options d'abonnement, masque ou affiche la création de compte
+		 * Covoiturage
 		 */
+		//Filtres de l'agenda
+		// Covoiture : obtention du n° de téléphone masqué
+		$( 'body' ).on('click', '#email4phone-title', function(e) {
+			$(this).toggleClass('active');
+		});
+		
+		/**
+		 * Page Abonnements aux lettres-infos et aux forums
+		 */
+		// La saisie d'une adresse email met à jour les options d'abonnement, masque ou affiche la création de compte
 		$('form.wpcf7-form input[name="nl-email"]').on('change', function(event){
 			var $actionElnt = $(this);
 			var $form = $actionElnt.parents('form:first');
@@ -390,13 +407,6 @@ jQuery( function( $ ) {
 				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
 		}); 
 	
-	
-		
-		// Covoiture : obtention du n° de téléphone masqué
-		$( 'body' ).on('click', '#email4phone-title', function(e) {
-			$(this).toggleClass('active');
-		});
-		
 		// Forum, commentaire
 		$( 'body' ).on('click', 'a.agdp-ajax-mark_as_ended', function(e) {
 			var $actionElnt = $(this);

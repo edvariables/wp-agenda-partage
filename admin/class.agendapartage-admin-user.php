@@ -255,4 +255,5 @@ class AgendaPartage_Admin_User {
 		return "Echec de suppression de l'information.";
 	}
 
+
 }

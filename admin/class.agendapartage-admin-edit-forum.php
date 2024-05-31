@@ -349,10 +349,13 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		if( self::$block_editor_is_used )
 			$fields[] = [
 				'name' => false,
-				'label' => __('Suggestion', AGDP_TAG),
-				'input' => 'label',
-				'value' => sprintf('Vous visualiserez mieux le résultat de la création des membres en passant <a href="%s">par cet affichage</a>.'
-									, get_edit_post_link( $post ) . '&block-editor=0'),
+				'input' => 'link',
+				'label' => sprintf('%s Vous visualiserez mieux le résultat de la '
+									.'<a href="%s&block-editor=0#agdp_forum-subscribers-add">'
+									.'création des membres en passant par cet affichage</a>.<br><br>'
+								, AgendaPartage::icon('info')
+								, get_edit_post_link( $post )
+							),
 			];
 		
 		$meta_key = '_new-subscribers-emails';
@@ -361,9 +364,6 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'label' => __('Adresse(s) e-mail', AGDP_TAG),
 			'input' => 'text',
 			'learn-more' => 'les adresses doivent être séparées d\'une virgule ou d\'un point-virgule.',
-			'comments' => ! self::$block_editor_is_used ? false :
-							sprintf('Suggestion : vous visualiserez mieux le résultat de la création des membres en passant <a href="%s">par cet affichage</a>.'
-								, get_edit_post_link( $post ) . '&block-editor=0')
 		];
 		
 		$newsletters = [ '' => ''];
