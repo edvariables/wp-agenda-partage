@@ -276,6 +276,29 @@ class AgendaPartage_Newsletter {
 	}
 	
 	/**
+	 * Retourne la page source de données du contenu de la newsletter.
+	 */
+	public static function get_content_source_page($newsletter_id){
+			
+		if(is_a($newsletter_id, 'WP_Post')){
+			$newsletter = $newsletter_id;
+			$newsletter_id = $newsletter->ID;
+		}
+		if( $source = self::get_content_source($newsletter_id, true)){
+			switch( $source[0] ){
+				case 'page' :
+					return get_post($source[1]);
+				case AgendaPartage_Evenement::post_type :
+					return get_post(AgendaPartage::get_option('agenda_page_id'));
+				case AgendaPartage_Covoiturage::post_type :
+					return get_post(AgendaPartage::get_option('covoiturages_page_id'));
+			}
+		}
+		
+		debug_log('get_content_source_post : NO RESULT !', $newsletter_id);
+	}
+	
+	/**
 	 * Retourne l'antériorité maximale des messages à publier de la newsletter.
 	 */
 	public static function get_anteriority_max($newsletter_id){
@@ -950,6 +973,9 @@ class AgendaPartage_Newsletter {
 		}
 	}
 	
+	/**
+	 * Retourne les newsletters actives
+	 */
 	public static function get_newsletters(){
 		$newsletters = array();
 		
@@ -1004,7 +1030,7 @@ class AgendaPartage_Newsletter {
 			return false;
 
 		if($send_email)
-			$html = AgendaPartage_User::send_welcome_email($user, false, false, true);
+			AgendaPartage_User::send_welcome_email($user, false, false, true);
 		return $user;
 	}
 	
@@ -1272,7 +1298,7 @@ class AgendaPartage_Newsletter {
 			else {
 				$user_is_new = true;
 				$user_name = $inputs['nl-user-name'];
-				$user = self::create_subscriber_user( $email, $user_name);
+				$user = self::create_subscriber_user( $email, $user_name, false);
 				if( ! $user ){
 					$abort = true;
 					$error_message = sprintf('Désolé, une erreur est survenue, nous n\'avons pas pu créer votre compte (%s).', $email);
@@ -1290,7 +1316,7 @@ class AgendaPartage_Newsletter {
 		$messages = ($contact_form->get_properties())['messages'];
 		$messages['mail_sent_ng'] = sprintf("%s\r\nDésolé, une erreur est survenue, la modification de votre inscription n'a pas fonctionné.", $messages['mail_sent_ng']);
 		if($user_is_new)
-			$messages['mail_sent_ok'] = sprintf("Votre compte %s a été créé, vous allez recevoir un e-mail de connexion.\r\nVous n'avez aucun abonnement à la lettre-info.", $email);
+			$messages['mail_sent_ok'] = sprintf("Votre compte %s a été créé, vous allez recevoir un e-mail de connexion.", $email);
 		elseif( $create_user )
 			$messages['mail_sent_ok'] = sprintf("Un compte existe déjà avec cette adresse %s. Vous pouvez vous connecter.\r\nDemandez un nouveau mot de passe si vous l'avez oublié.", $email);
 		else
@@ -1386,6 +1412,9 @@ class AgendaPartage_Newsletter {
 				}
 			}
 		}
+		
+		if( $user_is_new )
+			AgendaPartage_User::send_welcome_email($user, false, false, true);
 		
 		if( empty($messages['mail_sent_ok']) )
 			$messages['mail_sent_ok'] = 'Aucun changement. Bonne continuation.';

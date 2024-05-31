@@ -257,9 +257,28 @@ class AgendaPartage_User {
 		
 		$subscriptions = [];
 		foreach( AgendaPartage_Newsletter::get_newsletters() as $newsletter){
-			$subscription_period_name = AgendaPartage_Newsletter::subscription_period_name(AgendaPartage_Newsletter::get_subscription($email), $newsletter);
-			if($subscription_period_name)
-				$subscriptions[] = sprintf('<br>Votre abonnement à la lettre-info %s : %s.', $subscription_period_name);
+			$subscription_period_name = AgendaPartage_Newsletter::subscription_period_name(AgendaPartage_Newsletter::get_subscription($email, $newsletter), $newsletter);
+			if($subscription_period_name){
+				$page = AgendaPartage_Newsletter::get_content_source_page( $newsletter->ID );
+				if( $page ) 
+					$subscriptions[] = sprintf('<br>Votre abonnement à la lettre-info <a href="%s">%s</a> : %s.'
+						, get_permalink( $page )
+						, $page->post_title
+						, $subscription_period_name);
+			}
+		}
+		
+		foreach( AgendaPartage_Forum::get_forums() as $forum){
+			if( ( $subscription_role = AgendaPartage_Forum::get_user_subscription($forum, $email) )
+			&& isset( AgendaPartage_Forum::subscription_roles[$subscription_role] )
+			&& ( $subscription_role !== 'banned' )
+		){
+				$subscription_role_name = AgendaPartage_Forum::subscription_roles[$subscription_role];
+				$subscriptions[] = sprintf('<br>Votre adhésion à <a href="%s">%s</a> : %s.'
+					, get_permalink($forum)
+					, $forum->post_title
+					, $subscription_role_name);
+			}
 		}
 		if( count($subscriptions) )
 			$message .= '<br>' . implode("\n", $subscriptions);

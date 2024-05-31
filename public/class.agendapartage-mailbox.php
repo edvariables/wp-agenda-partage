@@ -97,26 +97,6 @@ class AgendaPartage_Mailbox {
 	}
 	
 	/**
-	 * Retourne le forum associé à une newsletter.
-	 */
-	public static function get_mailbox_of_newsletter($newsletter_id){
-		if( is_a($newsletter_id, 'WP_Post') ){
-			if($newsletter_id->post_type != AgendaPartage_Newsletter::post_type)
-				return false;
-			$newsletter_id = $newsletter_id->ID;
-		}
-		//TODO
-		if( $source = AgendaPartage_Newsletter::get_content_source($newsletter_id, true)){
-			if( $source[0] === self::post_type ){
-				if( $mailbox = get_post( $source[1] )){
-					return $mailbox;
-				}
-			}
-		}
-		return false;
-	}
-	
-	/**
 	 * Returns posts where post_status == $published_only ? 'publish' : * && meta['cron-enable'] == $cron_enable_only
 	 */
 	 public static function get_mailboxes( $published_only = true, $cron_enable_only = false){
