@@ -711,9 +711,7 @@ class AgendaPartage {
 	 */
 	public static function update_db(){
 		$current_version = self::get_db_version();
-		foreach([ '1.0.22'
-				, '1.0.23'
-				, '1.1.1'
+		foreach([ '1.2.2'
 			] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
 				continue;

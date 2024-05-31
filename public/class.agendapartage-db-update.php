@@ -1,6 +1,26 @@
 <?php
 
 class AgendaPartage_DB_Update {
+	
+	/**
+	*/
+	public static function update_db_1_2_2(){
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$sqls = [];
+		$sqls["clear-forums"] = "DELETE FROM {$blog_prefix}postmeta WHERE meta_key = 'agdpmailbox' AND meta_value=''";
+		foreach($sqls as $name => $sql){
+			$result = $wpdb->query($sql);
+		
+			if( $result === false ){
+				debug_log('update_db '.$name.' ERROR ', $sql);
+			}
+			else
+				debug_log('update_db '.$name.' OK : ' . $result);
+		}
+		
+		return true;
+	}
 
 	/**
 	*/
