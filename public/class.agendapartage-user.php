@@ -267,7 +267,14 @@ class AgendaPartage_User {
 						, $subscription_period_name);
 			}
 		}
+		if( count($subscriptions) )
+			$message .= '<br>' . implode("\n", $subscriptions);
 		
+		$url = get_permalink(AgendaPartage::get_option('newsletter_subscribe_page_id'));
+		$url = add_query_arg('email', $email, $url);
+		$message .= sprintf('<br>Vous pouvez modifier votre inscription aux lettres-infos en <a href="%s">cliquant ici</a>.', $url);
+		
+		$subscriptions = [];
 		foreach( AgendaPartage_Forum::get_forums() as $forum){
 			if( ( $subscription_role = AgendaPartage_Forum::get_user_subscription($forum, $email) )
 			&& isset( AgendaPartage_Forum::subscription_roles[$subscription_role] )
@@ -283,10 +290,6 @@ class AgendaPartage_User {
 		if( count($subscriptions) )
 			$message .= '<br>' . implode("\n", $subscriptions);
 		
-		$url = get_permalink(AgendaPartage::get_option('newsletter_subscribe_page_id'));
-		$url = add_query_arg('email', $email, $url);
-		$message .= sprintf('<br>Vous pouvez modifier votre inscription aux lettres-infos en <a href="%s">cliquant ici</a>.', $url);
-
 		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';
 		
 		
