@@ -97,7 +97,7 @@ jQuery( function( $ ) {
 		$( 'body' ).on('toggle-init', function() {
 			$('ul.wp-block-page-list.toggle')
 				.find('li > a').each(function(){
-					var active = $(this).nextAll('ul').length === 0;
+					var active = $(this).nextAll('ul:first').length === 0;
 					$(this)
 						.before('<span class="toggle-trigger ' + (active ? 'active' : '') + '"></span>')
 						.next('ul')
@@ -147,7 +147,7 @@ jQuery( function( $ ) {
 						$spinner.remove();
 						if(response){
 							if(typeof response === 'string' || response instanceof String){
-								var $container = $toggler.next('.toggle-container');
+								var $container = $toggler.nextAll('.toggle-container:first');
 								if($container.length == 0)
 									$container = $('<div class="toggle-container"/>').appendTo($toggler);
 								$container
@@ -162,7 +162,7 @@ jQuery( function( $ ) {
 											})
 								;
 								$toggler
-									.toggleClass( "active" ).nextAll(".toggle-container").slideDown( "normal" );
+									.toggleClass( "active" ).nextAll(".toggle-container:first").slideDown( "normal" );
 							}
 						}
 					},
@@ -180,13 +180,13 @@ jQuery( function( $ ) {
 								.appendTo($toggler.children(':first'));
 			}
 			else if(isActive) {
-				$toggler.removeClass( "active" ).nextAll(".toggle-container").slideUp( "normal" );
+				$toggler.removeClass( "active" ).nextAll(".toggle-container:first").slideUp( "normal" );
 				//Si la touche Control est enfoncé, redéplie (et recharge ajax si besoin est)
 				 if( event.ctrlKey )
 					$toggler.click( );
 			}
 			else {
-				$toggler.addClass( "active" ).nextAll(".toggle-container").slideDown( "normal" );
+				$toggler.addClass( "active" ).nextAll(".toggle-container:first").slideDown( "normal" );
 			}
 			return false;
 		} );
@@ -198,9 +198,9 @@ jQuery( function( $ ) {
 		} );
 		$( 'body' ).on('toggle-active', '.toggle-trigger', function(activate = true) {
 			if(activate)
-				$(this).addClass( "active" ).nextAll(".toggle-container").slideDown( "normal" );
+				$(this).addClass( "active" ).nextAll(".toggle-container:first").slideDown( "normal" );
 			else
-				$(this).removeClass( "active" ).nextAll(".toggle-container").slideUp( "normal" );
+				$(this).removeClass( "active" ).nextAll(".toggle-container:first").slideUp( "normal" );
 		} );
 	} );
 } );
