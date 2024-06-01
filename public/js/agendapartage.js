@@ -322,7 +322,7 @@ jQuery( function( $ ) {
 			var $form = $actionElnt.parents('form:first');
 			var email = $actionElnt.val();
 			if( ! email ){
-				$form.find('.if-not-connected').show();
+				$form.find('.nl-user-fields').show();
 				return;
 			}
 			$form
@@ -374,9 +374,9 @@ jQuery( function( $ ) {
 							is_user = response.is_user;
 						}
 						if(is_user)
-							$form.find('.if-not-connected').hide();
+							$form.find('.nl-user-fields').hide();
 						else {
-							$form.find('.if-not-connected').show();
+							$form.find('.nl-user-fields').show();
 							$form.find('.wpcf7-list-item.first input[name^="nl-period-"]').prop('checked', true);
 						}
 						

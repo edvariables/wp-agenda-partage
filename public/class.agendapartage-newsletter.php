@@ -722,11 +722,11 @@ class AgendaPartage_Newsletter {
 		}
 		
 		/** Create account **/
-		if( self::get_current_user()){
-			$html = preg_replace('/\<div\s+class="if-not-connected"/'
-								, '$0 style="display: none"' //cf .js
-								, $html);
-		}
+		// if( self::get_current_user()){
+			// $html = preg_replace('/\<div\s+class="nl-user-fields"/'
+								// , '$0 style="display: none"' //cf .js
+								// , $html);
+		// }
 		
 		/** reCaptcha */
 		if( AgendaPartage_WPCF7::may_skip_recaptcha() ){

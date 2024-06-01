@@ -277,14 +277,11 @@ input.wpcf7-form-control[name="cov-nb-places"] {
 .wpcf7-form .radios-br .wpcf7-form-control-wrap .wpcf7-list-item{
 	display: block;
 }
-/* .wpcf7-form label[for="nl-user-name"], .wpcf7-form label[for="nl-user-city"]{
-	margin-left: 1em;
+
+/* nl-user-fields */
+.wpcf7-form .nl-user-fields {
+	display: none; /*js while display*/
 }
-input.wpcf7-form-control[name="nl-user-name"], input.wpcf7-form-control[name="nl-user-city"] {
-    display: inline;
-    width: auto;
-    margin-left: 1em;
-} */
 .wpcf7-form .nl-user-fields label, .nl-user-fields p {
 	margin-bottom: 0px;
 }
@@ -292,6 +289,7 @@ input.wpcf7-form-control[name="nl-user-name"], input.wpcf7-form-control[name="nl
   white-space: nowrap;
 }
 
+/* nl-period */
 .wpcf7-list-item input[name="nl-period"] + span.wpcf7-list-item-label {
 	font-weight: normal;
 }
