@@ -61,7 +61,7 @@ class AgendaPartage_Forum {
 			add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
 		}
 		
-		add_filter('wp_get_nav_menu_items', array(__CLASS__, 'on_wp_get_nav_menu_items'), 10, 3);
+		// add_filter('wp_get_nav_menu_items', array(__CLASS__, 'on_wp_get_nav_menu_items'), 10, 3);
 		
 		add_filter('comments_array', array(__CLASS__, 'on_comments_array'), 10, 2);
 	}
@@ -136,7 +136,7 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne un tableau de pages de forum masquées à l'utilisateur courant
 	 */
-	public static function get_hidden_forums( $args = false){
+	/* public static function get_hidden_forums( $args = false){
 		if( current_user_can('moderate_comments') ) 
 			return self::get_forums();
 		
@@ -174,7 +174,7 @@ class AgendaPartage_Forum {
 		$args['include'] = $hidden_forums;
 		$pages = self::get_forums( $args );
 		return $pages;
-	}
+	} */
 	
 	
 	
@@ -751,6 +751,23 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
+	 * Retourne les forums associés à une adresse email
+	 */
+	public static function get_forums_of_email($email){
+		return self::get_forums( [
+					'meta_query' => [[
+						'key' => 'agdpmailbox',
+						'value' => '0',
+						'compare' => '>'
+					], [
+						'key' => 'forum_email',
+						'value' => $email,
+						'compare' => '='
+					]]
+				]);
+	}
+	
+	/**
 	 * Avant affichage, filtre ou ajoute des commentaires
 	 */
 	public static function on_comments_array($comments, $post_id){
@@ -787,8 +804,7 @@ class AgendaPartage_Forum {
 	 * Filtre les menus suivants l'utilisateur et ses abonnements aux forums
 	 TODO Cache
 	 */
-	public static function on_wp_get_nav_menu_items( $items, $menu, $args ){
-		// debug_log('on_wp_get_nav_menu_items', $items/* , $menu, $args */ );
+	/* public static function on_wp_get_nav_menu_items( $items, $menu, $args ){
 		if( current_user_can('moderate_comments') )
 			return $items;
 		// on cherche plutôt à afficher les seuls titres de Commentaires
@@ -804,7 +820,7 @@ class AgendaPartage_Forum {
 			// }
 		// }
 		return $items;
-	}
+	} */
 	
 }
 ?>

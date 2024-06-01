@@ -87,7 +87,6 @@ class AgendaPartage_Admin_User {
 
 		<table class="form-table" role="presentation"><?php
 			$pages = AgendaPartage_Mailbox::get_pages_dispatches();
-			
 			$subscription_roles = AgendaPartage_Forum::subscription_roles;
 			$post_statuses = [
 				'publish' => 'publié',
@@ -97,7 +96,8 @@ class AgendaPartage_Admin_User {
 			$forum_counter = 0;
 			foreach( $pages as $page_id => $dispatches ){
 				$rights = $dispatches[0]['rights'];
-				if( ! AgendaPartage_Forum::get_forum_right_need_subscription( false, $rights ) )
+				if( ! AgendaPartage_Forum::get_forum_right_need_subscription( false, $rights )
+				 && ! $current_user_can_moderate_comments )
 					continue;
 				$page = get_post($page_id);
 				$user_subscription = AgendaPartage_Forum::get_subscription($profile_user->user_email, $page_id);

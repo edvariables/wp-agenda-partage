@@ -643,7 +643,7 @@ class AgendaPartage_Evenements {
 			$except_tax = '';
 		$taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
-			$taxonomy['terms'] = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name);
+			$taxonomy['terms'] = AgendaPartage_Evenement::get_all_terms($tax_name);
 			if( count($taxonomy['terms']) === 0 ){
 				unset($taxonomy['terms']);
 				continue;
@@ -1039,7 +1039,7 @@ class AgendaPartage_Evenements {
 		//$html .= AgendaPartage::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data, $href);
 		
 		$meta_name = 'download_link';
-		foreach(AgendaPartage_Evenement_Post_type::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion) as $term_id => $term){
+		foreach(AgendaPartage_Evenement::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion) as $term_id => $term){
 			$file_format = get_term_meta($term->term_id, $meta_name, true);
 			if( $file_format ){
 				$data = [

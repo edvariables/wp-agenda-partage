@@ -10,7 +10,7 @@ class AgendaPartage_Evenements_Import {
 	/**
 	* import_ics
 	*/
-	public static function import_ics($file_name, $default_post_status = 'publish', $original_file_name = null){
+	public static function import_ics($file_name, $data = 'publish', $original_file_name = null){
 		$iCal = self::get_vcalendar($file_name);
 		
 		$import_source = 'import_ics_' . $iCal['title'];
@@ -29,8 +29,15 @@ class AgendaPartage_Evenements_Import {
 			, date_i18n('d/m/Y H:i:s', strtotime($iCal['events'][0]['dtstamp']))
 			, empty($iCal['description']) ? '' : $iCal['description']);
 		
-		if(!$default_post_status)
-			$default_post_status = 'publish';
+		$default_post_status = 'publish';
+		if( is_string($data) ){
+			$default_post_status = $data;
+			$data = [ 'post_status' => $data ];
+		}
+		elseif( is_array( $data ) ){
+			if( ! empty( $data['post_status'] ) )
+				$default_post_status = $data['post_status'];
+		}
 		
 		if(($user = wp_get_current_user())
 		&& $user->ID){
@@ -41,6 +48,7 @@ class AgendaPartage_Evenements_Import {
 		}
 		debug_log("\r\nimport_ics events", $iCal['events'], "\r\n\r\n\r\n\r\n");
 		foreach($iCal['events'] as $event){
+			$post_title = $event['summary'];
 			
 			switch(strtoupper($event['status'])){
 				case 'CONFIRMED':
@@ -51,6 +59,7 @@ class AgendaPartage_Evenements_Import {
 					$post_status = 'draft';
 					break;
 				case 'CANCELLED':
+				case 'TRASH':
 					$post_status = 'trash';//TODO signaler
 					break;
 				default: 
@@ -58,7 +67,22 @@ class AgendaPartage_Evenements_Import {
 					$ignoreCounter++;
 					continue 2;
 			}
-			// if(($successCounter + $ignoreCounter) > 5) break;//debug
+			
+			if( $existing_post = self::get_existing_post($event) ){
+				if( $post_status !== 'publish' ){
+					AgendaPartage_Evenement::change_post_status($existing_post->ID, $post_status);
+					$successCounter++;
+					debug_log('[UPDATE]post_status = ' . $post_status . ' / ' . var_export($post_title, true));
+					continue;
+				}
+				//Update
+			}
+			
+			if( $post_status === 'trash' ){
+				$ignoreCounter++;
+				debug_log('[IGNORE]trash = ' . var_export($post_title, true));
+				continue;
+			}
 			
 			$dateStart = $event['dtstart'];
 			$dateEnd = empty($event['dtend']) ? '' : $event['dtend'];
@@ -84,26 +108,32 @@ class AgendaPartage_Evenements_Import {
 				'ev-localisation' => empty($event['location']) ? '' : trim($event['location']),
 				'ev-organisateur' => empty($event['organisateur']) ? '' : trim($event['organisateur']),
 				'ev-email' => empty($event['email']) ? '' : trim($event['email']),
+				'ev-user-email' => empty($event['user-email']) ? '' : trim($event['user-email']),
 				'ev-phone' => empty($event['phone']) ? '' : trim($event['phone']),
 				'ev-import-uid' => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
 				'ev-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source
 			);
-						
-			$post_title = $event['summary'];
+			
+			if( ! empty( $data['meta_input'] ) ){
+				$inputs = array_merge( $data['meta_input'], $inputs );
+			}
+			
 			$post_content = empty($event['description']) ? '' : trim($event['description']);
 			if ($post_content === null) $post_content = '';
 			
-			//Check doublon
-			$doublon = AgendaPartage_Evenement_Edit::get_post_idem($post_title, $inputs);
-			if($doublon){
-				//var_dump($doublon);var_dump($post_title);var_dump($inputs);
-				debug_log('[IGNORE]$doublon = ' . var_export($post_title, true));
-				$ignoreCounter++;
-				$url = AgendaPartage_Evenement::get_post_permalink($doublon);
-				$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
-				continue;				
+			if( ! $existing_post ){
+				//Check doublon
+				$doublon = AgendaPartage_Evenement_Edit::get_post_idem($post_title, $inputs);
+				if($doublon){
+					//var_dump($doublon);var_dump($post_title);var_dump($inputs);
+					debug_log('[IGNORE]$doublon = ' . var_export($post_title, true));
+					$ignoreCounter++;
+					$url = AgendaPartage_Evenement::get_post_permalink($doublon);
+					$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
+					continue;				
+				}
 			}
 			
 			// terms
@@ -120,7 +150,7 @@ class AgendaPartage_Evenements_Import {
 				if( is_string($event[$node_name]))
 					$event[$node_name] = explode(',', $event[$node_name]);
 				$taxonomies[$tax_name] = [];
-				$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms = AgendaPartage_Evenement::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				foreach($event[$node_name] as $term_name){
 					if( ! array_key_exists($term_name, $all_terms)){
 						$data = [
@@ -169,10 +199,17 @@ class AgendaPartage_Evenements_Import {
 			// if( strlen($postarr['post_content']) >= 10 )
 				// $postarr['post_content'] = substr($postarr['post_content'], 0, 5) . "[...]";
 			
-			$post_id = wp_insert_post( $postarr, true );
+			if( $existing_post ){
+				$postarr['ID'] = $existing_post->ID;
+				$post_id = wp_update_post( $postarr, true );
+			}
+			else
+				$post_id = wp_insert_post( $postarr, true );
 			
-			if(!$post_id || is_wp_error( $post_id )){
+			if( ! $post_id || is_wp_error( $post_id )){
 				$failCounter++;
+				if( $existing_post )
+					debug_log('[UPDATE]' . $existing_post->ID);
 				debug_log('[INSERT ERROR]$post_title = ' . var_export($post_title, true));
 				debug_log('[INSERT ERROR+]$post_content = ' . var_export($post_content, true));
 				$log[] = '<li class="error">Erreur de création de l\'évènement</li>';
@@ -204,6 +241,27 @@ class AgendaPartage_Evenements_Import {
 		
 		return $successCounter;
 	}
+	
+	
+	
+	/**
+	 * get_vcalendar($file_name)
+	 */
+	public static function get_existing_post($event){
+		if( ! empty($event['uid']) && $event['uid'] ){
+			foreach( get_posts([
+				'post_type' => AgendaPartage_Evenement::post_type
+				, 'post_status' => ['publish', 'pending', 'draft']
+				, 'meta_key' => 'ev-import-uid'
+				, 'meta_value' => $event['uid']
+				, 'meta_compare' => '='
+				, 'numberposts' => 1
+				]) as $post)
+				return $post;
+			return false;
+		}
+	}
+	
 	/**
 	 * get_vcalendar($file_name)
 	 */

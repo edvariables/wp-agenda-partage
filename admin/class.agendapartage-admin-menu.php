@@ -28,6 +28,8 @@ class AgendaPartage_Admin_Menu {
 		//add_action( 'admin_menu', array( __CLASS__, 'init_admin_menu' ), 5 ); 
 		add_action('wp_dashboard_setup', array(__CLASS__, 'init_dashboard_widgets') );
 		
+		add_action( 'admin_bar_menu', array(__CLASS__, 'on_wp_admin_bar_posts_menu'), 64 );
+		
 		global $pagenow;
 		if ( $pagenow === 'admin.php' && isset($_GET['page'])
 		&& in_array($_GET['page'], [AGDP_TAG, AGDP_TAG . '-rights'] )) {
@@ -1132,6 +1134,60 @@ class AgendaPartage_Admin_Menu {
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-rights.php');
 		AgendaPartage_Admin_Edit_Rights::init();
 		AgendaPartage_Admin_Edit_Rights::agendapartage_rights_page_html();
+	}
+	
+	
+
+	/**
+	 * Adds edit posts link with awaiting moderation count bubble.
+	 *
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar The WP_Admin_Bar instance.
+	 */
+	public static function on_wp_admin_bar_posts_menu( $wp_admin_bar ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		
+		self::add_admin_bar_posts_menu( $wp_admin_bar, 'AgendaPartage_Evenement' );
+		
+		if( AgendaPartage::get_option('covoiturage_managed') )
+			self::add_admin_bar_posts_menu( $wp_admin_bar, 'AgendaPartage_Covoiturage' );
+		
+	}
+	/**
+	 * Adds edit posts link with awaiting moderation count bubble.
+	 *
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar The WP_Admin_Bar instance.
+	 */
+	public static function add_admin_bar_posts_menu( $wp_admin_bar, $post_type_class ) {
+		if( ! ($pending_posts  = $post_type_class::get_pending_posts()) )
+			return;
+		
+		$postType = get_post_type_object($post_type_class::post_type);
+    
+		$pending_text = sprintf(
+			'%s %s%s en attente',
+			count($pending_posts),
+			$postType->labels->singular_name,
+			count($pending_posts) > 1 ? 's' : '',
+		);
+
+		$icon   = '<span class="ab-icon" aria-hidden="true"></span>';
+		$title  = '<span class="ab-label awaiting-mod posts-pending-count count-' . count($pending_posts) . '" aria-hidden="true">' . count($pending_posts) . '</span>';
+		$title .= '<span class="screen-reader-text posts-in-moderation-text">' . $pending_text . '</span>';
+
+		$wp_admin_bar->add_node(
+			array(
+				'id'    => $post_type_class::post_type . 's',
+				'title' => $icon . $title,
+				'href'  => add_query_arg([
+								'post_status' => 'pending',
+								'post_type' => $post_type_class::post_type
+							], admin_url( 'edit.php')),
+			)
+		);
 	}
 }
 

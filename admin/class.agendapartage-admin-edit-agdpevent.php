@@ -144,7 +144,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	 */
 	public static function register_metabox_admin(){
 		$title = self::$the_post_is_new ? __('Nouvel évènement', AGDP_TAG) : __('Évènement', AGDP_TAG);
-		add_meta_box('agdp_agdpevent-admin', $title, array(__CLASS__, 'metabox_callback'), AgendaPartage_Evenement::post_type, 'side', 'high');
+		add_meta_box('agdp_agdpevent-admin', $title, array(__CLASS__, 'metabox_callback'), AgendaPartage_Evenement::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -187,7 +187,8 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			self::get_metabox_dates_fields(),
 			self::get_metabox_description_fields(),
 			self::get_metabox_organisateur_fields(),
-			self::get_metabox_general_fields()
+			self::get_metabox_general_fields(),
+			self::get_metabox_admin_fields(),
 		);
 	}	
 
@@ -320,6 +321,19 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 	public static function get_metabox_admin_fields(){
 		global $post;
 		$fields = array();
+		
+		$meta_name = 'ev-import-uid';
+ 		if( ! self::$the_post_is_new
+		&& ($imported = get_post_meta($post->ID, $meta_name, true)) ) {
+			$fields[] = array(
+				'name' => $meta_name,
+				'label' => __('Evènement importé', AGDP_TAG),
+				'input' => 'text',
+				'value' => $imported,
+				'container_class' => 'side-box',
+			);
+		}
+		
 		if( ! self::$the_post_is_new ){
 			$user_info = get_userdata($post->post_author);
 			if( is_object($user_info) )
@@ -327,7 +341,8 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 			else
 				$user_email = false;
 		}
- 		if(self::$the_post_is_new
+		
+		if(self::$the_post_is_new
 		|| ($user_email != get_post_meta($post->ID, 'ev-user-email', true)) ) {
 			/* TODO $fields[] = array(
 				'name' => 'ev-create-user',

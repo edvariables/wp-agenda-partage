@@ -91,6 +91,8 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			, $codesecret ? self::secretcode_argument . '=' . $codesecret : ''
 		);
 		
+		$html .= '[agdpevent info="is-imported"]';
+		
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
 		if(is_email($email)){
@@ -332,8 +334,12 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			case 'send_email':
 				$need_can_user_change = false;
 				$meta_name = 'ev-user-email' ;
-				$email = self::get_post_meta($post, $meta_name, true);
+				if( ! ($email = self::get_post_meta($post, $meta_name, true)) )
+					if( ! ($email = self::get_post_meta($post, 'ev-email', true)) )
+						break;
 				$email_parts = explode('@', $email);
+				if( count($email_parts) < 2 )
+					throw new Exception('$email incorrect : ' . print_r($email, true));
 				$email_trunc = substr($email, 0, 3) . str_repeat('*', strlen($email_parts[0])-min(strlen($email_parts[0]),3));
 				if($caption === null){
 					$caption = 'E-mail de validation';
@@ -453,8 +459,10 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	 */
 	public static function agdpevent_action_unpublish($post_id) {
 		$post_status = 'pending';
-		if( self::change_post_status($post_id, $post_status) )
+		if( self::change_post_status($post_id, $post_status) ){
+			self::send_for_diffusion( $post_id );
 			return 'redir:' . self::get_post_permalink($post_id, true, self::secretcode_argument, 'etat=en-attente');
+		}
 		return 'Impossible de modifier cet évènement.';
 	}
 	/**
@@ -464,8 +472,10 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		$post_status = 'publish';
 		if( (! self::waiting_for_activation($post_id)
 			|| current_user_can('manage_options') )
-		&& self::change_post_status($post_id, $post_status) )
+		&& self::change_post_status($post_id, $post_status) ){
+			self::send_for_diffusion( $post_id );
 			return 'redir:' . self::get_post_permalink($post_id, self::secretcode_argument);
+		}
 		return 'Impossible de modifier le statut.<br>Ceci peut être effectué depuis l\'e-mail de validation.';
 	}
 	/**
@@ -486,7 +496,11 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		if(self::user_can_change_post($post_id)){
 			// $post = wp_delete_post($post_id);
 			$post = self::change_post_status($post_id, 'trash');
-			return ! is_a($post, 'WP_Error');
+			if( is_a($post, 'WP_Error') )
+				return false;
+			
+			self::send_for_diffusion( $post_id );
+			return true;
 		}
 		// echo self::user_can_change_post($post_id, false, true);
 		return false;
@@ -555,7 +569,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		$codesecret_url = add_query_arg(self::secretcode_argument, $codesecret, $url);
 		$message .= sprintf('<br><br>Pour modifier cet évènement, <a href="%s">cliquez ici</a>', $codesecret_url);
 		
-		$url = self::get_post_permalink($post);
+		$url = self::get_post_permalink($post, true);
 		$message .= sprintf('<br><br>La page publique de cet évènement est : <a href="%s">%s</a>', $url, $url);
 
 		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';

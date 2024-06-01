@@ -757,7 +757,7 @@ class AgendaPartage_Covoiturages {
 			$except_tax = '';
 		$taxonomies = AgendaPartage_Covoiturage_Post_type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
-			$taxonomy['terms'] = AgendaPartage_Covoiturage_Post_type::get_all_terms($tax_name);
+			$taxonomy['terms'] = AgendaPartage_Covoiturage::get_all_terms($tax_name);
 			if( count($taxonomy['terms']) === 0 ){
 				unset($taxonomy['terms']);
 				continue;
@@ -1179,7 +1179,7 @@ class AgendaPartage_Covoiturages {
 		$html .= AgendaPartage::get_ajax_action_link(false, ['covoiturages','download_file'], 'download', '', $title, false, $data);
 		
 		$meta_name = 'download_link';
-		foreach(AgendaPartage_Covoiturage_Post_type::get_all_terms(AgendaPartage_Covoiturage::taxonomy_diffusion) as $term_id => $term){
+		foreach(AgendaPartage_Covoiturage::get_all_terms(AgendaPartage_Covoiturage::taxonomy_diffusion) as $term_id => $term){
 			$file_format = get_term_meta($term->term_id, $meta_name, true);
 			if( $file_format ){
 				$data = [

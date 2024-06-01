@@ -67,6 +67,10 @@ class AgendaPartage_Mailbox {
 			$page = $page_id;
 			$page_id = $page->ID;
 		}
+		elseif( $page_id === AgendaPartage_Evenement::post_type )
+			return get_post( AgendaPartage::get_option('agenda_page_id') );
+		elseif( $page_id === AgendaPartage_Covoiturage::post_type )
+			return get_post( AgendaPartage::get_option('covoiturages_page_id') );
 		else {
 			$page = get_post($page_id);
 		}
@@ -348,6 +352,10 @@ class AgendaPartage_Mailbox {
 			ORDER BY page_id, mailbox_id
 		';
 		
+		$post_type_pages = [
+			''.AgendaPartage::get_option('agenda_page_id') => AgendaPartage_Evenement::post_type,
+			''.AgendaPartage::get_option('covoiturages_page_id') => AgendaPartage_Covoiturage::post_type,
+		];
 		$dispatches = [];
 		foreach( $wpdb->get_results( $sql ) as $dbrow )	{
 			$email = $dbrow->email;
@@ -360,10 +368,17 @@ class AgendaPartage_Mailbox {
 				$rights = 'P';
 			if( $dbrow->moderate === '0')
 				$dbrow->moderate = false;
+			
+			$page_id = $dbrow->page_id;
+			if( isset( $post_type_pages[''.$page_id]) )
+				$type = $post_type_pages[''.$page_id];
+			else
+				$type = 'page';
+			
 			$dispatches[ $email ] = [
 				'email' => $email,
-				'type' => 'page',
-				'id' => $dbrow->page_id,
+				'type' => $type,
+				'id' => $page_id,
 				'page_title' => $dbrow->page_title,
 				'mailbox' => $dbrow->mailbox_id,
 				'mailbox_title' => $dbrow->mailbox_title,
@@ -542,7 +557,7 @@ class AgendaPartage_Mailbox {
 					debug_log(__CLASS__ . '.import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
 					continue;
 				}
-			
+
 			switch( $dispatch[$email_to]['type'] ){
 				case 'page' :
 					$page_id = $dispatch[$email_to]['id'];
@@ -558,13 +573,13 @@ class AgendaPartage_Mailbox {
 					if($comment && ! is_wp_error($comment))
 						$imported[] = $comment;
 					break;
-				case 'agdpevent' :
-					$post = self::import_message_to_post( $mailbox, $message, 'AgendaPartage_Evenement' );
+				case AgendaPartage_Evenement::post_type :
+					$post = self::import_message_to_post_type( $mailbox, $message, $dispatch[$email_to]['type'] );
 					if($post && ! is_wp_error($post))
 						$imported[] = $post;
 					break;
-				case 'covoiturage' :
-					$post = self::import_message_to_post( $mailbox, $message, 'AgendaPartage_Covoiturage' );
+				case AgendaPartage_Covoiturage::post_type :
+					$post = self::import_message_to_post_type( $mailbox, $message, $dispatch[$email_to]['type'] );
 					if($post && ! is_wp_error($post))
 						$imported[] = $post;
 					break;
@@ -580,15 +595,64 @@ class AgendaPartage_Mailbox {
 	/**
 	 * Import as post
 	 */	
-	public static function import_message_to_post_type($mailbox, $message, $post_class){
-		// debug_log('import_message_to_post_type', $message, $post_class);
-			return false;
+	public static function import_message_to_post_type($mailbox, $message, $post_type){
+		debug_log('import_message_to_post_type', $message, $post_type);
+
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){
 			return false;
 		}
-		$post_type = $post_class::post_type;
 		
+		$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
+		$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
+		$post_parent = false;
+		$user_id = 0;
+		// var_dump($message);
+		if( ! isset($message['reply_to']) || ! $message['reply_to'] )
+			$message['reply_to'] = [ $message['from'] ];
+		$user_email = strtolower($message['reply_to'][0]->email);
+		$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
+		if( ($pos = strpos($user_name, '@')) !== false)
+			$user_name = substr( $user_name, 0, $pos);
+		
+		$dateTime = $message['date'];
+		$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
+		
+		$meta_input = [
+			'source' => 'imap',
+			'source_server' => $imap_server,
+			'source_email' => $imap_email,
+			'source_id' => $message['id'],
+			'source_no' => $message['msgno'],
+			'from' => strtolower($message['from']->email),
+			'to' => strtolower($message['to'][0]->email),
+			'title' => trim($message['subject']),
+			'attachments' => $message['attachments'],
+			'send_date' => $email_date,
+			'mailbox_id' => $mailbox->ID,
+		];
+		
+		$page = AgendaPartage_Mailbox::get_forum_page($post_type);
+		$post_status = AgendaPartage_Forum::get_forum_post_status( $page, false, $user_email );
+		debug_log('import_message_to_post_type $post_status', $page->post_title, $post_status, $user_email );
+		
+		$data = [
+			'post_status' => $post_status,
+			'meta_input' => $meta_input,
+		];
+		
+		//TODO attention aux boucles infinies
+		if( ! empty($message['attachments']) ){					
+			foreach($message['attachments'] as $attachment){
+				if( '.ics' === substr($attachment, -4) ){
+					$posts = AgendaPartage_Post_Abstract::import_post_type_ics($post_type, $attachment, $data);
+					debug_log('import_message_to_post_type import_post_type_ics $posts', $posts);
+					return $posts;
+				}
+			}
+		}
+		return false;
+		//TODO
 		if( ($post = self::get_existing_post( $post_type, $message )) ){
 		}
 		else {
@@ -819,27 +883,49 @@ class AgendaPartage_Mailbox {
 		
 	/*
 	 * wpcf7_skip_mail callback 
-	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
+	 * Les emails sortant à destination d'une adresse de forum sont interceptés
 	 */
 	public static function wpcf7_before_send_mail ($contact_form, &$abort, $submission){ 
+		// debug_log(__CLASS__.'::wpcf7_before_send_mail', $abort, isset($_POST['_wpcf7_container_post']) ? $_POST['_wpcf7_container_post'] : ' ! _wpcf7_container_post');
 		if($abort)
 			return;
+		
 		if( isset($_POST['_wpcf7_container_post']) ){
-			if( ! ($page = get_post($_POST['_wpcf7_container_post']) ) )
+			if( ! ($post = get_post($_POST['_wpcf7_container_post']) ) )
 				return;
-			$meta_key = AGDP_PAGE_META_MAILBOX;
-			if( $mailbox_id = get_post_meta( $page->ID, $meta_key, true)){
-				if( $dispatch = self::get_page_dispatch( $page->ID ) ){
-					return self::import_wpcf7_to_comment($contact_form, $abort, $submission, $mailbox_id, $dispatch, $page);
-				}
+			
+			switch($post->post_type){
+				case AgendaPartage_Evenement::post_type:
+				case AgendaPartage_Covoiturage::post_type:
+					//TODO
+		
+					// $properties = $contact_form->get_properties();
+					// $posted_data = $submission->get_posted_data();
+					// $mail_properties = $properties['mail'];
+					// $email_to = strtolower($mail_properties['recipient']);
+					
+					// if( ($forums = AgendaPartage_Forum::get_forums_of_email ($email_to))
+					// && count($forums) )
+						// return self::import_wpcf7_to_post_type($mailbox_id, $post, $post->post_type);
+					
+					break;
+				case AgendaPartage_Forum::post_type:
+					$meta_key = AGDP_PAGE_META_MAILBOX;
+					if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
+						if( $dispatch = self::get_page_dispatch( $post->ID ) ){
+							return self::import_wpcf7_to_comment($contact_form, $abort, $submission, $mailbox_id, $dispatch, $post);
+						}
+					}
+					break;
 			}
+		
 		}
 	} 
 	/*
 	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
 	 */
 	public static function import_wpcf7_to_comment($contact_form, &$abort, $submission, $mailbox_id, $dispatch, $page){
-		// debug_log('import_wpcf7_to_comment');
+		debug_log(__CLASS__.'::import_wpcf7_to_comment');
 		
 		$properties = $contact_form->get_properties();
 		$posted_data = $submission->get_posted_data();

@@ -17,7 +17,7 @@ class AgendaPartage_Evenements_Export {
 			case 'vcalendar':
 				$file_format = 'ics';
 			case 'ics':
-				$export_data = self::export_posts_ics($posts);
+				$export_data = self::export_posts_ics($posts, $filters);
 				break;
 			case 'txt':
 				$encode_to = "Windows-1252";
@@ -89,7 +89,7 @@ class AgendaPartage_Evenements_Export {
 				$txt[] = implode(', ', $value);
 			if( $value = AgendaPartage_Evenement::get_event_categories($post->ID))
 				$txt[] = implode(', ', $value);
-			foreach(['ev-organisateur', 'ev-email', 'ev-phone', 'ev-siteweb'] as $meta_key)
+			foreach(['ev-organisateur', 'ev-email', 'ev-user-email', 'ev-phone', 'ev-siteweb'] as $meta_key)
 				if( $value = get_post_meta($post->ID, $meta_key, true) )
 					$txt[] = $value;
 			$txt[] = $post->post_content;
@@ -246,10 +246,11 @@ class AgendaPartage_Evenements_Export {
 				$infos = $value;
 				
 			$meta_key = 'ev-email';
-			if( $value = get_post_meta($post->ID, $meta_key, true) )
+			if( $value = get_post_meta($post->ID, $meta_key, true) ){
 				if($infos)
 					$infos .= ' / ';
 				$infos .= $value;
+			}
 			if( $infos ){
 				$infos = 'Infos : ' . $infos;
 				$xml_post = str_replace('[Infos]', $infos, $xml_post);
@@ -357,14 +358,16 @@ class AgendaPartage_Evenements_Export {
 	
 	/**
 	 * Retourne les données ICS pour le téléchargement de l'export des évènements
+	 *
+	 *  $filters['set_post_status']
 	 */
-	public static function export_posts_ics($posts){
+	public static function export_posts_ics($posts, $filters = false){
 
 		require_once(AGDP_PLUGIN_DIR . "/includes/icalendar/zapcallib.php");
 		
 		$iCal = self::get_new_ZCiCal();
 		foreach($posts as $post){
-			self::add_agdpevent_to_ZCiCal($post, $iCal);
+			self::add_agdpevent_to_ZCiCal($post, $iCal, $filters);
 		}
 		return $iCal->export();
 		
@@ -398,7 +401,7 @@ class AgendaPartage_Evenements_Export {
 		return $ical;
 	}
 	
-	public static function add_agdpevent_to_ZCiCal($post, $ical){
+	public static function add_agdpevent_to_ZCiCal($post, $ical, $filters = false){
 		$metas = get_post_meta($post->ID, '', true);
 		foreach($metas as $key=>$value)
 			if(is_array($value))
@@ -418,7 +421,7 @@ class AgendaPartage_Evenements_Export {
 		$vevent->addNode(new ZCiCalDataNode("LAST-MODIFIED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_modified)));
 
 		// Add status
-		$vevent->addNode(new ZCiCalDataNode("STATUS:" . self::get_vcalendar_status( $post )));
+		$vevent->addNode(new ZCiCalDataNode("STATUS:" . self::get_vcalendar_status( $post, $filters )));
 
 		// add title
 		$vevent->addNode(new ZCiCalDataNode("SUMMARY:" . $post->post_title));
@@ -444,6 +447,7 @@ class AgendaPartage_Evenements_Export {
 			'LOCATION'=>'ev-localisation'
 			, 'ORGANISATEUR'=>'ev-organisateur'
 			, 'EMAIL'=>'ev-email'
+			, 'USER-EMAIL'=>'ev-user-email'
 			, 'PHONE'=>'ev-phone'
 		] as $node_name => $meta_key)
 			if( ! empty( $metas[$meta_key]))
@@ -493,10 +497,16 @@ class AgendaPartage_Evenements_Export {
 		return $dateTime;
 	}
 		
-	public static function get_vcalendar_status($post){
-		switch($post->post_status){
+	public static function get_vcalendar_status($post, $filters = false){
+		$post_status = $post->post_status;
+		if( is_array($filters) )
+			if( ! empty($filters['set_post_status']) )
+				$post_status = $filters['set_post_status'];
+		switch($post_status){
 			case 'publish' :
 				return 'CONFIRMED';
+			case 'trash' :
+				return 'CANCELLED';
 			default :
 				return strtoupper($post->post_status);//only CANCELLED or DRAFT or TENTATIVE
 		}
@@ -511,6 +521,7 @@ class AgendaPartage_Evenements_Export {
 	 */
 	public static function get_export_filename($extension, $sub_path = 'export'){
 		$folder = self::get_export_folder($sub_path);
+		require_once(ABSPATH . 'wp-admin/includes/file.php');
 		$file = wp_tempnam(AGDP_TAG, $folder . '/');
 		return str_replace('.tmp', '.' . $extension, $file);
 	}

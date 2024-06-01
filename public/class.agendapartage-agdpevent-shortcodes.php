@@ -46,6 +46,7 @@ class AgendaPartage_Evenement_Shortcodes {
 		add_shortcode( 'agdpevent-description', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-dates', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-localisation', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'agdpevent-is-imported', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-details', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-message-contact', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent', array(__CLASS__, 'shortcodes_callback') );
@@ -255,7 +256,7 @@ class AgendaPartage_Evenement_Shortcodes {
 		if($shortcode == 'agdpevent'
 		&& count($atts) > 0){
 			
-			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-evenement', 'details', 'categories'];
+			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-evenement', 'is-imported', 'details', 'categories'];
 			if(array_key_exists('info', $atts)
 			&& in_array($atts['info'], $specificInfos))
 				$shortcode .= '-' . $atts['info'];
@@ -287,7 +288,6 @@ class AgendaPartage_Evenement_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
 				
 			case 'agdpevent-description':
 
@@ -303,7 +303,6 @@ class AgendaPartage_Evenement_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
 				
 			case 'agdpevent-localisation':
 
@@ -319,7 +318,6 @@ class AgendaPartage_Evenement_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
 				
 			case 'agdpevent-dates':
 
@@ -335,7 +333,28 @@ class AgendaPartage_Evenement_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
+				
+			case 'agdpevent-is-imported':
+
+				$meta_name = 'ev-import-uid';
+				$val = get_post_meta($post_id, $meta_name, true);
+				if($val || $content){
+					$matches = [];
+					preg_match_all('/^(\w+)\[(\d+)\]@(.*)$/', $val, $matches);
+					$source_post_type = $matches[1][0];
+					$source_id = $matches[2][0];
+					$source_site = $matches[3][0];
+					$val = sprintf('Cet évènement provient de <a href="%s://%s/blog/%s?p=%d">%s</a>', 
+						'https', $source_site, $source_post_type, $source_id, $source_site);
+					$val = do_shortcode( wp_kses_post($val . $content));
+					if($no_html)
+						$html = $val;
+					else
+						$html = '<div class="agdp-agdpevent agdp-'. $shortcode .'">'
+							. $val
+							. '</div>';
+				}
+				return $html;
 				
 			case 'agdpevent-cree-depuis':
 
@@ -351,7 +370,6 @@ class AgendaPartage_Evenement_Shortcodes {
 							. '</div>';
 				}
 				return $html;
-				break;
 				
 			case 'agdpevent-diffusions':
 				$tax_name = AgendaPartage_Evenement::taxonomy_diffusion;
@@ -375,7 +393,6 @@ class AgendaPartage_Evenement_Shortcodes {
 					}
 				}
 				return $html;
-				break;
 
 			case 'agdpevent-message-contact':
 				
@@ -519,7 +536,6 @@ class AgendaPartage_Evenement_Shortcodes {
 					return do_shortcode( wp_kses_post($content));
 				}
 				return '';
-				
 
 			default:
 			

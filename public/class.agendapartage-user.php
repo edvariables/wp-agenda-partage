@@ -218,7 +218,7 @@ class AgendaPartage_User {
 	 * Dans un email à un utilisateur, ajoute une invitation à saisir un nouveau mot de passe.
 	 * Returns a string to add to email for user to reset his password.
 	 */
-	private static function new_password_link($user_id, $redirect_to = false){
+	public static function new_password_link($user_id, $redirect_to = false){
 		if(is_a($user_id, 'WP_User')){
 			$user = $user_id;
 			$user_id = $user->ID;

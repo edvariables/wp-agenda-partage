@@ -10,7 +10,7 @@ class AgendaPartage_Covoiturages_Import {
 	/**
 	* import_ics
 	*/
-	public static function import_ics($file_name, $default_post_status = 'publish', $original_file_name = null){
+	public static function import_ics($file_name, $data = 'publish', $original_file_name = null){
 		$iCal = self::get_vcalendar($file_name);
 		
 		$import_source = 'import_ics_' . $iCal['title'];
@@ -29,8 +29,15 @@ class AgendaPartage_Covoiturages_Import {
 			, date_i18n('d/m/Y H:i:s', strtotime($iCal['covoiturages'][0]['dtstamp']))
 			, empty($iCal['description']) ? '' : $iCal['description']);
 		
-		if(!$default_post_status)
-			$default_post_status = 'publish';
+		$default_post_status = 'publish';
+		if( is_string($data) ){
+			$default_post_status = $data;
+			$data = [ 'post_status' => $data ];
+		}
+		elseif( is_array( $data ) ){
+			if( ! empty( $data['post_status'] ) )
+				$default_post_status = $data['post_status'];
+		}
 		
 		if(($user = wp_get_current_user())
 		&& $user->ID){
@@ -90,6 +97,10 @@ class AgendaPartage_Covoiturages_Import {
 				'cov-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source
 			);
+			
+			if( ! empty( $data['meta_input'] ) ){
+				$inputs = array_merge( $data['meta_input'], $inputs );
+			}
 						
 			$post_title = $covoiturage['summary'];
 			$post_content = empty($covoiturage['description']) ? '' : trim($covoiturage['description']);
@@ -120,7 +131,7 @@ class AgendaPartage_Covoiturages_Import {
 				if( is_string($covoiturage[$node_name]))
 					$covoiturage[$node_name] = explode(',', $covoiturage[$node_name]);
 				$taxonomies[$tax_name] = [];
-				$all_terms = AgendaPartage_Covoiturage_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms = AgendaPartage_Covoiturage::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				foreach($covoiturage[$node_name] as $term_name){
 					if( ! array_key_exists($term_name, $all_terms)){
 						$data = [

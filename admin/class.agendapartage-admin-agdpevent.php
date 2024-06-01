@@ -400,6 +400,5 @@ class AgendaPartage_Admin_Evenement {
 			return AgendaPartage::icon('warning', $result->get_error_message());
 		return AgendaPartage::icon('info', sprintf('Le terme "%s" a été ajouté.', $tax_name));
 	}
-
 }
 ?>

@@ -34,7 +34,7 @@ h3.info {
 }
 .agdp-metabox-row.side-box > input, 
 .agdp-metabox-row.side-box > textarea {
-	width: 12em;
+	width: 100%;/* 12em */
 }
 .agdp-metabox-row > input[type="number"] {
 	width: 5em;	
@@ -201,6 +201,17 @@ div.edit-post-layout__metaboxes {
 	border-top: 1px solid lightsteelblue;
 	background-color: beige;
 }
+
+#wpadminbar #wp-admin-bar-agdpevents .ab-icon::before {
+  content: "\f508";
+  top: 3px;
+}
+
+#wpadminbar #wp-admin-bar-covoiturages .ab-icon::before {
+  content: "\f16b";
+  top: 3px;
+}
+
 /*
  *******/
  
