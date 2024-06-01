@@ -632,12 +632,13 @@ class AgendaPartage_Evenement_Edit {
 			}
 			
 			//categories, communes et diffusions
+			$taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies();
 			$tax_terms = [];
-			foreach( AgendaPartage_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
+			foreach( $taxonomies as $tax_name => $taxonomy){
 				$field = $taxonomy['input'];
 			
 				$tax_terms[ $tax_name ] = [];
-				$all_terms = AgendaPartage_Evenement_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms = AgendaPartage_Evenement::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) ){
@@ -780,19 +781,21 @@ class AgendaPartage_Evenement_Edit {
 			$submission->set_response($error_message);
 			return false;
 		}
-		else {
+		
+		$previous_terms = [];
+		//Taxonomies
+		//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
+		foreach($tax_terms as $tax_name => $tax_inputs){
+			if( $tax_name === AgendaPartage_Evenement::taxonomy_diffusion )
+				$previous_terms[$tax_name] = wp_get_post_terms($post_id, $tax_name);
 			
-			//Taxonomies
-			//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
-			foreach($tax_terms as $tax_name => $tax_inputs){
-				$result = wp_set_post_terms($post_id, $tax_inputs, $tax_name, false);
-				if(is_a($result, 'WP_Error') || is_string($result)){
-					$error_message = is_string($result) ? $result : $result->get_error_message();
-					$abort = true;
-					$error_message = sprintf('Erreur d\'enregistrement des catégories (%s). %s. \r\n%s', $tax_name, $error_message, var_export($tax_inputs, true));
-					$submission->set_response($error_message);
-					return false;
-				}
+			$result = wp_set_post_terms($post_id, $tax_inputs, $tax_name, false);
+			if(is_a($result, 'WP_Error') || is_string($result)){
+				$error_message = is_string($result) ? $result : $result->get_error_message();
+				$abort = true;
+				$error_message = sprintf('Erreur d\'enregistrement des catégories (%s). %s. \r\n%s', $tax_name, $error_message, var_export($tax_inputs, true));
+				$submission->set_response($error_message);
+				return false;
 			}
 		}
 				
@@ -823,6 +826,16 @@ class AgendaPartage_Evenement_Edit {
 			//En cas de succès, on recharge la page dans laquelle on affichera un message.
 			if($result)
 				set_transient(AGDP_TAG . '_email_sent_' . $post_id, $post_id, 20);
+		}
+		
+		if( ! ( $post_is_new && $post->post_status === 'pending' ) ){
+			//Taxonomie Diffusion
+			$tax_name = AgendaPartage_Evenement::taxonomy_diffusion;
+			if( isset($tax_terms[$tax_name])){
+				$tax_inputs = $tax_terms[$tax_name];
+				$previous_tax_inputs = $previous_terms[$tax_name];
+				AgendaPartage_Evenement::send_for_diffusion( $post_id, $tax_name, $tax_inputs, $previous_tax_inputs );
+			}
 		}
 		
 		$url = AgendaPartage_Evenement::get_post_permalink($post_id, AGDP_EVENT_SECRETCODE);

@@ -839,7 +839,7 @@ class AgendaPartage_Covoiturage_Edit {
 				$field = $taxonomy['input'];
 			
 				$tax_terms[ $tax_name ] = [];
-				$all_terms = AgendaPartage_Covoiturage_Post_type::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms = AgendaPartage_Covoiturage::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) ){

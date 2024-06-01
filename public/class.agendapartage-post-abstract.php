@@ -9,6 +9,7 @@
 abstract class AgendaPartage_Post_Abstract {
 
 	const post_type = false; //Must override
+	const taxonomy_diffusion = false;//Must override
 	const secretcode_argument = false; //Must override
 	const field_prefix = false; //Must override
 
@@ -151,6 +152,48 @@ abstract class AgendaPartage_Post_Abstract {
 		}
 		
 		return false;
+	}
+	
+	/**
+	* Retourne l'export d'un post
+	*
+	*/
+	public static function get_posts_export($posts = false, $file_format = 'ics', $return = 'url', $filters = false) {
+		foreach($posts as $post){
+			if( $post = static::get_post($post))
+				$post_type = $post->post_type;
+			break;
+		}
+		if( empty($post_type) )
+			return false;
+		
+		switch($post_type){
+			case AgendaPartage_Evenement::post_type:
+				require_once( dirname(__FILE__) . '/class.agendapartage-agdpevents-export.php');
+				return AgendaPartage_Evenements_Export::do_export( [$post], $file_format, $return, $filters);
+			case AgendaPartage_Covoiturage::post_type:
+				require_once( dirname(__FILE__) . '/class.agendapartage-covoiturages-export.php');
+				return AgendaPartage_Covoiturages_Export::do_export( [$post], $file_format, $return, $filters);
+			default:
+				return false;
+		}
+	}
+	
+	/**
+	* Retourne les posts importés
+	*
+	*/
+	public static function import_post_type_ics($post_type, $file_name, $default_post_status = 'publish', $original_file_name = null) {
+		switch($post_type){
+			case AgendaPartage_Evenement::post_type:
+				require_once( dirname(__FILE__) . '/class.agendapartage-agdpevents-import.php');
+				return AgendaPartage_Evenements_Import::import_ics( $file_name, $default_post_status, $original_file_name);
+			case AgendaPartage_Covoiturage::post_type:
+				require_once( dirname(__FILE__) . '/class.agendapartage-covoiturages-import.php');
+				return AgendaPartage_Covoiturages_Import::import_ics( $file_name, $default_post_status, $original_file_name);
+			default:
+				return false;
+		}
 	}
 	
 	/**
@@ -430,6 +473,47 @@ abstract class AgendaPartage_Post_Abstract {
 
 	    return $where;
 	}
+
+	/**
+	 * Retourne tous les termes
+	 */
+	public static function get_all_terms($taxonomy, $array_keys_field = 'term_id', $query_args = []){
+		$query_args = array_merge( array(
+				'hide_empty' => false,
+				'taxonomy' => $taxonomy
+			), $query_args);
+		$terms = get_terms( $query_args );
+		if($array_keys_field){
+			$_terms = [];
+			foreach($terms as $term){
+				if( ! isset($term->$array_keys_field) )
+					continue;
+				$_terms[$term->$array_keys_field . ''] = $term;
+			}
+			$terms = $_terms;
+		}
+		
+		$meta_names = [];
+		switch($taxonomy){
+			case AgendaPartage_Evenement::taxonomy_diffusion :
+			case AgendaPartage_Covoiturage::taxonomy_diffusion :
+				$meta_names[] = 'default_checked';
+				$meta_names[] = 'download_link';
+				break;
+		}
+		foreach($meta_names as $meta_name){
+			foreach($terms as $term)
+				$term->$meta_name = get_term_meta($term->term_id, $meta_name, true);
+		}
+		return $terms;
+	}
+	
+	/**
+	 * Taxonomies
+	 */
+	public static function get_taxonomies ( $except = false ){
+		return self::abstracted_post_type_class()::get_taxonomies ( $except );
+	}
 	
 	/**
 	 * Retourne les éléments d'une taxonomy d'un évènement
@@ -589,8 +673,7 @@ abstract class AgendaPartage_Post_Abstract {
 	 * Si $post est fourni, modifie les valeurs sélectionnées.
 	 */
  	public static function init_wpcf7_form_html( $html, $post = false ) { 
-		$post_type_class = self::abstracted_post_type_class();
-		foreach( $post_type_class::get_taxonomies() as $tax_name => $taxonomy){
+		foreach( static::get_taxonomies() as $tax_name => $taxonomy){
 		
 			if($post){
 				$post_terms = array();
@@ -600,7 +683,7 @@ abstract class AgendaPartage_Post_Abstract {
 			else {
 				$post_terms = false;
 			}
-			$all_terms = $post_type_class::get_all_terms($tax_name);
+			$all_terms = static::get_all_terms($tax_name);
 			$checkboxes = '';
 			$selected = '';
 			$free_text = false;
@@ -653,4 +736,138 @@ abstract class AgendaPartage_Post_Abstract {
 		
 		$contact_form->set_properties(array('mail'=>$mail_data));
 	}
+	
+	/**
+	 * Diffusion d'un post selon le terme de diffusion.
+	 * Traite les termes ayant un paramètre "connexion",
+	 * par exemple : mailto:evenement.un-autre-site@agenda-partage.fr|from:mon-site@agenda-partage.fr
+	 */
+	public static function send_for_diffusion( $post_id, $taxonomy_diffusion = false, $tax_inputs = false, $previous_tax_inputs = false ){
+		// debug_log('send_for_diffusion', $post_id, $taxonomy_diffusion, $tax_inputs/* , $previous_tax_inputs */ );
+			
+		if( ! $taxonomy_diffusion
+		 || ( is_string($taxonomy_diffusion)
+			&& ! is_numeric($taxonomy_diffusion) )
+		){
+			$tax_name = is_string($taxonomy_diffusion) ? $taxonomy_diffusion : false;
+			$taxonomy_diffusion = self::abstracted_class()::taxonomy_diffusion;
+			$query_args = [
+				'meta_key' => 'connexion',
+				'meta_value' => '',
+				'meta_compare' => '!=',
+			];
+			$terms = self::abstracted_post_type_class()::get_all_diffusions( 'term_id', $query_args );
+			// debug_log('send_for_diffusion  terms ', $taxonomy_diffusion, $terms );
+			foreach( $terms as $term )
+				static::send_for_diffusion( $post_id, $term, $tax_inputs, $previous_tax_inputs );
+			return;
+		}
+		
+		if( is_a($taxonomy_diffusion, 'WP_Term') )
+			$diffusion_term_id = $taxonomy_diffusion->term_id;
+		else
+			$diffusion_term_id = $taxonomy_diffusion;
+		
+		if( empty($diffusion_term_id ) )
+			return false;
+		
+		if( is_array($tax_inputs) ){
+			foreach($tax_inputs as $index=>$term)
+				if( is_a($term, 'WP_Term') )
+					$tax_inputs[$index] = $term->term_id;
+		}
+		if( is_array($previous_tax_inputs) ){
+			foreach($previous_tax_inputs as $index=>$term)
+				if( is_a($term, 'WP_Term') )
+					$previous_tax_inputs[$index] = $term->term_id;
+		}
+		
+		//N'existe ni avant ni après
+		if( is_array($tax_inputs) || is_array($previous_tax_inputs) )
+			if( ! (
+				is_array($tax_inputs) && in_array( $diffusion_term_id, $tax_inputs)
+				|| is_array($previous_tax_inputs) && in_array( $diffusion_term_id, $previous_tax_inputs)
+			) )
+				return false;
+		
+		$post_status = get_post_status($post_id);
+		
+		//Existait mais n'existe plus
+		if( is_array($tax_inputs) && ! in_array( $diffusion_term_id, $tax_inputs) 
+		 && is_array($previous_tax_inputs) && in_array( $diffusion_term_id, $previous_tax_inputs) ){
+			foreach($previous_tax_inputs as $index=>$term)
+				$post_is_deleted = true;
+		}
+		else
+			$post_is_deleted = $post_status !== 'publish';
+		
+		$term_meta = 'connexion';
+		$connexion = get_term_meta( $diffusion_term_id, $term_meta, true );
+		// debug_log('send_for_diffusion $connexion',  $diffusion_term_id, $connexion );
+		if( ! $connexion )
+			return false;
+		
+		$attributes = [];
+		foreach( explode( '|', $connexion) as $index => $attribute){
+			$attribute = explode( ':', $attribute );
+			if( $index === 0 ) {
+				$attributes['action'] = $action = strtolower($attribute[0]);
+				$first_attribute = false;
+			}
+			$attributes[strtolower($attribute[0])] = $attribute[1];
+		}
+		
+		// Export .ics
+		$filters = [];
+		if( $post_is_deleted )
+			$filters['set_post_status'] = 'trash';
+		$export = static::get_posts_export( [ $post_id ], 'ics', 'file',  $filters );
+		
+		debug_log('send_for_diffusion $export', $filters, file_get_contents($export) );
+		
+		//Send
+		switch( $action ){
+			case 'mailto':
+				// debug_log('send_for_diffusion mailto', $action, $attributes, $export);
+				$subject = sprintf('[%s][%s]%s.%d:status=%s'
+					, get_bloginfo('name')
+					, self::abstracted_class()::taxonomy_diffusion
+					, self::abstracted_class()::post_type
+					, $post_id
+					, $post_status
+				);
+				$url = get_post_permalink( $post_id );
+				$message = sprintf('%s'
+					, $url
+				);
+				$headers = [];
+				if( ! empty($attributes['from']) )
+					$headers[] = 'From:' . $attributes['from'];
+				if( ! empty($attributes['reply-to']) )
+					$headers[] = 'Reply-to:' . $attributes['reply-to'];
+				$attachments = [ $export ];
+				$result = wp_mail( $attributes['mailto'], $subject, $message, $headers, $attachments );
+				
+				debug_log('send_for_diffusion wp_mail', $attributes['mailto'], $subject, $message, $headers, $attachments );
+				
+				break;
+			default:
+				debug_log('send_for_diffusion ! unknown action', $action);
+		}
+	}
+	
+	
+	
+	/**
+	* Retourne le nombre de posts en attente
+	*
+	*/
+	public static function get_pending_posts() {
+		return get_posts([
+			'fields' => 'ids',
+			'post_type' => static::post_type
+			, 'post_status' => 'pending'
+		]);
+	}
+
 }

@@ -243,40 +243,14 @@ class AgendaPartage_Evenement_Post_type {
 	/**
 	 * Retourne tous les termes
 	 */
-	public static function get_all_types_agdpevent($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_ev_category, $array_keys_field);
+	public static function get_all_types_agdpevent($array_keys_field = 'term_id', $query_args = []){
+		return AgendaPartage_Evenement::get_all_terms(AgendaPartage_Evenement::taxonomy_ev_category, $array_keys_field, $query_args);
 	}
-	public static function get_all_cities($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_city, $array_keys_field);
+	public static function get_all_cities($array_keys_field = 'term_id', $query_args = []){
+		return AgendaPartage_Evenement::get_all_terms(AgendaPartage_Evenement::taxonomy_city, $array_keys_field, $query_args);
 	}
-	public static function get_all_diffusions($array_keys_field = 'term_id'){
-		return self::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion, $array_keys_field );
-	}
-
-	/**
-	 * Retourne tous les termes
-	 */
-	public static function get_all_terms($taxonomy, $array_keys_field = 'term_id'){
-		$terms = get_terms( array('hide_empty' => false, 'taxonomy' => $taxonomy) );
-		if($array_keys_field){
-			$_terms = [];
-			foreach($terms as $term)
-				$_terms[$term->$array_keys_field . ''] = $term;
-			$terms = $_terms;
-		}
-		
-		$meta_names = [];
-		switch($taxonomy){
-			case AgendaPartage_Evenement::taxonomy_diffusion :
-				$meta_names[] = 'default_checked';
-				$meta_names[] = 'download_link';
-				break;
-		}
-		foreach($meta_names as $meta_name){
-			foreach($terms as $term)
-				$term->$meta_name = get_term_meta($term->term_id, $meta_name, true);
-		}
-		return $terms;
+	public static function get_all_diffusions($array_keys_field = 'term_id', $query_args = []){
+		return AgendaPartage_Evenement::get_all_terms(AgendaPartage_Evenement::taxonomy_diffusion, $array_keys_field, $query_args );
 	}
 	
 	/**
