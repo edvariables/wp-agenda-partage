@@ -550,14 +550,16 @@ class AgendaPartage_Evenements {
 .toggle-container {
 	overflow: hidden;
 	padding-left: 10px;
+	white-space: collapse;
 }
 .toggle-container pre {
 	background-color: #F5F5F5;
 	color: #333;
 	white-space: pre-line;
 }
-.toggle-container .ev-covoiturages {
+.ev-covoiturages {
 	white-space: collapse;
+	font-size: smaller;
 } 
 .agdp-agdpevents-email .month-title {
 	margin-top: 1em;
@@ -828,47 +830,50 @@ class AgendaPartage_Evenements {
 		if($value){
 			$html .= sprintf('<div class="ev-siteweb">%s</div>',  make_clickable( esc_html($value) ) );
 		}
-		if( ! $email_mode && ($covoiturages = self::get_agdpevent_covoiturages( $event, true )))
+		
+		$covoiturages = self::get_agdpevent_covoiturages( $event, true );
+		if( ! $email_mode && $covoiturages)
 			$html .= sprintf('<div class="ev-covoiturages">%s</div>',  $covoiturages );
 		
-		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', '</div>');
+			
+		$created_by = '';
+		if(is_user_logged_in()){
+			global $current_user;
+			//Rôle autorisé
+			if(	$current_user->has_cap( 'edit_posts' ) ){
+				$creator = new WP_User($event->post_author);
+				if(($user_name = $creator->get('display_name'))
+				|| ($user_name = $creator->get('user_login'))){
+					$created_by = ', créé par <a>' . $user_name . '</a>';
+				}
+			}
+		}
+				
+		$html .= date_diff_text($event->post_date, true, '<div class="created-since">', $created_by . '</div>');
 		
 		$html .= '<div class="footer">';
 				
-			$html .= '<table><tbody><tr>';
+		$html .= '<table><tbody><tr>';
 			
-			if(is_user_logged_in()){
-				global $current_user;
-				//Rôle autorisé
-				if(	$current_user->has_cap( 'edit_posts' ) ){
-					$creator = new WP_User($event->post_author);
-					if(($user_name = $creator->get('display_name'))
-					|| ($user_name = $creator->get('user_login'))){
-						$html .= '<td/><td>';
-						$html .= 'créé par <a>' . $user_name . '</a>';
-						
-						$html .= '</td></tr><tr>';
-					}
-				}
-			}
-			
-			if( ! $email_mode )
-				$html .= '<td class="trigger-collapser"><a href="#replier">'
-					.AgendaPartage::icon('arrow-up-alt2')
-					.'</a></td>';
-
-		
-			if( $email_mode && ($covoiturages = self::get_agdpevent_covoiturages( $event, true )))
-				$html .= sprintf('</td></tr><tr><td class="ev-covoiturages">%s</td></tr><tr>',  $covoiturages );
-			
+		if( $email_mode && $covoiturages )
 			$html .= sprintf(
-				'<td class="post-edit"><a href="%s">'
-					.'Afficher la page de l\'évènement'
-					. ($email_mode  ? '' : AgendaPartage::icon('media-default'))
-				.'</a></td>'
-				, $url);
-				
-			$html .= '</tr></tbody></table>';
+				'<td class="ev-covoiturages">%s</td></tr><tr>'
+				, $covoiturages);
+		
+		if( ! $email_mode )
+			$html .= '<td class="trigger-collapser"><a href="#replier">'
+				.AgendaPartage::icon('arrow-up-alt2')
+				.'</a></td>';
+	
+		$html .= sprintf(
+			'<td class="post-edit"><a href="%s">'
+				.'Afficher la page de l\'évènement%s'
+			.'</a></td>'
+			, $url
+			, ($email_mode  ? '' : AgendaPartage::icon('media-default'))
+		);
+			
+		$html .= '</tr></tbody></table>';
 			
 		$html .= '</div>';
 
