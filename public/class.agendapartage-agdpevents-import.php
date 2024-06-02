@@ -151,8 +151,9 @@ class AgendaPartage_Evenements_Import {
 					$event[$node_name] = explode(',', $event[$node_name]);
 				$taxonomies[$tax_name] = [];
 				$all_terms = AgendaPartage_Evenement::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms_lowercase = array_change_key_case( $all_terms );
 				foreach($event[$node_name] as $term_name){
-					if( ! array_key_exists($term_name, $all_terms)){
+					if( ! array_key_exists( strtolower($term_name), $all_terms_lowercase)){
 						$data = [
 							'post_type'=>AgendaPartage_Evenement::post_type,
 							'taxonomy'=>$tax_name,
@@ -165,7 +166,7 @@ class AgendaPartage_Evenements_Import {
 						);
 						continue;
 					}
-					$taxonomies[$tax_name][] =  $all_terms[$term_name]->term_id;
+					$taxonomies[$tax_name][] =  $all_terms_lowercase[strtolower($term_name)]->term_id;
 				}
 			}
 			
