@@ -26,7 +26,7 @@ class AgendaPartage_Covoiturages_Import {
 			, date_i18n('Y-m-d H:i'));
 		$log[] = sprintf('<ul><b>Source : "%s", le %s - %s</b>'
 			, empty($iCal['title']) ? '' : $iCal['title']
-			, date_i18n('d/m/Y H:i:s', strtotime($iCal['covoiturages'][0]['dtstamp']))
+			, date_i18n('d/m/Y H:i:s', strtotime($iCal['posts'][0]['dtstamp']))
 			, empty($iCal['description']) ? '' : $iCal['description']);
 		
 		$default_post_status = 'publish';
@@ -46,8 +46,8 @@ class AgendaPartage_Covoiturages_Import {
 		else {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
-		debug_log("\r\nimport_ics covoiturages", $iCal['covoiturages'], "\r\n\r\n\r\n\r\n");
-		foreach($iCal['covoiturages'] as $covoiturage){
+		debug_log("\r\nimport_ics covoiturages", $iCal['posts'], "\r\n\r\n\r\n\r\n");
+		foreach($iCal['posts'] as $covoiturage){
 			
 			switch(strtoupper($covoiturage['status'])){
 				case 'CONFIRMED':
@@ -219,103 +219,7 @@ class AgendaPartage_Covoiturages_Import {
 	 * get_vcalendar($file_name)
 	 */
 	public static function get_vcalendar($file_name){
-		require_once(AGDP_PLUGIN_DIR . "/includes/icalendar/zapcallib.php");	
-		$ical= new ZCiCal(file_get_contents($file_name));
-		$vcalendar = [];
-		
-		// debug_log($ical->tree->data);
-		
-		foreach($ical->tree->data as $key => $value){
-			$key = strtolower($key);
-			if(is_array($value)){
-				$vcalendar[$key] = '';
-				for($i = 0; $i < count($value); $i++){
-					$p = $value[$i]->getParameters();
-					if($vcalendar[$key])
-						$vcalendar[$key] .= ',';
-					$vcalendar[$key] .= $value[$i]->getValues();
-				}
-			} else {
-				$vcalendar[$key] = $value->getValues();
-			}
-		}
-		
-		if( ! empty($vcalendar['x-wr-calname'])){
-			if(empty($vcalendar['title']))
-				$vcalendar['title'] = $vcalendar['x-wr-calname'];
-		}
-		
-		if(empty($vcalendar['description']))
-			$vcalendar['description'] = 'vcalendar_' . wp_date('Y-m-d H:i:s');
-		if(empty($vcalendar['title']))
-			$vcalendar['title'] = $vcalendar['description'];
-		
-		$vevents = [];
-		if(isset($ical->tree->child)) {
-			foreach($ical->tree->child as $node) {
-				// debug_log($node->data);
-				if($node->getName() == "VEVENT") {
-					$vevent = [];
-					foreach($node->data as $key => $value) {
-						$key = strtolower($key);
-						if(is_array($value)){
-							$vevent[$key] = [];
-							$vevent[$key .'[parameters]'] = [];
-							for($i = 0; $i < count($value); $i++) {
-								if(is_array($value[$i])){
-									array_walk_recursive( $value[$i], function(&$value, $value_key, &$vevent_key_arr){
-										if(is_a($value, 'ZCiCalDataNode'))
-											$vevent_key_arr[] = $value->value[0];
-										else
-											$vevent_key_arr[] = $value;
-									}, $vevent[$key]);
-									debug_log($vevent[$key]);
-								}
-								else {
-									$vevent[$key][] = $value[$i]->getValues();
-									$p = $value[$i]->getParameters();
-									if($p){
-										$vevent[$key .'[parameters]'][] = $p;
-									}
-								}
-							}
-						} else {
-							if( isset($vevent[$key]) ){
-								if( ! is_array($vevent[$key])){
-									$vevent[$key] = [$vevent[$key]];
-									if(isset($vevent[$key .'[parameters]']))
-										$vevent[$key .'[parameters]'] = [$vevent[$key .'[parameters]']];
-								}
-								$vevent[$key][] = $value->getValues();
-							}
-							else
-								$vevent[$key] = $value->getValues();
-							$p = $value->getParameters();
-							if($p){
-								if(!empty($vevent[$key .'[parameters]']) && is_array($vevent[$key .'[parameters]']))
-									$vevent[$key .'[parameters]'][] = $p;
-								else
-									$vevent[$key .'[parameters]'] = $p;
-							}
-						}
-					}
-					//if no hour specified, dtend means the day before
-					if(isset($vevent['dtend']) && $vevent['dtend']){
-						if(strpos($vevent['dtstart'], 'T') === false
-						&& strpos($vevent['dtend'], 'T') === false
-						&& $vevent['dtend'] != $vevent['dtstart'])
-							$vevent['dtend'] = date('Y-m-d', strtotime($vevent['dtend'] . ' - 1 day')); 
-						$vevent['dtend'] = date('Y-m-d H:i:s', strtotime($vevent['dtend'])); 
-					}
-					$vevent['dtstart'] = date('Y-m-d H:i:s', strtotime($vevent['dtstart'])); 
-					$vevents[] = $vevent;
-				}
-			}
-		}
-		
-		$vcalendar['covoiturages'] = $vevents;
-		// debug_log($vcalendar);
-		return $vcalendar;
+		return AgendaPartage_Evenements_Import::get_vcalendar($file_name);
 	}
 	/*
 	**/

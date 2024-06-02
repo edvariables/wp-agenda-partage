@@ -596,7 +596,6 @@ class AgendaPartage_Mailbox {
 	 * Import as post
 	 */	
 	public static function import_message_to_post_type($mailbox, $message, $post_type){
-		debug_log('import_message_to_post_type', $message, $post_type);
 
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){

@@ -26,7 +26,7 @@ class AgendaPartage_Evenements_Import {
 			, date_i18n('Y-m-d H:i'));
 		$log[] = sprintf('<ul><b>Source : "%s", le %s - %s</b>'
 			, empty($iCal['title']) ? '' : $iCal['title']
-			, date_i18n('d/m/Y H:i:s', strtotime($iCal['events'][0]['dtstamp']))
+			, date_i18n('d/m/Y H:i:s', strtotime($iCal['posts'][0]['dtstamp']))
 			, empty($iCal['description']) ? '' : $iCal['description']);
 		
 		$default_post_status = 'publish';
@@ -46,8 +46,8 @@ class AgendaPartage_Evenements_Import {
 		else {
 			$post_author = AgendaPartage_User::get_blog_admin_id();
 		}
-		debug_log("\r\nimport_ics events", $iCal['events'], "\r\n\r\n\r\n\r\n");
-		foreach($iCal['events'] as $event){
+		// debug_log("import_ics events", $iCal['posts'], "\r\n\r\n\r\n\r\n");
+		foreach($iCal['posts'] as $event){
 			$post_title = $event['summary'];
 			
 			switch(strtoupper($event['status'])){
@@ -301,28 +301,28 @@ class AgendaPartage_Evenements_Import {
 		$vevents = [];
 		if(isset($ical->tree->child)) {
 			foreach($ical->tree->child as $node) {
-				// debug_log($node->data);
 				if($node->getName() == "VEVENT") {
 					$vevent = [];
 					foreach($node->data as $key => $value) {
 						$key = strtolower($key);
 						if(is_array($value)){
-							$vevent[$key] = [];
-							$vevent[$key .'[parameters]'] = [];
+							if( ! isset($vevent[$key]) )
+								$vevent[$key] = [];
 							for($i = 0; $i < count($value); $i++) {
 								if(is_array($value[$i])){
-									array_walk_recursive( $value[$i], function(&$value, $value_key) use($vevent, $key){
+									array_walk_recursive( $value[$i], function(&$value, $value_key) use(&$vevent, $key){
 										if(is_a($value, 'ZCiCalDataNode'))
 											$vevent[$key][] = $value->value[0];
 										else
 											$vevent[$key][] = $value;
 									});
-									debug_log('$vevent[$key]',$vevent[$key]);
 								}
 								else {
 									$vevent[$key][] = $value[$i]->getValues();
 									$p = $value[$i]->getParameters();
 									if($p){
+										if( ! isset($vevent[$key .'[parameters]']) )
+											$vevent[$key .'[parameters]'] = [];
 										$vevent[$key .'[parameters]'][] = $p;
 									}
 								}
@@ -361,7 +361,7 @@ class AgendaPartage_Evenements_Import {
 			}
 		}
 		
-		$vcalendar['events'] = $vevents;
+		$vcalendar['posts'] = $vevents;
 		// debug_log($vcalendar);
 		return $vcalendar;
 	}
