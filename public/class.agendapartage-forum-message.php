@@ -675,7 +675,7 @@ class AgendaPartage_Forum_Message {
 			$send_date = get_comment_meta($comment->comment_ID, 'send_date', true);
 			$send_date = date('d/m/Y à H:i', strtotime($send_date));
 			$subject = sprintf('[Modération] %s', $title);
-			$url = get_post_permalink($comment->comment_post_ID, true);
+			$url = get_permalink($comment->comment_post_ID);
 			$message = sprintf("Bonjour,"
 ."\nEn réponse à votre message \"%s\" du %s,"
 ."\n"

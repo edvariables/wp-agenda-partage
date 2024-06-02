@@ -212,7 +212,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		$html = sprintf('<ul class="agdp-covoiturages-list">');
 		//Ajouter
 		$new_link = sprintf('<a href="%s&%s=%d">Cliquez ici pour créer un %s covoiturage associé</a>'
-			, get_post_permalink(AgendaPartage::get_option('new_covoiturage_page_id'))
+			, get_permalink(AgendaPartage::get_option('new_covoiturage_page_id'))
 			, AGDP_ARG_EVENTID, $agdpevent->ID
 			, count($covoiturages) ? 'autre' : 'nouveau'
 		);
