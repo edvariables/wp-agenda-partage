@@ -58,6 +58,13 @@ class AgendaPartage_Admin_Covoiturage {
 				$post = get_post( $post_id );
 				echo $post->post_title;
 				
+				$meta_name = 'post-import-uid';
+				if( $imported = get_post_meta( $post_id, $meta_name, true ) )
+					echo sprintf('<div class="is-imported-post" title="%s">%s Covoiturage importé</div>'
+						, $imported
+						, AgendaPartage::icon('admin-multisite')
+					);
+				
 				break;
 			case 'cov_intention' :
 				$post = get_post( $post_id );

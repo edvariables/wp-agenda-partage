@@ -58,6 +58,12 @@ class AgendaPartage_Admin_Evenement {
 				$post = get_post( $post_id );
 				echo $post->post_title;
 				
+				$meta_name = 'post-import-uid';
+				if( $imported = get_post_meta( $post_id, $meta_name, true ) )
+					echo sprintf('<div class="is-imported-post" title="%s">%s Evènement importé</div>'
+						, $imported
+						, AgendaPartage::icon('admin-multisite')
+					);
 				break;
 			case 'organisateur' :
 				$organisateur = get_post_meta( $post_id, 'ev-organisateur', true );

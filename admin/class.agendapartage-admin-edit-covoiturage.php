@@ -353,6 +353,20 @@ class AgendaPartage_Admin_Edit_Covoiturage extends AgendaPartage_Admin_Edit_Post
 	public static function get_metabox_admin_fields(){
 		global $post;
 		$fields = array();
+		
+		$meta_name = 'post-import-uid';
+ 		if( ! self::$the_post_is_new
+		&& ($imported = get_post_meta($post->ID, $meta_name, true)) ) {
+			$fields[] = array(
+				'name' => $meta_name,
+				'label' => __('Covoiturage importé', AGDP_TAG),
+				'icon' => 'admin-multisite',
+				'input' => 'text',
+				'value' => $imported,
+				'container_class' => 'side-box',
+			);
+		}
+		
 		if( ! self::$the_post_is_new ){
 			$user_info = get_userdata($post->post_author);
 			if( is_object($user_info) )

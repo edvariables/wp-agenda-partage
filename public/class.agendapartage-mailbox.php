@@ -617,8 +617,10 @@ class AgendaPartage_Mailbox {
 		$dateTime = $message['date'];
 		$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
 		
+		$post_source = 'imap';
+		
 		$meta_input = [
-			'source' => 'imap',
+			'source' => $post_source,
 			'source_server' => $imap_server,
 			'source_email' => $imap_email,
 			'source_id' => $message['id'],
@@ -632,8 +634,7 @@ class AgendaPartage_Mailbox {
 		];
 		
 		$page = AgendaPartage_Mailbox::get_forum_page($post_type);
-		$post_status = AgendaPartage_Forum::get_forum_post_status( $page, false, $user_email );
-		debug_log('import_message_to_post_type $post_status', $page->post_title, $post_status, $user_email );
+		$post_status = AgendaPartage_Forum::get_forum_post_status( $page, false, $user_email, $post_source );
 		
 		$data = [
 			'post_status' => $post_status,
@@ -645,12 +646,12 @@ class AgendaPartage_Mailbox {
 			foreach($message['attachments'] as $attachment){
 				if( '.ics' === substr($attachment, -4) ){
 					$posts = AgendaPartage_Post_Abstract::import_post_type_ics($post_type, $attachment, $data);
-					debug_log('import_message_to_post_type import_post_type_ics $posts', $posts);
 					return $posts;
 				}
 			}
 		}
 		return false;
+		
 		//TODO
 		if( ($post = self::get_existing_post( $post_type, $message )) ){
 		}
@@ -659,7 +660,6 @@ class AgendaPartage_Mailbox {
 			$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
 		
 			$post_parent = false;
-			$user_id = 0;
 			// var_dump($message);
 			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
 				$message['reply_to'] = [ $message['from'] ];
@@ -667,6 +667,14 @@ class AgendaPartage_Mailbox {
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 			if( ($pos = strpos($user_name, '@')) !== false)
 				$user_name = substr( $user_name, 0, $pos);
+			
+			if( $user_id = email_exists($user_email) ){
+				if( is_multisite() ){
+					$blogs = get_blogs_of_user($user_id, false);
+					if( ! isset( $blogs[ get_current_blog_id() ] ) )
+						$user_id = 0;
+				}
+			}
 			
 			$dateTime = $message['date'];
 			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());

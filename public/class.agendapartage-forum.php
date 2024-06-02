@@ -670,7 +670,7 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne l'état d'un post à importer selon l'utilisateur lié
 	 */
-	 public static function get_forum_post_status($page = false, $user = false, $email = false) {
+	 public static function get_forum_post_status($page = false, $user = false, $email = false, $post_source = false) {
 		
 		$right = self::get_forum_right( $page );
 		if( ! $right || $right === 'P' )
@@ -689,8 +689,15 @@ class AgendaPartage_Forum {
 		else
 			$user = false;
 		if( !$user && $email ){
-			if( $user_id = email_exists($email) )
-				$user = new WP_USER($user_id);
+			if( $user_id = email_exists($email) ){				
+				if( is_multisite() ){
+					$blogs = get_blogs_of_user($user_id, false);
+					if( ! isset( $blogs[ get_current_blog_id() ] ) )
+						$user_id = false;
+				}
+				if( $user_id )
+					$user = new WP_USER($user_id);
+			}
 		}
 		if( ! $user)
 			return 'pending';
@@ -732,6 +739,8 @@ class AgendaPartage_Forum {
 					case 'P' : //Public;
 						return 'publish';
 					case 'E' : //'Validation par e-mail';
+						if( $post_source && in_array( $post_source, [ 'imap', 'email', 'mailbox'] ))
+							return 'publish';
 						return 'pending';
 					default:
 						return 'draft';

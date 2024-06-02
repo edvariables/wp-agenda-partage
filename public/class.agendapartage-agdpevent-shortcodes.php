@@ -336,7 +336,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				
 			case 'agdpevent-is-imported':
 
-				$meta_name = 'ev-import-uid';
+				$meta_name = 'post-import-uid';
 				$val = get_post_meta($post_id, $meta_name, true);
 				if($val || $content){
 					$matches = [];

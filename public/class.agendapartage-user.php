@@ -170,7 +170,7 @@ class AgendaPartage_User {
 
 		//copie from wp-admin/user-new.php ligne 64
 		// Adding an existing user to this blog.
-		if ( ! array_key_exists( $blog_id, get_blogs_of_user( $user->ID ) ) ) {
+		if ( ! array_key_exists( $blog_id, get_blogs_of_user( $user->ID, false ) ) ) {
 
 			if( current_user_can( 'promote_user', $user->ID )  ){
 				$result = add_existing_user_to_blog(
@@ -204,7 +204,7 @@ class AgendaPartage_User {
 	public static function get_current_or_default_blog_id($user){
 		$blog_id = get_current_blog_id();
 		if($user){
-			$blogs = get_blogs_of_user($user->ID);
+			$blogs = get_blogs_of_user($user->ID, false);
 			if( ! array_key_exists($blog_id, $blogs))
 				foreach($blogs as $blog){
 					$blog_id = $blog->userblog_id;

@@ -51,6 +51,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 			$val = ! array_key_exists ( 'value', $field ) || ! $field['value'] ? $meta_value : $field['value'];
 			$default_val = ! array_key_exists ( 'default', $field ) || ! $field['default'] ? null : $field['default'];
 			$label = ! array_key_exists ( 'label', $field ) || ! $field['label'] ? false : $field['label'];
+			$icon = ! array_key_exists ( 'icon', $field ) || ! $field['icon'] ? false : $field['icon'];
 			$input = ! array_key_exists ( 'input', $field ) || ! $field['input'] ? '' : $field['input'];
 			$input_type = ! array_key_exists ( 'type', $field ) || ! $field['type'] ? 'text' : $field['type'];
 			$style = ! array_key_exists ( 'style', $field ) || ! $field['style'] ? '' : $field['style'];
@@ -94,10 +95,15 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						$input_type = 'text';
 					break;
 			}
+			
+			if( $icon )
+				$icon = AgendaPartage::icon($icon) . ' ';
+			else
+				$icon = '';
 
 			// Label , sous pour checkbox
 			if($label && ! in_array( $input, ['label', 'link', 'checkbox'])) {
-				echo '<label for="'.$name.'">' . htmlentities($label) . ' : </label>';
+				echo '<label for="'.$name.'">' . $icon . htmlentities($label) . ' : </label>';
 			}
 
 			switch ($input) {
@@ -107,7 +113,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
-						. '>' . htmlentities($label).'</label>'
+						. '>' . $icon . htmlentities($label).'</label>'
 					;
 					break;
 
@@ -117,7 +123,7 @@ abstract class AgendaPartage_Admin_Edit_Post_Type {
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 						. ($input_attributes ? ' '.$input_attributes : '')
-						. '>' . $label.'</label>';
+						. '>' . $icon . $label.'</label>';
 					break;
 
 				////////////////

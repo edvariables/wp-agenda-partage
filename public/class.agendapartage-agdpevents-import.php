@@ -41,10 +41,10 @@ class AgendaPartage_Evenements_Import {
 		
 		if(($user = wp_get_current_user())
 		&& $user->ID){
-		    $post_author = $user->ID;
+		    $default_post_author = $user->ID;
 		}
 		else {
-			$post_author = AgendaPartage_User::get_blog_admin_id();
+			$default_post_author = AgendaPartage_User::get_blog_admin_id();
 		}
 		// debug_log("import_ics events", $iCal['posts'], "\r\n\r\n\r\n\r\n");
 		foreach($iCal['posts'] as $event){
@@ -110,7 +110,7 @@ class AgendaPartage_Evenements_Import {
 				'ev-email' => empty($event['email']) ? '' : trim($event['email']),
 				'ev-user-email' => empty($event['user-email']) ? '' : trim($event['user-email']),
 				'ev-phone' => empty($event['phone']) ? '' : trim($event['phone']),
-				'ev-import-uid' => empty($event['uid']) ? '' : $event['uid'],
+				'post-import-uid' => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
 				'ev-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source
@@ -119,6 +119,13 @@ class AgendaPartage_Evenements_Import {
 			if( ! empty( $data['meta_input'] ) ){
 				$inputs = array_merge( $data['meta_input'], $inputs );
 			}
+			
+			if( ! empty($inputs['ev-user-email']) )
+				$user_email = $inputs['ev-user-email'];
+			elseif( ! empty($inputs['ev-email']) )
+				$user_email = $inputs['ev-email'];
+			else
+				$user_email = false;
 			
 			$post_content = empty($event['description']) ? '' : trim($event['description']);
 			if ($post_content === null) $post_content = '';
@@ -138,13 +145,11 @@ class AgendaPartage_Evenements_Import {
 			
 			// terms
 			$all_taxonomies = AgendaPartage_Evenement_Post_type::get_taxonomies();
+			
+			$post_type_taxonomies = array_change_key_case( AgendaPartage_Evenement::get_taxonomies(), CASE_LOWER );
 			$taxonomies = [];
-			foreach([ 
-				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_ev_category
-				, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
-				, 'DIFFUSIONS' => AgendaPartage_Evenement::taxonomy_diffusion
-			] as $node_name => $tax_name){
-				$node_name = strtolower($node_name);
+			foreach($post_type_taxonomies as $node_name => $taxonomy){
+				$tax_name = $taxonomy['name'];
 				if( empty($event[$node_name]))
 					continue;
 				if( is_string($event[$node_name]))
@@ -174,7 +179,6 @@ class AgendaPartage_Evenements_Import {
 				'post_title' => $post_title,
 				'post_name' => sanitize_title( $post_title ),
 				'post_type' => AgendaPartage_Evenement::post_type,
-				'post_author' => $post_author,
 				'meta_input' => $inputs,
 				'post_content' =>  $post_content,
 				'post_status' => $post_status,
@@ -183,13 +187,9 @@ class AgendaPartage_Evenements_Import {
 			
 			// terms
 			$taxonomies = [];
-			foreach([ 
-				'CATEGORIES' => AgendaPartage_Evenement::taxonomy_ev_category
-				, 'CITIES' => AgendaPartage_Evenement::taxonomy_city
-				, 'DIFFUSIONS' => AgendaPartage_Evenement::taxonomy_diffusion
-			] as $node_name => $term_name){
-				if( ! empty($event[strtolower($node_name)]))
-					$taxonomies[$term_name] = $event[strtolower($node_name)];
+			foreach($post_type_taxonomies as $node_name => $taxonomy){
+				if( ! empty($event[$node_name]))
+					$taxonomies[$taxonomy['name']] = $event[$node_name];
 			}
 			
 			#DEBUG
@@ -202,10 +202,23 @@ class AgendaPartage_Evenements_Import {
 			
 			if( $existing_post ){
 				$postarr['ID'] = $existing_post->ID;
+				//update
 				$post_id = wp_update_post( $postarr, true );
 			}
-			else
+			else {
+				if( $user_email && ($post_author = email_exists($user_email)) ){
+					if( is_multisite() ){
+						$blogs = get_blogs_of_user($post_author, false);
+						if( ! isset( $blogs[ get_current_blog_id() ] ) )
+							$post_author = $default_post_author;
+					}
+				}
+				else
+					$post_author = $default_post_author;
+				$postarr['post_author'] = $post_author;
+				//insert
 				$post_id = wp_insert_post( $postarr, true );
+			}
 			
 			if( ! $post_id || is_wp_error( $post_id )){
 				$failCounter++;
@@ -253,7 +266,7 @@ class AgendaPartage_Evenements_Import {
 			foreach( get_posts([
 				'post_type' => AgendaPartage_Evenement::post_type
 				, 'post_status' => ['publish', 'pending', 'draft']
-				, 'meta_key' => 'ev-import-uid'
+				, 'meta_key' => 'post-import-uid'
 				, 'meta_value' => $event['uid']
 				, 'meta_compare' => '='
 				, 'numberposts' => 1

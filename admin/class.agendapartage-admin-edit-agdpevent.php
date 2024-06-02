@@ -322,12 +322,13 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		global $post;
 		$fields = array();
 		
-		$meta_name = 'ev-import-uid';
+		$meta_name = 'post-import-uid';
  		if( ! self::$the_post_is_new
 		&& ($imported = get_post_meta($post->ID, $meta_name, true)) ) {
 			$fields[] = array(
 				'name' => $meta_name,
 				'label' => __('Evènement importé', AGDP_TAG),
+				'icon' => 'admin-multisite',
 				'input' => 'text',
 				'value' => $imported,
 				'container_class' => 'side-box',

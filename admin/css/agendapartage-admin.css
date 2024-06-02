@@ -130,6 +130,9 @@ img.coo-favicon {
 	color: darkred;
 }
 
+#the-list .type-agdpevent .is-imported-post {
+	font-size: smaller;
+}
 
 
 /*toggle shortcode*/
