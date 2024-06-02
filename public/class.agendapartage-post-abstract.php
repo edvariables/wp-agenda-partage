@@ -17,6 +17,8 @@ abstract class AgendaPartage_Post_Abstract {
 	const posts_page_option = false; //Must override
 	const newsletter_option = false; //Must override
 	
+	private static $send_for_diffusion_history = [];
+	
 	private static $post_types = [];
 
 	private static $initiated = false;
@@ -817,13 +819,21 @@ abstract class AgendaPartage_Post_Abstract {
 			$attributes[strtolower($attribute[0])] = $attribute[1];
 		}
 		
+		$history_key = sprintf('%d>%s:%s', $post_id, $action, $attributes[$action]);
+		if( in_array( $history_key, self::$send_for_diffusion_history ) ){
+			debug_log('send_for_diffusion - already in send_for_diffusion_history', $action);
+			return;
+		}
+		else
+			self::$send_for_diffusion_history[] = $history_key;
+
 		// Export .ics
 		$filters = [];
 		if( $post_is_deleted )
 			$filters['set_post_status'] = 'trash';
 		$export = static::get_posts_export( [ $post_id ], 'ics', 'file',  $filters );
 		
-		debug_log('send_for_diffusion $export', $filters, file_get_contents($export) );
+		// debug_log('send_for_diffusion $export', $filters, file_get_contents($export) );
 		
 		//Send
 		switch( $action ){
