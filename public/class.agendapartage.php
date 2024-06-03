@@ -119,22 +119,30 @@ class AgendaPartage {
 		
 		add_filter( 'wp_nav_menu_items', array(__CLASS__, 'register_custom_menus' ), 10, 2 );
 		
-		add_action( 'agendapartage-init', array(__CLASS__, 'do_action_on_queried_object' ) );
+		add_action( 'agendapartage-init', array(__CLASS__, 'do_action_on_queried_object' ), 20 );
 	}
 	
 	/**
 	 * init_multisite_wp_cron
 	 */
 	public static function init_multisite_wp_cron(){
-		
 		if( ! defined( 'DOING_CRON')
 		 || ! DOING_CRON
 		 || ! is_multisite()
 		 || get_current_blog_id() !== BLOG_ID_CURRENT_SITE
 		)
 			return;
-		
-		foreach( get_sites() as $blog){
+		add_action( 'agendapartage-init', array(__CLASS__, 'multisite_spawn_wp_cron' ), 30 );
+	}
+	/**
+	 * init_multisite_wp_cron
+	 */
+	public static function multisite_spawn_wp_cron(){
+		foreach( get_sites([
+			'deleted' => 0,
+			'site__not_in' => [BLOG_ID_CURRENT_SITE],
+		 ]) as $blog)
+		{
 			if( $blog->blog_id === BLOG_ID_CURRENT_SITE
 			 || $blog->deleted )
 				continue;

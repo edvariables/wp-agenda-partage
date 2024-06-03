@@ -29,6 +29,8 @@ class AgendaPartage_Mailbox {
 			self::$initiated = true;
 
 			self::init_hooks();
+		
+			self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Mailbox', 'init_cron'); ne suffit pas. Pblm de multisites ?
 		}
 	}
 
@@ -40,8 +42,6 @@ class AgendaPartage_Mailbox {
 		add_filter('wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
-		
-		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Mailbox', 'init_cron'); ne suffit pas. Pblm de multisites ?
 	}
 	/*
 	 **/

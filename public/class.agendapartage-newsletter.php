@@ -19,7 +19,6 @@ class AgendaPartage_Newsletter {
 	const taxonomy_period = 'period';
 
 	private const cron_hook = 'agdpnl_cron_hook';
-	private static $cron_hook = false;
 
 	const default_mailing_hour = 2;
 	
@@ -53,8 +52,8 @@ class AgendaPartage_Newsletter {
 			define('ANTERIORITY_TWOMONTHS', '2'.ANTERIORITY_ONEMONTH);
 			
 			self::init_hooks();
-			
-			self::deactivate_cron( self::get_old_cron_hook() );//DEBUG
+		
+			self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas. Pblm de multisite ?
 		}
 	}
 
@@ -71,8 +70,6 @@ class AgendaPartage_Newsletter {
 		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		
 		add_action( self::get_cron_hook(), array(__CLASS__, 'on_cron_exec') );
-		
-		self::init_cron(); //SIC : register_activation_hook( 'AgendaPartage_Newsletter', 'init_cron'); ne suffit pas. Pblm de multisite ?
 	}
 	
 	public static function on_page_newsletter_subscribe( $page_id, $page ){
@@ -84,9 +81,7 @@ class AgendaPartage_Newsletter {
 	 **/
 	 
 	public static function get_cron_hook(){
-		if( self::$cron_hook )
-			return self::$cron_hook;
-		return self::$cron_hook = self::cron_hook;
+		return self::cron_hook;
 	}
 	public static function get_old_cron_hook(){
 		return self::cron_hook . '.' . get_current_blog_id();
@@ -1470,6 +1465,9 @@ class AgendaPartage_Newsletter {
 	 * $next_time in seconds or timestamp
 	 */
 	public static function init_cron($next_time = false){
+			
+		self::deactivate_cron( self::get_old_cron_hook() );//DEBUG
+			
 		$cron_hook = self::get_cron_hook();
 		$cron_time = wp_next_scheduled( $cron_hook );
 		if($next_time){
@@ -1500,9 +1498,12 @@ class AgendaPartage_Newsletter {
 	public static function deactivate_cron($cron_hook = false){
 		if( ! $cron_hook )
 			$cron_hook = self::get_cron_hook();
-		if( $timestamp = wp_next_scheduled( $cron_hook ) )
-		wp_unschedule_event( $timestamp, $cron_hook );
-		self::$cron_state = '0|Désactivé'; 
+		if( $timestamp = wp_next_scheduled( $cron_hook ) ){
+			wp_unschedule_event( $timestamp, $cron_hook );
+			
+			self::$cron_state = '0|Désactivé'; 
+			log_cron_state();
+		}
 	}
 	/**
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
