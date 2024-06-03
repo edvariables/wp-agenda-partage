@@ -639,7 +639,7 @@ class AgendaPartage_Newsletter {
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
-				if( default_tab_input_name && $content.find( '[data-name=' + default_tab_input_name + ']').length )
+				if( default_tab_input_name && $content.find( '[data-name=' + default_tab_input_name + ']:first').length )
 					default_tab = tabs_counter - 1;
 			});
 			$wrapper.html( $tabs.tabs({
@@ -867,9 +867,14 @@ class AgendaPartage_Newsletter {
 		$default_newsletter = $newsletter === true;
 		if( (! $newsletter) || $default_newsletter){
 			$newsletter = self::is_sending_email();
-			if( ! $newsletter
-			 && empty($_REQUEST[AGDP_ARG_NEWSLETTERID])){
-				if( empty($_REQUEST['post_ID'])){
+			if( ! $newsletter ){
+				foreach( [AGDP_ARG_NEWSLETTERID, 'post_ID'] as $argument ){
+					if( ! empty($_REQUEST[$argument])){
+						$newsletter = $_REQUEST[$argument];
+						break;
+					}
+				}				
+				if( ! $newsletter ){
 					if( ! ($newsletter = get_post())
 					|| $newsletter->post_type !== self::post_type){
 						if( ! $default_newsletter )
@@ -877,8 +882,6 @@ class AgendaPartage_Newsletter {
 						$newsletter = AgendaPartage::get_option('events_nl_post_id');
 					}
 				}
-				else
-					$newsletter = get_post($_REQUEST['post_ID']);
 			}
 		}
 		
