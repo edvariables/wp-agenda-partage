@@ -53,6 +53,8 @@ class AgendaPartage_Newsletter {
 			define('ANTERIORITY_TWOMONTHS', '2'.ANTERIORITY_ONEMONTH);
 			
 			self::init_hooks();
+			
+			self::deactivate_cron( self::get_old_cron_hook() );//DEBUG
 		}
 	}
 
@@ -76,12 +78,17 @@ class AgendaPartage_Newsletter {
 	public static function on_page_newsletter_subscribe( $page_id, $page ){
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'on_wpcf7_form_class_attr_cb'), 10, 1 ); 
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
-		add_action('wp_head', array(__CLASS__, 'init_js_sections_tabs'));
+		add_action( 'wp_head', array(__CLASS__, 'init_js_sections_tabs'));
 	}
 	/*
 	 **/
 	 
 	public static function get_cron_hook(){
+		if( self::$cron_hook )
+			return self::$cron_hook;
+		return self::$cron_hook = self::cron_hook;
+	}
+	public static function get_old_cron_hook(){
 		if( self::$cron_hook )
 			return self::$cron_hook;
 		return self::$cron_hook = self::cron_hook . '.' . get_current_blog_id();
@@ -1465,11 +1472,6 @@ class AgendaPartage_Newsletter {
 	 * $next_time in seconds or timestamp
 	 */
 	public static function init_cron($next_time = false){
-		//clear
-		// foreach(['agdpnl_cron_hook', 'agdpnl_cron_hook'.get_current_blog_id()] as $cron_hook)
-			// if( $cron_time = wp_next_scheduled( $cron_hook ) )
-				// wp_unschedule_event( $cron_time, $cron_hook );
-
 		$cron_hook = self::get_cron_hook();
 		$cron_time = wp_next_scheduled( $cron_hook );
 		if($next_time){
@@ -1497,8 +1499,9 @@ class AgendaPartage_Newsletter {
 	/**
 	 * Désactive le cron
 	 */
-	public static function deactivate_cron(){
-		$cron_hook = self::get_cron_hook();
+	public static function deactivate_cron($cron_hook = false){
+		if( ! $cron_hook )
+			$cron_hook = self::get_cron_hook();
 		if( $timestamp = wp_next_scheduled( $cron_hook ) )
 		wp_unschedule_event( $timestamp, $cron_hook );
 		self::$cron_state = '0|Désactivé'; 
