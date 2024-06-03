@@ -69,14 +69,17 @@ class AgendaPartage_Evenements_Import {
 			}
 			
 			if( $existing_post = self::get_existing_post($event) ){
-				if( $post_status !== 'publish' ){
 					
+				if( $post_status !== 'trash' ){
 					$meta_name = AGDP_IMPORT_REFUSED;
 					if( get_post_meta( $existing_post->ID, $meta_name, true ) ){
 						$ignoreCounter++;
-						debug_log('[REFUSED]post_status = ' . $post_status . ' / ' . var_export($post_title, true));
+						debug_log('[REFUSED]post_status = ' . $meta_name . ' / ' . var_export($post_title, true));
 						continue;
 					}
+				}
+				
+				if( $post_status !== 'publish' ){
 					
 					AgendaPartage_Evenement::change_post_status($existing_post->ID, $post_status);
 					$successCounter++;
