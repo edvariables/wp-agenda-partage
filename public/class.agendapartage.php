@@ -22,6 +22,7 @@ class AgendaPartage {
 		self::init_includes();
 		self::init_hooks();
 		self::load_modules();
+		self::init_wp_cron();
 
 		do_action( 'agendapartage-init' );
 	}
@@ -119,6 +120,21 @@ class AgendaPartage {
 		add_filter( 'wp_nav_menu_items', array(__CLASS__, 'register_custom_menus' ), 10, 2 );
 		
 		add_action( 'agendapartage-init', array(__CLASS__, 'do_action_on_queried_object' ) );
+	}
+	
+	/**
+	 * init_hooks
+	 */
+	public static function init_wp_cron(){
+		
+		// Multisite, dispatch cron
+		if( ! defined( 'DOING_CRON')
+		 || ! is_multisite()
+		 || get_current_blog_id() !== 1
+		)
+			return;
+		
+		debug_log(__FUNCTION__, get_sites());
 	}
 	
 	/******************
