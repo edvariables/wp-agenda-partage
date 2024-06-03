@@ -91,7 +91,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			, $codesecret ? self::secretcode_argument . '=' . $codesecret : ''
 		);
 		
-		$html .= '[agdpevent info="is-imported"]';
+		$html .= self::get_agdpevent_imported( $agdpevent );
 		
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
@@ -240,6 +240,35 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 		
 		return $html;
 	}
+	
+ 	/**
+ 	 * Retourne le Content de la page de l'évènement
+ 	 */
+	public static function get_agdpevent_imported( $post_id = null, $no_html = false ) {
+		global $post;
+ 		if( is_a($post_id, 'WP_Post')){
+			$post_id = $post_id->ID;
+		}
+		$meta_name = AGDP_IMPORT_UID;
+		$val = get_post_meta($post_id, $meta_name, true);
+		if($val){
+			$matches = [];
+			preg_match_all('/^(\w+)\[(\d+)\]@(.*)$/', $val, $matches);
+			$source_post_type = $matches[1][0];
+			$source_id = $matches[2][0];
+			$source_site = $matches[3][0];
+			$val = sprintf('Cet évènement provient de <a href="%s://%s/blog/%s?p=%d">%s</a>', 
+				'https', $source_site, $source_post_type, $source_id, $source_site);
+			if($no_html)
+				return $val;
+			return sprintf('<div class="agdp-agdpevent agdp-%s">%s %s</div>'
+					, $meta_name
+					, AgendaPartage::icon('admin-multisite')
+					, $val
+			);
+		}
+		return $post_id;
+	}
 		
  
  	/**
@@ -350,6 +379,20 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				if($confirmation === null || $confirmation === true)
 					$confirmation = sprintf('Confirmez-vous l\'envoi d\'un e-mail à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
 				break;
+			case 'refuse_import':
+				if($caption === null)
+					if( is_array($data) && ! empty($data['cancel']) )
+						$caption = __('Annuler le refus', AGDP_TAG);	
+					else
+						$caption = __('Refuser l\'importation', AGDP_TAG);
+				if($icon === true)
+					$icon = 'visibility';
+				if($confirmation === null || $confirmation === true)
+					if( is_array($data) && ! empty($data['cancel']) )
+						$confirmation = 'Confirmez-vous l\'annulation du refus d\'importer l\'évènement ?';
+					else
+						$confirmation = 'Confirmez-vous le refus d\'importer l\'évènement ?';
+				
 			default:
 				if(!$caption)
 					$caption = __($method, AGDP_TAG);
@@ -402,7 +445,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	 */
 	public static function on_wp_ajax_agdpevent_action_cb() {
 		
-		// debug_log('on_wp_ajax_agdpevent_action_cb');	
+		// debug_log('on_wp_ajax_agdpevent_action_cb', func_get_args());	
 		
 		if( ! AgendaPartage::check_nonce())
 			wp_die();
@@ -429,6 +472,16 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	 
 		// Don't forget to stop execution afterward.
 		wp_die();
+	}
+	
+	/**
+	 * Refuse imported post
+	 */
+	public static function agdpevent_action_refuse_import($post_id) {
+		$cancel = isset($_POST['data']) && ! empty($_POST['data']['cancel']);
+		if ( self::do_refuse_import($post_id, ! $cancel) )
+			return 'redir:' . AgendaPartage_Evenements::get_url(); //TODO add month in url
+		return 'Impossible de modifier cet évènement.';
 	}
 	
 	/**
@@ -487,6 +540,27 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			self::get_activation_key($post_id, true); //reset
 		}
 		return self::send_validation_email($post_id);
+	}
+	
+	/**
+	 * Refuse import from an other blog
+	 */
+	public static function do_refuse_import($post_id, $refuse = true) {
+		if(self::user_can_change_post($post_id)){
+			// $post = wp_delete_post($post_id);
+			
+			$meta_name = AGDP_IMPORT_REFUSED;
+			update_post_meta( $post_id, $meta_name, $refuse );
+			
+			if( $refuse ){
+				$post = self::change_post_status($post_id, 'draft');
+				if( is_a($post, 'WP_Error') )
+					return false;
+			}
+			return true;
+		}
+		// echo self::user_can_change_post($post_id, false, true);
+		return false;
 	}
 	
 	/**

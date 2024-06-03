@@ -7,13 +7,13 @@ a:active, a:focus {
 	outline: none;
 }
 
-p.alerte, div.alerte {
+.alerte {
 	border-style: solid;
 	border-color:orange;
 	padding: 5px;
 	border-radius: 2px;
 }
-p.info, div.info {
+.info {
 	border-style: solid;
 	border-color:green;
 	padding: 5px;
@@ -125,6 +125,16 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
   float: right;
   font-style: italic;
   font-size: smaller;
+}
+
+.entry-content .agdpevent-edit-toolbar.post-is-imported {
+	text-align: left;
+}
+.entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-uid {
+	display: inline-block;
+}
+.entry-content .agdpevent-edit-toolbar.post-is-imported > .agdpevent-tool > * {
+	float: none;
 }
 
 /*toggle shortcode*/

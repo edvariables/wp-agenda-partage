@@ -70,6 +70,14 @@ class AgendaPartage_Evenements_Import {
 			
 			if( $existing_post = self::get_existing_post($event) ){
 				if( $post_status !== 'publish' ){
+					
+					$meta_name = AGDP_IMPORT_REFUSED;
+					if( get_post_meta( $existing_post->ID, $meta_name, true ) ){
+						$ignoreCounter++;
+						debug_log('[REFUSED]post_status = ' . $post_status . ' / ' . var_export($post_title, true));
+						continue;
+					}
+					
 					AgendaPartage_Evenement::change_post_status($existing_post->ID, $post_status);
 					$successCounter++;
 					debug_log('[UPDATE]post_status = ' . $post_status . ' / ' . var_export($post_title, true));

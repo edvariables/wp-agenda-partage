@@ -243,7 +243,7 @@ class AgendaPartage_Mailbox {
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
 	 */
 	public static function on_cron_exec(){
-		// debug_log(__CLASS__.'::on_cron_exec');
+		debug_log( sprintf('[blog %d]%s::%s', get_current_blog_id(), __CLASS__, __FUNCTION__ ));
 		self::cron_exec(false);
 	}
 	

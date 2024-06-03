@@ -336,25 +336,7 @@ class AgendaPartage_Evenement_Shortcodes {
 				
 			case 'agdpevent-is-imported':
 
-				$meta_name = AGDP_IMPORT_UID;
-				$val = get_post_meta($post_id, $meta_name, true);
-				if($val || $content){
-					$matches = [];
-					preg_match_all('/^(\w+)\[(\d+)\]@(.*)$/', $val, $matches);
-					$source_post_type = $matches[1][0];
-					$source_id = $matches[2][0];
-					$source_site = $matches[3][0];
-					$val = sprintf('Cet évènement provient de <a href="%s://%s/blog/%s?p=%d">%s</a>', 
-						'https', $source_site, $source_post_type, $source_id, $source_site);
-					$val = do_shortcode( wp_kses_post($val . $content));
-					if($no_html)
-						$html = $val;
-					else
-						$html = '<div class="agdp-agdpevent agdp-'. $shortcode .'">'
-							. $val
-							. '</div>';
-				}
-				return $html;
+				return AgendaPartage_Evenement::get_agdpevent_imported( $post_id, $no_html );
 				
 			case 'agdpevent-cree-depuis':
 
