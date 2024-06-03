@@ -22,7 +22,7 @@ class AgendaPartage {
 		self::init_includes();
 		self::init_hooks();
 		self::load_modules();
-		self::init_wp_cron();
+		self::init_multisite_wp_cron();
 
 		do_action( 'agendapartage-init' );
 	}
@@ -123,18 +123,33 @@ class AgendaPartage {
 	}
 	
 	/**
-	 * init_hooks
+	 * init_multisite_wp_cron
 	 */
-	public static function init_wp_cron(){
+	public static function init_multisite_wp_cron(){
 		
-		// Multisite, dispatch cron
 		if( ! defined( 'DOING_CRON')
+		 || ! DOING_CRON
 		 || ! is_multisite()
-		 || get_current_blog_id() !== 1
+		 || get_current_blog_id() !== BLOG_ID_CURRENT_SITE
 		)
 			return;
 		
-		debug_log(__FUNCTION__, get_sites());
+		foreach( get_sites() as $blog){
+			if( $blog->blog_id === BLOG_ID_CURRENT_SITE
+			 || $blog->deleted )
+				continue;
+			try {
+				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id) );
+				switch_to_blog($blog->blog_id);
+				wp_cron();
+			}
+			catch( Exception $exception ){
+				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id), $exception );
+			}
+			finally {
+				restore_current_blog();
+			}
+		}
 	}
 	
 	/******************

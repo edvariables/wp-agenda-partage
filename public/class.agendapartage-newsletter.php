@@ -89,9 +89,7 @@ class AgendaPartage_Newsletter {
 		return self::$cron_hook = self::cron_hook;
 	}
 	public static function get_old_cron_hook(){
-		if( self::$cron_hook )
-			return self::$cron_hook;
-		return self::$cron_hook = self::cron_hook . '.' . get_current_blog_id();
+		return self::cron_hook . '.' . get_current_blog_id();
 	}
 
 	/**
@@ -1510,7 +1508,9 @@ class AgendaPartage_Newsletter {
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
 	 */
 	public static function on_cron_exec(){
+		debug_log( sprintf('[blog %d]%s::%s', __CLASS__, __FUNCTION__, get_current_blog_id() ));
 		self::cron_exec(false);
+		return true;
 	}
 	
 	/**
