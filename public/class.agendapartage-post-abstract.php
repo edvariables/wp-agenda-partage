@@ -808,15 +808,22 @@ abstract class AgendaPartage_Post_Abstract {
 				static::send_for_diffusion( $post_id, $term, $tax_inputs, $previous_tax_inputs );
 			return;
 		}
-		
-		if( is_a($taxonomy_diffusion, 'WP_Term') )
+		if( is_a($taxonomy_diffusion, 'WP_Term') ){
 			$diffusion_term_id = $taxonomy_diffusion->term_id;
+			$taxonomy_diffusion = $taxonomy_diffusion->taxonomy;
+		}
 		else
 			$diffusion_term_id = $taxonomy_diffusion;
 		
 		if( empty($diffusion_term_id ) )
 			return false;
 		
+		if( ! is_array($tax_inputs) ){
+			$tax_inputs = self::get_post_terms( $taxonomy_diffusion, $post_id, 'ids' );
+			if( is_a($tax_inputs, 'WP_Error') )
+				die( __FUNCTION__ . ' : ' . $taxonomy_diffusion . ' ' . print_r($tax_inputs, true) );
+		}
+			
 		if( is_array($tax_inputs) ){
 			foreach($tax_inputs as $index=>$term)
 				if( is_a($term, 'WP_Term') )
@@ -836,16 +843,24 @@ abstract class AgendaPartage_Post_Abstract {
 			) )
 				return false;
 		
+		$post_is_deleted = false;
 		$post_status = get_post_status($post_id);
 		
+		if( $post_status !== 'publish' ){
+			if( ! in_array( $diffusion_term_id, $tax_inputs) )
+				return false;
+			$post_is_deleted = true;
+		}
 		//Existait mais n'existe plus
-		if( is_array($tax_inputs) && ! in_array( $diffusion_term_id, $tax_inputs) 
+		elseif( is_array($tax_inputs) && ! in_array( $diffusion_term_id, $tax_inputs) 
 		 && is_array($previous_tax_inputs) && in_array( $diffusion_term_id, $previous_tax_inputs) ){
 			foreach($previous_tax_inputs as $index=>$term)
 				$post_is_deleted = true;
 		}
-		else
-			$post_is_deleted = $post_status !== 'publish';
+		//N'existe pas
+		elseif( is_array($tax_inputs) && ! in_array( $diffusion_term_id, $tax_inputs) ){
+			return false;
+		}
 		
 		$term_meta = 'connexion';
 		$connexion = get_term_meta( $diffusion_term_id, $term_meta, true );
@@ -905,6 +920,8 @@ abstract class AgendaPartage_Post_Abstract {
 				debug_log('send_for_diffusion wp_mail', $attributes['mailto'], $subject, $message, $headers, $attachments );
 				
 				break;
+				
+			case 'blog' :
 			default:
 				debug_log('send_for_diffusion ! unknown action', $action);
 		}

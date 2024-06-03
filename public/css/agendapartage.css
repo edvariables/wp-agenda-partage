@@ -27,6 +27,12 @@ a:active, a:focus {
 .text-green {
 	color: green !important;
 }
+.color-red {
+	color: darkred !important;
+}
+body.colors-dark .color-red {
+	color: lightsalmon !important;
+}
 
 /* ED200318 "Fièrement propulsé par Word Press" */
 .site-info > a
@@ -130,7 +136,7 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
 .entry-content .agdpevent-edit-toolbar.post-is-imported {
 	text-align: left;
 }
-.entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-uid {
+.entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-refused {
 	display: inline-block;
 }
 .entry-content .agdpevent-edit-toolbar.post-is-imported > .agdpevent-tool > * {

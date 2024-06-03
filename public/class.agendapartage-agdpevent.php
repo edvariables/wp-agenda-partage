@@ -261,13 +261,18 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				'https', $source_site, $source_post_type, $source_id, $source_site);
 			if($no_html)
 				return $val;
+			
+			$meta_name = AGDP_IMPORT_REFUSED;
+			if( $import_refused = get_post_meta( $post_id, $meta_name, true ) ){			
+				$val .= ' ' . AgendaPartage::icon('warning', 'Refusé', 'color-red');
+			}
 			return sprintf('<div class="agdp-agdpevent agdp-%s">%s %s</div>'
 					, $meta_name
 					, AgendaPartage::icon('admin-multisite')
 					, $val
 			);
 		}
-		return $post_id;
+		return '';
 	}
 		
  
@@ -327,13 +332,15 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	 */
 	public static function get_agdpevent_action_link($post, $method, $icon = false, $caption = null, $title = false, $confirmation = null, $data = null){
 		$need_can_user_change = true;
-		switch($method){
+		switch($method)
+		{
 			case 'remove':
 				if($caption === null)
 					$caption = __('Supprimer', AGDP_TAG);
 				if($confirmation === null || $confirmation === true)
 					$confirmation = 'Confirmez-vous la suppression définitive de l\'évènement ?';
 				break;
+				
 			case 'duplicate':
 				if($caption === null)
 					$caption = __('Dupliquer', AGDP_TAG);
@@ -342,6 +349,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				if($icon === true)
 					$icon = 'admin-page';
 				break;
+				
 			case 'unpublish':
 				if($caption === null)
 					$caption = __('Masquer dans l\'agenda', AGDP_TAG);
@@ -351,6 +359,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 					$confirmation = 'Confirmez-vous que l\'évènement ne sera plus visible ?';
 
 				break;
+				
 			case 'publish':
 				if($caption === null)
 					$caption = __('Rendre public dans l\'agenda', AGDP_TAG);
@@ -360,6 +369,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 					$confirmation = 'Confirmez-vous de rendre visible l\'évènement ?';
 				
 				break;
+				
 			case 'send_email':
 				$need_can_user_change = false;
 				$meta_name = 'ev-user-email' ;
@@ -379,6 +389,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				if($confirmation === null || $confirmation === true)
 					$confirmation = sprintf('Confirmez-vous l\'envoi d\'un e-mail à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
 				break;
+				
 			case 'refuse_import':
 				if($caption === null)
 					if( is_array($data) && ! empty($data['cancel']) )
@@ -386,7 +397,10 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 					else
 						$caption = __('Refuser l\'importation', AGDP_TAG);
 				if($icon === true)
-					$icon = 'visibility';
+					if( is_array($data) && ! empty($data['cancel']) )
+						$icon = 'undo';
+					else
+						$icon = 'lock';
 				if($confirmation === null || $confirmation === true)
 					if( is_array($data) && ! empty($data['cancel']) )
 						$confirmation = 'Confirmez-vous l\'annulation du refus d\'importer l\'évènement ?';
@@ -480,7 +494,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	public static function agdpevent_action_refuse_import($post_id) {
 		$cancel = isset($_POST['data']) && ! empty($_POST['data']['cancel']);
 		if ( self::do_refuse_import($post_id, ! $cancel) )
-			return 'redir:' . AgendaPartage_Evenements::get_url(); //TODO add month in url
+			return 'redir:' . self::get_post_permalink($post_id, true); 
 		return 'Impossible de modifier cet évènement.';
 	}
 	
@@ -522,6 +536,10 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 	 * Publish event
 	 */
 	public static function agdpevent_action_publish($post_id) {
+		$meta_name = AGDP_IMPORT_REFUSED;
+		if( get_post_meta( $post_id, $meta_name, true ) )
+			return 'Impossible de modifier le statut.<br>Cet évènement importé est marqué comme refusé.';
+			
 		$post_status = 'publish';
 		if( (! self::waiting_for_activation($post_id)
 			|| current_user_can('manage_options') )

@@ -252,9 +252,8 @@ class AgendaPartage_Evenement_Edit {
 					$meta_name = AGDP_IMPORT_REFUSED;
 					$import_refused = get_post_meta( $post_id, $meta_name, true );
 					
-					$html .= sprintf('<div class="agdpevent-edit-toolbar post-is-imported">%s%s<span class="agdpevent-tool">%s</span></div>'
+					$html .= sprintf('<div class="agdpevent-edit-toolbar post-is-imported">%s<span class="agdpevent-tool">%s</span></div>'
 						, $is_imported
-						, $import_refused ? ' ' . AgendaPartage::icon('warning', 'Refusé', 'alerte') : ''
 						, AgendaPartage_Evenement::get_agdpevent_action_link(
 							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null));
 				}
