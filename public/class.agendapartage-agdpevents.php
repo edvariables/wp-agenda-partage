@@ -53,9 +53,10 @@ class AgendaPartage_Evenements {
 			'post_type' => AgendaPartage_Evenement::post_type,
 			'post_status' => 'publish',
 			
+			// BUGG du OR qui fait qu'il manque un meta_key = 'ev-date-debut'
 			'meta_query' => [
 				'relation' => 'OR',
-				'ev-date-debut' => [
+				'ev-date-debut' => [ 
 					'key' => 'ev-date-debut',
 					'value' => wp_date('Y-m-d'),
 					'compare' => '>=',
@@ -115,7 +116,7 @@ class AgendaPartage_Evenements {
 			}
 			$all = array_merge($all, $query);
 		}
-		// var_dump($all);
+		// var_dump($all['meta_query']);
 		// echo "</div>";
 		return $all;
 		
@@ -140,8 +141,7 @@ class AgendaPartage_Evenements {
 					'value' => $date_min,
 					'compare' => '>=',
 					'type' => 'DATE',
-				],
-				'ev-date-debut' => [
+				], [
 					'key' => 'ev-date-debut',
 					'value' => $date_max,
 					'compare' => '<',
@@ -157,7 +157,6 @@ class AgendaPartage_Evenements {
 		);
 		
 		$posts = self::get_posts($query, self::get_filters_query(false));
-		
 		return $posts;
     }
 	
@@ -178,11 +177,15 @@ class AgendaPartage_Evenements {
 			}
 		$query = self::get_posts_query(...$queries);
 
-		// debug_log('get_posts $queries ', $queries);
-
-        $the_query = new WP_Query( $query );
-		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
+		add_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		
+       // debug_log('get_posts $queries ', $queries);
+		 $the_query = new WP_Query( $query );
+		 //BUGG wor5504_postmeta.meta_key = 'ev-date-debut' pas dans tous les OR
+		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>', $query);
         
+		remove_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		
 		if( ! empty($posts_where_filters))
 			remove_filter('posts_where', array(__CLASS__, 'on_posts_where_filters'),10,2);
 		

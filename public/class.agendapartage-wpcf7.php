@@ -33,9 +33,6 @@ class AgendaPartage_WPCF7 {
 		
 		//wpcf7_before_send_mail : mise à jour des données avant envoi (ou annulation) de mail
 		add_filter( 'wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
-		// if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
-			// add_filter( 'wpcf7_mail_failed', array(__CLASS__, 'wpcf7_mail_sent'), 10,1);
-		// }
 
 		//Contact Form 7 hooks
 		add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_check_headers_cb'), 10,1);
@@ -44,11 +41,6 @@ class AgendaPartage_WPCF7 {
 
 		//Contrôle de l'envoi effectif des mails	
 		add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail'), 10, 2);
-			
-		// Interception des emails en localhost
-		if( WP_DEBUG && in_array( $_SERVER['REMOTE_ADDR'], array( '127.0.0.1', 'pstfe.ed2020', '::1' ) ) ) {
-			// add_filter( 'wp_mail', array(__CLASS__, 'wp_mail_localhost'), 100, 1);
-		}
 		
 		//Maintient de la connexion de l'utilisateur pendant l'envoi du mail
 		// add_filter( 'wpcf7_verify_nonce', array(__CLASS__, 'wpcf7_verify_nonce_cb' ));	

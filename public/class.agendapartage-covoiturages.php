@@ -50,7 +50,7 @@ class AgendaPartage_Covoiturages {
 			'post_status' => 'publish',
 			
 			'meta_query' => [
-				'relation' => 'OR',
+				'relation' => 'OR', //Bugg 
 				'cov-date-debut' => [
 					'key' => 'cov-date-debut',
 					'value' => wp_date('Y-m-d'),
@@ -215,7 +215,9 @@ class AgendaPartage_Covoiturages {
 
 		// debug_log('get_posts $queries ', $queries);
 
-        $the_query = new WP_Query( $query );
+		add_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		$the_query = new WP_Query( $query );
+		remove_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
 		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
         
 		if( ! empty($posts_where_filters))

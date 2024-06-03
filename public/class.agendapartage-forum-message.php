@@ -718,7 +718,7 @@ class AgendaPartage_Forum_Message {
 			$message = str_replace("\\'", "'", str_replace('\"', '"', $message));
 			
 			$page = get_post($comment->comment_post_ID);
-			$url = sprintf('<a href="%s#comment-%d">%s</a>', get_post_permalink($page, true), $comment->comment_ID, $page->post_title);
+			$url = sprintf('<a href="%s#comment-%d">%s</a>', get_permalink($page), $comment->comment_ID, $page->post_title);
 			
 			$message .= "\n\n-------------\n<i>Votre message original :</i>\n\n"
 				. $comment->comment_content

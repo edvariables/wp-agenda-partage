@@ -110,7 +110,7 @@ class AgendaPartage_Evenements_Import {
 				'ev-email' => empty($event['email']) ? '' : trim($event['email']),
 				'ev-user-email' => empty($event['user-email']) ? '' : trim($event['user-email']),
 				'ev-phone' => empty($event['phone']) ? '' : trim($event['phone']),
-				'post-import-uid' => empty($event['uid']) ? '' : $event['uid'],
+				AGDP_IMPORT_UID => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
 				'ev-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source
@@ -148,8 +148,9 @@ class AgendaPartage_Evenements_Import {
 			
 			$post_type_taxonomies = array_change_key_case( AgendaPartage_Evenement::get_taxonomies(), CASE_LOWER );
 			$taxonomies = [];
-			foreach($post_type_taxonomies as $node_name => $taxonomy){
+			foreach($post_type_taxonomies as $taxonomy){
 				$tax_name = $taxonomy['name'];
+				$node_name = $taxonomy['filter'];
 				if( empty($event[$node_name]))
 					continue;
 				if( is_string($event[$node_name]))
@@ -189,7 +190,7 @@ class AgendaPartage_Evenements_Import {
 			$taxonomies = [];
 			foreach($post_type_taxonomies as $node_name => $taxonomy){
 				if( ! empty($event[$node_name]))
-					$taxonomies[$taxonomy['name']] = $event[$node_name];
+					$taxonomies[$taxonomy['filter']] = $event[$node_name];
 			}
 			
 			#DEBUG
@@ -266,7 +267,7 @@ class AgendaPartage_Evenements_Import {
 			foreach( get_posts([
 				'post_type' => AgendaPartage_Evenement::post_type
 				, 'post_status' => ['publish', 'pending', 'draft']
-				, 'meta_key' => 'post-import-uid'
+				, 'meta_key' => AGDP_IMPORT_UID
 				, 'meta_value' => $event['uid']
 				, 'meta_compare' => '='
 				, 'numberposts' => 1

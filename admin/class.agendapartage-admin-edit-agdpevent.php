@@ -322,7 +322,7 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 		global $post;
 		$fields = array();
 		
-		$meta_name = 'post-import-uid';
+		$meta_name = AGDP_IMPORT_UID;
  		if( ! self::$the_post_is_new
 		&& ($imported = get_post_meta($post->ID, $meta_name, true)) ) {
 			$fields[] = array(

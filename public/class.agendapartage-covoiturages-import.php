@@ -92,7 +92,7 @@ class AgendaPartage_Covoiturages_Import {
 				'cov-organisateur' => empty($covoiturage['organisateur']) ? '' : trim($covoiturage['organisateur']),
 				'cov-email' => empty($covoiturage['email']) ? '' : trim($covoiturage['email']),
 				'cov-phone' => empty($covoiturage['phone']) ? '' : trim($covoiturage['phone']),
-				'post-import-uid' => empty($covoiturage['uid']) ? '' : $covoiturage['uid'],
+				AGDP_IMPORT_UID => empty($covoiturage['uid']) ? '' : $covoiturage['uid'],
 				'cov-date-journee-entiere' => $timeStart ? '' : '1',
 				'cov-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source

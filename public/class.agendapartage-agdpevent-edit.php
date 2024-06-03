@@ -828,7 +828,7 @@ class AgendaPartage_Evenement_Edit {
 				set_transient(AGDP_TAG . '_email_sent_' . $post_id, $post_id, 20);
 		}
 		
-		if( ! ( $post_is_new && $post->post_status === 'pending' ) ){
+		if( ! ( $post_is_new && $postarr['post_status'] === 'pending' ) ){
 			//Taxonomie Diffusion
 			$tax_name = AgendaPartage_Evenement::taxonomy_diffusion;
 			if( isset($tax_terms[$tax_name])){
@@ -1030,7 +1030,7 @@ class AgendaPartage_Evenement_Edit {
 				if($tag->name == 'ev-date-fin'){
 					$date_debut = isset( $_POST['ev-date-debut'] ) ? trim( $_POST['ev-date-debut'] ) : '';
 					if( $date < strtotime($date_debut)) {
-						$result->invalidate( $tag, sprintf("Date de fin incorrecte (%s), elle ne peut pas être antérieure à la date de début (%s). Elle peut être vide.", date("d/m/Y", $date), date("d/m/Y", $date_debut) ) );
+						$result->invalidate( $tag, sprintf("Date de fin incorrecte (%s), elle ne peut pas être antérieure à la date de début (%s). Elle peut être vide.", date("d/m/Y", $date), date("d/m/Y", strtotime($date_debut)) ) );
 						break;
 					}
 				}

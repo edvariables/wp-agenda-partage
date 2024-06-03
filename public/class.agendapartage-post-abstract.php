@@ -417,7 +417,51 @@ abstract class AgendaPartage_Post_Abstract {
 		}
 		return $post;
 	}
- 	
+	
+	/***********************************************************/
+	/**
+	 * Hack de WP_Query pour meta_query
+	 * Recopie les clauses meta_key = 'xxx' du WHERE dans le JOIN pour chaque postmeta
+	 */
+	public static function on_posts_clauses_meta_query( $clauses, $query){
+	    global $wpdb;
+		
+		$postmeta = $wpdb->postmeta;
+		
+		//instances postsmeta et les alias
+		$matches = [];
+		$pattern = sprintf('/(%s)(\sAS\s(\w+))?\sON\s/i', preg_quote($postmeta));
+		if( preg_match_all( $pattern, $clauses['join'], $matches ) ){
+			$aliases = [];
+			$aliases_pattern = '';
+			foreach( $matches[3] as $index => $alias ){
+				if( $alias === '' )
+					$alias = $postmeta;
+				if( array_key_exists($alias, $aliases) )
+					continue;
+				$aliases[$alias] = $matches[0][$index];
+				if( $aliases_pattern )
+					$aliases_pattern .= '|';
+				$aliases_pattern .= preg_quote($alias);
+			}
+			
+			// Recheche dans le WHERE de alias.meta_key = 'xxx'
+			$pattern = sprintf('/(%s)\.meta_key\s=\s\'([^\']+)\'/', $aliases_pattern);
+			if( preg_match_all( $pattern, $clauses['where'], $matches ) ){
+				foreach( $matches[1] as $index => $alias ){
+					/*INNER JOIN wor5504_postmeta AS mt1 ON ( wor5504_posts.ID = mt1.post_id )  
+					devient
+					INNER JOIN wor5504_postmeta AS mt1 ON  mt1.meta_key = 'ev-date-fin' AND ( wor5504_posts.ID = mt1.post_id )  */
+					$join_clause = sprintf('%s %s AND ', $aliases[$alias], $matches[0][$index]);
+					if( strpos( $clauses['join'], $join_clause ) === false )
+						$clauses['join'] = str_replace( $aliases[$alias], $join_clause, $clauses['join']);
+				}
+			}
+		}
+		
+		return $clauses;
+	}
+	
 	/***********************************************************/
 	/**
 	 * Extend WordPress search to include custom fields
@@ -437,7 +481,7 @@ abstract class AgendaPartage_Post_Abstract {
 	public static function cf_search_join( $join ) {
 	    global $wpdb;
 
-	    if ( is_search() ) {    
+	    if ( is_search() ) {
 	        $join .=' LEFT JOIN '.$wpdb->postmeta. ' ON '. $wpdb->posts . '.ID = ' . $wpdb->postmeta . '.post_id ';
 	    }
 
