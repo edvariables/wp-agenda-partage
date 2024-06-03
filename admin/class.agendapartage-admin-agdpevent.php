@@ -59,11 +59,14 @@ class AgendaPartage_Admin_Evenement {
 				echo $post->post_title;
 				
 				$meta_name = AGDP_IMPORT_UID;
-				if( $imported = get_post_meta( $post_id, $meta_name, true ) )
-					echo sprintf('<div class="is-imported-post" title="%s">%s Evènement importé</div>'
+				if( $imported = get_post_meta( $post_id, $meta_name, true ) ){
+					$import_refused = get_post_meta($post->ID, AGDP_IMPORT_REFUSED, true);
+					echo sprintf('<div class="is-imported-post" title="%s">%s Evènement importé%s</div>'
 						, $imported
 						, AgendaPartage::icon('admin-multisite')
+						, $import_refused ? ' - Refusé !' : ''
 					);
+				}
 				break;
 			case 'organisateur' :
 				$organisateur = get_post_meta( $post_id, 'ev-organisateur', true );

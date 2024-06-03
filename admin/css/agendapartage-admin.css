@@ -17,6 +17,12 @@ h3.info {
 	border-left: 3px solid blue;
 	padding-left: 1em;
 }
+.color-red {
+	color: darkred !important;
+}
+body.colors-dark .color-red {
+	color: lightsalmon !important;
+}
 
 .agdp-metabox-row > label {
 	min-width: 12em;

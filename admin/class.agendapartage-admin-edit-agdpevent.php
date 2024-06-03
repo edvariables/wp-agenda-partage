@@ -335,12 +335,13 @@ class AgendaPartage_Admin_Edit_Evenement extends AgendaPartage_Admin_Edit_Post_T
 				'input' => 'text',
 				'value' => $imported,
 				'container_class' => 'side-box',
-				'fields' => $import_refused ? [ array(
+				'fields' => [ array(
 								'name' => AGDP_IMPORT_REFUSED,
 								'label' => __('Refusé', AGDP_TAG),
 								'input' => 'checkbox',
-								'container_class' => 'side-box',
-							)] : false
+								'value' => $import_refused,
+								'container_class' => 'side-box' . ($import_refused ? ' color-red' : ''),
+							)]
 			);
 		}
 		
