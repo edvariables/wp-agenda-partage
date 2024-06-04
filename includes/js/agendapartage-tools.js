@@ -42,10 +42,15 @@ jQuery( function( $ ) {
 								response = substr(response, 0, response.length-4);
 							var action = response.split(':')[0];
 							switch(action){
+								case 'reload' :
 								case 'redir' :
 									response = response.substring(action.length + 1);
 									$msg = $('<div class="ajax_action_info info">La page va être rechargée. Merci de patienter.</div>');
 									$spinner.after($msg);
+									if( action === 'reload' ){
+										document.location = response;
+										document.location.reload();
+									}
 									document.location = response;
 									return;
 								case 'js' :

@@ -285,12 +285,12 @@ class AgendaPartage_Evenement_Edit {
 				
 		if($post->post_status == 'publish')
 			$html .= sprintf('<span class="agdpevent-tool">%s</span>', AgendaPartage_Evenement::get_agdpevent_action_link($post_id, 'unpublish', true));
-		elseif( current_user_can('manage_options')
+		elseif( current_user_can('moderate_comments')
 		|| (! AgendaPartage_Evenement::waiting_for_activation($post_id)
 			&& AgendaPartage_Evenement::user_can_change_post($post_id))){
 			$html .= sprintf('<span class="agdpevent-tool">%s</span>', AgendaPartage_Evenement::get_agdpevent_action_link($post_id, 'publish', true));
 		}
-		if(current_user_can('manage_options')
+		if(current_user_can('edit_posts')
 		|| current_user_can('agdpevent'))
 			$html .= sprintf('<span class="agdpevent-tool">%s</span>', AgendaPartage_Evenement::get_agdpevent_action_link($post_id, 'duplicate', true));
 		$html .= sprintf('<span class="agdpevent-tool">%s</span>', AgendaPartage_Evenement::get_agdpevent_action_link($post_id, 'remove', true));

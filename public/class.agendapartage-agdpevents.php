@@ -41,46 +41,59 @@ class AgendaPartage_Evenements {
 	 * Hook
 	 ******/
 	
-	public static function get_url(){
-		$url = get_permalink(AgendaPartage::get_option('agenda_page_id')) . '#main';
+	public static function get_url( $event = false ){
+		$url = get_permalink(AgendaPartage::get_option('agenda_page_id'));
+		if( $event ) {
+			if( is_a($event, 'WP_Post') ) 
+				$url .= sprintf('#%s%d', AGDP_ARG_EVENTID, $event->ID);
+			else
+				$url .= sprintf('#%s%d', AGDP_ARG_EVENTID, $event);
+		}
+		else
+			$url .= '#main';
 		// $url = home_url();
 		return $url;
 	}
 	
 	public static function init_default_posts_query() {
 		
+		if( current_user_can('moderate_comments') )
+			$post_status = [ 'publish', 'pending' ];
+		else
+			$post_status = 'publish';
+		
 		self::$default_posts_query = array(
 			'post_type' => AgendaPartage_Evenement::post_type,
-			'post_status' => 'publish',
+			'post_status' => $post_status,
 			
 			// BUGG du OR qui fait qu'il manque un meta_key = 'ev-date-debut'
-			'meta_query' => [
-				'relation' => 'OR',
-				'ev-date-debut' => [ 
-					'key' => 'ev-date-debut',
-					'value' => wp_date('Y-m-d'),
-					'compare' => '>=',
-					'type' => 'DATE'
-				],
-				'ev-date-fin' => [
-					'relation' => 'AND',
-					[
-						'key' => 'ev-date-fin',
-						'value' => '',
-						'compare' => '!='
-					],
-					[
-						'key' => 'ev-date-fin',
-						'value' => wp_date('Y-m-d'),
-						'compare' => '>=',
-						'type' => 'DATE'
-					]
-				]
-			],
-			'orderby' => [
-				'ev-date-debut' => 'ASC',
-				'ev-heure-debut' => 'ASC',
-			],
+'meta_query' => [
+	'relation' => 'OR',
+	'ev-date-debut' => [ 
+		'key' => 'ev-date-debut',
+		'value' => wp_date('Y-m-d'),
+		'compare' => '>=',
+		'type' => 'DATE'
+	],
+	'ev-date-fin' => [
+		'relation' => 'AND',
+		[
+			'key' => 'ev-date-fin',
+			'value' => '',
+			'compare' => '!='
+		],
+		[
+			'key' => 'ev-date-fin',
+			'value' => wp_date('Y-m-d'),
+			'compare' => '>=',
+			'type' => 'DATE'
+		]
+	]
+],
+'orderby' => [
+	'ev-date-debut' => 'ASC',
+	'ev-heure-debut' => 'ASC',
+],
 			
 			'posts_per_page' => self::$default_posts_per_page
 		);
@@ -773,7 +786,12 @@ class AgendaPartage_Evenements {
 	
 	public static function get_list_item_html($event, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
-			
+		
+		if( $event->post_status === 'pending'
+		 && ( $email_mode
+			|| ! current_user_can('moderate_comments') ) )
+			return false;
+		
 		$date_debut = get_post_meta($event->ID, 'ev-date-debut', true);
 					
 		$url = AgendaPartage_Evenement::get_post_permalink( $event );
@@ -781,13 +799,27 @@ class AgendaPartage_Evenements {
 		
 		if( ! $email_mode ){
 			$html .= sprintf(
-					'<div class="show-post"><a href="%s">%s</a></div>'
+					'<div class="show-post post-status-%s"><a href="%s">%s</a></div>'
+				, $event->post_status
 				, $url
 				, AgendaPartage::icon('media-default')
 			);
+			if( $event->post_status === 'pending' ){
+				$html .= sprintf('<div class="approve-post">%s</div>'
+					, AgendaPartage_Evenement::get_agdpevent_action_link(
+						$event->ID
+						, 'publish'
+						, true
+						, ' Approuver'
+						, false, null
+						, /* $data */ [
+							'reload' => AgendaPartage_Evenements::get_url($event)
+				]));
+			}
 		}
-		$html .= sprintf('<div id="%s%d" class="agdpevent toggle-trigger %s" agdpevent="%s">'
+		$html .= sprintf('<div id="%s%d" class="agdpevent post-status-%s toggle-trigger %s" agdpevent="%s">'
 			, AGDP_ARG_EVENTID, $event->ID
+			, $event->post_status
 			, $event->ID == $requested_id ? 'active' : ''
 			, esc_attr( json_encode(['id'=> $event->ID, 'date' => $date_debut]) )
 		);

@@ -366,7 +366,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				if($icon === true)
 					$icon = 'visibility';
 				if($confirmation === null || $confirmation === true)
-					$confirmation = 'Confirmez-vous de rendre visible l\'évènement ?';
+					$confirmation = 'Confirmez-vous de rendre public l\'évènement ?';
 				
 				break;
 				
@@ -545,7 +545,19 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 			|| current_user_can('manage_options') )
 		&& self::change_post_status($post_id, $post_status) ){
 			self::send_for_diffusion( $post_id );
-			return 'redir:' . self::get_post_permalink($post_id, self::secretcode_argument);
+			
+			if(isset($_POST['data']) && is_array($_POST['data'])){
+				if( isset($_POST['data']['redir'])
+				&& ( $redir = $_POST['data']['redir'] )
+				)
+					return 'redir:' . $redir;
+					
+				elseif(isset($_POST['data']['reload'])
+				&& ( $redir = $_POST['data']['reload'] )
+				)
+					return 'reload:' . $redir;
+			}
+			return self::get_post_permalink($post_id, self::secretcode_argument);
 		}
 		return 'Impossible de modifier le statut.<br>Ceci peut être effectué depuis l\'e-mail de validation.';
 	}
