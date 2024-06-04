@@ -141,6 +141,22 @@ class AgendaPartage_Mailbox {
 	}
 	
 	/**
+	 * Retourne si la mailbox est marquée comme suspendue.
+	 */
+	public static function is_suspended($mailbox_id = false){
+		if( is_a($mailbox_id, 'WP_Post') )
+			$mailbox_id = $mailbox_id->ID;
+		elseif( ! $mailbox_id )
+			if( $mailbox = self::get_mailbox($mailbox_id) )
+				$mailbox_id = $mailbox->ID;
+		if( $mailbox_id ){
+			$meta_key = 'imap_suspend';
+			return get_post_meta($mailbox_id, $meta_key, true);
+		}
+		return null;
+	}
+	
+	/**
 	 * Teste la connexion IMAP.
 	 */
 	public static function check_connexion($mailbox = false){
@@ -500,6 +516,11 @@ class AgendaPartage_Mailbox {
 		$time = get_post_meta($mailbox->ID, self::sync_time_meta_key, true);
 		if( $time && $time >= strtotime('- 5 second'))
 			return true;
+		
+		if( self::is_suspended( $mailbox ) ){
+			// debug_log( __CLASS__ . '::' . __FUNCTION__ . '(' . $mailbox->post_title . ') is_suspended');
+			return false;
+		}
 		
 		try {
 			if( ! class_exists('AgendaPartage_Mailbox_IMAP') )

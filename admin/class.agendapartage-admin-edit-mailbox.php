@@ -38,14 +38,34 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 			// Edition d'une mailbox
 			case AgendaPartage_Mailbox::post_type:
 				$alerts = [];
+				$errors = [];
+				//post_status
 				if( $post->post_status != 'publish')
 					$alerts[] = sprintf('Attention, cette page est marquée "%s".', (get_post_statuses())[$post->post_status]);
-				if ( ! get_post_meta($post->ID, 'imap_mark_as_read', true) )
+		
+				//imap_suspend
+				$meta_key = 'imap_suspend';
+				if ( get_post_meta($post->ID, $meta_key, true) )
+					$errors[] = 'Attention, la connexion est suspendue.';
+				
+				//imap_mark_as_read
+				$meta_key = 'imap_mark_as_read';
+				if ( ! get_post_meta($post->ID, $meta_key, true) )
 					$alerts[] = 'Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée.';
-				if( $alerts )
+				
+				//rendering
+				if( $errors ){
+					AgendaPartage_Admin::add_admin_notice_now( implode('<br>', $errors)
+						, ['type' => 'error']);
+					$errors = [];
+				}
+				if( $alerts ){
 					AgendaPartage_Admin::add_admin_notice_now( implode('<br>', $alerts)
 						, ['type' => 'warning']);
-						
+					$alerts = [];
+				}
+				
+				//links summary
 				$dispatch = AgendaPartage_Mailbox::get_emails_dispatch($post->ID);
 						
 				$links = [];
@@ -157,6 +177,10 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 		$meta_key = 'imap_mark_as_read';
 		$imap_mark_as_read = get_post_meta($mailbox->ID, $meta_key, true);
 		
+		//imap_suspend
+		$meta_key = 'imap_suspend';
+		$imap_suspend = get_post_meta($mailbox->ID, $meta_key, true);
+		
 		$fields = [
 			[	'name' => 'imap_server',
 				'label' => __('Serveur IMAP', AGDP_TAG),
@@ -202,6 +226,12 @@ class AgendaPartage_Admin_Edit_Mailbox extends AgendaPartage_Admin_Edit_Post_Typ
 				'label' => __('Tester la connexion', AGDP_TAG),
 				'type' => 'checkbox',
 				($test_connexion_success ? 'learn-more' : 'warning') => $test_connexion_comment
+			],
+			[	'name' => 'imap_suspend',
+				'label' => __('Suspendre la connexion', AGDP_TAG),
+				'type' => 'checkbox',
+				($imap_suspend ? 'warning' : 'learn-more') 
+					=> $imap_suspend ? 'La connexion est suspendue' : false,
 			],
 		];
 		return $fields;

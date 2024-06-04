@@ -67,7 +67,13 @@ class AgendaPartage_Admin_Forum {
 					return;
 				}
 				
-				echo sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s</a>', $mailbox->ID, $mailbox->post_title);
+				$is_suspended = AgendaPartage_Mailbox::is_suspended( $mailbox );
+					
+				echo sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s%s</a>'
+					, $mailbox->ID
+					, $mailbox->post_title
+					, $is_suspended ? ' ' . AgendaPartage::icon('warning', 'Suspendu !') : ''
+				);
 				
 				$emails = '';
 				foreach( AgendaPartage_Mailbox::get_emails_dispatch( $mailbox->ID, $post_id ) as $email => $dispatch ){

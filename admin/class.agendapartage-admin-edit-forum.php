@@ -56,6 +56,17 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		
 		if( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $post ) ){
 			$mailbox_id = $mailbox->ID;
+			// is_suspended
+			if( AgendaPartage_Mailbox::is_suspended( $mailbox ) )
+				AgendaPartage_Admin::add_admin_notice_now(sprintf('Attention, la connexion est suspendue'
+					. ' pour <a href="/wp-admin/post.php?post=%s&action=edit">la boîte e-mails <u>%s</u></a>.', $mailbox_id, $mailbox->post_title)
+					, ['type' => 'warning', 
+						'actions' => [
+							'url' => sprintf('/wp-admin/post.php?post=%s&action=edit', $mailbox_id)
+						]
+					]);
+			
+			//emails_dispatch summary
 			$emails = '';
 			foreach( AgendaPartage_Mailbox::get_emails_dispatch( false, $post->ID ) as $email=>$dispatch){
 				if( $emails ) $emails .= ', ';
@@ -65,6 +76,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			if( is_array($emails) ) 
 				$emails = implode( ', ', array_keys($emails));
 			
+			//imap_mark_as_read
 			if ( ! get_post_meta($mailbox_id, 'imap_mark_as_read', true) )
 				AgendaPartage_Admin::add_admin_notice_now(sprintf('Attention, l\'option "Marquer les messages comme étant lus" n\'est pas cochée.'
 					. ' pour <a href="/wp-admin/post.php?post=%s&action=edit">la boîte e-mails <u>%s</u></a>.', $mailbox_id, $mailbox->post_title)
@@ -149,8 +161,14 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	}
 	
 	private static function check_comment_status( $post ){
+		//is_suspended
+		if( ( $mailbox = AgendaPartage_Mailbox::get_mailbox_of_page( $post ) )
+		 && AgendaPartage_Mailbox::is_suspended( $mailbox ) ){
+			echo sprintf('<div>%s</div>', AgendaPartage::icon('warning','La connexion est suspendue.'));
+		}
+		//comment_status
 		if( $post->comment_status !== 'open' ){
-			echo AgendaPartage::icon('warning','Les commentaires de cette page ne sont pas activés.');
+			echo sprintf('<div>%s</div>', AgendaPartage::icon('warning','Les commentaires de cette page ne sont pas activés.'));
 		}
 	}
 	
@@ -179,15 +197,19 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 		$values = ['' => '(aucune gestion de forum)'];
 		$post_statuses = get_post_statuses();
 		foreach( AgendaPartage_Mailbox::get_mailboxes( false ) as $mailbox_id => $mailbox ){
+			$is_suspended = AgendaPartage_Mailbox::is_suspended( $mailbox );
 			$values[$mailbox_id] = $mailbox->post_title
-				. ($mailbox->post_status != 'publish' ? sprintf(' (%s)', $post_statuses[$mailbox->post_status]) : '');
+				. ($mailbox->post_status != 'publish' ? sprintf(' (%s)', $post_statuses[$mailbox->post_status]) : '')
+				. ( $is_suspended ? ' - Suspendu !' : '')
+			;
 		}
 		$fields[] = [
 			'name' => $meta_key,
 			'label' => __('Boîte e-mails associée', AGDP_TAG),
 			'input' => 'select',
 			'values' => $values,
-			'unit' => sprintf('<a href="#" href_mod="/wp-admin/post.php?post=[post_id]&action=edit" onclick="%s">Afficher la boîte e-mails</a>.'
+			'unit' => sprintf('<a href="#" %s="%s" onclick="%s">Afficher la boîte e-mails</a>.'
+				, 'href_mod', '/wp-admin/post.php?post=[post_id]&action=edit'
 				, esc_attr('javascript:var $this=jQuery(this);'
 					. ' var post_id=$this.parents("div:first").find("select").val(); if( ! post_id ) return false;'
 					. ' var href=$this.attr("href_mod").replace("[post_id]", post_id);'
@@ -395,7 +417,8 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			return [ 'counter' => 0, 'label' => '<i>aucun membre</i>' ];
 		}
 		else {
-			return [ 'counter' => count($subscribers), 'label' => sprintf('%d membre(s)', count($subscribers))];
+			return [ 'counter' => count($subscribers)
+				, 'label' => sprintf('%d membre%s', count($subscribers), count($subscribers)>1 ? 's' : '')];
 		}
 	}
 	

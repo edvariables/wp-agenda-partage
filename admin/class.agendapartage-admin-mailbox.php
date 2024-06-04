@@ -137,8 +137,15 @@ class AgendaPartage_Admin_Mailbox {
 					echo sprintf('<code>%s</code>', $emails);
 				break;
 			case 'imap' :
-				if( ! ($imap_mark_as_read = get_post_meta($post_id, 'imap_mark_as_read', true)) )
+				//imap_suspend
+				$meta_key = 'imap_suspend';
+				if( get_post_meta($post_id, $meta_key, true)) 
+					echo sprintf('%s Suspendu !<br>', AgendaPartage::icon('warning'));
+				//imap_mark_as_read
+				$meta_key = 'imap_mark_as_read';
+				if( ! get_post_meta($post_id, $meta_key, true) )
 					echo sprintf('%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée.<br>', AgendaPartage::icon('warning'));
+				
 				$imap_server = get_post_meta($post_id, 'imap_server', true);
 				$imap_email = get_post_meta($post_id, 'imap_email', true);
 				echo sprintf('<code>%s@%s</code>', $imap_email, $imap_server);
