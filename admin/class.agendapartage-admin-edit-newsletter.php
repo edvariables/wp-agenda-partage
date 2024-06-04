@@ -379,7 +379,7 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 			}
 		
 		/** Liste d'abonnés **/
-		$sql = "SELECT usermeta.meta_value AS period, user.ID, user.user_email, user.user_nicename"
+		$sql = "SELECT DISTINCT usermeta.meta_value AS period, user.ID, user.user_email, user.user_nicename"
 			. "\n FROM {$user_prefix}users user"
 			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			// . "\n ON user.ID = usermetacap.user_id"
