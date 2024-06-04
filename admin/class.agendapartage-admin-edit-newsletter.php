@@ -351,16 +351,18 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		/** Nombre d'abonnés **/
 		$subscribers_count = 0;
 		$sql = "SELECT usermeta.meta_value AS period, COUNT(usermeta.umeta_id) AS count"
-			. "\n FROM {$user_prefix}users user"
-			. "\n INNER JOIN {$user_prefix}usermeta usermeta"
-			. "\n ON user.ID = usermeta.user_id"
-			. "\n AND usermeta.meta_key = '{$subscription_meta_key}'"
+			// . "\n FROM {$user_prefix}users user"
+			// . "\n INNER JOIN {$user_prefix}usermeta usermeta"
+			// . "\n ON user.ID = usermeta.user_id"
+			// . "\n AND usermeta.meta_key = '{$subscription_meta_key}'"
+			. "\n FROM {$user_prefix}usermeta usermeta"
+			. "\n WHERE usermeta.meta_key = '{$subscription_meta_key}'"
 			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
 			// . "\n ON user.ID = usermetacap.user_id"
 			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
 			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
 			. "\n GROUP BY usermeta.meta_value";
-		$sql .= " UNION ";
+		$sql .= "\n UNION ";
 		$sql .= "SELECT '0', COUNT(ID) AS count"
 			. "\n FROM {$user_prefix}users user"
 			. "\n INNER JOIN {$user_prefix}usermeta usermetacap"
@@ -375,7 +377,8 @@ class AgendaPartage_Admin_Edit_Newsletter extends AgendaPartage_Admin_Edit_Post_
 		foreach($dbresults as $dbresult)
 			if(isset($periods[$dbresult->period])){
 				$periods[$dbresult->period]['subscribers_count'] = $dbresult->count;
-				$subscribers_count += $dbresult->count;
+				if( $dbresult->period !== '0' && $dbresult->period !== 'none' )
+					$subscribers_count += $dbresult->count;
 			}
 		
 		/** Liste d'abonnés **/
