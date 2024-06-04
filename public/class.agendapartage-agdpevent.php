@@ -163,7 +163,15 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 					$info = '<div class="alerte">Cet évènement est désormais public.</div>';
 					$html = $info . $html;
 				}
+				break;
+		}			
+		
+		switch($post->post_status){
+			case 'pending':
+				if( ! current_user_can('moderate_comments') )
+					break;
 				
+			case 'publish': 
 				$page_id = AgendaPartage::get_option('agenda_page_id');
 				if($page_id){
 					$url = self::get_post_permalink($page_id, self::secretcode_argument);
@@ -175,6 +183,7 @@ class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
 				}
 				break;
 		}
+	
 		
 			
 		if(is_user_logged_in()){

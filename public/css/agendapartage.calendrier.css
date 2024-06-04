@@ -76,11 +76,18 @@ body.colors-dark .agdp-agdpevents-list .toggle-trigger {
   position: absolute;
   top: 8px;
   right: 42px;
+  color: darkred;
+}
+body.colors-dark .agdp-agdpevents-list > ul > li .approve-post a {
+  color: lightsalmon;
 }
 .agdpevent.post-status-pending {
 	border-style: solid;
-	border-color:orange;
+	border-color: darkred;
 	border-radius: 2px;	
+}
+body.colors-dark .agdpevent.post-status-pending {
+	border-color: lightsalmon;
 }
 
 .agdp-agdpevents-list a {

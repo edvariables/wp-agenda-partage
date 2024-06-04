@@ -45,9 +45,9 @@ class AgendaPartage_Evenements {
 		$url = get_permalink(AgendaPartage::get_option('agenda_page_id'));
 		if( $event ) {
 			if( is_a($event, 'WP_Post') ) 
-				$url .= sprintf('#%s%d', AGDP_ARG_EVENTID, $event->ID);
+				$url .= sprintf('#%s%d', AgendaPartage_Evenement::postid_argument, $event->ID);
 			else
-				$url .= sprintf('#%s%d', AGDP_ARG_EVENTID, $event);
+				$url .= sprintf('#%s%d', AgendaPartage_Evenement::postid_argument, $event);
 		}
 		else
 			$url .= '#main';
