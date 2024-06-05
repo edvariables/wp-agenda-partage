@@ -215,9 +215,9 @@ class AgendaPartage_Covoiturages {
 
 		// debug_log('get_posts $queries ', $queries);
 
-		add_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		add_filter( 'posts_clauses', array('AgendaPartage_Post', 'on_posts_clauses_meta_query'), 10, 2 );
 		$the_query = new WP_Query( $query );
-		remove_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		remove_filter( 'posts_clauses', array('AgendaPartage_Post', 'on_posts_clauses_meta_query'), 10, 2 );
 		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
         
 		if( ! empty($posts_where_filters))

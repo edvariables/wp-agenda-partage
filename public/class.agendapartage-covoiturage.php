@@ -12,7 +12,7 @@
  *
  * Voir aussi AgendaPartage_Admin_Covoiturage
  */
-class AgendaPartage_Covoiturage extends AgendaPartage_Post_Abstract {
+class AgendaPartage_Covoiturage extends AgendaPartage_Post {
 
 	const post_type = 'covoiturage';
 	const taxonomy_city = 'cov_city';

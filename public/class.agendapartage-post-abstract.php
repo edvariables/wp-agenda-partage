@@ -6,7 +6,7 @@
  * Uilisé par AgendaPartage_Evenement et AgendaPartage_Covoiturage
  * 
  */
-abstract class AgendaPartage_Post_Abstract {
+abstract class AgendaPartage_Post {
 
 	const post_type = false; //Must override
 	const taxonomy_diffusion = false;//Must override
@@ -38,7 +38,7 @@ abstract class AgendaPartage_Post_Abstract {
 	}
 
 	/**
-	 * Hooks pour AgendaPartage_Post_Abstract (static::post_type === false)
+	 * Hooks pour AgendaPartage_Post (static::post_type === false)
 	 */
 	private static function init_hooks_for_self() {
 		self::init_hooks_for_search();
@@ -547,7 +547,7 @@ abstract class AgendaPartage_Post_Abstract {
 				'hide_empty' => false,
 				'taxonomy' => $taxonomy
 			), $query_args);
-		if( in_array( $taxonomy, AgendaPartage_Post_Abstract::get_taxonomies_diffusion() ) )
+		if( in_array( $taxonomy, self::get_taxonomies_diffusion() ) )
 			if( empty( $query_args['orderby'] )
 			 || $query_args['orderby'] === 'order_index' ){
 				$order_index_filters = true;
@@ -573,7 +573,7 @@ abstract class AgendaPartage_Post_Abstract {
 		}
 		
 		$meta_names = [];
-		if( in_array( $taxonomy, AgendaPartage_Post_Abstract::get_taxonomies_diffusion() ) ){
+		if( in_array( $taxonomy, self::get_taxonomies_diffusion() ) ){
 			$meta_names[] = 'default_checked';
 			$meta_names[] = 'download_link';
 		}

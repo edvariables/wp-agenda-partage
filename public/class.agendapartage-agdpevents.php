@@ -192,14 +192,14 @@ class AgendaPartage_Evenements {
 			}
 		$query = self::get_posts_query(...$queries);
 
-		add_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		add_filter( 'posts_clauses', array('AgendaPartage_Post', 'on_posts_clauses_meta_query'), 10, 2 );
 		
        // debug_log('get_posts $queries ', $queries);
 		 $the_query = new WP_Query( $query );
 		 //BUGG wor5504_postmeta.meta_key = 'ev-date-debut' pas dans tous les OR
 		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>', $query);
         
-		remove_filter( 'posts_clauses', array('AgendaPartage_Post_Abstract', 'on_posts_clauses_meta_query'), 10, 2 );
+		remove_filter( 'posts_clauses', array('AgendaPartage_Post', 'on_posts_clauses_meta_query'), 10, 2 );
 		
 		if( ! empty($posts_where_filters))
 			remove_filter('posts_where', array(__CLASS__, 'on_posts_where_filters'),10,2);

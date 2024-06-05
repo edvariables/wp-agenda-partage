@@ -666,7 +666,7 @@ class AgendaPartage_Mailbox {
 		if( ! empty($message['attachments']) ){					
 			foreach($message['attachments'] as $attachment){
 				if( '.ics' === substr($attachment, -4) ){
-					$posts = AgendaPartage_Post_Abstract::import_post_type_ics($post_type, $attachment, $data);
+					$posts = AgendaPartage_Post::import_post_type_ics($post_type, $attachment, $data);
 					return $posts;
 				}
 			}

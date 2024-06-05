@@ -10,7 +10,7 @@ class AgendaPartage_Post_Types {
 	}
 
 	public static function init_includes() {
-		if(!class_exists('AgendaPartage_Post_Abstract'))
+		if(!class_exists('AgendaPartage_Post'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage-post-abstract.php' );
 		
 		if(!class_exists('AgendaPartage_Mailbox'))

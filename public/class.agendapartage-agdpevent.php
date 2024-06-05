@@ -12,7 +12,7 @@
  *
  * Voir aussi AgendaPartage_Admin_Evenement
  */
-class AgendaPartage_Evenement extends AgendaPartage_Post_Abstract {
+class AgendaPartage_Evenement extends AgendaPartage_Post {
 
 	const post_type = 'agdpevent';
 	const taxonomy_ev_category = 'ev_category';
