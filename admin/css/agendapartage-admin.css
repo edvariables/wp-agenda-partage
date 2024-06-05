@@ -194,6 +194,18 @@ body.colors-dark .toggle-trigger a:hover {
 	display: block;
 }
 
+.agdp-diagram .toggle-trigger > .dashicons-before,
+.agdp-diagram .toggle-container > :not(.toggle-trigger,.toggle-container) {
+	margin-left: 1.8em;
+}
+.agdp-diagram .toggle-trigger {
+	padding-top: 3px;
+	font-size: inherit;
+}
+.agdp-diagram .toggle-container {
+	padding: 2px 0px 3px 15px;
+}
+
 table.form-table.editcomment ul.attachments img {
 	max-width: 200px;
 }

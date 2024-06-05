@@ -185,21 +185,41 @@ class AgendaPartage_Forum {
 	public static function get_newsletters($forum_id, $exclude_sub_forums = false){
 		if( is_a($forum_id, 'WP_Post') )
 			$forum_id = $forum_id->ID;
-		
+		switch( $forum_id ){
+			case AgendaPartage::get_option('agenda_page_id'):
+				$meta_value = AgendaPartage_Evenement::post_type;
+				break;
+			case AgendaPartage::get_option('covoiturages_page_id'):
+				$meta_value = AgendaPartage_Covoiturage::post_type;
+				break;
+			default:
+				$meta_value = sprintf('page.%d', $forum_id);
+		}
 		$query = new WP_Query([
 			'post_type' => AgendaPartage_Newsletter::post_type,
 			'meta_key' => 'source',
-			'meta_value' => sprintf('page.%d', $forum_id),
+			'meta_value' => $meta_value,
 		]);
 		$posts = $query->get_posts();
-		if( ! $exclude_sub_forums )
-			return $posts;
 		
 		$meta_key = 'subscription_parent';
+		
+		if( ! $exclude_sub_forums ){
+			//Tri ceux qui n'ont pas de subscription_parent en premier
+			$newsletters = [];
+			foreach( $posts as $newsletter )
+				if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
+					$newsletters[$newsletter->ID.''] = $newsletter;
+			foreach( $posts as $newsletter )
+				if( ! isset($newsletters[$newsletter->ID.'']) )
+					$newsletters[$newsletter->ID.''] = $newsletter;
+			return $newsletters;
+		}
+		
 		$newsletters = [];
 		foreach( $posts as $newsletter )
 			if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
-				$newsletters[] = $newsletter;
+				$newsletters[$newsletter->ID.''] = $newsletter;
 		return $newsletters;
 	}
 	
@@ -809,27 +829,101 @@ class AgendaPartage_Forum {
 	}
 	
 	/**
-	 * wp_nav_menu hook
-	 * Filtre les menus suivants l'utilisateur et ses abonnements aux forums
-	 TODO Cache
+	 * Retourne l'analyse du forum
 	 */
-	/* public static function on_wp_get_nav_menu_items( $items, $menu, $args ){
-		if( current_user_can('moderate_comments') )
-			return $items;
-		// on cherche plutôt à afficher les seuls titres de Commentaires
-		// $hidden_forums_ids = self::get_hidden_forums( ['fields' => 'ids'] );
-		// $hidden_menu_items_ids = [];
-		// foreach( $items as $index => $menu_item ){
-			// if( in_array($menu_item->menu_item_parent, $hidden_menu_items_ids)
-			// || ( $menu_item->object === 'page' 
-				// && in_array($menu_item->object_id, $hidden_forums_ids))
-			// ){
-				// $hidden_menu_items_ids[] = $menu_item->ID;
-				// unset($items[$index]);
-			// }
-		// }
-		return $items;
-	} */
+	public static function get_diagram( $blog, $forum, $return_html = false ){
+		$post_types = $blog['post_types'];
+		$forum_id = $forum->ID;
+		$diagram = [ 
+			'page' => $forum, 
+			'mailbox' => AgendaPartage_Mailbox::get_mailbox_of_page( $forum_id ), 
+			'emails' => AgendaPartage_Forum::get_forum_source_emails( $forum_id ),
+			'newsletters' => AgendaPartage_Forum::get_newsletters( $forum_id ),
+		];
+		//posts_page
+		foreach( $post_types as $post_type => $page){
+			if( $forum_id === $page->ID ){
+				$diagram['posts_page'] = $page;
+				$diagram['posts_type'] = $post_type;
+				break;
+			}
+		}
+		if( empty( $diagram['posts_page'] ) ){
+			$diagram['posts_page'] = $forum;
+			$diagram['posts_type'] = $forum->post_type;
+		}
+		
+		return $diagram;
+	}
+	/**
+	 * Rendu Html d'un diagram
+	 */
+	public static function get_diagram_html( $page, $diagram = false, $blog_diagram = false ){
+		if( ! $diagram ){
+			if( ! $blog_diagram )
+				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
+			$diagram = self::get_diagram( $blog_diagram, $page );
+		}
+		$html = '';
+		$icon = 'text-page';
+		if( isset($diagram['posts_type']) )
+			switch( $diagram['posts_type'] ){
+				case AgendaPartage_Evenement::post_type :
+					$icon = 'calendar-alt';
+					break;
+				case AgendaPartage_Covoiturage::post_type :
+					$icon = 'car';
+					break;
+			}
+				
+		$html .= sprintf('<div>Page <a href="%s">%s</a><div>%s</div></div>'
+			, get_permalink($page)
+			, $page->post_title
+			, ''//print_r($menu_item, true)
+		);
+
+		$emails = '';
+		foreach( $diagram['emails'] as $email ){
+			if( $emails )
+				$emails .= sprintf('<small> ou %s</small>', $email);
+			else
+				$emails = $email;
+		}
+		if( $emails ){
+			$html .= sprintf('<div class="toggle-trigger">%s Par e-mail : %s</div>'
+					, AgendaPartage::icon('email-alt')
+					, $emails
+				);
+			$html .= '<div class="toggle-container">';
+						
+				if( $diagram['mailbox'] ){
+					$icon = 'email-alt';
+					$html .= sprintf('<h3 class="toggle-trigger">%s Boîte e-mails %s</h3>'
+						, AgendaPartage::icon($icon)
+						, $diagram['mailbox']->post_title
+					);
+				}
+			$html .= '</div>';
+		}
+		$icon = 'email-alt2';
+		if( ! $diagram['newsletters'] )
+			$html .= sprintf('<i>%s pas de lettre-info</i>'
+				, AgendaPartage::icon($icon)
+			);
+		
+		foreach( $diagram['newsletters'] as $newsletter_id => $newsletter ){
+			if( $newsletter->post_status !== 'publish' )
+				continue;
+			$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
+				, AgendaPartage::icon($icon)
+				, $newsletter->post_title
+			);
+			$html .= '<div class="toggle-container">';
+				$html .= AgendaPartage_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
+			$html .= '</div>';
+		}
+		return $html;
+	}
 	
 }
 ?>

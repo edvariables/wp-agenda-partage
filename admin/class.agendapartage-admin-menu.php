@@ -956,6 +956,12 @@ class AgendaPartage_Admin_Menu {
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
 			}
 			
+			$parent_slug = AGDP_TAG;
+			$page_title =  'Diagramme du site';
+			$menu_slug = $parent_slug . '-diagram';
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+				array(__CLASS__, 'agendapartage_diagram_page_html'), null);
+			
 			//Menu Pages
 			$capability = 'moderate_comments';
 			$parent_slug = 'edit.php?post_type=page';
@@ -1134,6 +1140,15 @@ class AgendaPartage_Admin_Menu {
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-edit-rights.php');
 		AgendaPartage_Admin_Edit_Rights::init();
 		AgendaPartage_Admin_Edit_Rights::agendapartage_rights_page_html();
+	}
+	
+	
+	/**
+	* top level menu:
+	* callback functions
+	*/
+	public static function agendapartage_diagram_page_html() {
+		echo sprintf('<pre>%s</pre>', AgendaPartage::blog_diagram_html());
 	}
 	
 	

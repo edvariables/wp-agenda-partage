@@ -827,4 +827,142 @@ class AgendaPartage {
 		}
 		return false;
 	}
+	
+	/**
+	 * Retourne l'analyse du blog
+	 */
+	public static function blog_diagram( ){
+		$bloginfo = get_bloginfo();
+		$blog = [
+			'blog' => $bloginfo,
+			'covoiturage_managed' => $covoiturage_managed = AgendaPartage::get_option('covoiturage_managed'),
+		];
+		
+		$mailboxes = AgendaPartage_Mailbox::get_mailboxes();
+		$forums = AgendaPartage_Forum::get_forums();
+		$newsletters = AgendaPartage_Newsletter::get_active_newsletters();
+		$post_types = [];
+		$post_types[ AgendaPartage_Evenement::post_type ] = get_post( self::get_option('agenda_page_id') );
+		if( $covoiturage_managed )
+			$post_types[ AgendaPartage_Covoiturage::post_type ] = get_post( self::get_option('covoiturages_page_id') );
+		$blog['post_types'] = $post_types;
+		
+		$menu_items = false;
+		foreach(get_nav_menu_locations() as $location => $menu_id ){
+			if( $location === 'top' ){
+				$menu_items = wp_get_nav_menu_items($menu_id);
+				break;
+			}
+		}
+		
+		$blog_forums = [];
+		foreach($forums as $forum_id => $forum){
+			$blog_forums[$forum_id.''] = AgendaPartage_Forum::get_diagram( $blog, $forum );
+		}
+		$blog['forums'] = $blog_forums;
+		
+		$menu = [];
+		foreach($menu_items as $menu_item){
+			$skip = true;
+			$page = [
+				'name' => $menu_item->title,
+				'url' => $menu_item->url,
+				$menu_item->object . '_id' => $menu_item->object_id,
+			];
+			if( isset( $forums[ $menu_item->object_id.'' ] ) ){
+				$skip = false;
+				$page['forum'] = $forums[ $menu_item->object_id.'' ];
+			}
+			foreach($post_types as $post_type => $posts_page )
+				if( $posts_page->ID == $menu_item->object_id ){
+					$skip = false;
+					$page[$post_type.'_page'] = $posts_page;
+				}
+			if( ! $skip )
+				$menu[] = $page;
+		}
+		$blog['menu'] = $menu;
+		
+		return $blog;
+	}
+	
+	/**
+	 * Rendu Html d'un diagram
+	 */
+	public static function blog_diagram_html( $diagram = false ){
+		if( ! $diagram )
+			$diagram = self::blog_diagram();
+		
+		$html = '<div class="agdp-diagram">';
+		
+			$icon = 'admin-site-alt3'; //TODO get blog favicon class="blavatar"
+			$html .= sprintf('<h3 class="toggle-trigger active">%s %s</h3>'
+				, AgendaPartage::icon($icon)
+				, $diagram['blog']
+			);
+			$html .= '<div class="toggle-container">';
+			foreach( $diagram['menu'] as $menu_item ){
+				if( empty($menu_item['page_id']))
+					continue;
+				if( isset($menu_item[AgendaPartage_Evenement::post_type . '_page']) ){
+					$icon = 'calendar-alt';
+				}
+				elseif( isset($menu_item[AgendaPartage_Covoiturage::post_type . '_page']) )
+					$icon = 'car';
+				else
+					$icon = 'text-page';
+				
+				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
+					, AgendaPartage::icon($icon)
+					, $menu_item['name']
+				);
+				
+				$html .= '<div class="toggle-container">';
+					if( isset($diagram['forums'][$menu_item['page_id'].'']) ){
+						$forum = $diagram['forums'][$menu_item['page_id'].''];
+						$page = $forum['page'];
+							$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
+					}
+				$html .= '</div>';
+			}
+			
+			foreach( $diagram['forums'] as $forum_id => $forum ){
+				$page = $forum['page'];
+				if( $page->post_status !== 'publish' )
+					continue;
+				$emails = '';
+				foreach( $forum['emails'] as $email ){
+					if( $emails )
+						$emails .= sprintf('<small> ou %s</small>', $email);
+					else
+						$emails = $email;
+				}
+				
+				$icon = 'text-page';
+				if( isset($forum['posts_type']) )
+					switch( $forum['posts_type'] ){
+						case AgendaPartage_Evenement::post_type :
+							$icon = 'calendar-alt';
+							break;
+						case AgendaPartage_Covoiturage::post_type :
+							$icon = 'car';
+							break;
+					}
+				
+				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
+					, AgendaPartage::icon('email-alt')
+					, $emails
+				);
+				$html .= '<div class="toggle-container">';
+					$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
+				$html .= '</div>';
+				
+			}
+			$html .= '</div>';
+			
+		$html .= '</div>';
+		return $html;
+	}
+
+	
 }

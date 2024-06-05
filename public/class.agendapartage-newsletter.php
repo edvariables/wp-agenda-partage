@@ -2003,6 +2003,74 @@ class AgendaPartage_Newsletter {
 		return false;
 	}
 	
-	
+	/**
+	 * Retourne l'analyse du forum
+	 */
+	public static function get_diagram( $blog_diagram, $newsletter, $return_html = false ){
+		$post_types = $blog_diagram['post_types'];
+		$newsletter_id = $newsletter->ID;
+		$source_page = self::get_content_source_page( $newsletter );
+		$diagram = [ 
+			'newsletter' => $newsletter, 
+			'source_page' => $source_page, 
+			'subscription_parent' => self::get_subscription_parent( $newsletter_id ),
+		];
+		//posts_page
+		if( $source_page )
+			foreach( $post_types as $post_type => $page){
+				if( $source_page->ID === $page->ID ){
+					$diagram['posts_page'] = $page;
+					$diagram['posts_type'] = $post_type;
+					break;
+				}
+			}
+		
+		return $diagram;
+	}
+	/**
+	 * Rendu Html d'un diagram
+	 */
+	public static function get_diagram_html( $newsletter, $diagram = false, $blog_diagram = false ){
+		if( ! $diagram ){
+			if( ! $blog_diagram )
+				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
+			$diagram = self::get_diagram( $blog_diagram, $newsletter );
+		}
+		$html = '';
+		$icon = 'email-alt2';
+		if( isset($diagram['posts_type']) )
+			switch( $diagram['posts_type'] ){
+				case AgendaPartage_Evenement::post_type :
+					$icon = 'calendar-alt';
+					break;
+				case AgendaPartage_Covoiturage::post_type :
+					$icon = 'car';
+					break;
+			}
+				
+		$html .= sprintf('<div>Lettre-info <a href="%s">%s</a><div>%s</div></div>'
+			, get_permalink($newsletter)
+			, $newsletter->post_title
+			, ''//print_r($menu_item, true)
+		);
+						
+		if( $diagram['source_page'] 
+		&& empty( $blog_diagram['forums'][$diagram['source_page']->ID.''] )){
+			$html .= sprintf('<h3 class="toggle-trigger">%s Page %s</h3>'
+				, AgendaPartage::icon($icon)
+				, $diagram['source_page']->post_title
+			);
+		}
+						
+		if( $diagram['subscription_parent'] ){
+			$icon = 'admin-users';
+			$html .= sprintf('<div>%s Abonné-e-s issus de <a href="%s">%s</a></div>'
+				, AgendaPartage::icon($icon)
+				, get_permalink($diagram['subscription_parent'])
+				, $diagram['subscription_parent']->post_title
+			);
+		}
+		return $html;
+	}
 }
 ?>
