@@ -44,10 +44,7 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 	
 	public static function init_hooks() {
 		
-		foreach( [
-			AgendaPartage_Evenement::post_type => AgendaPartage_Evenement::taxonomy_diffusion
-			, AgendaPartage_Covoiturage::post_type => AgendaPartage_Covoiturage::taxonomy_diffusion
-		] as $post_type => $taxonomy_diffusion){
+		foreach( AgendaPartage_Post_Abstract::get_taxonomies_diffusion() as $post_type => $taxonomy_diffusion){
 			add_action( 'saved_' . $taxonomy_diffusion , array(__CLASS__, 'saved_term_cb'), 10, 4 );
 
 			add_action( $taxonomy_diffusion . '_term_new_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
@@ -66,8 +63,6 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 				add_filter( 'terms_clauses', array( __CLASS__, 'on_terms_clauses'), 10, 3);
 				add_action( 'pre_get_terms', array( __CLASS__, 'on_pre_get_terms'), 10, 1);
 			}
-
-		
 		}
 	}
 	/****************/
@@ -129,10 +124,8 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		//TODO ne fonctionne pas sans on_pre_get_terms
 	 */
 	public static function on_terms_clauses( $clauses, $taxonomies, $args ) {
-		if( ! in_array( $taxonomies[0], [
-			AgendaPartage_Evenement::taxonomy_diffusion,
-			AgendaPartage_Covoiturage::taxonomy_diffusion,
-		]) )
+		if( ! $taxonomies
+		 || ! in_array( $taxonomies[0], AgendaPartage_Post_Abstract::get_taxonomies_diffusion() ) )
 			return $clauses;
 			
 		if( empty($_REQUEST['orderby'])

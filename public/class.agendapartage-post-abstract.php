@@ -20,6 +20,8 @@ abstract class AgendaPartage_Post_Abstract {
 	private static $send_for_diffusion_history = [];
 	
 	private static $post_types = [];
+	
+	private static $taxonomies_diffusion = [];
 
 	private static $initiated = false;
 	public static function init() {
@@ -30,6 +32,9 @@ abstract class AgendaPartage_Post_Abstract {
 		}
 			
 		self::$post_types[] = static::post_type;
+		if( static::taxonomy_diffusion ){
+			self::$taxonomies_diffusion[static::post_type] = static::taxonomy_diffusion;
+		}
 	}
 
 	/**
@@ -77,6 +82,20 @@ abstract class AgendaPartage_Post_Abstract {
 	 */
 	private static function abstracted_post_type_class($post_type = false){
 		return self::abstracted_class($post_type) . '_Post_Type';
+	}
+	
+	/**
+	 * Retourne les post_types agdp
+	 */
+	public static function get_post_types(){
+		return self::$post_types;
+	}
+	
+	/**
+	 * Retourne les taxonomies de diffusion des post_types agdp
+	 */
+	public static function get_taxonomies_diffusion(){
+		return self::$taxonomies_diffusion;
 	}
 	
 	/***************
@@ -528,8 +547,7 @@ abstract class AgendaPartage_Post_Abstract {
 				'hide_empty' => false,
 				'taxonomy' => $taxonomy
 			), $query_args);
-		if( $taxonomy === AgendaPartage_Evenement::taxonomy_diffusion
-		 || $taxonomy === AgendaPartage_Covoiturage::taxonomy_diffusion )
+		if( in_array( $taxonomy, AgendaPartage_Post_Abstract::get_taxonomies_diffusion() ) )
 			if( empty( $query_args['orderby'] )
 			 || $query_args['orderby'] === 'order_index' ){
 				$order_index_filters = true;
@@ -555,12 +573,9 @@ abstract class AgendaPartage_Post_Abstract {
 		}
 		
 		$meta_names = [];
-		switch($taxonomy){
-			case AgendaPartage_Evenement::taxonomy_diffusion :
-			case AgendaPartage_Covoiturage::taxonomy_diffusion :
-				$meta_names[] = 'default_checked';
-				$meta_names[] = 'download_link';
-				break;
+		if( in_array( $taxonomy, AgendaPartage_Post_Abstract::get_taxonomies_diffusion() ) ){
+			$meta_names[] = 'default_checked';
+			$meta_names[] = 'download_link';
 		}
 		foreach($meta_names as $meta_name){
 			foreach($terms as $term)
