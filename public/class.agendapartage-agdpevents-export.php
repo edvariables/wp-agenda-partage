@@ -443,13 +443,16 @@ class AgendaPartage_Evenements_Export {
 		$vevent->addNode(new ZCiCalDataNode("DESCRIPTION:" . ZCiCal::formatContent( $post->post_content)));
 
 		// Add fields
-		foreach([
+		$fields = [
 			'LOCATION'=>'ev-localisation'
 			, 'ORGANISATEUR'=>'ev-organisateur'
 			, 'EMAIL'=>'ev-email'
 			, 'USER-EMAIL'=>'ev-user-email'
 			, 'PHONE'=>'ev-phone'
-		] as $node_name => $meta_key)
+		];
+		if( ! empty($filters[AgendaPartage_Evenement::secretcode_argument]) )
+			$fields[ strtoupper(AgendaPartage_Evenement::secretcode_argument) ] = AgendaPartage_Evenement::field_prefix . AgendaPartage_Evenement::secretcode_argument;
+		foreach($fields as $node_name => $meta_key)
 			if( ! empty( $metas[$meta_key]))
 				$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $metas[$meta_key])));
 

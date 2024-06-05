@@ -790,13 +790,14 @@ abstract class AgendaPartage_Post_Abstract {
 	 */
 	public static function send_for_diffusion( $post_id, $taxonomy_diffusion = false, $tax_inputs = false, $previous_tax_inputs = false ){
 		// debug_log('send_for_diffusion', $post_id, $taxonomy_diffusion, $tax_inputs/* , $previous_tax_inputs */ );
-			
+		$post_class = self::abstracted_class();
+		
 		if( ! $taxonomy_diffusion
 		 || ( is_string($taxonomy_diffusion)
 			&& ! is_numeric($taxonomy_diffusion) )
 		){
 			$tax_name = is_string($taxonomy_diffusion) ? $taxonomy_diffusion : false;
-			$taxonomy_diffusion = self::abstracted_class()::taxonomy_diffusion;
+			$taxonomy_diffusion = $post_class::taxonomy_diffusion;
 			$query_args = [
 				'meta_key' => 'connexion',
 				'meta_value' => '',
@@ -887,7 +888,7 @@ abstract class AgendaPartage_Post_Abstract {
 			self::$send_for_diffusion_history[] = $history_key;
 
 		// Export .ics
-		$filters = [];
+		$filters = [ static::secretcode_argument => true ];
 		if( $post_is_deleted )
 			$filters['set_post_status'] = 'trash';
 		$export = static::get_posts_export( [ $post_id ], 'ics', 'file',  $filters );
@@ -900,14 +901,15 @@ abstract class AgendaPartage_Post_Abstract {
 				// debug_log('send_for_diffusion mailto', $action, $attributes, $export);
 				$subject = sprintf('[%s][%s]%s.%d:status=%s'
 					, get_bloginfo('name')
-					, self::abstracted_class()::taxonomy_diffusion
-					, self::abstracted_class()::post_type
+					, $post_class::taxonomy_diffusion
+					, $post_class::post_type
 					, $post_id
-					, $post_status
+					, $post_is_deleted ? 'cancelled' : $post_status
 				);
 				$url = get_post_permalink( $post_id );
-				$message = sprintf('%s'
+				$message = sprintf("%s\n----\n%s"
 					, $url
+					, html_to_plain_text($post_class::get_post_details_for_email( $post_id ))
 				);
 				$headers = [];
 				if( ! empty($attributes['from']) )

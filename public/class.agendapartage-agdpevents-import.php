@@ -123,14 +123,22 @@ class AgendaPartage_Evenements_Import {
 				'ev-phone' => empty($event['phone']) ? '' : trim($event['phone']),
 				AGDP_IMPORT_UID => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
-				'ev-codesecret' => AgendaPartage::get_secret_code(6),
+				// 'ev-codesecret' => AgendaPartage::get_secret_code(6),
 				'_post-source' => $import_source
 			);
 			
+			//ev-codesecret
+			if( ! empty($event[ strtoupper(AgendaPartage_Evenement::secretcode_argument) ]) )
+				$inputs['ev-codesecret'] = $event[ strtoupper(AgendaPartage_Evenement::secretcode_argument) ];
+			else
+				$inputs['ev-codesecret'] = AgendaPartage::get_secret_code(6);
+		
+			//meta_input in arguments
 			if( ! empty( $data['meta_input'] ) ){
 				$inputs = array_merge( $data['meta_input'], $inputs );
 			}
 			
+			//email
 			if( ! empty($inputs['ev-user-email']) )
 				$user_email = $inputs['ev-user-email'];
 			elseif( ! empty($inputs['ev-email']) )
@@ -138,6 +146,7 @@ class AgendaPartage_Evenements_Import {
 			else
 				$user_email = false;
 			
+			//description
 			$post_content = empty($event['description']) ? '' : trim($event['description']);
 			if ($post_content === null) $post_content = '';
 			

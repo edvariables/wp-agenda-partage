@@ -83,9 +83,6 @@ class AgendaPartage_Newsletter {
 	public static function get_cron_hook(){
 		return self::cron_hook;
 	}
-	public static function get_old_cron_hook(){
-		return self::cron_hook . '.' . get_current_blog_id();
-	}
 
 	/**
 	 * Registers js files.
@@ -1468,8 +1465,6 @@ class AgendaPartage_Newsletter {
 	 * $next_time in seconds or timestamp
 	 */
 	public static function init_cron($next_time = false){
-			
-		self::deactivate_cron( self::get_old_cron_hook() );//DEBUG
 			
 		$cron_hook = self::get_cron_hook();
 		$cron_time = wp_next_scheduled( $cron_hook );
