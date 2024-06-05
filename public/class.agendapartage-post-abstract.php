@@ -528,7 +528,22 @@ abstract class AgendaPartage_Post_Abstract {
 				'hide_empty' => false,
 				'taxonomy' => $taxonomy
 			), $query_args);
+		if( $taxonomy === AgendaPartage_Evenement::taxonomy_diffusion
+		 || $taxonomy === AgendaPartage_Covoiturage::taxonomy_diffusion )
+			if( empty( $query_args['orderby'] )
+			 || $query_args['orderby'] === 'order_index' ){
+				$order_index_filters = true;
+				add_filter( 'terms_clauses', array( __CLASS__, 'on_terms_clauses_order_index'), 10, 3);
+				add_action( 'pre_get_terms', array( __CLASS__, 'on_pre_get_terms_order_index'), 10, 1);
+			}
+		 
 		$terms = get_terms( $query_args );
+		
+		if( isset($order_index_filters) ){
+			remove_filter( 'terms_clauses', array( __CLASS__, 'on_terms_clauses_order_index'), 10, 3);
+			remove_filter( 'pre_get_terms', array( __CLASS__, 'on_pre_get_terms_order_index'), 10, 1);
+		}
+		
 		if($array_keys_field){
 			$_terms = [];
 			foreach($terms as $term){
@@ -552,6 +567,23 @@ abstract class AgendaPartage_Post_Abstract {
 				$term->$meta_name = get_term_meta($term->term_id, $meta_name, true);
 		}
 		return $terms;
+	}
+	/**
+	 * Sort terms with order_index meta_value
+		//TODO ne fonctionne pas sans on_terms_clauses
+	 */
+	public static function on_pre_get_terms_order_index( $query ) {
+		$query->query_vars['meta_key'] = 'order_index';  
+		$query->query_vars['orderby'] = 'meta_value';
+	}
+	/**
+	 * terms_clauses pour ORDER BY order_index.meta_value 
+		//TODO ne fonctionne pas sans on_pre_get_terms
+	 */
+	public static function on_terms_clauses_order_index( $clauses, $taxonomies, $args ) {
+		if( preg_match('/(\w+)\.meta_key\s=\s\'order_index\'/', $clauses['where'], $matches ) )
+			$clauses['orderby'] = sprintf('ORDER BY %s.meta_value', $matches[1]);
+		return $clauses;
 	}
 	
 	/**

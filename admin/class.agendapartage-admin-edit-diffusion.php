@@ -12,16 +12,42 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 
 	public static function init() {
 		parent::init();
-
+		
+		self::initialize_order_index_fields();
+		
 		self::init_hooks();
+	}
+	
+	
+	/**
+	* db update
+	*/
+	public static function initialize_order_index_fields(){
+		global $wpdb;
+		$result = 0;
+		$meta_key = 'order_index';
+		foreach( [
+			'agdpevent' => 'ev_diffusion',
+			'covoiturage' => 'cov_diffusion',
+		] as $post_type => $taxonomy_diffusion ){
+			foreach( get_terms(['taxonomy'=>$taxonomy_diffusion]) as $term )
+				if( ! ($meta_value = get_term_meta( $term->term_id, $meta_key, true ) )
+				&& $meta_value === '' ) {
+					if( update_term_meta( $term->term_id, $meta_key, '0') )
+						$result++;
+				}
+		}
+		if( $result )
+			debug_log(__CLASS__ . '::' . __FUNCTION__, 'update_db add taxonomy_diffusion order_index termmeta : ', $result);
+		return true;
 	}
 	
 	public static function init_hooks() {
 		
 		foreach( [
-			AgendaPartage_Evenement::taxonomy_diffusion
-			, AgendaPartage_Covoiturage::taxonomy_diffusion
-		] as $taxonomy_diffusion){
+			AgendaPartage_Evenement::post_type => AgendaPartage_Evenement::taxonomy_diffusion
+			, AgendaPartage_Covoiturage::post_type => AgendaPartage_Covoiturage::taxonomy_diffusion
+		] as $post_type => $taxonomy_diffusion){
 			add_action( 'saved_' . $taxonomy_diffusion , array(__CLASS__, 'saved_term_cb'), 10, 4 );
 
 			add_action( $taxonomy_diffusion . '_term_new_form_tag', array( __CLASS__, 'on_term_edit_form_tag' ), 10 ); //form attr
@@ -32,12 +58,23 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 			//add custom columns for list view
 			add_filter( 'manage_edit-' . $taxonomy_diffusion . '_columns', array( __CLASS__, 'manage_columns' ) );
 			add_filter( 'manage_' . $taxonomy_diffusion . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
+			add_filter( 'manage_edit-' . $taxonomy_diffusion . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
+			if(basename($_SERVER['PHP_SELF']) === 'edit-tags.php'
+				&& isset($_GET['taxonomy']) && $_GET['taxonomy'] === $taxonomy_diffusion
+				&& isset($_GET['post_type']) && $_GET['post_type'] === $post_type
+			){
+				add_filter( 'terms_clauses', array( __CLASS__, 'on_terms_clauses'), 10, 3);
+				add_action( 'pre_get_terms', array( __CLASS__, 'on_pre_get_terms'), 10, 1);
+			}
+
+		
 		}
 	}
 	/****************/
 	public static function manage_columns($columns){
 		$columns['default_checked'] = 'Coché par défaut';
 		$columns['properties'] = 'Lien / Connexion';
+		$columns['order_index'] = 'Ordre de tri';
 		return $columns;
 	}
 	public static function manage_custom_columns($content, string $column_name, int $term_id){
@@ -47,6 +84,9 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 					echo 'Coché par défaut';
 				else
 					echo 'non';
+				break;
+			case 'order_index' :
+				echo get_term_meta( $term_id, $column_name, true );
 				break;
 			case 'properties' :
 				$properties = [];
@@ -65,6 +105,44 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 		}
 		return $content;
 	}
+	public static function manage_sortable_columns( $columns ) {
+		$columns['order_index'] = 'order_index';
+		return $columns;
+	}
+	/**
+	 * Sort custom column
+		//TODO ne fonctionne pas sans on_terms_clauses
+	 */
+	public static function on_pre_get_terms( $query ) {
+		
+		if( ! empty( $query->query_vars )
+		 && ( empty($_REQUEST['orderby'])
+			|| $_REQUEST['orderby'] === 'order_index' ) ){
+				
+			$query->query_vars['meta_key'] = 'order_index';  
+			$query->query_vars['orderby'] = 'meta_value';
+			// debug_log(__FUNCTION__ . ' set ', $query->query_vars['orderby']);
+		}
+	}
+	/**
+	 * terms_clauses pour ORDER BY order_index.meta_value 
+		//TODO ne fonctionne pas sans on_pre_get_terms
+	 */
+	public static function on_terms_clauses( $clauses, $taxonomies, $args ) {
+		if( ! in_array( $taxonomies[0], [
+			AgendaPartage_Evenement::taxonomy_diffusion,
+			AgendaPartage_Covoiturage::taxonomy_diffusion,
+		]) )
+			return $clauses;
+			
+		if( empty($_REQUEST['orderby'])
+		 || $_REQUEST['orderby'] === 'order_index' ){
+			if( preg_match('/(\w+)\.meta_key\s=\s\'order_index\'/', $clauses['where'], $matches ) )
+				$clauses['orderby'] = sprintf('ORDER BY %s.meta_value', $matches[1]);
+		}
+		// debug_log(__FUNCTION__, $clauses, $taxonomies);
+		return $clauses;
+	}
 	
 	public static function get_metabox_all_fields(){}//for abstract
 
@@ -73,7 +151,7 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		foreach([ 'default_checked', 'download_link', 'connexion' ] as $meta_name)
+		foreach([ 'default_checked', 'download_link', 'connexion', 'order_index' ] as $meta_name)
 			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
 				update_term_meta($term_id, $meta_name, $args[$meta_name]);
 			}
@@ -138,6 +216,18 @@ class AgendaPartage_Admin_Edit_Diffusion extends AgendaPartage_Admin_Edit_Post_T
         <td><i>La description apparaitra en information complémentaire lors de l'édition.</td>
     </tr><?php
     ?><tr class="form-field">
+        <th scope="row"><label for="order_index">Index de tri</label></th>
+        <td><?php
+			$meta_name = 'order_index';
+				
+			parent::metabox_html([array('name' => $meta_name,
+									'label' => '',
+									'input' => 'input',
+									'type' => 'number',
+								)], $tag, null);
+        ?></td>
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="default_checked">Coché par défaut</label></th>
         <td><?php
 			$meta_name = 'default_checked';

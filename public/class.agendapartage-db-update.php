@@ -1,10 +1,10 @@
 <?php
 
 class AgendaPartage_DB_Update {
-	
+
 	/**
 	*/
-	public static function update_db_1_2_2(){
+	public static function update_db_1_2_5(){
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$sqls = [];

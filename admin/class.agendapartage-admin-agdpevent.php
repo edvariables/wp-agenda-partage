@@ -127,10 +127,12 @@ class AgendaPartage_Admin_Evenement {
 		switch( $query->query_vars['orderby']) {
 			case 'dates':
 				$query->set('meta_key','ev-date-debut');  
-				$query->set('orderby','meta_value');  
+				$query->set('orderby','meta_value'); 
+				break;
 			case 'organisateur':
 				$query->set('meta_key','ev-email');  
 				$query->set('orderby','meta_value');  
+				break;
 		}
 	}
 	/****************/
