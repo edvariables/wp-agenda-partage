@@ -103,10 +103,16 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 	 * Register Meta Boxes (boite en édition du mailbox)
 	 */
 	public static function register_forum_metaboxes($post){
+		$subscribers_counter = self::get_subscribers_counters($post);
+		if( $subscribers_counter['counter'] === 0
+		 && in_array(AgendaPartage_Forum::get_forum_right( $post ), ['P', 'E']) )
+			$subscribers_counter = false;
+			
 		$box_name = sprintf('<span>%s <a href="%s" class="no-flex">%s</a></span>'
 			, __('Forum', AGDP_TAG)
 			, sprintf('/wp-admin/users.php?s&action=-1&%s=%d', AgendaPartage_Forum::tag, $post->ID)
-			, AgendaPartage::icon('info', self::get_subscribers_counters($post)['label'])) ;
+			, $subscribers_counter ? AgendaPartage::icon('info', $subscribers_counter['label']) : ''
+		) ;
 		add_meta_box('agdp_forum-properties', $box_name, array(__CLASS__, 'metabox_callback'), AgendaPartage_Forum::post_type, 'normal', 'high');
 
 		if( AgendaPartage_Forum::get_forum_right_need_subscription( $post ) )
