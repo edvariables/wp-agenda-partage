@@ -52,6 +52,17 @@ class AgendaPartage_Forum {
 			'banned' => 'Banni-e',
 		];
 
+	
+	const show_comments_modes = [
+			'' => '(par défaut)',
+			'never' => 'Jamais, personne.',
+			'admin' => 'Les administrateurices seul-es',
+			'moderator' => '+ Les modérateurices',
+			'subscribers' => '+ Les membres du forum (non banni-es)',
+			'connected' => '+ Les utilisateurices connecté-es',
+			'public' => 'Tout le monde',
+		];
+
 	/**
 	 * Hook
 	 */
@@ -831,15 +842,17 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne l'analyse du forum
 	 */
-	public static function get_diagram( $blog, $forum, $return_html = false ){
+	public static function get_diagram( $blog, $forum ){
 		$post_types = $blog['post_types'];
 		$forum_id = $forum->ID;
 		$diagram = [ 
 			'page' => $forum, 
 			'mailbox' => AgendaPartage_Mailbox::get_mailbox_of_page( $forum_id ), 
-			'emails' => AgendaPartage_Forum::get_forum_source_emails( $forum_id ),
-			'newsletters' => AgendaPartage_Forum::get_newsletters( $forum_id ),
+			'emails' => self::get_forum_source_emails( $forum_id ),
+			'newsletters' => self::get_newsletters( $forum_id ),
+			'right' => self::get_forum_right( $forum_id ),
 		];
+		
 		//posts_page
 		foreach( $post_types as $post_type => $page){
 			if( $forum_id === $page->ID ){
@@ -851,6 +864,15 @@ class AgendaPartage_Forum {
 		if( empty( $diagram['posts_page'] ) ){
 			$diagram['posts_page'] = $forum;
 			$diagram['posts_type'] = $forum->post_type;
+		}
+		
+		$meta_key = 'forum_moderate';
+		$diagram[ $meta_key ] = get_post_meta($forum_id, $meta_key, true);
+		if( $diagram['posts_type'] === 'page' ){
+			$meta_key = 'forum_show_comments';
+			$diagram[ $meta_key ] = get_post_meta($forum_id, $meta_key, true);
+			
+			$diagram[ 'comment_status' ] = $forum->comment_status;
 		}
 		
 		return $diagram;
@@ -865,22 +887,40 @@ class AgendaPartage_Forum {
 			$diagram = self::get_diagram( $blog_diagram, $page );
 		}
 		$html = '';
-		$icon = 'text-page';
-		if( isset($diagram['posts_type']) )
-			switch( $diagram['posts_type'] ){
-				case AgendaPartage_Evenement::post_type :
-					$icon = 'calendar-alt';
-					break;
-				case AgendaPartage_Covoiturage::post_type :
-					$icon = 'car';
-					break;
-			}
 				
 		$html .= sprintf('<div>Page <a href="%s">%s</a><div>%s</div></div>'
 			, get_permalink($page)
 			, $page->post_title
 			, ''//print_r($menu_item, true)
 		);
+		
+		$property = 'right';
+		if( $diagram[ $property ] )
+			$html .= sprintf('<div>%s Droits : %s</div>'
+					, AgendaPartage::icon($diagram[ $property ] === 'P' ? 'unlock' : 'lock')
+					, self::get_right_label( $diagram[ $property ] )
+				);
+		
+		$property = 'forum_moderate';
+		if( $diagram[ $property ] )
+			$html .= sprintf('<div>%s Modération systématique</div>'
+					, AgendaPartage::icon('lock')
+				);
+		
+		$property = 'forum_show_comments';
+		if( ! empty($diagram[ $property ]) ){
+			$html .= sprintf('<div>%s Affichage des commentaires : %s</div>'
+					, AgendaPartage::icon('visibility')
+					, self::show_comments_modes[$diagram[ $property ]]
+				);
+			if( $diagram[ $property ] !== 'never' ){
+				$property = 'comment_status';
+				if( $diagram[ $property ] !== 'open' )
+					$html .= sprintf('<div>%s Les commentaires ne sont pas affichés</div>'
+							, AgendaPartage::icon('lock')
+						);
+			}
+		}
 
 		$emails = '';
 		foreach( $diagram['emails'] as $email ){
@@ -897,11 +937,7 @@ class AgendaPartage_Forum {
 			$html .= '<div class="toggle-container">';
 						
 				if( $diagram['mailbox'] ){
-					$icon = 'email-alt';
-					$html .= sprintf('<h3 class="toggle-trigger">%s Boîte e-mails %s</h3>'
-						, AgendaPartage::icon($icon)
-						, $diagram['mailbox']->post_title
-					);
+					$html .= AgendaPartage_Mailbox::get_diagram_html( $diagram['mailbox'], false, $blog_diagram );
 				}
 			$html .= '</div>';
 		}

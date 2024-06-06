@@ -2006,7 +2006,7 @@ class AgendaPartage_Newsletter {
 	/**
 	 * Retourne l'analyse du forum
 	 */
-	public static function get_diagram( $blog_diagram, $newsletter, $return_html = false ){
+	public static function get_diagram( $blog_diagram, $newsletter ){
 		$post_types = $blog_diagram['post_types'];
 		$newsletter_id = $newsletter->ID;
 		$source_page = self::get_content_source_page( $newsletter );
@@ -2015,6 +2015,20 @@ class AgendaPartage_Newsletter {
 			'source_page' => $source_page, 
 			'subscription_parent' => self::get_subscription_parent( $newsletter_id ),
 		];
+		
+		$meta_key = 'mailing-enable';
+		$diagram[ $meta_key ] = get_post_meta($newsletter_id, $meta_key, true);
+		if( $diagram[ $meta_key ] ){
+			if( $cron_state = self::get_cron_state() ){
+				$cron_comment = substr($cron_state, 2);
+				$diagram[ 'cron_state' ] = str_starts_with( $cron_state, '1|') 
+								? 'Actif' 
+								: (str_starts_with( $cron_state, '0|')
+									? 'A l\'arrêt'
+									: $cron_state);
+			}
+		}
+		
 		//posts_page
 		if( $source_page )
 			foreach( $post_types as $post_type => $page){
@@ -2070,6 +2084,19 @@ class AgendaPartage_Newsletter {
 				, $diagram['subscription_parent']->post_title
 			);
 		}
+		
+		$meta_key = 'mailing-enable';
+		if( $diagram[ $meta_key ] ){
+			if( ! empty($diagram[ 'cron_state' ]) )
+				$html .= sprintf('<div>%s %s</div>'
+					, AgendaPartage::icon('controls-repeat')
+					, $diagram[ 'cron_state' ]
+				);
+		}
+		else
+			$html .= sprintf('<div>%s L\'envoi automatique n\'est pas actif</div>'
+				, AgendaPartage::icon('warning')
+			);
 		return $html;
 	}
 }

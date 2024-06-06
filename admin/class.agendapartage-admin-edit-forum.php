@@ -268,15 +268,7 @@ class AgendaPartage_Admin_Edit_Forum extends AgendaPartage_Admin_Edit_Post_Type 
 			'name' => 'forum_show_comments',
 			'label' => __('Visibilité des messages ?', AGDP_TAG),
 			'input' => 'select',
-			'values' => [
-				'' => '(par défaut)',
-				'never' => 'Jamais, personne.',
-				'admin' => 'Les administrateurices seul-es',
-				'moderator' => '+ Les modérateurices',
-				'subscribers' => '+ Les membres du forum (non banni-es)',
-				'connected' => '+ Les utilisateurices connecté-es',
-				'public' => 'Tout le monde',
-			],
+			'values' => AgendaPartage_Forum::show_comments_modes,
 			'learn-more' => 'Dans le cas des forums avec Adhésion, l\'affichage aux non-membres se limite aux titres des messages.'
 		];
 		

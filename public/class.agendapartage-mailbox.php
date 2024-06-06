@@ -1052,5 +1052,82 @@ class AgendaPartage_Mailbox {
 		return true;
 	}
 	
+	/**
+	 * Retourne l'analyse du forum
+	 */
+	public static function get_diagram( $blog_diagram, $mailbox ){
+		$mailbox_id = $mailbox->ID;
+		$diagram = [ 
+			'mailbox' => $mailbox, 
+		];
+		
+		//post_status
+		$diagram['post_status'] = $mailbox->post_status;
+		
+		//imap
+		$meta_key = 'imap_server';
+		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		$meta_key = 'imap_email';
+		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		
+		//imap_email
+		$meta_key = 'imap_suspend';
+		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		
+		//imap_mark_as_read
+		$meta_key = 'imap_mark_as_read';
+		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		
+		
+		return $diagram;
+	}
+	/**
+	 * Rendu Html d'un diagram
+	 */
+	public static function get_diagram_html( $mailbox, $diagram = false, $blog_diagram = false ){
+		if( ! $diagram ){
+			if( ! $blog_diagram )
+				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
+			$diagram = self::get_diagram( $blog_diagram, $mailbox );
+		}
+		$html = '';
+		$icon = 'email';
+				
+		$html .= sprintf('<div>Boîte e-mails <a href="%s">%s</a><div>%s</div></div>'
+			, get_permalink($mailbox)
+			, $mailbox->post_title
+			, ''//print_r($menu_item, true)
+		);
+			
+		$meta_key = 'imap_server';
+		if( ! empty($diagram[$meta_key]) ){
+			$imap_server = $diagram[$meta_key];
+			$meta_key = 'imap_email';
+			$imap_email = $diagram[$meta_key];				
+			$html .= sprintf('<div>Connexion à %s via %s</div>'
+				, $imap_email
+				, $imap_server
+			);
+		}
+			
+		$meta_key = 'imap_suspend';
+		if( ! empty($diagram[$meta_key]) ){
+			$icon = 'warning';
+			$html .= sprintf('<div>%s La connexion est suspendue.</div>'
+					, AgendaPartage::icon($icon)
+			);
+		}
+			
+		$meta_key = 'imap_mark_as_read';
+		if( empty($diagram[$meta_key]) ){
+			$icon = 'warning';
+			$html .= sprintf('<div>%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée. Les e-mails seront lus indéfiniment.</div>'
+					, AgendaPartage::icon($icon)
+			);
+		}
+		
+		return $html;
+	}
+	
 }
 ?>
