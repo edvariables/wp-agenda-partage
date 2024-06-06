@@ -63,7 +63,7 @@ abstract class AgendaPartage_Post {
 	/**
 	 * Retourne la classe qui hérite de celle-ci correspondant au post_type donné
 	 */
-	private static function abstracted_class($post_type = false){
+	public static function abstracted_class($post_type = false){
 		if( ! $post_type )
 			if( ! ($post_type = static::post_type) )
 				throw new ArgumentException('post_type argument is empty');
@@ -80,7 +80,7 @@ abstract class AgendaPartage_Post {
 	/**
 	 * Retourne la classe de Post_Type qui hérite de celle-ci correspondant au post_type donné
 	 */
-	private static function abstracted_post_type_class($post_type = false){
+	public static function abstracted_post_type_class($post_type = false){
 		return self::abstracted_class($post_type) . '_Post_Type';
 	}
 	
@@ -975,9 +975,7 @@ abstract class AgendaPartage_Post {
 				debug_log('send_for_diffusion ! unknown action', $action);
 		}
 	}
-	
-	
-	
+		
 	/**
 	* Retourne le nombre de posts en attente
 	*
@@ -990,4 +988,140 @@ abstract class AgendaPartage_Post {
 		]);
 	}
 
+	
+	/**
+	 * Retourne l'analyse de la page des évènements ou covoiturages
+	 */
+	public static function get_diagram( $blog_diagram, $posts_page ){
+		$post_types = $blog_diagram['post_types'];
+		$posts_page_id = $posts_page->ID;
+		$diagram = [ 
+			'page' => $posts_page, 
+		];
+		
+		//posts_page
+		foreach( $post_types as $post_type => $page){
+			if( $posts_page_id === $page->ID ){
+				$diagram['posts_page'] = $page;
+				$diagram['posts_type'] = $post_type;
+				break;
+			}
+		}
+		if( empty( $diagram['posts_page'] ) ){
+			$diagram['posts_page'] = $posts_page;
+			$diagram['posts_type'] = static::post_type;
+		}
+		
+		//diffusion 
+		$diffusions = [];
+		$post_class = self::abstracted_class();
+		$taxonomy_diffusion = $post_class::taxonomy_diffusion;
+		// $query_args = [
+			// 'meta_key' => 'connexion',
+			// 'meta_value' => '',
+			// 'meta_compare' => '!=',
+		// ];
+		$terms = self::abstracted_post_type_class()::get_all_diffusions();//( 'term_id', $query_args );
+		foreach( $terms as $term ){
+			$diffusion = [
+				'name' => $term->taxonomy,
+			];
+			$term_meta = 'connexion';
+			if( $connexion = get_term_meta( $term->term_id, $term_meta, true ) ){
+				$attributes = [];
+				foreach( explode( '|', $connexion) as $index => $attribute){
+					$attribute = explode( ':', $attribute );
+					if( $index === 0 ) {
+						$attributes['action'] = $action = strtolower($attribute[0]);
+						$first_attribute = false;
+					}
+					$attributes[strtolower($attribute[0])] = $attribute[1];
+				}
+				$diffusion['connexion'] = $attributes;
+			}
+			$diffusions[ $term->name ] = $diffusion;
+		}
+		$diagram['diffusions'] = $diffusions;
+		
+		return $diagram;
+	}
+	/**
+	 * Rendu Html d'un diagram
+	 */
+	public static function get_diagram_html( $posts_page, $diagram = false, $blog_diagram = false ){
+		if( ! $diagram ){
+			if( ! $blog_diagram )
+				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
+			$diagram = self::get_diagram( $blog_diagram, $posts_page );
+		}
+		$html = '';
+				
+		$html .= sprintf('<div>Page <a href="%s">%s</a></div>'
+			, get_permalink($posts_page)
+			, $posts_page->post_title
+		);
+		
+		$property = 'diffusions';
+		if( ! empty($diagram[ $property ]) ){
+			foreach( $diagram[ $property ] as $diffusion_name => $diffusion ){
+				if( empty( $diffusion['connexion'] ) ){
+					$icon = 'arrow-right-alt2';
+					$html .= sprintf('<div>%s Diffusion %s</div>'
+							, AgendaPartage::icon($icon)
+							, $diffusion_name
+						);
+					
+					continue;
+				}
+				
+				$icon = 'email-alt2';
+				$html .= sprintf('<div class="toggle-trigger">%s Diffusion %s</div>'
+						, AgendaPartage::icon($icon)
+						, $diffusion_name
+					);
+				$html .= '<div class="toggle-container">';
+					$connexion = $diffusion['connexion'];
+					switch($connexion['action']){
+						case 'mailto':
+							$property = 'mailto';
+							$html .= sprintf('<div>%s : %s</div>'
+								, $property
+								, $connexion[$property]
+							);
+							$property = 'reply-to';
+							$html .= sprintf('<div>%s : %s</div>'
+								, $property
+								, $connexion[$property]
+							);
+							break;
+						default:
+							$property = $connexion['action'];
+							$html .= sprintf('<div>%s : %s</div>'
+								, $property
+								, $connexion[$property]
+							);
+					}
+				$html .= '</div>';
+			}
+		}
+
+		$icon = 'email-alt2';
+		if( empty( $diagram['newsletters'] ) )
+			$html .= sprintf('<i>%s pas de lettre-info</i>'
+				, AgendaPartage::icon($icon)
+			);
+		else
+			foreach( $diagram['newsletters'] as $newsletter_id => $newsletter ){
+				if( $newsletter->post_status !== 'publish' )
+					continue;
+				$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
+					, AgendaPartage::icon($icon)
+					, $newsletter->post_title
+				);
+				$html .= '<div class="toggle-container">';
+					$html .= AgendaPartage_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
+				$html .= '</div>';
+			}
+		return $html;
+	}
 }

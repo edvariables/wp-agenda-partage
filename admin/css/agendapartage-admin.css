@@ -196,7 +196,7 @@ body.colors-dark .toggle-trigger a:hover {
 
 .agdp-diagram .toggle-trigger > .dashicons-before,
 .agdp-diagram .toggle-container > :not(.toggle-trigger,.toggle-container) {
-	margin-left: 1.8em;
+	margin-left: 2.5em;
 }
 .agdp-diagram .toggle-trigger {
 	padding-top: 3px;

@@ -842,8 +842,8 @@ class AgendaPartage_Forum {
 	/**
 	 * Retourne l'analyse du forum
 	 */
-	public static function get_diagram( $blog, $forum ){
-		$post_types = $blog['post_types'];
+	public static function get_diagram( $blog_diagram, $forum ){
+		$post_types = $blog_diagram['post_types'];
 		$forum_id = $forum->ID;
 		$diagram = [ 
 			'page' => $forum, 
@@ -858,6 +858,9 @@ class AgendaPartage_Forum {
 			if( $forum_id === $page->ID ){
 				$diagram['posts_page'] = $page;
 				$diagram['posts_type'] = $post_type;
+				
+				$diagram = array_merge( AgendaPartage_Post::abstracted_class( $post_type )::get_diagram( $blog_diagram, $page )
+									, $diagram );
 				break;
 			}
 		}
@@ -887,12 +890,19 @@ class AgendaPartage_Forum {
 			$diagram = self::get_diagram( $blog_diagram, $page );
 		}
 		$html = '';
-				
-		$html .= sprintf('<div>Page <a href="%s">%s</a><div>%s</div></div>'
-			, get_permalink($page)
-			, $page->post_title
-			, ''//print_r($menu_item, true)
-		);
+		
+		//posts_page
+		if( isset($diagram['posts_type']) && $diagram['posts_type'] !== 'page' ) {
+			$posts_type = $diagram['posts_type'];
+			$html .= AgendaPartage_Post::abstracted_class( $posts_type )::get_diagram_html( $page, $diagram, $blog_diagram );
+		}
+		else {
+			$html .= sprintf('<div>Page <a href="%s">%s</a><div>%s</div></div>'
+				, get_permalink($page)
+				, $page->post_title
+				, ''//print_r($menu_item, true)
+			);
+		}
 		
 		$property = 'right';
 		if( $diagram[ $property ] )
@@ -941,22 +951,25 @@ class AgendaPartage_Forum {
 				}
 			$html .= '</div>';
 		}
-		$icon = 'email-alt2';
-		if( ! $diagram['newsletters'] )
-			$html .= sprintf('<i>%s pas de lettre-info</i>'
-				, AgendaPartage::icon($icon)
-			);
 		
-		foreach( $diagram['newsletters'] as $newsletter_id => $newsletter ){
-			if( $newsletter->post_status !== 'publish' )
-				continue;
-			$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
-				, AgendaPartage::icon($icon)
-				, $newsletter->post_title
-			);
-			$html .= '<div class="toggle-container">';
-				$html .= AgendaPartage_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
-			$html .= '</div>';
+		if( ! isset($posts_type) ){
+			$icon = 'email-alt2';
+			if( ! $diagram['newsletters'] )
+				$html .= sprintf('<i>%s pas de lettre-info</i>'
+					, AgendaPartage::icon($icon)
+				);
+			
+			foreach( $diagram['newsletters'] as $newsletter_id => $newsletter ){
+				if( $newsletter->post_status !== 'publish' )
+					continue;
+				$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
+					, AgendaPartage::icon($icon)
+					, $newsletter->post_title
+				);
+				$html .= '<div class="toggle-container">';
+					$html .= AgendaPartage_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
+				$html .= '</div>';
+			}
 		}
 		return $html;
 	}

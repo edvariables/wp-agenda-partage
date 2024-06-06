@@ -845,6 +845,9 @@ class AgendaPartage {
 		$post_types[ AgendaPartage_Evenement::post_type ] = get_post( self::get_option('agenda_page_id') );
 		if( $covoiturage_managed )
 			$post_types[ AgendaPartage_Covoiturage::post_type ] = get_post( self::get_option('covoiturages_page_id') );
+		$post_types_url = [];
+		foreach($post_types as $post_type => $posts_page )
+			$post_types_url[$post_type] = get_permalink($posts_page);
 		$blog['post_types'] = $post_types;
 		
 		$menu_items = false;
@@ -854,30 +857,44 @@ class AgendaPartage {
 				break;
 			}
 		}
-		
+				
 		$blog_forums = [];
 		foreach($forums as $forum_id => $forum){
 			$blog_forums[$forum_id.''] = AgendaPartage_Forum::get_diagram( $blog, $forum );
 		}
 		$blog['forums'] = $blog_forums;
-		
 		$menu = [];
 		foreach($menu_items as $menu_item){
 			$skip = true;
+			
 			$page = [
 				'name' => $menu_item->title,
 				'url' => $menu_item->url,
-				$menu_item->object . '_id' => $menu_item->object_id,
 			];
-			if( isset( $forums[ $menu_item->object_id.'' ] ) ){
-				$skip = false;
-				$page['forum'] = $forums[ $menu_item->object_id.'' ];
-			}
-			foreach($post_types as $post_type => $posts_page )
-				if( $posts_page->ID == $menu_item->object_id ){
+			if( $menu_item->object === 'page' ){
+				$page['page_id'] = $menu_item->object_id;
+				if( isset( $forums[ $page['page_id'].'' ] ) ){
 					$skip = false;
-					$page[$post_type.'_page'] = $posts_page;
+					$page['forum'] = $forums[ $menu_item->object_id.'' ];
 				}
+				foreach($post_types as $post_type => $posts_page )
+					if( $posts_page->ID == $menu_item->object_id ){
+						$skip = false;
+						$page[$post_type.'_page'] = $posts_page;
+					}
+			}
+			else { //menu "lien personnalisé"
+				$url = $menu_item->url;
+				if( ! $url || substr($url, 0, 4) !== 'http')
+					$url = home_url( $url );
+				$url = (explode('#', $url))[0];
+				foreach($post_types as $post_type => $posts_page )
+					if( $post_types_url[$post_type] === $url ){
+						$skip = false;
+						$page[$post_type.'_page'] = $posts_page;
+						$page['page_id'] = $posts_page->ID;
+					}
+			}
 			if( ! $skip )
 				$menu[] = $page;
 		}
@@ -921,7 +938,18 @@ class AgendaPartage {
 					if( isset($diagram['forums'][$menu_item['page_id'].'']) ){
 						$forum = $diagram['forums'][$menu_item['page_id'].''];
 						$page = $forum['page'];
-							$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
+						$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
+					}
+					elseif( ! empty($menu_item['url']) ){
+						if( isset($menu_item[AgendaPartage_Evenement::post_type . '_page']) )
+							$html .= AgendaPartage_Evenement::get_diagram_html( $menu_item[AgendaPartage_Evenement::post_type . '_page'], $diagram );
+						elseif( isset($menu_item[AgendaPartage_Covoiturage::post_type . '_page']) )
+							$html .= AgendaPartage_Covoiturage::get_diagram_html( $menu_item[AgendaPartage_Covoiturage::post_type . '_page'], $diagram );
+						else
+							$html .= sprintf('<div>Page <a href="%s">%s</a></div>'
+								, $menu_item['url']
+								, $menu_item['name']
+							);
 					}
 				$html .= '</div>';
 			}
@@ -963,6 +991,4 @@ class AgendaPartage {
 		$html .= '</div>';
 		return $html;
 	}
-
-	
 }
