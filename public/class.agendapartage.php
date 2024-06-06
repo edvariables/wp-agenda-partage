@@ -942,9 +942,9 @@ class AgendaPartage {
 					}
 					elseif( ! empty($menu_item['url']) ){
 						if( isset($menu_item[AgendaPartage_Evenement::post_type . '_page']) )
-							$html .= AgendaPartage_Evenement::get_diagram_html( $menu_item[AgendaPartage_Evenement::post_type . '_page'], $diagram );
+							$html .= AgendaPartage_Evenement::get_diagram_html( $menu_item[AgendaPartage_Evenement::post_type . '_page'], false, $diagram );
 						elseif( isset($menu_item[AgendaPartage_Covoiturage::post_type . '_page']) )
-							$html .= AgendaPartage_Covoiturage::get_diagram_html( $menu_item[AgendaPartage_Covoiturage::post_type . '_page'], $diagram );
+							$html .= AgendaPartage_Covoiturage::get_diagram_html( $menu_item[AgendaPartage_Covoiturage::post_type . '_page'], false, $diagram );
 						else
 							$html .= sprintf('<div>Page <a href="%s">%s</a></div>'
 								, $menu_item['url']

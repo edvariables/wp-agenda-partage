@@ -1090,10 +1090,11 @@ abstract class AgendaPartage_Post {
 								, $connexion[$property]
 							);
 							$property = 'reply-to';
-							$html .= sprintf('<div>%s : %s</div>'
-								, $property
-								, $connexion[$property]
-							);
+							if( ! empty($connexion[$property]) )
+								$html .= sprintf('<div>%s : %s</div>'
+									, $property
+									, $connexion[$property]
+								);
 							break;
 						default:
 							$property = $connexion['action'];
