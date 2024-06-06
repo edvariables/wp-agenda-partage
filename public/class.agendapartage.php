@@ -982,7 +982,16 @@ class AgendaPartage {
 					, $emails
 				);
 				$html .= '<div class="toggle-container">';
-					$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
+					switch( isset($forum['posts_type']) ? $forum['posts_type'] : 'forum' ){
+						case AgendaPartage_Evenement::post_type :
+							$html .= AgendaPartage_Evenement::get_diagram_html( $page, $forum, $diagram );
+							break;
+						case AgendaPartage_Covoiturage::post_type :
+							$html .= AgendaPartage_Covoiturage::get_diagram_html( $page, $forum, $diagram );
+							break;
+						default:
+							$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
+					}
 				$html .= '</div>';
 				
 			}

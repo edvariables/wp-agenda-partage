@@ -897,7 +897,8 @@ class AgendaPartage_Forum {
 			$html .= AgendaPartage_Post::abstracted_class( $posts_type )::get_diagram_html( $page, $diagram, $blog_diagram );
 		}
 		else {
-			$html .= sprintf('<div>Page <a href="%s">%s</a><div>%s</div></div>'
+			$html .= sprintf('<div class="%s">Page <a href="%s">%s</a><div>%s</div></div>'
+				, __CLASS__
 				, get_permalink($page)
 				, $page->post_title
 				, ''//print_r($menu_item, true)

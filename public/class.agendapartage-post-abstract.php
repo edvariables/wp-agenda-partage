@@ -1056,7 +1056,8 @@ abstract class AgendaPartage_Post {
 		}
 		$html = '';
 				
-		$html .= sprintf('<div>Page <a href="%s">%s</a></div>'
+		$html .= sprintf('<div class="%s">Page <a href="%s">%s</a></div>'
+			, __CLASS__
 			, get_permalink($posts_page)
 			, $posts_page->post_title
 		);
