@@ -1048,25 +1048,25 @@ abstract class AgendaPartage_Post {
 	 * Retourne l'analyse de la page des évènements ou covoiturages
 	 * Fonction appelable via AgendaPartage_Evenement, AgendaPartage_Covoiturage ou une page quelconque
 	 */
-	public static function get_diagram( $blog_diagram, $posts_page ){
+	public static function get_diagram( $blog_diagram, $page ){
 		
 		$post_types = $blog_diagram['post_types'];
-		$posts_page_id = $posts_page->ID;
+		$page_id = $page->ID;
 		$diagram = [ 
-			'page' => $posts_page, 
-			'newsletters' => self::get_page_newsletters( $posts_page_id ),
+			'page' => $page, 
+			'newsletters' => self::get_page_newsletters( $page_id ),
 		];
 		
-		//posts_page
-		foreach( $post_types as $post_type => $page){
-			if( $posts_page_id === $page->ID ){
-				$diagram['posts_page'] = $page;
+		//page
+		foreach( $post_types as $post_type => $posts_page){
+			if( $page_id === $posts_page->ID ){
+				$diagram['posts_page'] = $posts_page;
 				$diagram['posts_type'] = $post_type;
 				break;
 			}
 		}
 		if( empty( $diagram['posts_page'] ) ){
-			$diagram['posts_page'] = $posts_page;
+			$diagram['posts_page'] = $page;
 			$diagram['posts_type'] = static::post_type ? static::post_type : 'page';
 		}
 		
@@ -1104,27 +1104,35 @@ abstract class AgendaPartage_Post {
 			$diagram['diffusions'] = $diffusions;
 		}
 		
+		//WPCF7
+		$wpcf7s = [];
+		foreach(AgendaPartage_WPCF7::get_page_wpcf7( $page ) as $wpcf7_id => $post ){
+			$wpcf7s[ $post->ID.'' ] = $post;
+		}
+		if( count($wpcf7s) )
+			$diagram['forms'] = $wpcf7s;
+		
 		return $diagram;
 	}
 	/**
 	 * Rendu Html d'un diagram
 	 */
-	public static function get_diagram_html( $posts_page, $diagram = false, $blog_diagram = false ){
+	public static function get_diagram_html( $page, $diagram = false, $blog_diagram = false ){
 		
 		if( ! static::post_type
 		 && $blog_diagram
-		 && isset( $blog_diagram['posts_pages'][$posts_page->ID.''] ) ){
-			$post_class = $blog_diagram['posts_pages'][$posts_page->ID.'']['class'];
-			return $post_class::get_diagram_html( $posts_page, $diagram, $blog_diagram );
+		 && isset( $blog_diagram['posts_pages'][$page->ID.''] ) ){
+			$post_class = $blog_diagram['posts_pages'][$page->ID.'']['class'];
+			return $post_class::get_diagram_html( $page, $diagram, $blog_diagram );
 		}
 		
 		if( ! $diagram ){
 			if( ! $blog_diagram )
 				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
-			$diagram = self::get_diagram( $blog_diagram, $posts_page );
+			$diagram = self::get_diagram( $blog_diagram, $page );
 		}
 		$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/post.php?post=%d&action=edit">%s</a>'
-			, $posts_page->ID
+			, $page->ID
 			, AgendaPartage::icon('edit show-mouse-over')
 		) : '';
 		
@@ -1133,8 +1141,8 @@ abstract class AgendaPartage_Post {
 		$html .= sprintf('<div class="%s">%s Page <a href="%s">%s</a>%s</div>'
 			, __CLASS__
 			, AgendaPartage::icon('admin-page')
-			, get_permalink($posts_page)
-			, $posts_page->post_title
+			, get_permalink($page)
+			, $page->post_title
 			, $admin_edit
 		);
 		
@@ -1226,9 +1234,10 @@ abstract class AgendaPartage_Post {
 			}
 		}
 
+		$property = 'newsletters';
 		$icon = 'email-alt2';
-		if( ! empty( $diagram['newsletters'] ) )
-			foreach( $diagram['newsletters'] as $newsletter_id => $newsletter ){
+		if( ! empty( $diagram[$property] ) )
+			foreach( $diagram[$property] as $newsletter_id => $newsletter ){
 				if( $newsletter->post_status !== 'publish' )
 					continue;
 				$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
@@ -1237,6 +1246,19 @@ abstract class AgendaPartage_Post {
 				);
 				$html .= '<div class="toggle-container">';
 					$html .= AgendaPartage_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
+				$html .= '</div>';
+			}
+
+		$property = 'forms';
+		$icon = 'feedback';
+		if( ! empty( $diagram[$property] ) )
+			foreach( $diagram[$property] as $wpcf7_id => $wpcf7 ){
+				$html .= sprintf('<h3 class="toggle-trigger">%s Formulaire %s</h3>'
+					, AgendaPartage::icon($icon)
+					, $wpcf7->post_title
+				);
+				$html .= '<div class="toggle-container">';
+					$html .= AgendaPartage_WPCF7::get_diagram_html( $wpcf7, false, $blog_diagram );
 				$html .= '</div>';
 			}
 		return $html;

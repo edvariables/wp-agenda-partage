@@ -2030,7 +2030,7 @@ class AgendaPartage_Newsletter {
 		}
 		
 		//posts_page
-		if( $source_page )
+		if( $source_page ) //TODO pas toujours visible (cf visible https://ecolocos.agenda-partage.fr/wp-admin/admin.php?page=agendapartage-diagram)
 			foreach( $post_types as $post_type => $page){
 				if( $source_page->ID === $page->ID ){
 					$diagram['posts_page'] = $page;

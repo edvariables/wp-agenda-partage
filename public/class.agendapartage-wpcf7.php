@@ -431,4 +431,110 @@ class AgendaPartage_WPCF7 {
 		
 		return $args;
 	}
+
+	/**
+	 * Recherche de wpcf7 dans un page->post_content
+	 */
+	public static function get_page_wpcf7($page){
+		$posts = [];
+		switch($page->ID){
+			case AgendaPartage::get_option('agenda_page_id'):
+				$post_id = AgendaPartage::get_option('agdpevent_edit_form_id');
+				$posts[ $post_id.'' ] = get_post( $post_id );
+				break;
+			case AgendaPartage::get_option('covoiturages_page_id'):
+				$post_id = AgendaPartage::get_option('covoiturage_edit_form_id');
+				$posts[ $post_id.'' ] = get_post( $post_id );
+				break;
+			default:
+		}
+		
+		$content = $page->post_content;
+		
+		$matches = [];
+		$pattern = sprintf('/%s([0-9a-z]+)\"/', preg_quote('[contact-form-7 id="'));
+		if( preg_match_all( $pattern, $content, $matches ) ){
+			foreach( $matches[1] as $wpcf7_id ){
+				if( is_numeric($wpcf7_id) )
+					$post = get_post($wpcf7_id);
+				else
+					if( $wpcf7 = wpcf7_get_contact_form_by_hash($wpcf7_id) )
+						$post = get_post( $wpcf7->id() );
+				if( $post )
+					$posts[ $post->ID.'' ] = $post;
+			}
+		}
+		return $posts;
+	}
+	/**
+	 * Retourne l'analyse de la page des évènements ou covoiturages
+	 * Fonction appelable via AgendaPartage_Evenement, AgendaPartage_Covoiturage ou une page quelconque
+	 */
+	public static function get_diagram( $blog_diagram, $post ){
+		
+		$diagram = [
+			'id' => $post->ID,
+			'name' => $post->post_title,
+		];
+		
+		$wpcf7 = wpcf7_contact_form( $post );
+		if( $wpcf7 === null ){
+			var_dump($post);
+			return null;
+		}
+		
+		$properties = $wpcf7->get_properties();
+		$mail = [];
+		foreach($properties['mail'] as $property => $value )
+			switch($property){
+				case 'recipient':
+					$mail['Envoyé à'] = $value;
+					break;
+				case 'additional_headers':
+					$matches = [];
+					if( preg_match( '/reply\-to\:\s?(.*)/i', $value, $matches ) )
+						$mail['Répondre à '] = $matches[1];
+					break;
+			}
+		$diagram['mail'] = $mail;
+		
+		return $diagram;
+	}
+	/**
+	 * Rendu Html d'un diagram
+	 */
+	public static function get_diagram_html( $post, $diagram = false, $blog_diagram = false ){
+		
+		if( ! $diagram ){
+			if( ! $blog_diagram )
+				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
+			$diagram = self::get_diagram( $blog_diagram, $post );
+		}
+		$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/admin.php?page=wpcf7&post=%d&action=edit">%s</a>'
+			, $post->ID
+			, AgendaPartage::icon('edit show-mouse-over')
+		) : '';
+		
+		$html = '';
+		
+		$html .= sprintf('<div>%s Formulaire <a href="%s">%s</a>%s</div>'
+			, AgendaPartage::icon('feedback')
+			, get_permalink($post)
+			, $post->post_title
+			, $admin_edit
+		);
+		
+		$icon = 'email-alt2';
+		if( ! empty( $diagram['mail'] ) ){
+			foreach( $diagram['mail'] as $property => $value ){
+				$html .= sprintf('<div>%s %s : %s</div>'
+					, AgendaPartage::icon($icon)
+					, $property
+					, $value
+				);
+			}
+		}
+		return $html;
+	}
+
 }
