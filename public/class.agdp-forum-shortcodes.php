@@ -264,7 +264,7 @@ class Agdp_Forum_Shortcodes {
 	
 	
 	/**
-	* [agdpforum-messages "nom du forum"]
+	* [agdp-comments "nom du forum"]
 	* [agdpforum-messages] le forum est défini dans la configuration de la newsletter
 	* [agdpforum-messages mode:liste|list|email forum:"nom du forum"]
 	*/
@@ -291,11 +291,11 @@ class Agdp_Forum_Shortcodes {
 		switch($shortcode){
 			case 'agdpforum-messages-list':
 				
-				return Agdp_Forum_Messages::get_list_html( $mailbox, $page, $content );
+				return Agdp_Comments::get_list_html( $mailbox, $page, $content );
 				
 			case 'agdpforum-messages-email':
 				
-				$html = Agdp_Forum_Messages::get_list_for_email( $mailbox, $page, $content );
+				$html = Agdp_Comments::get_list_for_email( $mailbox, $page, $content );
 				return $html;
 
 			default:

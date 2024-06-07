@@ -4,7 +4,7 @@
  * AgendaPartage -> Forum -> Messages
  * Liste des commentaires d'une page associée à une mailbox
  */
-class Agdp_Forum_Messages {
+class Agdp_Comments {
 
 	private static $initiated = false;
 	public static $default_comments_query = [];
@@ -536,7 +536,7 @@ class Agdp_Forum_Messages {
 			$html .= sprintf('<pre>%s%s</pre>', htmlentities($value), $more );
 		}
 		
-		$html .= Agdp_Forum_Message::get_attachments_links($comment);
+		$html .= Agdp_Comment::get_attachments_links($comment);
 		
 		$value = $comment->comment_author;
 		if($value){

@@ -2,12 +2,12 @@
 
 /**
  * AgendaPartage -> Forum -> Message
- * Edition de message dans un forum.
+ * Edition de commentaire dans un forum.
  *
  * Voir aussi Agdp_Forum
  *
  */
-class Agdp_Forum_Message {
+class Agdp_Comment {
 
 	private static $initiated = false;
 		

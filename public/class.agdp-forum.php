@@ -265,7 +265,7 @@ class Agdp_Forum {
 		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
 		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
 		
-		Agdp_Forum_Message::init_page($mailbox, $page);
+		Agdp_Comment::init_page($mailbox, $page);
 		
 		return $import_result;
 	}

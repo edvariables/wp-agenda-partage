@@ -11,7 +11,7 @@ class Agdp_Post_Types {
 
 	public static function init_includes() {
 		if(!class_exists('Agdp_Post'))
-			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post-abstract.php' );
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post.php' );
 		
 		if(!class_exists('Agdp_Mailbox'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox.php' );

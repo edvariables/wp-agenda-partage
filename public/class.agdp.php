@@ -47,7 +47,7 @@ class Agdp {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-user.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_User', 'init' ) );
 
-		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post-abstract.php' );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post.php' );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Mailbox', 'init' ) );
@@ -78,11 +78,11 @@ class Agdp {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-forum.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Forum', 'init' ) );
 		
-		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-forum-message.php' );
-		add_action( 'agendapartage-init', array( 'Agdp_Forum_Message', 'init' ) );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-comment.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Comment', 'init' ) );
 		
-		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-forum-messages.php' );
-		add_action( 'agendapartage-init', array( 'Agdp_Forum_Messages', 'init' ) );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-comments.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Comments', 'init' ) );
 		
 		if(self::maillog_enable()){
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-maillog.php' );
