@@ -968,7 +968,7 @@ class Agdp_Admin_Menu {
 			}
 			
 			$parent_slug = AGDP_TAG;
-			$page_title =  'Diagramme du site';
+			$page_title =  'Arborescence du site';
 			$menu_slug = $parent_slug . '-diagram';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
 				array(__CLASS__, 'agendapartage_diagram_page_html'), null);

@@ -517,9 +517,8 @@ class Agdp_WPCF7 {
 		
 		$html = '';
 		
-		$html .= sprintf('<div>%s Formulaire <a href="%s">%s</a>%s</div>'
+		$html .= sprintf('<div>%s Formulaire %s%s</div>'
 			, Agdp::icon('feedback')
-			, get_permalink($post)
 			, $post->post_title
 			, $admin_edit
 		);
