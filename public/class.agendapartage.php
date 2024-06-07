@@ -920,6 +920,18 @@ class AgendaPartage {
 		}
 		$blog['menu'] = $menu;
 		
+		$other_pages = [];
+		foreach( AgendaPartage_Post::get_pages() as $page ){
+			if( ! isset( $blog_forums[$page->ID.''] )
+			 && ! isset( $posts_pages[$page->ID.''] )
+			){
+				$other_pages[$page->ID.''] = $page;
+			}
+		}
+		if( $other_pages )
+			$blog['pages'] = $other_pages;
+		
+			$blog['pages'] = $other_pages;
 		return $blog;
 	}
 	
@@ -1014,6 +1026,22 @@ class AgendaPartage {
 						default:
 							$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
 					}
+				$html .= '</div>';
+				
+			}
+			
+			foreach( $diagram['pages'] as $page_id => $page ){
+				if( $page->post_status !== 'publish' )
+					continue;
+				
+				$icon = 'text-page';
+				
+				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
+					, AgendaPartage::icon('admin-page')
+					, $page->post_title
+				);
+				$html .= '<div class="toggle-container">';
+					$html .= AgendaPartage_Post::get_diagram_html( $page, false, $diagram );
 				$html .= '</div>';
 				
 			}

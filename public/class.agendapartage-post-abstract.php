@@ -1042,7 +1042,19 @@ abstract class AgendaPartage_Post {
 			, 'post_status' => 'pending'
 		]);
 	}
-
+		
+	/**
+	* Retourne les pages
+	*
+	*/
+	public static function get_pages( $parent_id = 0) {
+		return get_posts([ 
+			'post_type' => 'page',
+			'post_status' => 'publish',
+			'numberposts' => -1,
+			'post_parent' => $parent_id
+		]);
+	}
 	
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages
@@ -1111,6 +1123,9 @@ abstract class AgendaPartage_Post {
 		}
 		if( count($wpcf7s) )
 			$diagram['forms'] = $wpcf7s;
+		
+		if( $children_pages = self::get_pages( $page->ID ) )
+			$diagram['pages'] = $children_pages;
 		
 		return $diagram;
 	}
@@ -1259,6 +1274,19 @@ abstract class AgendaPartage_Post {
 				);
 				$html .= '<div class="toggle-container">';
 					$html .= AgendaPartage_WPCF7::get_diagram_html( $wpcf7, false, $blog_diagram );
+				$html .= '</div>';
+			}
+
+		$property = 'pages';
+		$icon = 'text-page';
+		if( ! empty( $diagram[$property] ) )
+			foreach( $diagram[$property] as $page ){
+				$html .= sprintf('<h3 class="toggle-trigger">%s Page %s</h3>'
+					, AgendaPartage::icon($icon)
+					, $page->post_title
+				);
+				$html .= '<div class="toggle-container">';
+					$html .= self::get_diagram_html( $page, false, $blog_diagram );
 				$html .= '</div>';
 			}
 		return $html;
