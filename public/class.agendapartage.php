@@ -841,14 +841,30 @@ class AgendaPartage {
 		$mailboxes = AgendaPartage_Mailbox::get_mailboxes();
 		$forums = AgendaPartage_Forum::get_forums();
 		$newsletters = AgendaPartage_Newsletter::get_active_newsletters();
+		
 		$post_types = [];
-		$post_types[ AgendaPartage_Evenement::post_type ] = get_post( self::get_option('agenda_page_id') );
-		if( $covoiturage_managed )
-			$post_types[ AgendaPartage_Covoiturage::post_type ] = get_post( self::get_option('covoiturages_page_id') );
+		$posts_pages = [];
+		foreach( [ 'AgendaPartage_Evenement', 'AgendaPartage_Covoiturage'] as $post_class ){
+			if( ( 'AgendaPartage_Covoiturage' === $post_class )
+			 && ! $covoiturage_managed )
+				continue;
+			$post_type = $post_class::post_type;
+			$page = get_post( self::get_option($post_class::posts_page_option) );
+			$post_types[ $post_type ] = $page;
+			$posts_pages[$page->ID.''] = [
+				'post_type' => $post_type,
+				'class' => $post_class,
+				'page' => $page,
+				'id' => $page->ID,
+				'url' => get_permalink($page),
+			];
+		}
+		
 		$post_types_url = [];
 		foreach($post_types as $post_type => $posts_page )
-			$post_types_url[$post_type] = get_permalink($posts_page);
+			$post_types_url[$posts_page->ID.''] = $post_types_url[$post_type] = get_permalink($posts_page);
 		$blog['post_types'] = $post_types;
+		$blog['posts_pages'] = $posts_pages;
 		
 		$menu_items = false;
 		foreach(get_nav_menu_locations() as $location => $menu_id ){
@@ -863,6 +879,7 @@ class AgendaPartage {
 			$blog_forums[$forum_id.''] = AgendaPartage_Forum::get_diagram( $blog, $forum );
 		}
 		$blog['forums'] = $blog_forums;
+		
 		$menu = [];
 		foreach($menu_items as $menu_item){
 			$skip = true;
@@ -877,22 +894,25 @@ class AgendaPartage {
 					$skip = false;
 					$page['forum'] = $forums[ $menu_item->object_id.'' ];
 				}
-				foreach($post_types as $post_type => $posts_page )
+				if( isset( $posts_pages[$menu_item->object_id] ) ){
+					$posts_page = $posts_pages[$menu_item->object_id]['page'];
 					if( $posts_page->ID == $menu_item->object_id ){
 						$skip = false;
 						$page[$post_type.'_page'] = $posts_page;
 					}
+				}
 			}
 			else { //menu "lien personnalisé"
 				$url = $menu_item->url;
 				if( ! $url || substr($url, 0, 4) !== 'http')
 					$url = home_url( $url );
 				$url = (explode('#', $url))[0];
-				foreach($post_types as $post_type => $posts_page )
-					if( $post_types_url[$post_type] === $url ){
+				foreach($posts_pages as $posts_page_info )
+					if( $posts_page_info['url'] === $url ){
 						$skip = false;
-						$page[$post_type.'_page'] = $posts_page;
-						$page['page_id'] = $posts_page->ID;
+						$page[$posts_page_info['post_type'].'_page'] = $posts_page_info['page'];
+						$page['page_id'] = $posts_page_info['page']->ID;
+						break;
 					}
 			}
 			if( ! $skip )
@@ -909,7 +929,8 @@ class AgendaPartage {
 	public static function blog_diagram_html( $diagram = false ){
 		if( ! $diagram )
 			$diagram = self::blog_diagram();
-		
+		$posts_pages = $diagram['posts_pages'];
+
 		$html = '<div class="agdp-diagram">';
 		
 			$icon = 'admin-site-alt3'; //TODO get blog favicon class="blavatar"
@@ -921,9 +942,8 @@ class AgendaPartage {
 			foreach( $diagram['menu'] as $menu_item ){
 				if( empty($menu_item['page_id']))
 					continue;
-				if( isset($menu_item[AgendaPartage_Evenement::post_type . '_page']) ){
+				if( isset($menu_item[AgendaPartage_Evenement::post_type . '_page']) )
 					$icon = 'calendar-alt';
-				}
 				elseif( isset($menu_item[AgendaPartage_Covoiturage::post_type . '_page']) )
 					$icon = 'car';
 				else
@@ -941,12 +961,14 @@ class AgendaPartage {
 						$html .= AgendaPartage_Forum::get_diagram_html( $page, $forum, $diagram );
 					}
 					elseif( ! empty($menu_item['url']) ){
+							
 						if( isset($menu_item[AgendaPartage_Evenement::post_type . '_page']) )
 							$html .= AgendaPartage_Evenement::get_diagram_html( $menu_item[AgendaPartage_Evenement::post_type . '_page'], false, $diagram );
 						elseif( isset($menu_item[AgendaPartage_Covoiturage::post_type . '_page']) )
 							$html .= AgendaPartage_Covoiturage::get_diagram_html( $menu_item[AgendaPartage_Covoiturage::post_type . '_page'], false, $diagram );
 						else
-							$html .= sprintf('<div>Page <a href="%s">%s</a></div>'
+							$html .= sprintf('<div>%s Page <a href="%s">%s</a></div>'
+								, AgendaPartage::icon('admin-page')
 								, $menu_item['url']
 								, $menu_item['name']
 							);

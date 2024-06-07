@@ -52,7 +52,7 @@ class AgendaPartage_Admin_User {
 	 * Mise à jour des paramètres spécifiques de l'utilisateur
 	 */
 	public static function on_insert_custom_user_meta($custom_meta, $user, $update, $userdata){
-		foreach(AgendaPartage_Newsletter::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
+		foreach(AgendaPartage_Post::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
 			$meta_key = AgendaPartage_Newsletter::get_subscription_meta_key($newsletter_id);
 			if( array_key_exists($meta_key, $_POST))
 				$custom_meta[$meta_key] = $_POST[$meta_key];

@@ -187,53 +187,6 @@ class AgendaPartage_Forum {
 		return $pages;
 	} */
 	
-	
-	
-	/**
-	 * Retourne les newsletters utilisant un forum.
-	 * $exclude_sub_forums exclut les newsletters qui utilise les abonnés d'une autre lettre-info
-	 */
-	public static function get_newsletters($forum_id, $exclude_sub_forums = false){
-		if( is_a($forum_id, 'WP_Post') )
-			$forum_id = $forum_id->ID;
-		switch( $forum_id ){
-			case AgendaPartage::get_option('agenda_page_id'):
-				$meta_value = AgendaPartage_Evenement::post_type;
-				break;
-			case AgendaPartage::get_option('covoiturages_page_id'):
-				$meta_value = AgendaPartage_Covoiturage::post_type;
-				break;
-			default:
-				$meta_value = sprintf('page.%d', $forum_id);
-		}
-		$query = new WP_Query([
-			'post_type' => AgendaPartage_Newsletter::post_type,
-			'meta_key' => 'source',
-			'meta_value' => $meta_value,
-		]);
-		$posts = $query->get_posts();
-		
-		$meta_key = 'subscription_parent';
-		
-		if( ! $exclude_sub_forums ){
-			//Tri ceux qui n'ont pas de subscription_parent en premier
-			$newsletters = [];
-			foreach( $posts as $newsletter )
-				if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
-					$newsletters[$newsletter->ID.''] = $newsletter;
-			foreach( $posts as $newsletter )
-				if( ! isset($newsletters[$newsletter->ID.'']) )
-					$newsletters[$newsletter->ID.''] = $newsletter;
-			return $newsletters;
-		}
-		
-		$newsletters = [];
-		foreach( $posts as $newsletter )
-			if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
-				$newsletters[$newsletter->ID.''] = $newsletter;
-		return $newsletters;
-	}
-	
 	/***************************/
 	/******** Droits ***********/
 	
@@ -849,7 +802,6 @@ class AgendaPartage_Forum {
 			'page' => $forum, 
 			'mailbox' => AgendaPartage_Mailbox::get_mailbox_of_page( $forum_id ), 
 			'emails' => self::get_forum_source_emails( $forum_id ),
-			'newsletters' => self::get_newsletters( $forum_id ),
 			'right' => self::get_forum_right( $forum_id ),
 		];
 		
@@ -867,6 +819,9 @@ class AgendaPartage_Forum {
 		if( empty( $diagram['posts_page'] ) ){
 			$diagram['posts_page'] = $forum;
 			$diagram['posts_type'] = $forum->post_type;
+				
+			$diagram = array_merge( AgendaPartage_Post::get_diagram( $blog_diagram, $forum )
+								, $diagram );
 		}
 		
 		$meta_key = 'forum_moderate';
@@ -891,26 +846,20 @@ class AgendaPartage_Forum {
 		}
 		$html = '';
 		
-		//posts_page
-		if( isset($diagram['posts_type']) && $diagram['posts_type'] !== 'page' ) {
-			$posts_type = $diagram['posts_type'];
-			$html .= AgendaPartage_Post::abstracted_class( $posts_type )::get_diagram_html( $page, $diagram, $blog_diagram );
-		}
-		else {
-			$html .= sprintf('<div class="%s">Page <a href="%s">%s</a><div>%s</div></div>'
-				, __CLASS__
-				, get_permalink($page)
-				, $page->post_title
-				, ''//print_r($menu_item, true)
-			);
-		}
+		$html .= AgendaPartage_Post::get_diagram_html( $page, $diagram, $blog_diagram );
 		
 		$property = 'right';
-		if( $diagram[ $property ] )
-			$html .= sprintf('<div>%s Droits : %s</div>'
+		if( $diagram[ $property ] ){
+			$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/post.php?post=%d&action=edit#agdp_forum-properties">%s</a>'
+					, $page->ID
+					, AgendaPartage::icon('edit show-mouse-over')
+				) : '';
+			$html .= sprintf('<div>%s Droits du forum : %s%s</div>'
 					, AgendaPartage::icon($diagram[ $property ] === 'P' ? 'unlock' : 'lock')
 					, self::get_right_label( $diagram[ $property ] )
+					, $admin_edit
 				);
+		}
 		
 		$property = 'forum_moderate';
 		if( $diagram[ $property ] )
@@ -941,7 +890,7 @@ class AgendaPartage_Forum {
 				$emails = $email;
 		}
 		if( $emails ){
-			$html .= sprintf('<div class="toggle-trigger">%s Par e-mail : %s</div>'
+			$html .= sprintf('<h3 class="toggle-trigger">%s Par e-mail : %s</h3>'
 					, AgendaPartage::icon('email-alt')
 					, $emails
 				);
@@ -953,25 +902,6 @@ class AgendaPartage_Forum {
 			$html .= '</div>';
 		}
 		
-		if( ! isset($posts_type) ){
-			$icon = 'email-alt2';
-			if( ! $diagram['newsletters'] )
-				$html .= sprintf('<i>%s pas de lettre-info</i>'
-					, AgendaPartage::icon($icon)
-				);
-			
-			foreach( $diagram['newsletters'] as $newsletter_id => $newsletter ){
-				if( $newsletter->post_status !== 'publish' )
-					continue;
-				$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
-					, AgendaPartage::icon($icon)
-					, $newsletter->post_title
-				);
-				$html .= '<div class="toggle-container">';
-					$html .= AgendaPartage_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
-				$html .= '</div>';
-			}
-		}
 		return $html;
 	}
 	

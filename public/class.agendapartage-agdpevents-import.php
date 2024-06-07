@@ -101,8 +101,12 @@ class AgendaPartage_Evenements_Import {
 			$timeEnd = substr($dateEnd, 11, 5);//TODO 
 			if($timeStart == '00:00')
 				$timeStart = '';
+			else
+				$timeStart =  preg_replace( '/^0([1-9])/', '$1', $timeStart);
 			if($timeEnd == '00:00')
 				$timeEnd = '';
+			else
+				$timeEnd =  preg_replace( '/^0([1-9])/', '$1', $timeEnd);
 			$dateStart = substr($dateStart, 0, 10);
 			$dateEnd = substr($dateEnd, 0, 10);
 			if(strtotime($dateStart) < $today) {

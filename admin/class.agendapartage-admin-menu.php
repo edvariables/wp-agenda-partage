@@ -542,7 +542,12 @@ class AgendaPartage_Admin_Menu {
 
 	
 	public static function init_js_sections_tabs() {
-		
+		//
+		$argument = 'tab';
+		if( ! empty($_REQUEST[$argument]))
+			$default_tab = $_REQUEST[$argument];
+		else
+			$default_tab = 0;
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
 		jQuery('form > div.agdp-tabs-wrap:first').each(function(){
@@ -554,15 +559,21 @@ class AgendaPartage_Admin_Menu {
 			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
 			var $submit = jQuery(this).find('p.submit');
+			var default_tab_name = '<?=$default_tab?>';
+			var default_tab = 0;
 			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
 				tabs_counter++;
 				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
+				if( default_tab_name && $content.find( '#' + default_tab_name + ':first').length )
+					default_tab = tabs_counter - 1;
 			});
 			jQuery(this)
-				.html( $tabs.tabs() )
+				.html( $tabs.tabs({
+					active: default_tab
+				}) )
 				.append($submit);
 		});
 	});</script>

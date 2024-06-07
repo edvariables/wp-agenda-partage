@@ -1066,17 +1066,30 @@ class AgendaPartage_Mailbox {
 		
 		//imap
 		$meta_key = 'imap_server';
-		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
 		$meta_key = 'imap_email';
-		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
+		
+		$meta_key = 'cron-enable';
+		$diagram[ $meta_key ] = get_post_meta($mailbox_id, $meta_key, true);
+		if( $diagram[ $meta_key ] ){
+			if( $cron_state = self::get_cron_state() ){
+				$cron_comment = substr($cron_state, 2);
+				$diagram[ 'cron_state' ] = str_starts_with( $cron_state, '1|') 
+								? 'Actif' 
+								: (str_starts_with( $cron_state, '0|')
+									? 'A l\'arrêt'
+									: $cron_state);
+			}
+		}
 		
 		//imap_email
 		$meta_key = 'imap_suspend';
-		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
 		
 		//imap_mark_as_read
 		$meta_key = 'imap_mark_as_read';
-		$diagram[$meta_key] = get_post_meta($mailbox->ID, $meta_key, true);
+		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
 		
 		
 		return $diagram;
@@ -1090,13 +1103,18 @@ class AgendaPartage_Mailbox {
 				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
 			$diagram = self::get_diagram( $blog_diagram, $mailbox );
 		}
+		$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/post.php?post=%d&action=edit">%s</a>'
+				, $mailbox->ID
+				, AgendaPartage::icon('edit show-mouse-over')
+			) : '';
+			
 		$html = '';
 		$icon = 'email';
 				
-		$html .= sprintf('<div>Boîte e-mails <a href="%s">%s</a><div>%s</div></div>'
+		$html .= sprintf('<div>Boîte e-mails <a href="%s">%s</a>%s</div>'
 			, get_permalink($mailbox)
 			, $mailbox->post_title
-			, ''//print_r($menu_item, true)
+			, $admin_edit
 		);
 			
 		$meta_key = 'imap_server';
@@ -1117,7 +1135,20 @@ class AgendaPartage_Mailbox {
 					, AgendaPartage::icon($icon)
 			);
 		}
-			
+		else {
+			$meta_key = 'cron-enable';
+			if( $diagram[ $meta_key ] ){
+				if( ! empty($diagram[ 'cron_state' ]) )
+					$html .= sprintf('<div>%s %s</div>'
+						, AgendaPartage::icon('controls-repeat')
+						, $diagram[ 'cron_state' ]
+					);
+			}
+			else
+				$html .= sprintf('<div>%s L\'importation automatique n\'est pas active</div>'
+					, AgendaPartage::icon('warning')
+				);
+		}
 		$meta_key = 'imap_mark_as_read';
 		if( empty($diagram[$meta_key]) ){
 			$icon = 'warning';

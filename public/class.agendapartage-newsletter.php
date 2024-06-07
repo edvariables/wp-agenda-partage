@@ -2050,6 +2050,12 @@ class AgendaPartage_Newsletter {
 				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
 			$diagram = self::get_diagram( $blog_diagram, $newsletter );
 		}
+		
+		$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/post.php?post=%d&action=edit#agdp_forum-properties">%s</a>'
+				, $newsletter->ID
+				, AgendaPartage::icon('edit show-mouse-over')
+			) : '';
+			
 		$html = '';
 		$icon = 'email-alt2';
 		if( isset($diagram['posts_type']) )
@@ -2062,10 +2068,11 @@ class AgendaPartage_Newsletter {
 					break;
 			}
 				
-		$html .= sprintf('<div>Lettre-info <a href="%s">%s</a><div>%s</div></div>'
+		$html .= sprintf('<div>%s Lettre-info <a href="%s">%s</a>%s</div>'
+			, AgendaPartage::icon('admin-page')
 			, get_permalink($newsletter)
 			, $newsletter->post_title
-			, ''//print_r($menu_item, true)
+			, $admin_edit
 		);
 						
 		if( $diagram['source_page'] 
