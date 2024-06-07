@@ -42,7 +42,7 @@ define( 'AGDP_MAILLOG_ENABLE', 'maillog_enable');
 define( 'AGDP_DEBUGLOG_ENABLE', 'debuglog_enable');
 define( 'AGDP_CONNECT_MENU_ENABLE', 'connect_menu_enable');
 			
-//argument de requête pour modification d'évènement. code généré par AgendaPartage::get_secret_code()
+//argument de requête pour modification d'évènement. code généré par Agdp::get_secret_code()
 define( 'AGDP_EVENT_SECRETCODE', 'codesecret' ); 
 define( 'AGDP_COVOIT_SECRETCODE', 'covsecret' ); 
 define( 'AGDP_ARG_EVENTID', 'eventid' ); 
@@ -68,21 +68,21 @@ define( 'USER_LEVEL_SUBSCRIBER', 0 );
 define( 'USER_LEVEL_NONE', 0 ); 
 
 require_once( AGDP_PLUGIN_DIR . '/includes/functions.php' );
-require_once( AGDP_PLUGIN_DIR . '/public/class.agendapartage.php' );
+require_once( AGDP_PLUGIN_DIR . '/public/class.agdp.php' );
 
 //plugin_activation
-register_activation_hook( __FILE__, array( 'AgendaPartage', 'plugin_activation' ) );
+register_activation_hook( __FILE__, array( 'Agdp', 'plugin_activation' ) );
 //plugin_deactivation
-register_deactivation_hook( __FILE__, array( 'AgendaPartage', 'plugin_deactivation' ) );
+register_deactivation_hook( __FILE__, array( 'Agdp', 'plugin_deactivation' ) );
 
 add_action( 'admin_menu', 'agendapartage_admin_menu' );
 function agendapartage_admin_menu(){
-	require_once( AGDP_PLUGIN_DIR . '/admin/class.agendapartage-admin-menu.php' );
-	AgendaPartage_Admin_Menu::init();
+	require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-menu.php' );
+	Agdp_Admin_Menu::init();
 }
 
-add_action( 'init', array( 'AgendaPartage', 'init' ) );
-add_action( 'admin_init', array( 'AgendaPartage', 'admin_init' ) );
+add_action( 'init', array( 'Agdp', 'init' ) );
+add_action( 'admin_init', array( 'Agdp', 'admin_init' ) );
 
 //forbidden xmlrpc
 //TODO option to be clear
