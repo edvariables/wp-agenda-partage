@@ -30,10 +30,10 @@ jQuery( function( $ ) {
 				if(! confirm(msg) ) return false;
 			}
 			jQuery.ajax({
-				url : agendapartage_ajax.ajax_url,
+				url : agdp_ajax.ajax_url,
 				type : 'post', 
 				data : Object.assign(data, {
-					_nonce : agendapartage_ajax.check_nonce
+					_nonce : agdp_ajax.check_nonce
 				}),
 				success : function( response ) {
 					if(response){
@@ -143,10 +143,10 @@ jQuery( function( $ ) {
 			if(ajaxData){
 				var ajaxData = JSON.parse(ajaxData);
 				jQuery.ajax({
-					url : agendapartage_ajax.ajax_url,
+					url : agdp_ajax.ajax_url,
 					type : 'post',
 					data : Object.assign(ajaxData, {
-						_nonce : agendapartage_ajax.check_nonce
+						_nonce : agdp_ajax.check_nonce
 					}),
 					success : function( response ) {
 						$spinner.remove();

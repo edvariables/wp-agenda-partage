@@ -113,7 +113,7 @@ class Agdp_Admin {
 		wp_enqueue_script(array( 'jquery', 'jquery-ui-tabs' ));
 		
 	    wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array('jquery'), AGDP_VERSION , false );
-		wp_localize_script( AGDP_TAG . '-tools', 'agendapartage_ajax', array( 
+		wp_localize_script( AGDP_TAG . '-tools', 'agdp_ajax', array( 
 			'ajax_url' => admin_url('admin-ajax.php')
 			, 'check_nonce' => wp_create_nonce('agdp-admin-nonce')
 			, 'is_admin' => true )

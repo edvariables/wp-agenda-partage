@@ -49,14 +49,14 @@ class Agdp_Admin_Menu {
 		
 		//Cette section permet d'englober les onglets suivants. Sans ça, pas d'onglets. Idem dans class.agendapartage-admin-edit-rights.php
 		add_settings_section(
-			'agendapartage_section_checkup',
+			'agdp_section_checkup',
 			'',
 			array(__CLASS__, 'check_module_health'),
 			AGDP_TAG, $section_args
 		);
 		
 		add_settings_section(
-			'agendapartage_section_pages',
+			'agdp_section_pages',
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
@@ -67,12 +67,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_pages',
+				'agdp_section_pages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -82,12 +82,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Page d\'inscription à la lettre-info', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_pages',
+				'agdp_section_pages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -97,12 +97,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Formulaire d\'inscription à la lettre-info', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_pages',
+				'agdp_section_pages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
@@ -112,12 +112,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Page "Ecrivez-nous".', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_pages',
+				'agdp_section_pages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -127,12 +127,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Formulaire "Ecrivez-nous"', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_pages',
+				'agdp_section_pages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
@@ -142,19 +142,19 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_pages',
+				'agdp_section_pages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => Agdp_Newsletter::post_type
 				]
 			);
 
 		// register a new section in the "agendapartage" page
 		add_settings_section(
-			'agendapartage_section_agdpevents',
+			'agdp_section_agdpevents',
 			__( 'Évènements', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
@@ -165,12 +165,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Page de l\'agenda', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -180,12 +180,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -195,12 +195,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Formulaire d\'ajout et modification des évènements', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
@@ -210,12 +210,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Message à l\'organisateur d\'évènement', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
@@ -225,12 +225,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Message de la part de l\'administrateur à l\'organisateur', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
@@ -240,12 +240,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => Agdp_Newsletter::post_type
 				]
 			);
@@ -255,12 +255,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Diffusion "Lettre-info"', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_terms_cb'),
+				array(__CLASS__, 'agdp_combos_terms_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'taxonomy' => Agdp_Evenement::taxonomy_diffusion
 				]
 			);
@@ -270,9 +270,9 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Statut des nouveaux évènements', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label_for' => $field_id,
 					'label' => Agdp::get_option_label($field_id),
@@ -280,7 +280,7 @@ class Agdp_Admin_Menu {
 									, __( 'Si vous cochez cette option, la saise des évènements va se complexifier pour les utilisateurs.', AGDP_TAG )
 									, __( 'Même si cette option n\'est pas cochée, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
 									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
 			);
@@ -290,20 +290,20 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Diffusions', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents',
+				'agdp_section_agdpevents',
 				[
 					'label' => __('Diffusion docx', AGDP_TAG) . ' ' . self::get_ev_diffusion_docx(),
 					'learn-more' => [__( 'L\'importation du document Word (.docx) servant de modèle s\'effectue dans le paramétrage des diffusions des évènements.', AGDP_TAG )],
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 				]
 			);
 			
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
 		add_settings_section(
-			'agendapartage_section_covoiturages',
+			'agdp_section_covoiturages',
 			__( 'Covoiturages', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
@@ -314,13 +314,13 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_covoiturages',
+				'agdp_section_covoiturages',
 				[
 					'label_for' => $field_id,
 					'label' => Agdp::get_option_label($field_id),
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
 			);
@@ -330,12 +330,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_covoiturages',
+				'agdp_section_covoiturages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -345,12 +345,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_covoiturages',
+				'agdp_section_covoiturages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -360,12 +360,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Formulaire d\'ajout et modification de covoiturage', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_covoiturages',
+				'agdp_section_covoiturages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => WPCF7_ContactForm::post_type
 				]
 			);
@@ -375,12 +375,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_covoiturages',
+				'agdp_section_covoiturages',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => Agdp_Newsletter::post_type
 				]
 			);
@@ -390,9 +390,9 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Statut des nouveaux covoiturages', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_covoiturages',
+				'agdp_section_covoiturages',
 				[
 					'label_for' => $field_id,
 					'label' => Agdp::get_option_label($field_id),
@@ -400,7 +400,7 @@ class Agdp_Admin_Menu {
 									, __( 'Si vous cochez cette option, la saise des covoiturages va se complexifier pour les utilisateurs.', AGDP_TAG )
 									, __( 'Même si cette option n\'est pas cochée, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
 									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
 			);
@@ -408,7 +408,7 @@ class Agdp_Admin_Menu {
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
 		add_settings_section(
-			'agendapartage_section_forums',
+			'agdp_section_forums',
 			__( 'Forums', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
@@ -419,12 +419,12 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agendapartage_combos_posts_cb'),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agendapartage_section_forums',
+				'agdp_section_forums',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'post_type' => 'page'
 				]
 			);
@@ -434,7 +434,7 @@ class Agdp_Admin_Menu {
 
 		// register a new section in the "agendapartage" page
 		add_settings_section(
-			'agendapartage_section_security',
+			'agdp_section_security',
 			__( 'Divers', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
@@ -445,13 +445,13 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Affichage du menu "Se connecter"', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_security',
+				'agdp_section_security',
 				[
 					'label_for' => $field_id,
 					'label' => __( 'Afficher', AGDP_TAG ),
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
 			);
@@ -461,15 +461,15 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Traçage des mails', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_security',
+				'agdp_section_security',
 				[
 					'label_for' => $field_id,
 					'label' => __( 'Activer', AGDP_TAG ),
 					'learn-more' => [__( 'A n\'utiliser que pour la poursuite d\'envois abusifs ou de robots.', AGDP_TAG )
 									, __( 'Pensez à purger les Traces mail et à vider la corbeille.', AGDP_TAG )],
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
 			);
@@ -479,21 +479,21 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Traçage des alertes', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_input_cb'),
+				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agendapartage_section_security',
+				'agdp_section_security',
 				[
 					'label_for' => $field_id,
 					'label' => __( 'Activer', AGDP_TAG ),
 					'learn-more' => [sprintf(__( 'Des traces sont disponibles dans le fichier %s.', AGDP_TAG ), debug_log_file())],
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
 			);
 
 		// register a new section in the "agendapartage" page
 		add_settings_section(
-			'agendapartage_section_agdpevents_import',
+			'agdp_section_agdpevents_import',
 			__( 'Importation d\'évènements', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, $section_args
@@ -504,19 +504,19 @@ class Agdp_Admin_Menu {
 			add_settings_field(
 				$field_id, 
 				__( 'Importation d\'un fichier ICS', AGDP_TAG ),
-				array(__CLASS__, 'agendapartage_import_ics_cb'),
+				array(__CLASS__, 'agdp_import_ics_cb'),
 				AGDP_TAG,
-				'agendapartage_section_agdpevents_import',
+				'agdp_section_agdpevents_import',
 				[
 					'label_for' => $field_id,
-					'class' => 'agendapartage_row',
+					'class' => 'agdp_row',
 				]
 			);
 		
 		if(is_multisite()){
 			// register a new section in the "agendapartage" page
 			add_settings_section(
-				'agendapartage_section_blog_import',
+				'agdp_section_blog_import',
 				__( 'Initialisation du site', AGDP_TAG ),
 				array(__CLASS__, 'settings_sections_cb'),
 				AGDP_TAG, $section_args
@@ -527,12 +527,12 @@ class Agdp_Admin_Menu {
 				add_settings_field(
 					$field_id, 
 					__( 'Importation des données du site principal', AGDP_TAG ),
-					array(__CLASS__, 'agendapartage_site_import_cb'),
+					array(__CLASS__, 'agdp_site_import_cb'),
 					AGDP_TAG,
-					'agendapartage_section_blog_import',
+					'agdp_section_blog_import',
 					[
 						'label_for' => $field_id,
-						'class' => 'agendapartage_row',
+						'class' => 'agdp_row',
 					]
 				);
 			}
@@ -604,19 +604,19 @@ class Agdp_Admin_Menu {
 	public static function settings_sections_cb($args ) {
 		
 		switch($args['id']){
-			case 'agendapartage_section_security' : 
+			case 'agdp_section_security' : 
 				$message = __('Paramètres de surveillance de l\'activité', AGDP_TAG);
 				break;
-			case 'agendapartage_section_pages' : 
+			case 'agdp_section_pages' : 
 				// $message = __('Paramètres concernant les références de pages et formulaires', AGDP_TAG);
 				break;
-			case 'agendapartage_section_agdpevents' : 
+			case 'agdp_section_agdpevents' : 
 				$message = __('Paramètres concernant les évènements, leurs pages et formulaires.', AGDP_TAG);
 				break;
-			case 'agendapartage_section_agdpevents_import' : 
+			case 'agdp_section_agdpevents_import' : 
 				$message = __('Importation d\'évènements depuis une source externe', AGDP_TAG);
 				break;
-			case 'agendapartage_section_blog_import' : 
+			case 'agdp_section_blog_import' : 
 				if( get_current_blog_id() === BLOG_ID_CURRENT_SITE ){
 					?><p id="<?php echo esc_attr( $args['id'] ); ?>" class="dashicons-before dashicons-welcome-learn-more">Vous êtes sur le site principal, vous ne pouvez pas faire d'importation de modèles.</p><?php
 					return;
@@ -632,7 +632,7 @@ class Agdp_Admin_Menu {
 		<?php }
 	}
 	
-	public static function agendapartage_site_import_cb( $args ){
+	public static function agdp_site_import_cb( $args ){
 					
 		$option_id = $args['label_for'];
 		?><label>
@@ -676,7 +676,7 @@ class Agdp_Admin_Menu {
 
 	}
 	
-	public static function agendapartage_import_ics_cb( $args ){
+	public static function agdp_import_ics_cb( $args ){
 		$option_id = $args['label_for'];
 		$post_status = Agdp::get_option($option_id . '-post_status');
 		?>
@@ -720,7 +720,7 @@ class Agdp_Admin_Menu {
 	 * Attention, les auteurs de ces pages doivent être administrateurs
 	 * $args['post_type'] doit être fourni
 	 */
-	public static function agendapartage_input_cb( $args ) {
+	public static function agdp_input_cb( $args ) {
 		if( empty($args['label_for']) )
 			$value = $option_id = false;
 		else {
@@ -769,7 +769,7 @@ class Agdp_Admin_Menu {
 	 * Attention, les auteurs de ces pages doivent être administrateurs
 	 * $args['post_type'] doit être fourni
 	 */
-	public static function agendapartage_combos_posts_cb( $args ) {
+	public static function agdp_combos_posts_cb( $args ) {
 		// get the value of the setting we've registered with register_setting()
 		$option_id = $args['label_for'];
 		$post_type = $args['post_type'];
@@ -842,7 +842,7 @@ class Agdp_Admin_Menu {
 	 * Option parmi la liste des termes d'une taxonomy
 	 * $args['taxonomy'] doit être fourni
 	 */
-	public static function agendapartage_combos_terms_cb( $args ) {
+	public static function agdp_combos_terms_cb( $args ) {
 		// get the value of the setting we've registered with register_setting()
 		$option_id = $args['label_for'];
 		$taxonomy = $args['taxonomy'];
@@ -895,7 +895,7 @@ class Agdp_Admin_Menu {
 			'Agenda Partagé',
 			'manage_options',
 			AGDP_TAG,
-			array(__CLASS__, 'agendapartage_options_page_html'),
+			array(__CLASS__, 'agdp_options_page_html'),
 			'dashicons-lightbulb',
 			25
 		);
@@ -958,7 +958,7 @@ class Agdp_Admin_Menu {
 			$page_title =  'Règles de publications';
 			$menu_slug = $parent_slug . '-rights';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agendapartage_rights_page_html'), null);
+				array(__CLASS__, 'agdp_rights_page_html'), null);
 			
 			if( class_exists('Agdp_Maillog') ){
 				$parent_slug = AGDP_TAG;
@@ -971,7 +971,7 @@ class Agdp_Admin_Menu {
 			$page_title =  'Arborescence du site';
 			$menu_slug = $parent_slug . '-diagram';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agendapartage_diagram_page_html'), null);
+				array(__CLASS__, 'agdp_diagram_page_html'), null);
 			
 			//Menu Pages
 			$capability = 'moderate_comments';
@@ -995,7 +995,7 @@ class Agdp_Admin_Menu {
 	* top level menu:
 	* callback functions
 	*/
-	public static function agendapartage_options_page_html() {
+	public static function agdp_options_page_html() {
 		// check user capabilities
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -1007,13 +1007,13 @@ class Agdp_Admin_Menu {
 		// wordpress will add the "settings-updated" $_GET parameter to the url
 		if ( isset( $_GET['settings-updated'] ) ) {
 			// add settings saved message with the class of "updated"
-			add_settings_error( 'agendapartage_messages', 'agendapartage_message', __( 'Réglages enregistrés', AGDP_TAG ), 'updated' );
+			add_settings_error( 'agdp_messages', 'agdp_message', __( 'Réglages enregistrés', AGDP_TAG ), 'updated' );
 
 			
 		}
 
 		// show error/update messages
-		settings_errors( 'agendapartage_messages' );
+		settings_errors( 'agdp_messages' );
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -1147,10 +1147,10 @@ class Agdp_Admin_Menu {
 	* top level menu:
 	* callback functions
 	*/
-	public static function agendapartage_rights_page_html() {
+	public static function agdp_rights_page_html() {
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-rights.php');
 		Agdp_Admin_Edit_Rights::init();
-		Agdp_Admin_Edit_Rights::agendapartage_rights_page_html();
+		Agdp_Admin_Edit_Rights::agdp_rights_page_html();
 	}
 	
 	
@@ -1158,7 +1158,7 @@ class Agdp_Admin_Menu {
 	* top level menu:
 	* callback functions
 	*/
-	public static function agendapartage_diagram_page_html() {
+	public static function agdp_diagram_page_html() {
 		echo sprintf('<pre>%s</pre>', Agdp::blog_diagram_html());
 	}
 	

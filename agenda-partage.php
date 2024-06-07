@@ -9,7 +9,8 @@
  * Description: Agenda partagé tout intégré et facile pour les visiteurs et rédacteurs d'évènements.
  Un module de covoiturage a été ajouté.
  Inclus l'envoi de lettres-info contenant la liste des évènements ou covoiturages à venir.
- Visitiable et testable : https://agendapartage.fr
+ Inclus la réception de mails pour enrichir les commentaires d'une page selon des droits paramétrables (public, validation par email, utilisateur connecté, adhésion au forum de la page)
+ Visitable et testable : https://agendapartage.fr
  Only in french language...
  - Plugins obligatoires :
 	- WP Contact Form 7
@@ -18,16 +19,16 @@
 	- ReCaptcha v2 for Contact Form 7
 	- WP Mail Smtp - SMTP7
  * Author: Emmanuel Durand, edid@free.fr
- * Author URI: https://agendapartage.fr
+ * Author URI: https://agenda-partage.fr
  * Tags: 
  * License: GPLv3
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
- * Version: 1.2.16
+ * Version: 1.2.17
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AGDP_VERSION', '1.2.16' );
+define( 'AGDP_VERSION', '1.2.17' );
 define( 'AGDP_MINIMUM_WP_VERSION', '5.0' );
 
 define( 'AGDP_PLUGIN', __FILE__ );
@@ -75,8 +76,8 @@ register_activation_hook( __FILE__, array( 'Agdp', 'plugin_activation' ) );
 //plugin_deactivation
 register_deactivation_hook( __FILE__, array( 'Agdp', 'plugin_deactivation' ) );
 
-add_action( 'admin_menu', 'agendapartage_admin_menu' );
-function agendapartage_admin_menu(){
+add_action( 'admin_menu', 'agdp_admin_menu' );
+function agdp_admin_menu(){
 	require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-menu.php' );
 	Agdp_Admin_Menu::init();
 }

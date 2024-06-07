@@ -289,7 +289,7 @@ class Agdp {
 		wp_enqueue_script( AGDP_TAG . '-tools' );
 		
 	    
-		wp_localize_script( AGDP_TAG, 'agendapartage_ajax', array( 
+		wp_localize_script( AGDP_TAG, 'agdp_ajax', array( 
 			'ajax_url' => admin_url('admin-ajax.php')
 			, 'check_nonce' => wp_create_nonce('agdp-nonce')) );
 		
@@ -544,16 +544,16 @@ class Agdp {
 	public static function plugin_deactivation( ) {
 		
 		// Remove any scheduled cron jobs.
-		$agendapartage_cron_events = array(
-			'agendapartage_schedule_cron_recheck',
-			'agendapartage_scheduled_delete',
+		$agdp_cron_events = array(
+			'agdp_schedule_cron_recheck',
+			'agdp_scheduled_delete',
 		);
 		
-		foreach ( $agendapartage_cron_events as $agendapartage_cron_event ) {
-			$timestamp = wp_next_scheduled( $agendapartage_cron_event );
+		foreach ( $agdp_cron_events as $agdp_cron_event ) {
+			$timestamp = wp_next_scheduled( $agdp_cron_event );
 			
 			if ( $timestamp ) {
-				wp_unschedule_event( $timestamp, $agendapartage_cron_event );
+				wp_unschedule_event( $timestamp, $agdp_cron_event );
 			}
 		}
 		self::unregister_post_types();
@@ -844,15 +844,15 @@ class Agdp {
 		
 		$post_types = [];
 		$posts_pages = [];
-		foreach( [ 'Agdp_Evenement', 'Agdp_Covoiturage'] as $post_class ){
-			if( ( 'Agdp_Covoiturage' === $post_class )
+		foreach( Agdp_Post::get_post_types() as $post_type ){
+			if( ( $post_type === Agdp_Covoiturage::post_type )
 			 && ! $covoiturage_managed )
 				continue;
-			$post_type = $post_class::post_type;
+			$post_class = Agdp_Post::abstracted_class($post_type);
 			$page = get_post( self::get_option($post_class::posts_page_option) );
 			$post_types[ $post_type ] = $page;
 			$posts_pages[$page->ID.''] = [
-				'post_type' => $post_type,
+				'posts_type' => $post_type,
 				'class' => $post_class,
 				'page' => $page,
 				'id' => $page->ID,
@@ -896,10 +896,15 @@ class Agdp {
 				}
 				if( isset( $posts_pages[$menu_item->object_id] ) ){
 					$posts_page = $posts_pages[$menu_item->object_id]['page'];
+					$posts_type = $posts_pages[$menu_item->object_id]['posts_type'];
 					if( $posts_page->ID == $menu_item->object_id ){
 						$skip = false;
-						$page[$post_type.'_page'] = $posts_page;
+						$page[$posts_type.'_page'] = $posts_page;
 					}
+				}
+				elseif( $skip ) {
+					$skip = false;
+					$page['page'] = get_post( $menu_item->object_id );
 				}
 			}
 			else { //menu "lien personnalisé"
@@ -910,13 +915,13 @@ class Agdp {
 				foreach($posts_pages as $posts_page_info )
 					if( $posts_page_info['url'] === $url ){
 						$skip = false;
-						$page[$posts_page_info['post_type'].'_page'] = $posts_page_info['page'];
+						$page[$posts_page_info['posts_type'].'_page'] = $posts_page_info['page'];
 						$page['page_id'] = $posts_page_info['page']->ID;
 						break;
 					}
 			}
 			if( ! $skip )
-				$menu[] = $page;
+				$menu[$page['page_id'].''] = $page;
 		}
 		$blog['menu'] = $menu;
 		
@@ -924,13 +929,12 @@ class Agdp {
 		foreach( Agdp_Post::get_pages() as $page ){
 			if( ! isset( $blog_forums[$page->ID.''] )
 			 && ! isset( $posts_pages[$page->ID.''] )
+			 && ! isset( $menu[$page->ID.''] )
 			){
 				$other_pages[$page->ID.''] = $page;
 			}
 		}
 		if( $other_pages )
-			$blog['pages'] = $other_pages;
-		
 			$blog['pages'] = $other_pages;
 		return $blog;
 	}
@@ -1016,16 +1020,16 @@ class Agdp {
 					, $emails
 				);
 				$html .= '<div class="toggle-container">';
-					switch( isset($forum['posts_type']) ? $forum['posts_type'] : 'forum' ){
-						case Agdp_Evenement::post_type :
-							$html .= Agdp_Evenement::get_diagram_html( $page, $forum, $diagram );
-							break;
-						case Agdp_Covoiturage::post_type :
-							$html .= Agdp_Covoiturage::get_diagram_html( $page, $forum, $diagram );
-							break;
-						default:
+					// switch( isset($forum['posts_type']) ? $forum['posts_type'] : 'forum' ){
+						// case Agdp_Evenement::post_type :
+							// $html .= Agdp_Evenement::get_diagram_html( $page, $forum, $diagram );
+							// break;
+						// case Agdp_Covoiturage::post_type :
+							// $html .= Agdp_Covoiturage::get_diagram_html( $page, $forum, $diagram );
+							// break;
+						// default:
 							$html .= Agdp_Forum::get_diagram_html( $page, $forum, $diagram );
-					}
+					// }
 				$html .= '</div>';
 				
 			}
@@ -1041,7 +1045,7 @@ class Agdp {
 					, $page->post_title
 				);
 				$html .= '<div class="toggle-container">';
-					$html .= Agdp_Post::get_diagram_html( $page, false, $diagram );
+					$html .= Agdp_Forum::get_diagram_html( $page, false, $diagram );
 				$html .= '</div>';
 				
 			}

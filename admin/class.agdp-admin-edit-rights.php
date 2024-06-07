@@ -30,7 +30,7 @@ class Agdp_Admin_Edit_Rights {
 		
 		//Cette section permet d'englober les onglets suivants. Sans ça, pas d'onglets. Idem dans class.agendapartage-admin-menu.php
 		add_settings_section(
-			'agendapartage_section_checkup',
+			'agdp_section_checkup',
 			'',
 			array(__CLASS__, 'check_module_health'),
 			self::TAG, $section_args
@@ -72,7 +72,7 @@ class Agdp_Admin_Edit_Rights {
 					'page_section_' . $page_id,
 					[
 						'label_for' => $field_id,
-						'class' => 'agendapartage_row',
+						'class' => 'agdp_row',
 						'input_type' => 'radio',
 						'values' => $publish_all_rights,
 						'value' =>  $dispatch['rights']
@@ -106,7 +106,7 @@ class Agdp_Admin_Edit_Rights {
 					'email_section_' . $email_esc,
 					[
 						'label_for' => $field_id,
-						'class' => 'agendapartage_row',
+						'class' => 'agdp_row',
 						'input_type' => 'radio',
 						'values' => $publish_all_rights,
 						'value' =>  $dispatch['rights']
@@ -247,7 +247,7 @@ class Agdp_Admin_Edit_Rights {
 	* top level menu:
 	* callback functions
 	*/
-	public static function agendapartage_rights_page_html() {
+	public static function agdp_rights_page_html() {
 		// check user capabilities
 		if ( ! current_user_can( 'manage_options' ) ) {
 			?><h1>Désolé, l'accès à cette page est réservée.</h1><?php
@@ -260,12 +260,12 @@ class Agdp_Admin_Edit_Rights {
 		// wordpress will add the "settings-updated" $_GET parameter to the url
 		if ( isset( $_GET['settings-updated'] ) ) {
 			// add settings saved message with the class of "updated"
-			add_settings_error( 'agendapartage_messages', 'agendapartage_message', __( 'Droits enregistrés', AGDP_TAG ), 'updated' );
+			add_settings_error( 'agdp_messages', 'agdp_message', __( 'Droits enregistrés', AGDP_TAG ), 'updated' );
 			
 		}
 
 		// show error/update messages
-		settings_errors( 'agendapartage_messages' );
+		settings_errors( 'agdp_messages' );
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>

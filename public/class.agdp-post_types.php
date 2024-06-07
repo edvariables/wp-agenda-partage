@@ -41,7 +41,7 @@ class Agdp_Post_Types {
 	 */
 	public static function register_post_types() {
 
-		do_action( 'agendapartage_register_post_types' );
+		do_action( 'agdp_register_post_types' );
 
 		Agdp_Mailbox_Post_type::register_post_type();
 		
@@ -64,7 +64,7 @@ class Agdp_Post_Types {
 	    // clear the permalinks after the post type has been registered
 	    flush_rewrite_rules();
 
-		do_action( 'agendapartage_after_register_post_types' ); 
+		do_action( 'agdp_after_register_post_types' ); 
 	}
 
 	/**
@@ -72,7 +72,7 @@ class Agdp_Post_Types {
 	 */
 	public static function unregister_post_types() {
 
-		do_action( 'agendapartage_unregister_post_types' );
+		do_action( 'agdp_unregister_post_types' );
 		
 		
 		unregister_post_type(Agdp_Mailbox::post_type);
@@ -94,7 +94,7 @@ class Agdp_Post_Types {
 		// clear the permalinks to remove our post type's rules from the database
     	flush_rewrite_rules();
 
-		do_action( 'agendapartage_after_unregister_post_types' );
+		do_action( 'agdp_after_unregister_post_types' );
 	}
 	
 	public static function plugin_activation(){

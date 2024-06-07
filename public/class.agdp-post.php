@@ -1062,22 +1062,22 @@ abstract class Agdp_Post {
 	 */
 	public static function get_diagram( $blog_diagram, $page ){
 		
-		$post_types = $blog_diagram['post_types'];
+		$posts_pages = $blog_diagram['posts_pages'];
 		$page_id = $page->ID;
 		$diagram = [ 
+			'type' => 'page', 
+			'id' => $page_id, 
 			'page' => $page, 
 			'newsletters' => self::get_page_newsletters( $page_id ),
 		];
 		
-		//page
-		foreach( $post_types as $post_type => $posts_page){
-			if( $page_id === $posts_page->ID ){
-				$diagram['posts_page'] = $posts_page;
-				$diagram['posts_type'] = $post_type;
-				break;
-			}
+		//page de posts
+		if( isset($posts_pages[$page_id.''])){
+			$posts_page = $posts_pages[$page_id.''];
+			$diagram['posts_page'] = $posts_page['page'];
+			$diagram['posts_type'] = $posts_page['posts_type'];
 		}
-		if( empty( $diagram['posts_page'] ) ){
+		else {
 			$diagram['posts_page'] = $page;
 			$diagram['posts_type'] = static::post_type ? static::post_type : 'page';
 		}
@@ -1095,6 +1095,7 @@ abstract class Agdp_Post {
 			$terms = self::abstracted_post_type_class()::get_all_diffusions();//( 'term_id', $query_args );
 			foreach( $terms as $term ){
 				$diffusion = [
+					'type' => 'diffusion', 
 					'id' => $term->term_id,
 					'name' => $term->taxonomy,
 				];
@@ -1121,6 +1122,14 @@ abstract class Agdp_Post {
 		foreach(Agdp_WPCF7::get_page_wpcf7( $page ) as $wpcf7_id => $post ){
 			$wpcf7s[ $post->ID.'' ] = $post;
 		}
+		foreach( [ 
+			'new_agdpevent_page_id' => 'agdpevent_edit_form_id',
+			'new_covoiturage_page_id' => 'covoiturage_edit_form_id'
+		] as $new_post_page_id => $new_post_form_id )
+			if( $page->ID == Agdp::get_option($new_post_page_id) ){
+				$new_post_form_id = Agdp::get_option($new_post_form_id);
+				$wpcf7s[ $new_post_form_id.'' ] = get_post( $new_post_form_id );
+			}
 		if( count($wpcf7s) )
 			$diagram['forms'] = $wpcf7s;
 		
@@ -1167,7 +1176,7 @@ abstract class Agdp_Post {
 				if( Agdp::get_option( $meta_key ) ){
 					$admin_param = is_admin() ? sprintf(' <a href="/wp-admin/admin.php?page=%s&tab=%s">%s</a>'
 							,  AGDP_TAG
-							, 'agendapartage_section_agdpevents'
+							, 'agdp_section_agdpevents'
 							, Agdp::icon('edit show-mouse-over')
 						) : '';
 					$html .= sprintf('<div>%s Validation par e-mail%s</div>'
@@ -1181,7 +1190,7 @@ abstract class Agdp_Post {
 				if( Agdp::get_option( $meta_key ) ){
 					$admin_param = is_admin() ? sprintf(' <a href="/wp-admin/admin.php?page=%s&tab=%s">%s</a>'
 							,  AGDP_TAG
-							, 'agendapartage_section_covoiturages'
+							, 'agdp_section_covoiturages'
 							, Agdp::icon('edit show-mouse-over')
 						) : '';
 					$html .= sprintf('<div>%s Validation par e-mail (sauf utilisateur connecté)</div>'
@@ -1280,13 +1289,13 @@ abstract class Agdp_Post {
 		$property = 'pages';
 		$icon = 'text-page';
 		if( ! empty( $diagram[$property] ) )
-			foreach( $diagram[$property] as $page ){
+			foreach( $diagram[$property] as $child_page ){
 				$html .= sprintf('<h3 class="toggle-trigger">%s Page %s</h3>'
 					, Agdp::icon($icon)
-					, $page->post_title
+					, $child_page->post_title
 				);
 				$html .= '<div class="toggle-container">';
-					$html .= self::get_diagram_html( $page, false, $blog_diagram );
+					$html .= Agdp_Post::get_diagram_html( $child_page, false, $blog_diagram );
 				$html .= '</div>';
 			}
 		return $html;

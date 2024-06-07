@@ -150,15 +150,15 @@ jQuery( function( $ ) {
 					if( $comment_list.length === 0)
 						return;
 					data = { 
-						'action' : 'agendapartage_comment_action',
+						'action' : 'agdp_comment_action',
 						'method' : 'get',
 						'data' : { 'comment_id' : id },
 					};
 					jQuery.ajax({
-						url : agendapartage_ajax.ajax_url,
+						url : agdp_ajax.ajax_url,
 						type : 'post', 
 						data : Object.assign(data, {
-							_nonce : agendapartage_ajax.check_nonce
+							_nonce : agdp_ajax.check_nonce
 						}),
 						success : function( response ) {
 							if(response){
@@ -337,13 +337,13 @@ jQuery( function( $ ) {
 				return;
 			post_id = post_id.substr('post-'.length);
 			jQuery.ajax({
-				url : agendapartage_ajax.ajax_url,
+				url : agdp_ajax.ajax_url,
 				type : 'post',
 				data : {
 					'action' : 'agdpnl_get_subscription', //newsletters + forums
 					'post_id' : post_id,
 					'email' : email,
-					'_nonce' : agendapartage_ajax.check_nonce
+					'_nonce' : agdp_ajax.check_nonce
 				},
 				success : function( response ) {
 					if(response){

@@ -796,22 +796,26 @@ class Agdp_Forum {
 	 * Retourne l'analyse du forum
 	 */
 	public static function get_diagram( $blog_diagram, $forum ){
-		$post_types = $blog_diagram['post_types'];
+		$posts_pages = $blog_diagram['posts_pages'];
 		$forum_id = $forum->ID;
 		$diagram = [ 
+			'id' => $forum_id, 
 			'page' => $forum, 
-			'mailbox' => Agdp_Mailbox::get_mailbox_of_page( $forum_id ), 
-			'emails' => self::get_forum_source_emails( $forum_id ),
-			'right' => self::get_forum_right( $forum_id ),
 		];
 		
+		if( $mailbox = Agdp_Mailbox::get_mailbox_of_page( $forum_id ) ){
+			$diagram['mailbox'] = $mailbox;
+			$diagram['emails'] = self::get_forum_source_emails( $forum_id );
+			$diagram['right'] = self::get_forum_right( $forum_id );
+		}
+		
 		//posts_page
-		foreach( $post_types as $post_type => $page){
-			if( $forum_id === $page->ID ){
-				$diagram['posts_page'] = $page;
+		foreach( $posts_pages as $post_type => $posts_page){
+			if( $forum_id === $posts_page['id'] ){
+				$diagram['posts_page'] = $posts_page['page'];
 				$diagram['posts_type'] = $post_type;
 				
-				$diagram = array_merge( Agdp_Post::abstracted_class( $post_type )::get_diagram( $blog_diagram, $page )
+				$diagram = array_merge( $posts_page['class']::get_diagram( $blog_diagram, $forum )
 									, $diagram );
 				break;
 			}
@@ -824,13 +828,15 @@ class Agdp_Forum {
 								, $diagram );
 		}
 		
-		$meta_key = 'forum_moderate';
-		$diagram[ $meta_key ] = get_post_meta($forum_id, $meta_key, true);
-		if( $diagram['posts_type'] === 'page' ){
-			$meta_key = 'forum_show_comments';
+		if( $mailbox ){
+			$meta_key = 'forum_moderate';
 			$diagram[ $meta_key ] = get_post_meta($forum_id, $meta_key, true);
-			
-			$diagram[ 'comment_status' ] = $forum->comment_status;
+			if( $diagram['posts_type'] === 'page' ){
+				$meta_key = 'forum_show_comments';
+				$diagram[ $meta_key ] = get_post_meta($forum_id, $meta_key, true);
+				
+				$diagram[ 'comment_status' ] = $forum->comment_status;
+			}
 		}
 		
 		return $diagram;
@@ -847,6 +853,9 @@ class Agdp_Forum {
 		$html = '';
 		
 		$html .= Agdp_Post::get_diagram_html( $page, $diagram, $blog_diagram );
+		
+		if( empty($diagram['mailbox']) )
+			return $html;
 		
 		$property = 'right';
 		if( $diagram[ $property ] ){
