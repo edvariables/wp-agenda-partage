@@ -839,18 +839,14 @@ class Agdp {
 		$bloginfo = get_bloginfo();
 		$blog = [
 			'blog' => $bloginfo,
-			'covoiturage_managed' => $covoiturage_managed = Agdp::get_option('covoiturage_managed'),
 		];
 		
-		$mailboxes = Agdp_Mailbox::get_mailboxes();
 		$forums = Agdp_Forum::get_forums();
-		$newsletters = Agdp_Newsletter::get_active_newsletters();
 		
 		$post_types = [];
 		$posts_pages = [];
 		foreach( Agdp_Post::get_post_types() as $post_type ){
-			if( ( $post_type === Agdp_Covoiturage::post_type )
-			 && ! $covoiturage_managed )
+			if( ! Agdp_Post::is_managed( $post_type  ) )
 				continue;
 			$post_class = Agdp_Post::abstracted_class($post_type);
 			$page = get_post( self::get_option($post_class::posts_page_option) );
@@ -923,6 +919,9 @@ class Agdp {
 						$page['page_id'] = $posts_page_info['page']->ID;
 						break;
 					}
+				//TODO lien personnalisé vers autre page
+				if( $skip ){
+				}
 			}
 			if( ! $skip )
 				$menu[$page['page_id'].''] = $page;
@@ -964,7 +963,8 @@ class Agdp {
 			foreach( $diagram['menu'] as $menu_item ){
 				if( empty($menu_item['page_id']))
 					continue;
-				$icon = Agdp_Page::get_icon( $menu_item['page_id'] );
+				$page_id = $menu_item['page_id'];
+				$icon = Agdp_Page::get_icon( $page_id );
 				
 				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
 					, Agdp::icon($icon)
@@ -972,20 +972,17 @@ class Agdp {
 				);
 				
 				$html .= '<div class="toggle-container">';
-					if( isset($diagram['forums'][$menu_item['page_id'].'']) ){
-						$forum = $diagram['forums'][$menu_item['page_id'].''];
+					if( isset($diagram['forums'][$page_id.'']) ){
+						$forum = $diagram['forums'][$page_id.''];
 						$page = $forum['page'];
 						$html .= Agdp_Forum::get_diagram_html( $page, $forum, $diagram );
 					}
-					elseif( ! empty($menu_item['url']) ){
-							
-						if( isset($menu_item[Agdp_Evenement::post_type . '_page']) )
-							$html .= Agdp_Page::get_diagram_html( $menu_item[Agdp_Evenement::post_type . '_page'], false, $diagram );
-						elseif( isset($menu_item[Agdp_Covoiturage::post_type . '_page']) )
-							$html .= Agdp_Page::get_diagram_html( $menu_item[Agdp_Covoiturage::post_type . '_page'], false, $diagram );
+					else {
+						if( isset( $menu_item['page'] ) )
+							$page = $menu_item['page'];
 						else
-							// var_dump($menu_item['page_id']);
-							$html .= Agdp_Page::get_diagram_html( get_post( $menu_item['page_id'] ), false, $diagram );
+							$page = get_post( $page_id );
+						$html .= Agdp_Page::get_diagram_html( $page, false, $diagram );
 					}
 				$html .= '</div>';
 			}

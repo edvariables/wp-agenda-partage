@@ -901,9 +901,8 @@ class Agdp_Covoiturages extends Agdp_Posts {
  	 */
 	public static function get_covoiturage_agdpevents( $covoiturage, $details = true ) {
 		
-		if( ! $covoiturage )
-			return '';
-		if( ! Agdp::get_option('covoiturage_managed') )
+		if( ! $covoiturage
+		 || ! Agdp_Covoiturage::is_managed() )
 			return '';
 		
 		$meta_name = 'cov-periodique';

@@ -76,16 +76,25 @@ abstract class Agdp_Page {
 	 * Retourne la classe du type des posts contenus dans la page
 	 */
 	public static function get_posts_type_class( $page_id ){
-		switch( self::posts_type( $page_id ) ){
+		switch( self::get_posts_type( $page_id ) ){
 			case Agdp_Evenement::post_type:
 				return 'Agdp_Evenement';
 			case Agdp_Covoiturage::post_type:
 				return 'Agdp_Covoiturage';
 			default:
-				if( Agdp_Forum::post_is_forum( $page_id ) )
+				// if( Agdp_Forum::post_is_forum( $page_id ) )
 					return 'Agdp_Comment';
-				return 'WP_Comment';
+				// return 'WP_Comment';
 		}
+		return false;
+	}
+	
+	/**
+	 * Retourne la classe de gestion des posts ou comments contenus dans la page
+	 */
+	public static function get_posts_class( $page_id ){
+		if( $posts_type_class = self::get_posts_type_class( $page_id ) )
+			return $posts_type_class . 's';
 		return false;
 	}
 	
@@ -105,15 +114,6 @@ abstract class Agdp_Page {
 					return Agdp_Forum::icon;
 				return self::icon;
 		}
-		return false;
-	}
-	
-	/**
-	 * Retourne la classe de gestion des posts ou comments contenus dans la page
-	 */
-	public static function get_posts_class( $page_id ){
-		if( $posts_type_class = self::get_posts_type_class( $page_id ) )
-			return $posts_type_class . 's';
 		return false;
 	}
 	
@@ -204,6 +204,11 @@ abstract class Agdp_Page {
 		
 		$diagram = array_merge( Agdp_Post::get_diagram( $blog_diagram, $diagram['posts_page'] )
 							, $diagram );
+		$posts_class = self::get_posts_class( $diagram['posts_page'] );
+		if( $posts_class === 'Agdp_Comments' )
+			$diagram['pending'] = $posts_class::get_pending_comments( $page );
+		else
+			$diagram['pending'] = $posts_class::get_pending_posts();
 		
 		if( $children_pages = self::get_pages( $page->ID ) )
 			$diagram['pages'] = $children_pages;
@@ -244,6 +249,32 @@ abstract class Agdp_Page {
 		);
 		
 		$html .= Agdp_Post::get_diagram_html( $page, $diagram, $blog_diagram );
+		
+		$posts_type = self::get_posts_type($page);
+		
+		$property = 'pending';
+		if( ! empty($diagram['pending']) ){
+			if( is_admin() ){
+				if( $posts_type === 'comment' )
+					$admin_edit = sprintf(' <a href="/wp-admin/edit-comments.php?p=%d&comment_status=moderate">%s</a>'
+						, $page->ID
+						, Agdp::icon('edit show-mouse-over')
+					);
+				else
+					$admin_edit = sprintf(' <a href="/wp-admin/edit.php?post_type=%s&post_status=pending">%s</a>'
+						, $posts_type
+						, Agdp::icon('edit show-mouse-over')
+					);
+			} else 
+				$admin_edit = '';
+			$html .= sprintf('<div>%s En attente : %d %s%s%s</div>'
+				, Agdp::icon('welcome-comments')
+				, count($diagram['pending'])
+				, strtolower( Agdp_Post::get_post_type_labels( $posts_type )->singular_name )
+				, count($diagram['pending']) > 1 ? 's' : ''
+				, $admin_edit
+			);
+		}
 		
 		$property = 'newsletters';
 		$icon = 'email-alt2';

@@ -225,6 +225,24 @@ abstract class Agdp_Posts {
 	}
 	
 	
+		
+	/**
+	* Retourne les posts en attente
+	*
+	*/
+	public static function get_pending_posts( $post_type = false) {
+		if( ! $post_type ){
+			if( ! static::post_type )
+				$post_type = Agdp_Post::get_post_types();
+			else
+				$post_type = static::post_type;
+		}
+		return static::get_posts([
+			'fields' => 'ids',
+			'post_type' => $post_type
+			, 'post_status' => 'pending'
+		]);
+	}
 
 	/**
 	 * Show more

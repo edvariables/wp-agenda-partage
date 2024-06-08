@@ -92,10 +92,40 @@ abstract class Agdp_Post {
 	}
 	
 	/**
+	 * Retourne les labels du post_type
+	 */
+	public static function get_post_type_labels($post_type = false){
+		if( ! $post_type )
+			if( ! ($post_type = static::post_type) )
+				throw new ArgumentException('post_type argument is empty');
+		
+		if( $post_type_object = get_post_type_object($post_type) )
+			return $post_type_object->labels;
+		
+		$labels = new stdClass();
+		$labels->name = 'Message';
+		$labels->singular_name = $labels->name;
+		return $labels;
+	}
+	
+	/**
 	 * Retourne les taxonomies de diffusion des post_types agdp
 	 */
 	public static function get_taxonomies_diffusion(){
 		return self::$taxonomies_diffusion;
+	}
+	
+	/**
+	 * Retourne les taxonomies de diffusion des post_types agdp
+	 */
+	public static function is_managed( $post_type = false){
+		if( ! $post_type )
+			if( ! static::post_type )
+				throw new Exception( 'L\'argument $post_type doit être fourni pour la classe abstract ' . __CLASS__ .'.' );
+			else
+				$post_type = static::post_type;
+		$option = $post_type . '_managed';
+		return Agdp::get_option($option);
 	}
 	
 	/***************
@@ -928,21 +958,7 @@ abstract class Agdp_Post {
 			default:
 				debug_log('send_for_diffusion ! unknown action', $action);
 		}
-	}
-		
-	/**
-	* Retourne le nombre de posts en attente
-	*
-	*/
-	public static function get_pending_posts() {
-		return get_posts([
-			'fields' => 'ids',
-			'post_type' => static::post_type
-			, 'post_status' => 'pending'
-		]);
-	}
-	
-	
+	}	
 	
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages
@@ -959,8 +975,9 @@ abstract class Agdp_Post {
 		
 		//diffusion 
 		if( static::post_type ){
-			$diffusions = [];
 			$post_class = self::abstracted_class();
+		
+			$diffusions = [];
 			$taxonomy_diffusion = $post_class::taxonomy_diffusion;
 			// $query_args = [
 				// 'meta_key' => 'connexion',
@@ -1027,6 +1044,7 @@ abstract class Agdp_Post {
 			if( ! $blog_diagram )
 				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
 			$diagram = self::get_diagram( $blog_diagram, $page );
+		
 		
 		if( static::post_type ){
 			$meta_key = static::post_type . '_need_validation';

@@ -147,6 +147,19 @@ class Agdp_Comments {
 	}
 	
 	/**
+	 * Recherche de messages en attente d'approbation
+	 */
+	public static function get_pending_comments( $page ){
+		$pendings = self::get_comments( array(
+			'fields' => 'ids',
+			'post_id' => $page->ID,
+			'status' => '0',
+			'number' => '',
+		));
+		return $pendings;
+    }
+	
+	/**
 	 * Recherche de tous les mois contenant des messages mais aussi les mois sans.
 	 * Return array($week => $count)
 	 */

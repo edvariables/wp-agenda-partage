@@ -72,7 +72,7 @@ class Agdp_Admin_Menu {
 				add_submenu_page( $parent_slug, $page_title, 'Evènements à venir', $capability, $menu_slug);
 			}
 			$option = 'covoiturages_nl_post_id';
-			if( Agdp::get_option('covoiturage_managed')
+			if( Agdp_Covoiturage::is_managed() 
 			 && ( $post_id = Agdp::get_option($option) )){
 				$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Newsletter::post_type) ;
 				$page_title =  Agdp::get_option_label($option);
@@ -146,10 +146,10 @@ class Agdp_Admin_Menu {
 			return;
 		}
 		
-		self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Evenement' );
+		self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Evenements' );
 		
-		if( Agdp::get_option('covoiturage_managed') )
-			self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Covoiturage' );
+		if( Agdp_Covoiturage::is_managed() )
+			self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Covoiturages' );
 		
 	}
 	/**
@@ -158,12 +158,12 @@ class Agdp_Admin_Menu {
 	 *
 	 * @param WP_Admin_Bar $wp_admin_bar The WP_Admin_Bar instance.
 	 */
-	public static function add_admin_bar_posts_menu( $wp_admin_bar, $post_type_class ) {
-		if( ! ($pending_posts  = $post_type_class::get_pending_posts()) )
+	public static function add_admin_bar_posts_menu( $wp_admin_bar, $posts_type_class ) {
+		if( ! ($pending_posts  = $posts_type_class::get_pending_posts()) )
 			return;
 		
-		$postType = get_post_type_object($post_type_class::post_type);
-    
+		$postType = get_post_type_object($posts_type_class::post_type);
+		
 		$pending_text = sprintf(
 			'%s %s%s en attente',
 			count($pending_posts),
@@ -177,11 +177,11 @@ class Agdp_Admin_Menu {
 
 		$wp_admin_bar->add_node(
 			array(
-				'id'    => $post_type_class::post_type . 's',
+				'id'    => $posts_type_class::post_type . 's',
 				'title' => $icon . $title,
 				'href'  => add_query_arg([
 								'post_status' => 'pending',
-								'post_type' => $post_type_class::post_type
+								'post_type' => $posts_type_class::post_type
 							], admin_url( 'edit.php')),
 			)
 		);

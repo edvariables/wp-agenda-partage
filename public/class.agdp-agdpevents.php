@@ -787,7 +787,7 @@ class Agdp_Evenements extends Agdp_Posts {
  	 * Retourne le Content de la page de l'évènement
  	 */
 	public static function get_agdpevent_covoiturages( $agdpevent = null, $details = false ) {
-		if( ! Agdp::get_option('covoiturage_managed') )
+		if( ! Agdp_Covoiturage::is_managed() )
 			return '';
 		
 		global $post;

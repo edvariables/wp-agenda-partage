@@ -204,7 +204,7 @@ class Agdp_Evenement extends Agdp_Post {
  	 * Retourne le Content de la page de l'évènement
  	 */
 	public static function get_agdpevent_covoiturage( $agdpevent = null ) {
-		if( ! Agdp::get_option('covoiturage_managed') )
+		if( ! Agdp_Covoiturage::is_managed() )
 			return '';
 		global $post;
  		if( ! isset($agdpevent) || ! is_a($agdpevent, 'WP_Post')){
