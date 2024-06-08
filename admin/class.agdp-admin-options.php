@@ -20,11 +20,6 @@ class Agdp_Admin_Options {
 	}
 
 	public static function init_hooks() {
-
-		//TODO
-		// Le hook admin_menu est avant le admin_init
-		//add_action( 'admin_menu', array( __CLASS__, 'init_admin_menu' ), 5 ); 
-		add_action('wp_dashboard_setup', array(__CLASS__, 'init_dashboard_widgets') );
 		
 		global $pagenow;
 		if ( $pagenow === 'admin.php' && isset($_GET['page'])
@@ -916,28 +911,7 @@ class Agdp_Admin_Options {
 		</div>
 		<?php
 	}
-
-	/**
-	 *
-	 */
-	public static function init_dashboard_widgets() {
-	    self::remove_dashboard_widgets();
-	}
-
-	// TODO parametrage initiale pour chaque utilisateur
-	public static function remove_dashboard_widgets() {
-	    global $wp_meta_boxes, $current_user;
-	    /*var_dump($wp_meta_boxes['dashboard']);*/
-		if( ! in_array('administrator',(array)$current_user->roles) ) {
-			remove_meta_box( 'dashboard_quick_press', 'dashboard', 'side' );
-			remove_meta_box( 'dashboard_right_now', 'dashboard', 'normal' );
-		}
-		remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
-		
-		if( ! current_user_can('moderate_comments') )
-			remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
-	}
-
+	
 	/**
 	 *
 	 */

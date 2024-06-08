@@ -323,7 +323,7 @@ class Agdp_Mailbox {
 	 * Retourne les paramètres de distribution des e-mails.
 	 * $destination_filter est une page de forum
 	 */
-	public static function get_emails_dispatch( $mailbox_id = false, $destination_filter = false ){
+	public static function get_emails_dispatch( $mailbox_id = false, $destination_filter = false, $forum_email = false ){
 		if( is_a($mailbox_id, 'WP_POST') )
 			$mailbox_id = $mailbox_id->ID;
 		if( is_a($destination_filter, 'WP_POST') )
@@ -362,6 +362,12 @@ class Agdp_Mailbox {
 		if( $destination_filter ){
 			$sql .= '
 				AND page.ID  = ' . $destination_filter . '
+			';
+		}
+		if( $forum_email ){
+			$sql .= '
+				AND ( email.meta_value  = \'' . $forum_email . '\'
+					OR CONCAT( email.meta_value, \'@\', SUBSTRING_INDEX( mailbox_email.meta_value, \'@\', -1) )  = \'' . $forum_email . '\' )
 			';
 		}
 		$sql .= '

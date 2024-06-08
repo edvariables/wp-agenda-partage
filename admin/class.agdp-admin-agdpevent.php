@@ -259,7 +259,7 @@ class Agdp_Admin_Evenement {
 	    global $wp_meta_boxes;
 		//TODO : trier par les derniers ajoutés
 		//TODO : author OR email
-		if( ! current_user_can('manage_options') ){
+		if( ! current_user_can('moderate_comments') ){
 			$agdpevents = self::get_my_agdpevents(5);
 			if( count($agdpevents) ) {
 				add_meta_box( 'dashboard_my_agdpevents',
@@ -286,7 +286,7 @@ class Agdp_Admin_Evenement {
 			}
 		}
 		
-		if(current_user_can('manage_options')
+		if(current_user_can('moderate_comments')
 		/* TODO || current_user_can('agdpevent') */){
 		    $agdpevents = Agdp_Evenements::get_posts( 10, [
 				'post_status' => ['publish', 'pending', 'draft']

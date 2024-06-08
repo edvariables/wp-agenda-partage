@@ -22,6 +22,11 @@ class Agdp_Admin_Menu {
 
 	public static function init_hooks() {
 
+		//TODO
+		// Le hook admin_menu est avant le admin_init
+		//add_action( 'admin_menu', array( __CLASS__, 'init_admin_menu' ), 5 ); 
+		add_action('wp_dashboard_setup', array(__CLASS__, 'init_dashboard_widgets') );
+
 		add_action( 'admin_bar_menu', array(__CLASS__, 'on_wp_admin_bar_posts_menu'), 64 );
 		
 	}
@@ -186,6 +191,28 @@ class Agdp_Admin_Menu {
 			)
 		);
 	}
+
+	/**
+	 * dashboard
+	 */
+	public static function init_dashboard_widgets() {
+	    self::remove_dashboard_widgets();
+	}
+
+	// TODO parametrage initiale pour chaque utilisateur
+	public static function remove_dashboard_widgets() {
+	    global $wp_meta_boxes, $current_user;
+	    /*var_dump($wp_meta_boxes['dashboard']);*/
+		if( ! in_array('administrator',(array)$current_user->roles) ) {
+			remove_meta_box( 'dashboard_quick_press', 'dashboard', 'side' );
+			remove_meta_box( 'dashboard_right_now', 'dashboard', 'normal' );
+		}
+		remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
+		
+		if( ! current_user_can('moderate_comments') )
+			remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
+	}
+
 }
 
 ?>

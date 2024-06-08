@@ -114,11 +114,21 @@ class Agdp_Admin_Forum {
 	 */
 	public static function add_dashboard_widgets() {
 	    global $wp_meta_boxes;
-		if( ! current_user_can('manage_options') ){
-			$comments = self::get_my_comments(10);
+		if( ! current_user_can('moderate_comments') ){
+			$comments = self::get_my_comments();
 			if( count($comments) ) {
 				add_meta_box( 'dashboard_my_comments',
 					__('Mes messages', AGDP_TAG),
+					array(__CLASS__, 'dashboard_my_comments_cb'),
+					'dashboard',
+					'normal',
+					'high',
+					array('comments' => $comments) );
+			}
+			$comments = self::get_my_forums_comments();
+			if( count($comments) ) {
+				add_meta_box( 'dashboard_my_comments',
+					__('Les derniers messages', AGDP_TAG),
 					array(__CLASS__, 'dashboard_my_comments_cb'),
 					'dashboard',
 					'normal',
@@ -134,7 +144,7 @@ class Agdp_Admin_Forum {
 	public static function dashboard_my_comments_cb($post , $widget) {
 		$comments = $widget['args']['comments'];
 		$forums = [];
-		$edit_url = current_user_can('manage_options');
+		$edit_url = current_user_can('edit_posts');
 		?><ul><?php
 		foreach($comments as $comment){
 			echo '<li>';
@@ -183,6 +193,40 @@ class Agdp_Admin_Forum {
 			. "\n AND comment.comment_approved IN ('0','1')"
 			. "\n AND comment.comment_author_email = '{$user_email}'"
 			. "\n ORDER BY IFNULL(comment_send_date.meta_value, comment.comment_date) DESC"
+			. "\n LIMIT {$num_comments}"
+			;
+		$dbresults = $wpdb->get_results($sql);
+		if( is_a($dbresults, 'WP_Error') )
+			throw $dbresults;
+		return $dbresults;
+	}
+	/**
+	 * Init
+	 */
+	public static function get_my_forums_comments($num_comments = 5, $days_left = 7) {
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+	    $current_user = wp_get_current_user();
+		$user_id = $current_user->ID;
+		$blog_id = get_current_blog_id();
+		$days_left_date = date('Y-m-d', strtotime( "- $days_left Day"));
+		$sql = "SELECT comment.comment_post_ID, comment.comment_ID, post.post_title, post.post_name"
+			. ", comment.comment_approved"
+			. ", comment_title.meta_value AS comment_title, comment.comment_date"
+			. "\n FROM {$blog_prefix}posts post"
+			. "\n INNER JOIN {$blog_prefix}usermeta subscription"
+			. "\n ON subscription.user_id = {$user_id}"
+			. "\n AND subscription.meta_key = CONCAT('agdpforum_subscr_{$blog_id}_', post.ID)"
+			. "\n INNER JOIN {$blog_prefix}comments comment"
+			. "\n ON comment.comment_post_ID = post.ID"
+			. "\n INNER JOIN {$blog_prefix}commentmeta comment_title"
+			. "\n ON comment_title.comment_id = comment.comment_ID"
+			. "\n AND comment_title.meta_key = 'title'"
+			. "\n WHERE post.post_type = '".Agdp_Forum::post_type."'"
+			. "\n AND post.post_status = 'publish'"
+			. "\n AND comment.comment_approved = '1'"
+			. "\n AND comment.comment_date >= '{$days_left_date}'"
+			. "\n ORDER BY comment.comment_date DESC"
 			. "\n LIMIT {$num_comments}"
 			;
 		$dbresults = $wpdb->get_results($sql);

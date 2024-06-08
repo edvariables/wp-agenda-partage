@@ -485,15 +485,32 @@ class Agdp_WPCF7 {
 		
 		$properties = $wpcf7->get_properties();
 		$mail = [];
+		
+		$no_mail_sent = in_array($post->ID, [
+			Agdp::get_option('newsletter_subscribe_form_id'),
+			Agdp::get_option('covoiturage_edit_form_id'),
+			Agdp::get_option('agdpevent_edit_form_id')] );
 		foreach($properties['mail'] as $property => $value )
 			switch($property){
 				case 'recipient':
-					$mail['Envoyé à'] = $value;
+					if( ! $no_mail_sent ){
+						if( $dispatches = Agdp_Mailbox::get_emails_dispatch( false, false, $value ) ){
+							$no_mail_sent = true;
+							foreach($dispatches as $email=>$dispatch){
+								$mail[] = 'Genère un commentaire/message';
+								break;
+							}
+						}
+						else
+							$mail['Envoyé à'] = $value;
+					}
 					break;
 				case 'additional_headers':
 					$matches = [];
-					if( preg_match( '/reply\-to\:\s?(.*)/i', $value, $matches ) )
-						$mail['Répondre à '] = $matches[1];
+					if( ! $no_mail_sent ){
+						if( preg_match( '/reply\-to\:\s?(.*)/i', $value, $matches ) )
+							$mail['Répondre à '] = $matches[1];
+					}
 					break;
 			}
 		$diagram['mail'] = $mail;
@@ -522,15 +539,18 @@ class Agdp_WPCF7 {
 			, $post->post_title
 			, $admin_edit
 		);
-		
+			
 		$icon = 'email-alt2';
 		if( ! empty( $diagram['mail'] ) ){
 			foreach( $diagram['mail'] as $property => $value ){
-				$html .= sprintf('<div>%s %s : %s</div>'
+				if( is_numeric($property) ) $property = '';
+				$html .= sprintf('<div>%s %s</div>'
 					, Agdp::icon($icon)
-					, $property
-					, $value
-				);
+					, trim(sprintf('%s %s %s'
+						, $property
+						, $value && $property ? ':' : ''
+						, $value
+				)));
 			}
 		}
 		return $html;

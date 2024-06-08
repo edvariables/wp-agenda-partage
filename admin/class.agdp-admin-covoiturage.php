@@ -245,7 +245,7 @@ class Agdp_Admin_Covoiturage {
 	    global $wp_meta_boxes;
 		//TODO : trier par les derniers ajoutés
 		//TODO : author OR email
-		if( ! current_user_can('manage_options') ){
+		if( ! current_user_can('moderate_comments') ){
 			$covoiturages = self::get_my_covoiturages(5);
 			if( count($covoiturages) ) {
 				add_meta_box( 'dashboard_my_covoiturages',
@@ -258,7 +258,7 @@ class Agdp_Admin_Covoiturage {
 			}
 		}
 		
-		if(current_user_can('manage_options')
+		if(current_user_can('moderate_comments')
 		|| current_user_can('covoiturage')){
 		    $covoiturages = Agdp_Covoiturages::get_posts( 10, [
 				'post_status' => ['publish', 'pending', 'draft']
