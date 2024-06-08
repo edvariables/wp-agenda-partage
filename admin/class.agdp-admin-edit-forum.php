@@ -249,7 +249,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		];
 		
 		//Newsletters
-		foreach( Agdp_Post::get_page_newsletters($post) as $newsletter)
+		foreach( Agdp_Page::get_page_newsletters($post) as $newsletter)
 			$fields[] = [
 				'name' => '',
 				'label' => __('Lettre-info', AGDP_TAG)
@@ -388,7 +388,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		
 		$newsletters = [ '' => ''];
 		$meta_key = '_new-subscribers-newsletter';
-		foreach( Agdp_Post::get_page_newsletters($post->ID, true) as $newsletter ) {
+		foreach( Agdp_Page::get_page_newsletters($post->ID, true) as $newsletter ) {
 			$newsletters[ $newsletter->ID.''] = $newsletter->post_title;
 		}
 		if( count($newsletters) > 1 )
