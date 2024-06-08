@@ -211,6 +211,12 @@ body.colors-dark .toggle-trigger a:hover {
 .agdp-diagram .dashicons-before {
 	color: #27748f;
 }
+.agdp-diagram .dashicons-before.dashicons-warning {
+	color: #cd5555;
+}
+.agdp-diagram .dashicons-before.alert {
+	color: #be692b;
+}
 
 .agdp-diagram .show-mouse-over {
 	color: #afd2de;

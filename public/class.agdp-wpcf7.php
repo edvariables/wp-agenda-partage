@@ -485,23 +485,33 @@ class Agdp_WPCF7 {
 		
 		$properties = $wpcf7->get_properties();
 		$mail = [];
-		
-		$no_mail_sent = in_array($post->ID, [
-			Agdp::get_option('newsletter_subscribe_form_id'),
-			Agdp::get_option('covoiturage_edit_form_id'),
-			Agdp::get_option('agdpevent_edit_form_id')] );
+		$no_mail_sent = in_array($wpcf7->id(), [
+			$newsletter_subscribe_form_id = Agdp::get_option('newsletter_subscribe_form_id'),
+			$covoiturage_edit_form_id = Agdp::get_option('covoiturage_edit_form_id'),
+			$agdpevent_edit_form_id = Agdp::get_option('agdpevent_edit_form_id')] );
 		foreach($properties['mail'] as $property => $value )
 			switch($property){
 				case 'recipient':
-					if( ! $no_mail_sent ){
-						if( $dispatches = Agdp_Mailbox::get_emails_dispatch( false, false, $value ) ){
-							$no_mail_sent = true;
-							foreach($dispatches as $email=>$dispatch){
-								$mail[] = 'Genère un commentaire/message';
+					if( $no_mail_sent ){
+						switch( $wpcf7->id() ){
+							case $agdpevent_edit_form_id :
+								$mail[] = 'Genère un évènement';
 								break;
-							}
+							case $covoiturage_edit_form_id :
+								$mail[] = 'Genère un covoiturage';
+								break;
 						}
-						else
+					}
+					else{
+						if( $dispatches = Agdp_Mailbox::get_emails_dispatch( false, false, $value ) ){
+							foreach($dispatches as $email=>$dispatch)
+								if( $email === $value ){
+									$no_mail_sent = true;
+									$mail[] = 'Genère un commentaire ou message';
+									break;
+								}
+						}
+						if( ! $no_mail_sent )
 							$mail['Envoyé à'] = $value;
 					}
 					break;

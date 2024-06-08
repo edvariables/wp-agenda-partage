@@ -268,7 +268,7 @@ abstract class Agdp_Page {
 			} else 
 				$admin_edit = '';
 			$html .= sprintf('<div>%s En attente : %d %s%s%s</div>'
-				, Agdp::icon('welcome-comments')
+				, Agdp::icon('welcome-comments alert')
 				, count($diagram['pending'])
 				, strtolower( Agdp_Post::get_post_type_labels( $posts_type )->singular_name )
 				, count($diagram['pending']) > 1 ? 's' : ''
