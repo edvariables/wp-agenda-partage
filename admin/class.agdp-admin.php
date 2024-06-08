@@ -11,8 +11,10 @@ class Agdp_Admin {
 
 	public static function init_includes() {	
 
-		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-menu.php' );
-		Agdp_Admin_Menu::init();
+		// Agdp_Admin_Menu loaded and initialized in agenda-partage.php, admin_menu hook.
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-options.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Options', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-user.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_User', 'init' ) );
@@ -64,11 +66,11 @@ class Agdp_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-newsletter.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Newsletter', 'init' ) );
 
-		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-forum-comments.php' );
-		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Forum_Comments', 'init' ) );
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-comments.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Comments', 'init' ) );
 
-		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-forum-comment.php' );
-		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Forum_Comment', 'init' ) );
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-comment.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Comment', 'init' ) );
 
 		if(Agdp::maillog_enable()){
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-maillog.php' );

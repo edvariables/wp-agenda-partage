@@ -2,7 +2,7 @@
 /**
  * AgendaPartage Admin -> Forum Page -> Comments
  */
-class Agdp_Admin_Forum_Comments {
+class Agdp_Admin_Comments {
 
 	public static function init() {
 		self::init_hooks();

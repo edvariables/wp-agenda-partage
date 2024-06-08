@@ -40,8 +40,6 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 											return $location . '&block-editor=0';}, 10, 2);
 				return self::$block_editor_is_used = false;
 			}
-				
-			// return false;
 		}
 		return self::$block_editor_is_used = $use_block_editor;
 	}

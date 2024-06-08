@@ -7,7 +7,7 @@
  * Définition des metaboxes et des champs personnalisés des commentaires de forum
  *
  */
-class Agdp_Admin_Edit_Forum_Comment {
+class Agdp_Admin_Edit_Comment {
 
 	public static function init() {
 
