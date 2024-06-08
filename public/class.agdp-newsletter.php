@@ -1506,8 +1506,13 @@ class Agdp_Newsletter {
 	/**
 	 * A l'exécution du cron, cherche des destinataires pour ce jour
 	 */
-	public static function on_cron_exec(){
-		debug_log( sprintf('[blog %d]%s::%s', get_current_blog_id(), __CLASS__, __FUNCTION__ ));
+	public static function on_cron_exec($if_scheduled = false){
+		if( $if_scheduled ){
+			$timestamp = wp_next_scheduled( self::cron_hook );
+			if( $timestamp && ( $timestamp > time() ) )
+				return;
+		}
+		debug_log( sprintf('[blog %d]%s::%s', get_current_blog_id(), __CLASS__, __FUNCTION__,  $if_scheduled ));
 		self::cron_exec(false);
 		return true;
 	}

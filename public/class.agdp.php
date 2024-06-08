@@ -153,7 +153,8 @@ class Agdp {
 			try {
 				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id) );
 				switch_to_blog($blog->blog_id);
-				wp_cron();
+				Agdp_Mailbox::on_cron_exec( true );
+				Agdp_Newsletter::on_cron_exec( true );
 			}
 			catch( Exception $exception ){
 				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id), $exception );
