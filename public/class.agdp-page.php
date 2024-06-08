@@ -11,6 +11,8 @@ abstract class Agdp_Page {
 	const post_type = false; //Must override
 	const posts_type = false; //Must override
 	const page_type = false; //Must override
+	
+	const icon = 'text-page';
 
 	/**
 	 * Retourne le type de la page
@@ -83,6 +85,25 @@ abstract class Agdp_Page {
 				if( Agdp_Forum::post_is_forum( $page_id ) )
 					return 'Agdp_Comment';
 				return 'WP_Comment';
+		}
+		return false;
+	}
+	
+	/**
+	 * Retourne le nom de l'icon selon le type de posts affichés
+	 */
+	public static function get_icon( $page_id ){
+		if( ! $page_id )
+			return self::icon;
+		switch( self::get_posts_type( $page_id ) ){
+			case Agdp_Evenement::post_type:
+				return Agdp_Evenements::icon;
+			case Agdp_Covoiturage::post_type:
+				return Agdp_Covoiturages::icon;
+			default:
+				if( Agdp_Forum::post_is_forum( $page_id ) )
+					return Agdp_Forum::icon;
+				return self::icon;
 		}
 		return false;
 	}

@@ -10,6 +10,8 @@ class Agdp_Evenements extends Agdp_Posts {
 	const postid_argument = Agdp_Evenement::postid_argument;
 	const page_id_option = Agdp_Evenement::posts_page_option;
 	
+	const icon = 'calendar-alt';
+	
 	private static $initiated = false;
 	
 	public static $default_posts_query = [];

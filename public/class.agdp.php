@@ -964,12 +964,7 @@ class Agdp {
 			foreach( $diagram['menu'] as $menu_item ){
 				if( empty($menu_item['page_id']))
 					continue;
-				if( isset($menu_item[Agdp_Evenement::post_type . '_page']) )
-					$icon = 'calendar-alt';
-				elseif( isset($menu_item[Agdp_Covoiturage::post_type . '_page']) )
-					$icon = 'car';
-				else
-					$icon = 'text-page';
+				$icon = Agdp_Page::get_icon( $menu_item['page_id'] );
 				
 				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
 					, Agdp::icon($icon)
@@ -1008,32 +1003,14 @@ class Agdp {
 						$emails = $email;
 				}
 				
-				$icon = 'text-page';
-				if( isset($forum['posts_type']) )
-					switch( $forum['posts_type'] ){
-						case Agdp_Evenement::post_type :
-							$icon = 'calendar-alt';
-							break;
-						case Agdp_Covoiturage::post_type :
-							$icon = 'car';
-							break;
-					}
+				$icon = Agdp_Page::get_icon( $forum_id );
 				
 				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
 					, Agdp::icon('email-alt')
 					, $emails
 				);
 				$html .= '<div class="toggle-container">';
-					// switch( isset($forum['posts_type']) ? $forum['posts_type'] : 'forum' ){
-						// case Agdp_Evenement::post_type :
-							// $html .= Agdp_Evenement::get_diagram_html( $page, $forum, $diagram );
-							// break;
-						// case Agdp_Covoiturage::post_type :
-							// $html .= Agdp_Covoiturage::get_diagram_html( $page, $forum, $diagram );
-							// break;
-						// default:
-							$html .= Agdp_Forum::get_diagram_html( $page, $forum, $diagram );
-					// }
+					$html .= Agdp_Forum::get_diagram_html( $page, $forum, $diagram );
 				$html .= '</div>';
 				
 			}
@@ -1043,7 +1020,7 @@ class Agdp {
 				if( $page->post_status !== 'publish' )
 					continue;
 				
-				$icon = 'text-page';
+				$icon = Agdp_Page::icon;
 				
 				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
 					, Agdp::icon('admin-page')

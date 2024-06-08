@@ -580,6 +580,8 @@ class Agdp_Forum extends Agdp_Page {
 	 * Teste si la page est un forum
 	 */
 	public static function post_is_forum( $post ){
+		if( is_numeric($post) )
+			$post = get_post($post);
 		if($post && $post->post_type === 'page'){
 			$field_id = 'forums_parent_id';
 			if( $post->post_parent

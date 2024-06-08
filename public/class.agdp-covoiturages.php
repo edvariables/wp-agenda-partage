@@ -9,6 +9,8 @@ class Agdp_Covoiturages extends Agdp_Posts {
 	const post_type = Agdp_Covoiturage::post_type;
 	const postid_argument = Agdp_Covoiturage::postid_argument;
 	const page_id_option = Agdp_Covoiturage::posts_page_option;
+	
+	const icon = 'car';
 
 	private static $initiated = false;
 	
