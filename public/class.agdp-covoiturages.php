@@ -4,17 +4,19 @@
  * AgendaPartage -> Covoiturages
  * Collection de covoiturages
  */
-class Agdp_Covoiturages {
+class Agdp_Covoiturages extends Agdp_Posts {
+
+	const post_type = Agdp_Covoiturage::post_type;
+	const postid_argument = Agdp_Covoiturage::postid_argument;
+	const page_id_option = Agdp_Covoiturage::posts_page_option;
 
 	private static $initiated = false;
+	
 	public static $default_posts_query = [];
-	
-	private static $default_posts_per_page = 30;
-	
-	private static $filters_summary = null;
 
 	public static function init() {
 		if ( ! self::$initiated ) {
+			parent::init();
 			
 			self::init_default_posts_query();
 			
@@ -28,21 +30,15 @@ class Agdp_Covoiturages {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		add_action( 'wp_ajax_'.Agdp_Covoiturage::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_covoiturages_show_more_cb') );
-		add_action( 'wp_ajax_nopriv_'.Agdp_Covoiturage::post_type.'_show_more', array(__CLASS__, 'on_wp_ajax_covoiturages_show_more_cb') );
-		add_action( 'wp_ajax_'.AGDP_TAG.'_covoiturages_action', array(__CLASS__, 'on_wp_ajax_covoiturages') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_covoiturages_action', array(__CLASS__, 'on_wp_ajax_covoiturages') );
+		parent::init_hooks();
 	}
 	/*
 	 * Hook
 	 ******/
 	
-	public static function get_url(){
-		$url = get_permalink(Agdp::get_option('covoiturages_page_id')) . '#main';
-		// $url = home_url();
-		return $url;
-	}
-	
+	/**
+	 * default_posts_query
+	 */
 	public static function init_default_posts_query() {
 		
 		self::$default_posts_query = array(
@@ -81,42 +77,7 @@ class Agdp_Covoiturages {
 		);
 
 	}
-	
-	/**
-	* Retourne les paramètres pour WP_Query avec les paramètres par défaut.
-	* N'inclut pas les filtres.
-	*/
-	public static function get_posts_query(...$queries){
-		$all = self::$default_posts_query;
-		// echo "<div style='margin-left: 15em;'>";
-		foreach ($queries as $query) {
-			if( ! is_array($query)){
-				if(is_numeric($query))
-					$query = array('posts_per_page' => $query);
-				else
-					$query = array();
-			}
-			if(isset($query['meta_query'])){
-				if(isset($all['meta_query'])){
-					$all['meta_query'] = array(
-						(string)uniqid()=> $all['meta_query']
-						, (string)uniqid()=> $query['meta_query']
-						, 'relation' => 'AND'
-					);
-				}
-				else
-					$all['meta_query'] = $query['meta_query'];
-				
-				unset($query['meta_query']);
-			}
-			$all = array_merge($all, $query);
-		}
-		// var_dump($all);
-		// echo "</div>";
-		return $all;
 		
-	}
-	
 	/**
 	 * Recherche des covoiturages d'une semaine
 	 * $year_week : yyyy-ww
@@ -197,47 +158,6 @@ class Agdp_Covoiturages {
     }
 	
 	/**
-	 * Recherche de covoiturages
-	 */
-	public static function get_posts(...$queries){
-		foreach($queries as $query)
-			if(is_array($query) && array_key_exists('posts_where_filters', $query)){
-				if( ! $query['posts_where_filters']){
-					unset($query['posts_where_filters']);
-					continue;
-				}
-				add_filter('posts_where', array(__CLASS__, 'on_posts_where_filters'),10,2);
-				$posts_where_filters = true;
-				// debug_log('get_posts $posts_where_filters = true;');
-				break;
-			}
-		$query = self::get_posts_query(...$queries);
-
-		// debug_log('get_posts $queries ', $queries);
-
-		add_filter( 'posts_clauses', array('Agdp_Post', 'on_posts_clauses_meta_query'), 10, 2 );
-		$the_query = new WP_Query( $query );
-		remove_filter( 'posts_clauses', array('Agdp_Post', 'on_posts_clauses_meta_query'), 10, 2 );
-		// debug_log('get_posts ' . '<pre>'.$the_query->request.'</pre>');
-        
-		if( ! empty($posts_where_filters))
-			remove_filter('posts_where', array(__CLASS__, 'on_posts_where_filters'),10,2);
-		
-		return $the_query->posts; 
-    }
-	/**
-	* Filtre WP_Query sur une requête
-	*/
-	public static function on_posts_where_filters($where, $wp_query){
-		// debug_log('on_posts_where_filters', $where , $wp_query->get( 'posts_where_filters' ));
-		if($filters_sql = $wp_query->get( 'posts_where_filters' )){
-			global $wpdb;
-			$where .= ' AND ' . $wpdb->posts . '.ID IN ('.$filters_sql.')';
-		}
-		return $where;
-	}
-
-	/**
 	 * Recherche de toutes les semaines contenant des covoiturages mais aussi les semaines sans.
 	 * Return array($year-$semaine => $count)
 	 */
@@ -294,46 +214,6 @@ class Agdp_Covoiturages {
 		}
 		return $weeks;
     }
-
-	/**
-	 * Retourne les filtres
-	 */
-	public static function get_filters($filters = null){
-		// debug_log('get_filters IN $_REQUEST', $_REQUEST);
-		if( ! $filters){
-			if(isset($_REQUEST['action'])
-			&& $_REQUEST['action'] === 'filters'){
-				$filters = $_REQUEST;
-				unset($filters['action']);
-			}
-			elseif( isset($_REQUEST['data']) &&  isset($_REQUEST['data']['filters'])){
-				return $_REQUEST['data']['filters'];
-			}
-			else
-				return [];
-			//possible aussi avec $_SERVER['referer']
-			
-		}
-		if( isset($filters['data']) &&  isset($filters['data']['filters']))
-			return $filters['data']['filters'];
-		// debug_log('get_filters RETURN $filters', $filters);
-		return $filters;
-	}
-
-	/**
-	 * Ajoute un filtre sur une taxonomie
-	 */
-	public static function add_tax_filter($taxonomy, $term_id){
-		if($term_id == -1)
-			return;
-		if(empty($_REQUEST['data']))
-			$_REQUEST['data'] = ['filters'=>[]];
-		elseif(empty($_REQUEST['data']['filters']))
-			$_REQUEST['data']['filters'] = [];
-		if(empty($_REQUEST['data']['filters'][$taxonomy . 's']))
-			$_REQUEST['data']['filters'][$taxonomy . 's'] = [];
-		$_REQUEST['data']['filters'][$taxonomy . 's'][$term_id . ''] = 'on';
-	}
 
 	/**
 	 * Retourne les filtres de requête soit en sql soit array('posts_where_filters'=>sql) que get_posts() traite.
@@ -1092,81 +972,6 @@ class Agdp_Covoiturages {
 		}
 		return $html;
 	}
-
-	/**
-	 * Show more
-	 */
-	public static function on_wp_ajax_covoiturages_show_more_cb() {
-		if(! array_key_exists("data", $_POST)){
-			$ajax_response = '';
-		}
-		else {
-			$data = $_POST['data'];
-			if( array_key_exists("month", $data)){
-				$ajax_response = self::get_week_posts_list_html($data['month']);
-			}
-		}
-		
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
-	}
-	
-	/**
-	 * Show more
-	 */
-	/* public static function on_wp_ajax_covoiturages_show_more_cb() {
-		if(!array_key_exists("last-post", $_POST)){
-			$ajax_response = '';
-		}
-		else {
-			$last_post = $_POST["last-post"];
-			$date_min = $last_post['date'];
-			$last_post_id = $last_post['id'];
-			$query = array(
-				'meta_query' => [
-					'cov-date-debut' => [
-						'key' => 'cov-date-debut',
-						'value' => $date_min,
-						'compare' => '>=',
-						'type' => 'DATE',
-					],
-					// 'cov-heure-debut' => [
-						// 'key' => 'cov-heure-debut',
-						// 'compare' => 'EXISTS', # we don't actually want any restriction around time
-						// 'type' => 'TIME',
-					// ],
-				],
-				'orderby' => [
-					'cov-date-debut' => 'ASC',
-					'cov-heure-debut' => 'ASC',
-				],
-				
-			);
-			
-			$posts = self::get_posts(self::$default_posts_per_page + 1, $query);
-			//Supprime les posts du début (même date)
-			$exclude_counter= 0;
-			foreach($posts as $post){
-				$exclude_counter++;
-				if($post->ID == $last_post_id){
-					$posts = array_slice($posts, $exclude_counter);
-					break;
-				}
-			}
-			$ajax_response = self::get_covoiturages_list_html($posts);
-		}
-		
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
-	} */
-	
-	
 	
 	public static function download_links(){
 		$html = '';
@@ -1189,39 +994,15 @@ class Agdp_Covoiturages {
 					'filters' => [ Agdp_Covoiturage::taxonomy_diffusion => $term_id]
 				];
 				$title = sprintf('Télécharger les covoiturages pour %s (%s)', $term->name, $file_format);
-				$html .= Agdp::get_ajax_action_link(false, ['covoiturages','download_file'], 'download', '', $title, false, $data);
+				
+				$href = sprintf('/wp-admin/admin-ajax.php/?action=%s_%s_action&%s'
+					, AGDP_TAG
+					, 'covoiturages_download'
+					, http_build_query(['data' => $data]) );
+				$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
 			}
 		}
 		return $html;
-	}
-
-	/**
-	 * Requête Ajax
-	 */
-	public static function on_wp_ajax_covoiturages() {
-		if( ! Agdp::check_nonce()
-		|| empty($_POST['method']))
-			wp_die();
-		
-		$ajax_response = '';
-		
-		$method = $_POST['method'];
-		$data = $_POST['data'];
-		
-		try{
-			//cherche une fonction du nom "on_ajax_action_{method}"
-			$function = array(__CLASS__, sprintf('on_ajax_action_%s', $method));
-			$ajax_response = call_user_func( $function, $data);
-		}
-		catch( Exception $e ){
-			$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
-		}
-		
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
 	}
 
 	/**
@@ -1253,30 +1034,6 @@ class Agdp_Covoiturages {
 			
 		$query = self::get_filters_query(false, $filters);
 		$posts = self::get_posts($query);
-		// $filters_sql = self::get_filters_query(true, $filters);
-		
-		// global $wpdb;
-		// $blog_prefix = $wpdb->get_blog_prefix();
-		// $sql = "SELECT posts.*, date_debut.meta_value AS dt_debut, heure_debut.meta_value as h_debut"
-			// . "\n FROM {$blog_prefix}posts posts"
-			// . "\n INNER JOIN {$blog_prefix}postmeta date_debut"
-			// . "\n ON date_debut.post_id = posts.ID"
-			// . "\n AND date_debut.meta_key = 'cov-date-debut'"
-			// . "\n AND date_debut.meta_value BETWEEN '" . wp_date('Y-m-01') . "'"
-				// . "\n AND '" . wp_date('Y-m-d', strtotime(wp_date('Y-m-d') . ' + 1 year')) . "'"
-			// . "\n LEFT JOIN {$blog_prefix}postmeta heure_debut"
-			// . "\n ON heure_debut.post_id = posts.ID"
-			// . "\n AND heure_debut.meta_key = 'cov-heure-debut'"
-			// . "\n WHERE posts.post_status = 'publish'"
-			// . ($filters_sql ? "\n AND posts.ID IN (" . $filters_sql . ")" : '')
-			// . "\n ORDER BY date_debut.meta_value, heure_debut.meta_value";
-		// $result = $wpdb->get_results($sql);
-		
-		// if( is_wp_error($result)){
-			// debug_log('on_ajax_action_download_file wp_error ',$sql, $result->request);
-			// return 'Erreur sql';
-		// }
-        // $posts = $result; 
 		
 		if( ! $posts)
 			return sprintf('Aucun covoiturage à exporter');

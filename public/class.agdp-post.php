@@ -439,50 +439,6 @@ abstract class Agdp_Post {
 	
 	/***********************************************************/
 	/**
-	 * WP_Query hack for meta_query
-	 * Duplicate "meta_key = 'xxx'" from WHERE clause into JOIN clause for each postmeta
-	 */
-	public static function on_posts_clauses_meta_query( $clauses, $query){
-	    global $wpdb;
-		
-		$postmeta = $wpdb->postmeta;
-		
-		//JOIN clause aliases
-		$matches = [];
-		$pattern = sprintf('/(%s)(\sAS\s(\w+))?\sON\s/i', preg_quote($postmeta));
-		if( preg_match_all( $pattern, $clauses['join'], $matches ) ){
-			$aliases = [];
-			$aliases_pattern = '';
-			foreach( $matches[3] as $index => $alias ){
-				if( $alias === '' )
-					$alias = $postmeta;
-				if( array_key_exists($alias, $aliases) )
-					continue;
-				$aliases[$alias] = $matches[0][$index];
-				if( $aliases_pattern )
-					$aliases_pattern .= '|';
-				$aliases_pattern .= preg_quote($alias);
-			}
-			
-			// search in WHERE clause for alias.meta_key = 'xxx'
-			$pattern = sprintf('/(%s)\.meta_key\s=\s\'([^\']+)\'/', $aliases_pattern);
-			if( preg_match_all( $pattern, $clauses['where'], $matches ) ){
-				foreach( $matches[1] as $index => $alias ){
-					/*INNER JOIN wor5504_postmeta AS mt1 ON ( wor5504_posts.ID = mt1.post_id )  
-					becomes
-					INNER JOIN wor5504_postmeta AS mt1 ON  mt1.meta_key = 'ev-date-end' AND ( wor5504_posts.ID = mt1.post_id )  */
-					$join_clause = sprintf('%s %s AND ', $aliases[$alias], $matches[0][$index]);
-					if( strpos( $clauses['join'], $join_clause ) === false )
-						$clauses['join'] = str_replace( $aliases[$alias], $join_clause, $clauses['join']);
-				}
-			}
-		}
-		
-		return $clauses;
-	}
-	
-	/***********************************************************/
-	/**
 	 * Extend WordPress search to include custom fields
 	 *
 	 * https://adambalee.com
@@ -674,63 +630,6 @@ abstract class Agdp_Post {
 		}
 		return $url;
 	}
-
-	
-	
-	
-	/**
-	 * Retourne les newsletters utilisant une page.
-	 * $exclude_sub_newsletters exclut les newsletters qui utilise les abonnés d'une autre lettre-info
-	 */
-	public static function get_page_newsletters($page_id = false, $exclude_sub_newsletters = false){
-		if( ! $page_id ){
-			if( ! static::post_type )
-				return false;
-			$meta_value = static::post_type;
-			$page_id = Agdp::get_option( self::posts_page_option );
-		}
-		else {
-			if( is_a($page_id, 'WP_Post') )
-				$page_id = $page_id->ID;
-			switch( $page_id ){
-				case Agdp::get_option('agenda_page_id'):
-					$meta_value = Agdp_Evenement::post_type;
-					break;
-				case Agdp::get_option('covoiturages_page_id'):
-					$meta_value = Agdp_Covoiturage::post_type;
-					break;
-				default:
-					$meta_value = sprintf('page.%d', $page_id);
-			}
-		}
-		$query = new WP_Query([
-			'post_type' => Agdp_Newsletter::post_type,
-			'meta_key' => 'source',
-			'meta_value' => $meta_value,
-		]);
-		$posts = $query->get_posts();
-		
-		$meta_key = 'subscription_parent';
-		
-		if( ! $exclude_sub_newsletters ){
-			//Tri ceux qui n'ont pas de subscription_parent en premier
-			$newsletters = [];
-			foreach( $posts as $newsletter )
-				if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
-					$newsletters[$newsletter->ID.''] = $newsletter;
-			foreach( $posts as $newsletter )
-				if( ! isset($newsletters[$newsletter->ID.'']) )
-					$newsletters[$newsletter->ID.''] = $newsletter;
-			return $newsletters;
-		}
-		
-		$newsletters = [];
-		foreach( $posts as $newsletter )
-			if( ! get_post_meta( $newsletter->ID, $meta_key, true ) )
-				$newsletters[$newsletter->ID.''] = $newsletter;
-		return $newsletters;
-	}
-
 	
 	/**
 	* Définit si l'utilsateur courant peut modifier l'évènement
@@ -1042,19 +941,8 @@ abstract class Agdp_Post {
 			, 'post_status' => 'pending'
 		]);
 	}
-		
-	/**
-	* Retourne les pages
-	*
-	*/
-	public static function get_pages( $parent_id = 0) {
-		return get_posts([ 
-			'post_type' => 'page',
-			'post_status' => 'publish',
-			'numberposts' => -1,
-			'post_parent' => $parent_id
-		]);
-	}
+	
+	
 	
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages
@@ -1062,25 +950,12 @@ abstract class Agdp_Post {
 	 */
 	public static function get_diagram( $blog_diagram, $page ){
 		
-		$posts_pages = $blog_diagram['posts_pages'];
 		$page_id = $page->ID;
 		$diagram = [ 
 			'type' => 'page', 
 			'id' => $page_id, 
 			'page' => $page, 
-			'newsletters' => self::get_page_newsletters( $page_id ),
 		];
-		
-		//page de posts
-		if( isset($posts_pages[$page_id.''])){
-			$posts_page = $posts_pages[$page_id.''];
-			$diagram['posts_page'] = $posts_page['page'];
-			$diagram['posts_type'] = $posts_page['posts_type'];
-		}
-		else {
-			$diagram['posts_page'] = $page;
-			$diagram['posts_type'] = static::post_type ? static::post_type : 'page';
-		}
 		
 		//diffusion 
 		if( static::post_type ){
@@ -1133,15 +1008,13 @@ abstract class Agdp_Post {
 		if( count($wpcf7s) )
 			$diagram['forms'] = $wpcf7s;
 		
-		if( $children_pages = self::get_pages( $page->ID ) )
-			$diagram['pages'] = $children_pages;
-		
 		return $diagram;
 	}
 	/**
 	 * Rendu Html d'un diagram
 	 */
 	public static function get_diagram_html( $page, $diagram = false, $blog_diagram = false ){
+		$html = '';
 		
 		if( ! static::post_type
 		 && $blog_diagram
@@ -1150,54 +1023,24 @@ abstract class Agdp_Post {
 			return $post_class::get_diagram_html( $page, $diagram, $blog_diagram );
 		}
 		
-		if( ! $diagram ){
+		if( ! $diagram )
 			if( ! $blog_diagram )
 				throw new Exception('$blog_diagram doit être renseigné si $diagram ne l\'est pas.');
 			$diagram = self::get_diagram( $blog_diagram, $page );
-		}
-		$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/post.php?post=%d&action=edit">%s</a>'
-			, $page->ID
-			, Agdp::icon('edit show-mouse-over')
-		) : '';
 		
-		$html = '';
-		
-		$html .= sprintf('<div class="%s">%s Page <a href="%s">%s</a>%s</div>'
-			, __CLASS__
-			, Agdp::icon('admin-page')
-			, get_permalink($page)
-			, $page->post_title
-			, $admin_edit
-		);
-		
-		switch( static::post_type ){
-			case Agdp_Evenement::post_type :
-				$meta_key = 'agdpevent_need_validation';
-				if( Agdp::get_option( $meta_key ) ){
-					$admin_param = is_admin() ? sprintf(' <a href="/wp-admin/admin.php?page=%s&tab=%s">%s</a>'
-							,  AGDP_TAG
-							, 'agdp_section_agdpevents'
-							, Agdp::icon('edit show-mouse-over')
-						) : '';
-					$html .= sprintf('<div>%s Validation par e-mail%s</div>'
-						, Agdp::icon('lock')
-						, $admin_param
-					);
-				}
-				break;
-			case Agdp_Covoiturage::post_type :
-				$meta_key = 'covoiturage_need_validation';
-				if( Agdp::get_option( $meta_key ) ){
-					$admin_param = is_admin() ? sprintf(' <a href="/wp-admin/admin.php?page=%s&tab=%s">%s</a>'
-							,  AGDP_TAG
-							, 'agdp_section_covoiturages'
-							, Agdp::icon('edit show-mouse-over')
-						) : '';
-					$html .= sprintf('<div>%s Validation par e-mail (sauf utilisateur connecté)</div>'
-						, Agdp::icon('lock')
-					);
-				}
-				break;
+		if( static::post_type ){
+			$meta_key = static::post_type . '_need_validation';
+			if( Agdp::get_option( $meta_key ) ){
+				$admin_param = is_admin() ? sprintf(' <a href="/wp-admin/admin.php?page=%s&tab=%s">%s</a>'
+						,  AGDP_TAG
+						, 'agdp_section_'.static::post_type.'s'
+						, Agdp::icon('edit show-mouse-over')
+					) : '';
+				$html .= sprintf('<div>%s Validation par e-mail%s</div>'
+					, Agdp::icon('lock')
+					, $admin_param
+				);
+			}
 		}
 		
 		$property = 'diffusions';
@@ -1258,26 +1101,11 @@ abstract class Agdp_Post {
 			}
 		}
 
-		$property = 'newsletters';
-		$icon = 'email-alt2';
-		if( ! empty( $diagram[$property] ) )
-			foreach( $diagram[$property] as $newsletter_id => $newsletter ){
-				if( $newsletter->post_status !== 'publish' )
-					continue;
-				$html .= sprintf('<h3 class="toggle-trigger">%s Lettre-info %s</h3>'
-					, Agdp::icon($icon)
-					, $newsletter->post_title
-				);
-				$html .= '<div class="toggle-container">';
-					$html .= Agdp_Newsletter::get_diagram_html( $newsletter, false, $blog_diagram );
-				$html .= '</div>';
-			}
-
 		$property = 'forms';
 		$icon = 'feedback';
 		if( ! empty( $diagram[$property] ) )
 			foreach( $diagram[$property] as $wpcf7_id => $wpcf7 ){
-				$html .= sprintf('<h3 class="toggle-trigger">%s Formulaire %s</h3>'
+				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
 					, Agdp::icon($icon)
 					, $wpcf7->post_title
 				);
@@ -1285,19 +1113,8 @@ abstract class Agdp_Post {
 					$html .= Agdp_WPCF7::get_diagram_html( $wpcf7, false, $blog_diagram );
 				$html .= '</div>';
 			}
-
-		$property = 'pages';
-		$icon = 'text-page';
-		if( ! empty( $diagram[$property] ) )
-			foreach( $diagram[$property] as $child_page ){
-				$html .= sprintf('<h3 class="toggle-trigger">%s Page %s</h3>'
-					, Agdp::icon($icon)
-					, $child_page->post_title
-				);
-				$html .= '<div class="toggle-container">';
-					$html .= Agdp_Post::get_diagram_html( $child_page, false, $blog_diagram );
-				$html .= '</div>';
-			}
+			
 		return $html;
 	}
+
 }

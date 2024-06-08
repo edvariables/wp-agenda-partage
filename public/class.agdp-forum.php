@@ -9,11 +9,14 @@
  *
  * Un forum est une page qui doit afficher ses commentaires.
  */
-class Agdp_Forum {
+class Agdp_Forum extends Agdp_Page {
 
+	const posts_type = 'comment';
+	const page_type = 'page';
+	
 	const post_type = 'page';
 	const tag = 'agdpforum';
-	const page_class = 'use-agdpforum';
+	const page_html_class = 'use-agdpforum';
 	
 	// const user_role = 'author';
 
@@ -220,7 +223,7 @@ class Agdp_Forum {
 		
 		$mailbox = Agdp_Mailbox::get_mailbox_of_page($post_id);
 		if ( $mailbox ){
-			$classes[] = self::page_class;
+			$classes[] = self::page_html_class;
 			
 			// Initialise la page et importe les nouveaux messages
 			$messages = self::init_page($mailbox, $post_id);
@@ -573,8 +576,9 @@ class Agdp_Forum {
 		return true;
 	}
 	
-	
-	
+	/**
+	 * Teste si la page est un forum
+	 */
 	public static function post_is_forum( $post ){
 		if($post && $post->post_type === 'page'){
 			$field_id = 'forums_parent_id';
@@ -815,7 +819,7 @@ class Agdp_Forum {
 				$diagram['posts_page'] = $posts_page['page'];
 				$diagram['posts_type'] = $post_type;
 				
-				$diagram = array_merge( $posts_page['class']::get_diagram( $blog_diagram, $forum )
+				$diagram = array_merge( Agdp_Page::get_diagram( $blog_diagram, $forum )
 									, $diagram );
 				break;
 			}
@@ -824,7 +828,7 @@ class Agdp_Forum {
 			$diagram['posts_page'] = $forum;
 			$diagram['posts_type'] = $forum->post_type;
 				
-			$diagram = array_merge( Agdp_Post::get_diagram( $blog_diagram, $forum )
+			$diagram = array_merge( Agdp_Page::get_diagram( $blog_diagram, $forum )
 								, $diagram );
 		}
 		
@@ -852,7 +856,7 @@ class Agdp_Forum {
 		}
 		$html = '';
 		
-		$html .= Agdp_Post::get_diagram_html( $page, $diagram, $blog_diagram );
+		$html .= parent::get_diagram_html( $page, $diagram, $blog_diagram );
 		
 		if( empty($diagram['mailbox']) )
 			return $html;

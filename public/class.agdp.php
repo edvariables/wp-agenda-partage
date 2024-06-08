@@ -48,6 +48,10 @@ class Agdp {
 		add_action( 'agendapartage-init', array( 'Agdp_User', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post.php' );
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts.php' );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-page.php' );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Mailbox', 'init' ) );
@@ -926,7 +930,7 @@ class Agdp {
 		$blog['menu'] = $menu;
 		
 		$other_pages = [];
-		foreach( Agdp_Post::get_pages() as $page ){
+		foreach( Agdp_Page::get_pages() as $page ){
 			if( ! isset( $blog_forums[$page->ID.''] )
 			 && ! isset( $posts_pages[$page->ID.''] )
 			 && ! isset( $menu[$page->ID.''] )
@@ -955,6 +959,8 @@ class Agdp {
 				, $diagram['blog']
 			);
 			$html .= '<div class="toggle-container">';
+			
+			//menu
 			foreach( $diagram['menu'] as $menu_item ){
 				if( empty($menu_item['page_id']))
 					continue;
@@ -979,19 +985,17 @@ class Agdp {
 					elseif( ! empty($menu_item['url']) ){
 							
 						if( isset($menu_item[Agdp_Evenement::post_type . '_page']) )
-							$html .= Agdp_Evenement::get_diagram_html( $menu_item[Agdp_Evenement::post_type . '_page'], false, $diagram );
+							$html .= Agdp_Page::get_diagram_html( $menu_item[Agdp_Evenement::post_type . '_page'], false, $diagram );
 						elseif( isset($menu_item[Agdp_Covoiturage::post_type . '_page']) )
-							$html .= Agdp_Covoiturage::get_diagram_html( $menu_item[Agdp_Covoiturage::post_type . '_page'], false, $diagram );
+							$html .= Agdp_Page::get_diagram_html( $menu_item[Agdp_Covoiturage::post_type . '_page'], false, $diagram );
 						else
-							$html .= sprintf('<div>%s Page <a href="%s">%s</a></div>'
-								, Agdp::icon('admin-page')
-								, $menu_item['url']
-								, $menu_item['name']
-							);
+							// var_dump($menu_item['page_id']);
+							$html .= Agdp_Page::get_diagram_html( get_post( $menu_item['page_id'] ), false, $diagram );
 					}
 				$html .= '</div>';
 			}
 			
+			//forums
 			foreach( $diagram['forums'] as $forum_id => $forum ){
 				$page = $forum['page'];
 				if( $page->post_status !== 'publish' )
@@ -1034,6 +1038,7 @@ class Agdp {
 				
 			}
 			
+			//pages
 			foreach( $diagram['pages'] as $page_id => $page ){
 				if( $page->post_status !== 'publish' )
 					continue;
