@@ -256,7 +256,7 @@ class Agdp_Evenement_Edit {
 						, $is_imported
 						, Agdp_Evenement::get_agdpevent_action_link(
 							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null)
-						, 'Vos modifications seront peut-être (sans doute) écrasées.'
+						, 'Vos modifications seront sans doute écrasées ultérieurement.'
 					);
 					
 				}

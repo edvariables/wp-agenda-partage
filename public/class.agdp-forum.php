@@ -678,7 +678,7 @@ class Agdp_Forum extends Agdp_Page {
 		}
 		else
 			$user = false;
-		if( !$user && $email ){
+		if( ! $user && $email ){
 			if( $user_id = email_exists($email) ){				
 				if( is_multisite() ){
 					$blogs = get_blogs_of_user($user_id, false);
@@ -689,9 +689,13 @@ class Agdp_Forum extends Agdp_Page {
 					$user = new WP_USER($user_id);
 			}
 		}
-		if( ! $user)
+		if( ! $user){
+			if( $email && $right === 'E' //'Validation par e-mail'
+			&& $post_source && in_array( $post_source, [ 'imap', 'email', 'mailbox'] ) )
+				return 'publish';
 			return 'pending';
-
+		}
+		
 		if( $user && ! $email )
 			$email = $user->user_email;
 		
@@ -699,7 +703,7 @@ class Agdp_Forum extends Agdp_Page {
 			return 'publish';
 		
 		$user_subscription = self::get_subscription($user->user_email, $page);
-		// debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription);
+		// debug_log('get_forum_post_status $user_subscription', $page->post_title, $user_subscription, $right, $post_source);
 		switch($user_subscription){
 			case 'administrator' :
 			case 'moderator' :

@@ -673,7 +673,7 @@ class Agdp_Mailbox {
 			'meta_input' => $meta_input,
 		];
 		
-		//TODO attention aux boucles infinies
+		//TODO attention aux boucles infinies de mails qui partent et reviennent
 		if( ! empty($message['attachments']) ){					
 			foreach($message['attachments'] as $attachment){
 				if( '.ics' === substr($attachment, -4) ){
