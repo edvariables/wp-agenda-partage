@@ -950,7 +950,8 @@ class Agdp {
 						$page[$posts_type.'_page'] = $posts_page;
 					}
 				}
-				elseif( $skip ) {
+				elseif( $skip
+				&& $menu_item->menu_item_parent === 0) {
 					$skip = false;
 					$page['page'] = get_post( $menu_item->object_id );
 				}
