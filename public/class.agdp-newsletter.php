@@ -17,7 +17,8 @@ class Agdp_Newsletter {
 
 	const post_type = 'agdpnl';
 	const taxonomy_period = 'period';
-
+	const icon = 'email-alt2';
+	
 	private const cron_hook = 'agdpnl_cron_hook';
 
 	const default_mailing_hour = 2;
@@ -2074,7 +2075,7 @@ class Agdp_Newsletter {
 			}
 				
 		$html .= sprintf('<div>%s Lettre-info <a href="%s">%s</a>%s</div>'
-			, Agdp::icon('admin-page')
+			, Agdp::icon( self::icon )
 			, get_permalink($newsletter)
 			, $newsletter->post_title
 			, $admin_edit

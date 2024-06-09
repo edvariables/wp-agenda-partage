@@ -187,7 +187,7 @@ class Agdp {
 		$message = '';
 
 		$command = $blog->siteurl . '/wp-cron.php?doing_wp_cron';//='.microtime( true );
-		$message .= "\n[". date('h:i:s') ."] Curl: " . $command . "\n";
+		$message .= "Curl: " . $command . "\n";
 		$ch = curl_init($command);
 		
 		
@@ -207,7 +207,8 @@ class Agdp {
 		$rc = curl_exec($ch);
 		curl_close($ch);
 		
-		$message .= "\n[". date('h:i:s') ."] " . print_r( $rc, true );
+		if( $rc )
+			$message .= ', returns : ' . print_r( $rc, true );
 		
 		debug_log( __FUNCTION__, $message);
 	}

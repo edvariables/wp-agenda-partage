@@ -104,17 +104,19 @@ abstract class Agdp_Page {
 	public static function get_icon( $page_id ){
 		if( ! $page_id )
 			return self::icon;
-		switch( self::get_posts_type( $page_id ) ){
-			case Agdp_Evenement::post_type:
-				return Agdp_Evenements::icon;
-			case Agdp_Covoiturage::post_type:
-				return Agdp_Covoiturages::icon;
-			default:
-				if( Agdp_Forum::post_is_forum( $page_id ) )
-					return Agdp_Forum::icon;
-				return self::icon;
+		foreach([
+			'new_agdpevent_page_id' => 'welcome-add-page',
+			'new_covoiturage_page_id' => 'welcome-add-page',
+			'agenda_page_id' => Agdp_Evenements::icon,
+			'covoiturages_page_id' => Agdp_Covoiturages::icon,
+		] as $option => $icon ){
+			if( $page_id == Agdp::get_option( $option ) ){
+				return $icon;
+			}
 		}
-		return false;
+		if( Agdp_Forum::post_is_forum( $page_id ) )
+			return Agdp_Forum::icon;
+		return self::icon;
 	}
 	
 	/**
@@ -240,10 +242,11 @@ abstract class Agdp_Page {
 		
 		$html = '';
 		
+		$icon = self::get_icon( $page->ID );
 		$html .= sprintf('<div class="%s">%s Page <a href="%s">%s</a>%s</div>'
 			, __CLASS__
-			, Agdp::icon('admin-page')
-			, get_permalink($page)
+			, Agdp::icon( $icon )
+			, get_permalink( $page )
 			, $page->post_title
 			, $admin_edit
 		);
@@ -277,7 +280,7 @@ abstract class Agdp_Page {
 		}
 		
 		$property = 'newsletters';
-		$icon = 'email-alt2';
+		$icon = Agdp_Newsletter::icon;
 		if( ! empty( $diagram[$property] ) )
 			foreach( $diagram[$property] as $newsletter_id => $newsletter ){
 				if( $newsletter->post_status !== 'publish' )
@@ -292,9 +295,9 @@ abstract class Agdp_Page {
 			}
 
 		$property = 'pages';
-		$icon = 'text-page';
 		if( ! empty( $diagram[$property] ) )
 			foreach( $diagram[$property] as $child_page ){
+				$icon = Agdp_Page::get_icon( $child_page->ID );
 				$html .= sprintf('<h3 class="toggle-trigger">%s %s</h3>'
 					, Agdp::icon($icon)
 					, $child_page->post_title

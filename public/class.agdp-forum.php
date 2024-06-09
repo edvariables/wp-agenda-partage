@@ -908,7 +908,7 @@ class Agdp_Forum extends Agdp_Page {
 		}
 		if( $emails ){
 			$html .= sprintf('<h3 class="toggle-trigger">%s Par e-mail : %s</h3>'
-					, Agdp::icon('email-alt')
+					, Agdp::icon('welcome-add-page')
 					, $emails
 				);
 			$html .= '<div class="toggle-container">';
