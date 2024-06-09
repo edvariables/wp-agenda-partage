@@ -238,6 +238,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				case 'input':
 				default:
 					//TODO phone, email, checkbox, number, int, bool, yes|no, ...
+					if( ! $val && $default_val) $val = $default_val;
 					echo '<input id="'.$id.'"'
 						. ' type="' . $input_type .'"'
 						. ' name="'.$name.'"'
@@ -254,7 +255,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if($learn_more)
 				foreach($learn_more as $comment){
 					echo '<br>';
-					if($input != 'checkbox')
+					if( in_array( $input, ['input', 'checkbox'] ))
 						echo '<label></label>';
 					?><span class="dashicons-before dashicons-welcome-learn-more"><?=$comment?></span><?php
 				}
@@ -262,7 +263,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if($comments)
 				foreach($comments as $comment){
 					echo '<br>';
-					if($input != 'checkbox')
+					if( in_array( $input, ['input', 'checkbox'] ))
 						echo '<label></label>';
 					?><span><?=$comment?></span><?php
 				}
@@ -270,7 +271,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if($warning)
 				foreach($warning as $comment){
 					echo '<br>';
-					if($input != 'checkbox')
+					if( in_array( $input, ['input', 'checkbox'] ))
 						echo '<label></label>';
 					?><span class="dashicons-before dashicons-warning"><?=$comment?></span><?php
 				}

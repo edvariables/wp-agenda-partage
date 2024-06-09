@@ -211,12 +211,19 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
     ?><tr class="form-field">
         <th scope="row"><label for="order_index">Index de tri</label></th>
         <td><?php
+		
 			$meta_name = 'order_index';
-				
+			if( $tag && ! get_term_meta($tag->term_id, $meta_name, true))
+				$warning = 'Ne peut pas être nul.';
+			else
+				$warning = '';
+							
 			parent::metabox_html([array('name' => $meta_name,
 									'label' => '',
 									'input' => 'input',
 									'type' => 'number',
+									'default' => 1,
+									'unit' => $warning,
 								)], $tag, null);
         ?></td>
     </tr>
@@ -237,7 +244,8 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 			$meta_name = 'connexion';
 			parent::metabox_html([array('name' => $meta_name,
 									// 'label' => __('Paramètres.', AGDP_TAG),
-									'type' => 'text',
+									'type' => 'input',
+									'input' => 'textarea',
 									// 'default' => $checked
 								)], $tag, null);
         ?></td>
