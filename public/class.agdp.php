@@ -130,6 +130,10 @@ class Agdp {
 	 * init_multisite_wp_cron
 	 */
 	public static function init_multisite_wp_cron(){
+		//debug
+		// if( ! defined( 'DOING_CRON') )
+			// self::multisite_spawn_wp_cron();
+		
 		if( ! defined( 'DOING_CRON')
 		 || ! DOING_CRON
 		 || ! is_multisite()
@@ -142,29 +146,70 @@ class Agdp {
 	 * multisite_spawn_wp_cron
 	 */
 	public static function multisite_spawn_wp_cron(){
-		foreach( get_sites([
-			'deleted' => 0,
-			'site__not_in' => [BLOG_ID_CURRENT_SITE],
-		 ]) as $blog)
+		// if( is_multisite() )
+			$blogs = get_sites([
+				'deleted' => 0,
+				'archived' => 0,
+				'site__not_in' => [BLOG_ID_CURRENT_SITE],
+			 ]);
+			// else //debug
+				// $blogs = get_blogs_of_user( get_current_user_id(), true );
+		$my_delay = (30*1000000)/count($blogs); // 30 microseconds divided by the number of sites
+		foreach( $blogs as $blog)
 		{
-			if( $blog->blog_id === BLOG_ID_CURRENT_SITE
-			 || $blog->deleted )
-				continue;
+			$blog_id = isset($blog->userblog_id) ? $blog->userblog_id : $blog->blog_id;
+			// if( $blog->blog_id === BLOG_ID_CURRENT_SITE
+			 // || $blog->deleted
+			 // || $blog->archived
+			// )
+				// continue;
 			try {
-				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id) );
-				switch_to_blog($blog->blog_id);
+				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog_id) );
+				self::call_blog_wp_cron( $blog );
 				
-				//TODO wp_cron() ne fait rien mais ce qui suit n'est pas assez général
-				Agdp_Mailbox::on_cron_exec( true );
-				Agdp_Newsletter::on_cron_exec( true );
+				usleep($my_delay); // sleep the calculated amount of time to spread out the calls over 30 secconds
+				
+				// switch_to_blog($blog_id);
+				
+				// TODO wp_cron() ne fait rien mais ce qui suit n'est pas assez général
+				// Agdp_Mailbox::on_cron_exec( true );
+				// Agdp_Newsletter::on_cron_exec( true );
 			}
 			catch( Exception $exception ){
-				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id), $exception );
+				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog_id), $exception );
 			}
 			finally {
-				restore_current_blog();
+				// restore_current_blog();
 			}
 		}
+	}
+	private static function call_blog_wp_cron( $blog ){
+		$message = '';
+
+		$command = $blog->siteurl . '/wp-cron.php?doing_wp_cron';//='.microtime( true );
+		$message .= "\n[". date('h:i:s') ."] Curl: " . $command . "\n";
+		$ch = curl_init($command);
+		
+		
+		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.0.3705; .NET CLR 1.1.4322)');
+		curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+		curl_setopt($ch, CURLOPT_URL, $command);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_POST, true);
+		//curl_setopt($ch, CURLOPT_POSTFIELDS, 'a=b&c=d&e=f');
+		$headers[] = 'Content-Type:application/x-www-form-urlencoded';
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		
+		
+		//$rc = curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //WAS FALSE
+		$rc = curl_exec($ch);
+		curl_close($ch);
+		
+		$message .= "\n[". date('h:i:s') ."] " . print_r( $rc, true );
+		
+		debug_log( __FUNCTION__, $message);
 	}
 	
 	/******************

@@ -151,7 +151,7 @@ class Agdp_Evenements extends Agdp_Posts {
 				ORDER BY year, month
 				";
 		$result = $wpdb->get_results($sql);
-		 debug_log(__FUNCTION__, 'get_posts_months', $sql);
+		
 		$months = [];
 		$prev_row = false;
 		foreach($result as $row){
