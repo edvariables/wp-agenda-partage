@@ -899,6 +899,8 @@ class Agdp_Forum extends Agdp_Page {
 
 		$emails = '';
 		foreach( $diagram['emails'] as $email ){
+			//TODO find taxonomy diffusion avec connexion mailto:$email
+			
 			if( $emails )
 				$emails .= sprintf('<small> ou %s</small>', $email);
 			else

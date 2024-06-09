@@ -139,7 +139,7 @@ class Agdp {
 		add_action( 'agendapartage-init', array(__CLASS__, 'multisite_spawn_wp_cron' ), 30 );
 	}
 	/**
-	 * init_multisite_wp_cron
+	 * multisite_spawn_wp_cron
 	 */
 	public static function multisite_spawn_wp_cron(){
 		foreach( get_sites([
@@ -153,6 +153,8 @@ class Agdp {
 			try {
 				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog->blog_id) );
 				switch_to_blog($blog->blog_id);
+				
+				//TODO wp_cron() ne fait rien mais ce qui suit n'est pas assez général
 				Agdp_Mailbox::on_cron_exec( true );
 				Agdp_Newsletter::on_cron_exec( true );
 			}
