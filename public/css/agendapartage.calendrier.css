@@ -77,9 +77,11 @@ body.colors-dark .agdp-agdpevents-list .toggle-trigger {
   top: 8px;
   right: 42px;
   color: darkred;
+  background-color: white;
 }
 body.colors-dark .agdp-agdpevents-list > ul > li .approve-post a {
   color: lightsalmon;
+  background-color: black;
 }
 .agdpevent.post-status-pending {
 	border-style: solid;

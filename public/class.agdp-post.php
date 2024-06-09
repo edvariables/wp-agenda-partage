@@ -125,7 +125,7 @@ abstract class Agdp_Post {
 			else
 				$post_type = static::post_type;
 		$option = $post_type . '_managed';
-		return Agdp::get_option($option);
+		return Agdp::get_option($option, true);
 	}
 	
 	/***************
