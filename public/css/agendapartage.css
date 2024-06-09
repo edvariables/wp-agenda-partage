@@ -133,7 +133,9 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
   font-size: smaller;
 }
 
+/* post-is-imported */
 .entry-content .agdpevent-edit-toolbar.post-is-imported {
+	margin-bottom: 1.5em;
 	text-align: left;
 }
 .entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-refused {
@@ -141,6 +143,9 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
 }
 .entry-content .agdpevent-edit-toolbar.post-is-imported > .agdpevent-tool > * {
 	float: none;
+}
+.entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-refused {
+	margin-bottom: 0px;
 }
 
 /*toggle shortcode*/

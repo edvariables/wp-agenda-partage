@@ -253,7 +253,7 @@ class Agdp_Evenement extends Agdp_Post {
  	/**
  	 * Retourne le Content de la page de l'évènement
  	 */
-	public static function get_agdpevent_imported( $post_id = null, $no_html = false ) {
+	public static function get_agdpevent_imported( $post_id = null, $no_html = false, $add_alert = false ) {
 		global $post;
  		if( is_a($post_id, 'WP_Post')){
 			$post_id = $post_id->ID;
@@ -275,10 +275,11 @@ class Agdp_Evenement extends Agdp_Post {
 			if( $import_refused = get_post_meta( $post_id, $meta_name, true ) ){			
 				$val .= ' ' . Agdp::icon('warning', 'Refusé', 'color-red');
 			}
-			return sprintf('<div class="agdp-agdpevent agdp-%s">%s %s</div>'
+			return sprintf('<div class="agdp-agdpevent agdp-%s">%s %s%s</div>'
 					, $meta_name
-					, Agdp::icon('admin-multisite')
+					, Agdp::icon( $add_alert ? 'warning' : 'admin-multisite')
 					, $val
+					, $add_alert && $add_alert !== true ? $add_alert : ''
 			);
 		}
 		return '';

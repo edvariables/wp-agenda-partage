@@ -247,15 +247,18 @@ class Agdp_Evenement_Edit {
 		
 		if($agdpevent_exists){
 			//Is imported
-			if( $is_imported = Agdp_Evenement::get_agdpevent_imported( $post ) ){
+			if( $is_imported = Agdp_Evenement::get_agdpevent_imported( $post, false, true ) ){
 				if( current_user_can('moderate_comments') ){
 					$meta_name = AGDP_IMPORT_REFUSED;
 					$import_refused = get_post_meta( $post_id, $meta_name, true );
 					
-					$html .= sprintf('<div class="agdpevent-edit-toolbar post-is-imported">%s<span class="agdpevent-tool">%s</span></div>'
+					$html .= sprintf('<div class="agdpevent-edit-toolbar post-is-imported">%s<span class="agdpevent-tool">%s</span><br>%s</div>'
 						, $is_imported
 						, Agdp_Evenement::get_agdpevent_action_link(
-							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null));
+							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null)
+						, 'Vos modifications seront peut-être (sans doute) écrasées.'
+					);
+					
 				}
 				else
 					$html .= $is_imported;
