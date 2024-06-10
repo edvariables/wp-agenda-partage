@@ -51,16 +51,20 @@ abstract class Agdp_Posts_Export {
 			if( empty($post_type) )
 				return false;
 			
-			switch($post_type){
-				case Agdp_Evenement::post_type:
-					require_once( dirname(__FILE__) . '/class.agdp-agdpevents-export.php');
-					return Agdp_Evenements_Export::do_export( $posts, $file_format, $return, $filters);
-				case Agdp_Covoiturage::post_type:
-					require_once( dirname(__FILE__) . '/class.agdp-covoiturages-export.php');
-					return Agdp_Covoiturages_Export::do_export( $posts, $file_format, $return, $filters);
-				default:
-					return false;
-			}
+			require_once( sprintf('%s/class.agdp-%ss-export.php', dirname(__FILE__), $post_type) );
+			$posts_class = Agdp_Page::get_posts_class( $post_type );
+			return ($posts_class .'_Export')::do_export( $posts, $file_format, $return, $filters);
+			// switch($post_type){
+
+				// case Agdp_Evenement::post_type:
+					// require_once( dirname(__FILE__) . '/class.agdp-agdpevents-export.php');
+					// return Agdp_Evenements_Export::do_export( $posts, $file_format, $return, $filters);
+				// case Agdp_Covoiturage::post_type:
+					// require_once( dirname(__FILE__) . '/class.agdp-covoiturages-export.php');
+					// return Agdp_Covoiturages_Export::do_export( $posts, $file_format, $return, $filters);
+				// default:
+					// return false;
+			// }
 		}
 			
 		$encode_to = "UTF-8";
@@ -350,7 +354,7 @@ abstract class Agdp_Posts_Export {
 	/**
 	 * Retourne le fichier modèle pour la diffusion
 	 */
-	private static function get_diffusion_docx_model_file($filters){
+	public static function get_diffusion_docx_model_file($filters){
 		$term_id = false;
 		foreach($filters as $filter_name => $filter_value)
 			if( $filter_name === self::get_taxonomy_diffusion() ){
@@ -376,7 +380,7 @@ abstract class Agdp_Posts_Export {
 	/**
 	 * Découpe en 3 (avant, paragraphe, après) un XML autours d'un paragraphe contenant $field
 	 */
-	private static function explode_xml_paragraph($xml, $field){
+	public static function explode_xml_paragraph($xml, $field){
 		$find = $field;
 		$pos = strpos($xml, $find);
 		if( $pos === false ) throw new Exception('Impossible d\'analyser le document : '  . $find);
@@ -399,7 +403,7 @@ abstract class Agdp_Posts_Export {
 	/**
 	 * Supprime, dans un XML, un paragraphe contenant $field
 	 */
-	private static function remove_xml_paragraph($xml, $field){
+	public static function remove_xml_paragraph($xml, $field){
 		$parts = self::explode_xml_paragraph($xml, $field);
 		
 		return $parts[0] . $parts[2];
@@ -446,13 +450,25 @@ abstract class Agdp_Posts_Export {
 		return $ical;
 	}
 	
-	public static function static($post, $ical, $filters = false){
-		$metas = get_post_meta($post->ID, '', true);
-		foreach($metas as $key=>$value)
-			if(is_array($value))
-				$metas[$key] = implode(', ', $value);
-				
-		$vevent = new ZCiCalNode("VEVENT", $ical->curnode);
+	
+	/**
+	 * add_post_to_ZCiCal
+	 */
+	public static function add_post_to_ZCiCal($post, $ical_or_vevent, $filters = false, $metas = false){
+		if( is_a($ical_or_vevent, 'ZCiCal') ){
+			$ical = $ical_or_vevent;
+			$vevent = new ZCiCalNode("VEVENT", $ical->curnode);
+		}
+		else 
+			$vevent = $ical_or_vevent;
+
+		// metas
+		if( ! is_array($metas) ){
+			$metas = get_post_meta($post->ID, '', true);
+			foreach($metas as $key=>$value)
+				if(is_array($value))
+					$metas[$key] = implode(', ', $value);
+		}
 
 		// add start date
 		$vevent->addNode(new ZCiCalDataNode("CREATED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_date)));
@@ -468,7 +484,7 @@ abstract class Agdp_Posts_Export {
 
 		// add title
 		$vevent->addNode(new ZCiCalDataNode("SUMMARY:" . $post->post_title));
-		
+
 		// UID is a required item in VEVENT, create unique string for this event
 		// Adding your domain to the end is a good way of creating uniqueness
 		$parse = parse_url(content_url());
@@ -477,34 +493,35 @@ abstract class Agdp_Posts_Export {
 
 		// Add description
 		$vevent->addNode(new ZCiCalDataNode("DESCRIPTION:" . ZCiCal::formatContent( $post->post_content)));
+		
+		// add start date
+		if( ! empty($metas['date_start']) )
+			$vevent->addNode(new ZCiCalDataNode("DTSTART;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_start'])));
+
+		// add end date
+		if( ! empty($metas['date_end']) )
+			$vevent->addNode(new ZCiCalDataNode("DTEND;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_end'])));
 
 		// Add fields
+		$secretcode_argument = static::get_secretcode_argument(); 
+		if( ! empty($filters[$secretcode_argument]) )
+			$fields[ strtoupper($secretcode_argument) ] = static::get_field_prefix() . $secretcode_argument;
+		
 		$fields = [
+			AGDP_IMPORT_UID=>AGDP_IMPORT_UID,
+			AGDP_IMPORT_REFUSED=>AGDP_IMPORT_REFUSED,
 		];
-		if( ! empty($filters[self::get_secretcode_argument()]) )
-			$fields[ strtoupper(self::get_secretcode_argument()) ] = self::get_field_prefix() . self::get_secretcode_argument();
 		foreach($fields as $node_name => $meta_key)
 			if( ! empty( $metas[$meta_key]))
 				$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $metas[$meta_key])));
-
-		// Add terms
-		foreach([ 
-			'CATEGORIES' => Agdp_Evenement::taxonomy_ev_category
-			, 'CITIES' => Agdp_Evenement::taxonomy_city
-			, 'DIFFUSIONS' => Agdp_Evenement::taxonomy_diffusion
-		] as $node_name => $tax_name){
-			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'names');
-			if($terms){
-				//$terms = array_map(function($tax_name){ return str_replace(',','-', $tax_name);}, $terms);//escape ','
-				foreach($terms as $term_name)
-					$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $term_name)));
-					
-				// $vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( implode(',', $terms) )));
-			}
-		}
+			
+			
 		return $vevent;
 	}
 	
+	/**
+	 * sanitize_datetime
+	 */
 	public static function sanitize_datetime($date, $time, $date_start = false, $time_start = false){
 		if( ! $date ){
 			// debug_log('sanitize_datetime(', $date, $time, $date_start);

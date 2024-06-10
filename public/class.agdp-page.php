@@ -75,8 +75,21 @@ abstract class Agdp_Page {
 	/**
 	 * Retourne la classe du type des posts contenus dans la page
 	 */
-	public static function get_posts_type_class( $page_id ){
-		switch( self::get_posts_type( $page_id ) ){
+	public static function get_posts_type_class( $page_id_or_post_type ){
+		
+		if( is_a($page_id_or_post_type, 'WP_Post') ){
+			$page_id = $page_id_or_post_type;
+			$post_type = $page_id->post_type;
+		}
+		elseif( is_numeric( $page_id_or_post_type ) ){
+			$page_id = $page_id_or_post_type;
+			$post_type = self::get_posts_type( $page_id );
+		}
+		elseif( is_string($page_id_or_post_type) ){
+			$post_type = $page_id_or_post_type;
+			$page_id = false;
+		}
+		switch( $post_type ){
 			case Agdp_Evenement::post_type:
 				return 'Agdp_Evenement';
 			case Agdp_Covoiturage::post_type:
@@ -101,7 +114,7 @@ abstract class Agdp_Page {
 	/**
 	 * Retourne le nom de l'icon selon le type de posts affichés
 	 */
-	public static function get_icon( $page_id ){
+	public static function get_icon( $page_id, $default = false ){
 		if( ! $page_id )
 			return self::icon;
 		foreach([
@@ -116,6 +129,8 @@ abstract class Agdp_Page {
 		}
 		if( Agdp_Forum::post_is_forum( $page_id ) )
 			return Agdp_Forum::icon;
+		if( $default && $default !== true )
+			return $default;
 		return self::icon;
 	}
 	

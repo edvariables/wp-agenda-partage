@@ -1041,8 +1041,8 @@ class Agdp_Covoiturages extends Agdp_Posts {
 		
 		$file_format = $data['file_format'];
 		
-		require_once( dirname(__FILE__) . '/class.agdp-covoiturages-export.php');
-		$url = Agdp_Covoiturages_Export::do_export($posts, $file_format, 'url');
+		require_once( dirname(__FILE__) . '/class.agdp-posts-export.php');
+		$url = Agdp_Posts_Export::do_export($posts, $file_format, 'url');
 		
 		return 'download:' . $url;
 	}

@@ -928,12 +928,12 @@ class Agdp_Evenements extends Agdp_Posts {
 		}
 		$file_format = $data['file_format'];
 		
-		require_once( dirname(__FILE__) . '/class.agdp-agdpevents-export.php');
+		require_once( dirname(__FILE__) . '/class.agdp-posts-export.php');
 		if( $return === 'download:url' )
 			$return_value = 'url';
 		else
 			$return_value = $return;
-		$value = Agdp_Evenements_Export::do_export($posts, $file_format, $return_value, $filters);
+		$value = Agdp_Posts_Export::do_export($posts, $file_format, $return_value, $filters);
 		switch( $return ){
 			case 'data' :
 			case 'url' :

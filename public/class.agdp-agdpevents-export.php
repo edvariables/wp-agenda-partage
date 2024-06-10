@@ -236,46 +236,26 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 	/**********************************************************/
 	
 	
-	public static function add_post_to_ZCiCal($post, $ical, $filters = false){
-		$metas = get_post_meta($post->ID, '', true);
-		foreach($metas as $key=>$value)
-			if(is_array($value))
-				$metas[$key] = implode(', ', $value);
+	public static function add_post_to_ZCiCal($post, $ical, $filters = false, $metas = false){
+		
+		// metas
+		if( ! $metas ){
+			$metas = get_post_meta($post->ID, '', true);
+			foreach($metas as $key=>$value)
+				if(is_array($value))
+					$metas[$key] = implode(', ', $value);
+		}
 		$metas['date_start'] = self::sanitize_datetime($metas['ev-date-debut'], $metas['ev-heure-debut']);
 		$metas['date_end'] = self::sanitize_datetime($metas['ev-date-fin'], $metas['ev-heure-fin'], $metas['ev-date-debut'], $metas['ev-heure-debut']);
 				
-		$vevent = new ZCiCalNode("VEVENT", $ical->curnode);
-
-		// add start date
-		$vevent->addNode(new ZCiCalDataNode("CREATED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_date)));
-
-		// DTSTAMP is a required item in VEVENT
-		$vevent->addNode(new ZCiCalDataNode("DTSTAMP;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime()));
-
-		// add last modified date
-		$vevent->addNode(new ZCiCalDataNode("LAST-MODIFIED;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($post->post_modified)));
-
-		// Add status
-		$vevent->addNode(new ZCiCalDataNode("STATUS:" . self::get_vcalendar_status( $post, $filters )));
-
-		// add title
-		$vevent->addNode(new ZCiCalDataNode("SUMMARY:" . $post->post_title));
-
+		$vevent = parent::add_post_to_ZCiCal($post, $ical, $filters, $metas);
+		
 		// add start date
 		$vevent->addNode(new ZCiCalDataNode("DTSTART;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_start'])));
 
 		// add end date
 		if($metas['date_end'])
 			$vevent->addNode(new ZCiCalDataNode("DTEND;TZID=Europe/Paris:" . ZCiCal::fromSqlDateTime($metas['date_end'])));
-
-		// UID is a required item in VEVENT, create unique string for this event
-		// Adding your domain to the end is a good way of creating uniqueness
-		$parse = parse_url(content_url());
-		$uid = sprintf('%s[%d]@%s', Agdp_Evenement::post_type, $post->ID, $parse['host']);
-		$vevent->addNode(new ZCiCalDataNode("UID:" . $uid));
-
-		// Add description
-		$vevent->addNode(new ZCiCalDataNode("DESCRIPTION:" . ZCiCal::formatContent( $post->post_content)));
 
 		// Add fields
 		$fields = [

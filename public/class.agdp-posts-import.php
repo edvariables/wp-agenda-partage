@@ -20,16 +20,8 @@ abstract class Agdp_Posts_Import {
 	* import_post_type_ics
 	*/
 	public static function import_post_type_ics($post_type, $file_name, $default_post_status = 'publish', $original_file_name = null){
-		switch($post_type){
-			case Agdp_Evenement::post_type:
-				require_once( dirname(__FILE__) . '/class.agdp-agdpevents-import.php');
-				return Agdp_Evenements_Import::import_ics( $file_name, $default_post_status, $original_file_name);
-			case Agdp_Covoiturage::post_type:
-				require_once( dirname(__FILE__) . '/class.agdp-covoiturages-import.php');
-				return Agdp_Covoiturages_Import::import_ics( $file_name, $default_post_status, $original_file_name);
-			default:
-				return false;
-		}
+		require_once( sprintf('%s/class.agdp-%ss-import.php', dirname(__FILE__), $post_type);
+		return ($post_type .'s_Import')::import_ics( $file_name, $default_post_status, $original_file_name);
 	}
 	
 	/**
