@@ -129,6 +129,8 @@ class Agdp_Covoiturage extends Agdp_Post {
 
 		$html .= Agdp_Covoiturage_Edit::get_agdpevents_list( $covoiturage );
 		
+		$html .= self::get_post_imported( $covoiturage );
+		
 		$meta_name = 'cov-email' ;
 		$email = get_post_meta($covoiturage->ID, $meta_name, true);
 		if( ! is_email($email))
@@ -219,6 +221,41 @@ class Agdp_Covoiturage extends Agdp_Post {
 			}
 		}
 		return $html;
+	}
+	
+ 	/**
+ 	 * Retourne le Content de la page du covoiturage
+ 	 */
+	public static function get_post_imported( $post_id = null, $no_html = false, $add_alert = false ) {
+		global $post;
+ 		if( is_a($post_id, 'WP_Post')){
+			$post_id = $post_id->ID;
+		}
+		$meta_name = AGDP_IMPORT_UID;
+		$val = get_post_meta($post_id, $meta_name, true);
+		if($val){
+			$matches = [];
+			preg_match_all('/^(\w+)\[(\d+)\]@(.*)$/', $val, $matches);
+			$source_post_type = $matches[1][0];
+			$source_id = $matches[2][0];
+			$source_site = $matches[3][0];
+			$val = sprintf('Ce covoiturage provient de <a href="%s://%s/blog/%s?p=%d">%s</a>', 
+				'https', $source_site, $source_post_type, $source_id, $source_site);
+			if($no_html)
+				return $val;
+			
+			$meta_name = AGDP_IMPORT_REFUSED;
+			if( $import_refused = get_post_meta( $post_id, $meta_name, true ) ){			
+				$val .= ' ' . Agdp::icon('warning', 'Refusé', 'color-red');
+			}
+			return sprintf('<div class="agdp-covoiturage agdp-%s">%s %s%s</div>'
+					, $meta_name
+					, Agdp::icon( $add_alert ? 'warning' : 'admin-multisite')
+					, $val
+					, $add_alert && $add_alert !== true ? $add_alert : ''
+			);
+		}
+		return '';
 	}
 	
 	/*******************
@@ -679,7 +716,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		$val = self::get_post_meta($post_id, $meta_name, true, false);
 		if( /*! is_user_logged_in()
 		&&*/ ! get_post_meta($post_id, 'cov-phone-show', true)){
-			// $val = sprintf('<span class="covoiturage-tool">%s</span>'
+			// $val = sprintf('<span class="agdppost-tool">%s</span>'
 				// , self::get_covoiturage_action_link($post_id, 'send_phone_number', true));
 				//Formulaire de saisie du code secret
 			$url = self::get_post_permalink( $post_id );

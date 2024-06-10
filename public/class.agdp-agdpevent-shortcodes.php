@@ -336,7 +336,7 @@ class Agdp_Evenement_Shortcodes {
 				
 			case 'agdpevent-is-imported':
 
-				return Agdp_Evenement::get_agdpevent_imported( $post_id, $no_html );
+				return Agdp_Evenement::get_post_imported( $post_id, $no_html );
 				
 			case 'agdpevent-cree-depuis':
 

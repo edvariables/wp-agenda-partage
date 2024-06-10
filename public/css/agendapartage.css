@@ -134,18 +134,16 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
 }
 
 /* post-is-imported */
-.entry-content .agdpevent-edit-toolbar.post-is-imported {
+.entry-content .agdppost-edit-toolbar.post-is-imported {
 	margin-bottom: 1.5em;
 	text-align: left;
 }
-.entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-refused {
+.entry-content .agdppost-edit-toolbar .agdp-post-import-refused {
+	margin-bottom: 0px;
 	display: inline-block;
 }
-.entry-content .agdpevent-edit-toolbar.post-is-imported > .agdpevent-tool > * {
+.entry-content .agdppost-edit-toolbar.post-is-imported > .agdppost-tool > * {
 	float: none;
-}
-.entry-content .agdpevent-edit-toolbar .agdp-agdpevent.agdp-post-import-refused {
-	margin-bottom: 0px;
 }
 
 /*toggle shortcode*/
@@ -229,21 +227,17 @@ label.textarea-rows-5 textarea {
 	display: inline-flex;
 }
 
-.agdpevent-edit-toolbar,
-.covoiturage-edit-toolbar {
+.agdppost-edit-toolbar {
 	text-align: right;
 }
-.agdpevent-edit-toolbar > .agdpevent-tool > *,
-.covoiturage-edit-toolbar > .covoiturage-tool > * {
+.agdppost-edit-toolbar > .agdppost-tool > * {
 	float: right;
 	margin-left: 1em;
 }
-.agdpevent-edit-toolbar > .agdpevent-tool .dashicons-before,
-.covoiturage-edit-toolbar > .covoiturage-tool .dashicons-before {
+.agdppost-edit-toolbar > .agdppost-tool .dashicons-before {
 	margin-right: 3px;
 }
-.agdpevent-edit-toolbar > .agdpevent-tool .close-box,
-.covoiturage-edit-toolbar > .covoiturage-tool .close-box,
+.agdppost-edit-toolbar > .agdppost-tool .close-box,
 .ajax_action-response .close-box {
 	float: right;
 }

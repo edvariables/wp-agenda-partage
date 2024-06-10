@@ -91,7 +91,7 @@ class Agdp_Evenement extends Agdp_Post {
 			, $codesecret ? self::secretcode_argument . '=' . $codesecret : ''
 		);
 		
-		$html .= self::get_agdpevent_imported( $agdpevent );
+		$html .= self::get_post_imported( $agdpevent );
 		
 		$meta_name = 'ev-email' ;
 		$email = get_post_meta($agdpevent->ID, $meta_name, true);
@@ -254,7 +254,7 @@ class Agdp_Evenement extends Agdp_Post {
  	/**
  	 * Retourne le Content de la page de l'évènement
  	 */
-	public static function get_agdpevent_imported( $post_id = null, $no_html = false, $add_alert = false ) {
+	public static function get_post_imported( $post_id = null, $no_html = false, $add_alert = false ) {
 		global $post;
  		if( is_a($post_id, 'WP_Post')){
 			$post_id = $post_id->ID;

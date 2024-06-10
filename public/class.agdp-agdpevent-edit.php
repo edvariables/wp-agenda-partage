@@ -247,12 +247,12 @@ class Agdp_Evenement_Edit {
 		
 		if($agdpevent_exists){
 			//Is imported
-			if( $is_imported = Agdp_Evenement::get_agdpevent_imported( $post, false, true ) ){
+			if( $is_imported = Agdp_Evenement::get_post_imported( $post, false, true ) ){
 				if( current_user_can('moderate_comments') ){
 					$meta_name = AGDP_IMPORT_REFUSED;
 					$import_refused = get_post_meta( $post_id, $meta_name, true );
 					
-					$html .= sprintf('<div class="agdpevent-edit-toolbar post-is-imported">%s<span class="agdpevent-tool">%s</span><br>%s</div>'
+					$html .= sprintf('<div class="agdppost-edit-toolbar post-is-imported">%s<span class="agdppost-tool">%s</span><br>%s</div>'
 						, $is_imported
 						, Agdp_Evenement::get_agdpevent_action_link(
 							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null)
@@ -275,11 +275,11 @@ class Agdp_Evenement_Edit {
 	public static function get_edit_toolbar($post){
 		$post_id = $post->ID;
 		
-		$html = '<div class="agdpevent-edit-toolbar">';
+		$html = '<div class="agdppost-edit-toolbar">';
 		
 		$url = get_page_link( Agdp::get_option('contact_page_id'));
 		$url = add_query_arg(AGDP_ARG_EVENTID, $post_id, $url );
-		$html .= sprintf('<span class="agdpevent-tool"><a href="%s" title="%s">%s%s</a></span>'
+		$html .= sprintf('<span class="agdppost-tool"><a href="%s" title="%s">%s%s</a></span>'
 				, esc_url($url)
 				, __('Ecrivez-nous pour signaler un problème avec cet évènement', AGDP_TAG)
 				, Agdp::icon('email-alt')
@@ -287,17 +287,17 @@ class Agdp_Evenement_Edit {
 		);
 				
 		if($post->post_status == 'publish')
-			$html .= sprintf('<span class="agdpevent-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'unpublish', true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'unpublish', true));
 		elseif( current_user_can('moderate_comments')
 		|| (! Agdp_Evenement::waiting_for_activation($post_id)
 			&& Agdp_Evenement::user_can_change_post($post_id))){
-			$html .= sprintf('<span class="agdpevent-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'publish', true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'publish', true));
 		}
 		if(current_user_can('edit_posts')
 		|| current_user_can('agdpevent'))
-			$html .= sprintf('<span class="agdpevent-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'duplicate', true));
-		$html .= sprintf('<span class="agdpevent-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'remove', true));
-		$html .= sprintf('<span class="agdpevent-tool">%s</span>', Agdp_Evenement::get_agdpevent_contact_email_link($post_id, true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'duplicate', true));
+		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'remove', true));
+		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_contact_email_link($post_id, true));
 		$html .= '</div>';
 		
 		return $html;

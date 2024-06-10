@@ -271,6 +271,23 @@ class Agdp_Covoiturage_Edit {
 		}
 		
 		if($covoiturage_exists){
+			//Is imported
+			if( $is_imported = Agdp_Covoiturage::get_post_imported( $post, false, true ) ){
+				if( current_user_can('moderate_comments') ){
+					$meta_name = AGDP_IMPORT_REFUSED;
+					$import_refused = get_post_meta( $post_id, $meta_name, true );
+					
+					$html .= sprintf('<div class="agdppost-edit-toolbar post-is-imported">%s<span class="agdppost-tool">%s</span><br>%s</div>'
+						, $is_imported
+						, Agdp_Evenement::get_agdpevent_action_link(
+							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null)
+						, 'Vos modifications seront sans doute écrasées ultérieurement.'
+					);
+					
+				}
+				else
+					$html .= $is_imported;
+			}
 			$html .= self::get_edit_toolbar($post);
 		}
 		return $html;
@@ -282,11 +299,11 @@ class Agdp_Covoiturage_Edit {
 	public static function get_edit_toolbar($post){
 		$post_id = $post->ID;
 		
-		$html = '<div class="covoiturage-edit-toolbar">';
+		$html = '<div class="agdppost-edit-toolbar">';
 		
 		$url = get_page_link( Agdp::get_option('contact_page_id'));
 		$url = add_query_arg(AGDP_ARG_COVOITURAGEID, $post_id, $url );
-		$html .= sprintf('<span class="covoiturage-tool"><a href="%s" title="%s">%s%s</a></span>'
+		$html .= sprintf('<span class="agdppost-tool"><a href="%s" title="%s">%s%s</a></span>'
 				, esc_url($url)
 				, __('Ecrivez-nous pour signaler un problème avec ce covoiturage', AGDP_TAG)
 				, Agdp::icon('email-alt')
@@ -294,18 +311,18 @@ class Agdp_Covoiturage_Edit {
 		);
 				
 		if($post->post_status == 'publish')
-			$html .= sprintf('<span class="covoiturage-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'unpublish', true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'unpublish', true));
 		elseif( current_user_can('manage_options')
 		|| (! Agdp_Covoiturage::waiting_for_activation($post_id)
 			&& Agdp_Covoiturage::user_can_change_post($post_id))){
-			$html .= sprintf('<span class="covoiturage-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'publish', true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'publish', true));
 		}
 		if(current_user_can('manage_options')
 		|| current_user_can('covoiturage')
 		|| Agdp_Covoiturage::user_can_change_post($post_id))
-			$html .= sprintf('<span class="covoiturage-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'duplicate', true));
-		$html .= sprintf('<span class="covoiturage-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'remove', true));
-		$html .= sprintf('<span class="covoiturage-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_contact_email_link($post_id, true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'duplicate', true));
+		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_action_link($post_id, 'remove', true));
+		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Covoiturage::get_covoiturage_contact_email_link($post_id, true));
 		$html .= '</div>';
 		
 		return $html;
