@@ -4,58 +4,9 @@
  * AgendaPartage -> Covoiturages
  * Collection de covoiturages
  */
-class Agdp_Covoiturages_Export {
-	 
-	 /**
-	  * Export
-	  *
-	  * $return = url|file|data
-	  */
-	 public static function do_export($posts, $file_format = 'ics', $return = 'url' ){
-		$encode_to = "UTF-8";
-		switch( strtolower( $file_format )){
-			case 'vcalendar':
-				$file_format = 'ics';
-			case 'ics':
-				$export_data = self::export_posts_ics($posts);
-				break;
-			case 'txt':
-				$encode_to = "Windows-1252";
-				$export_data = self::export_posts_txt($posts);
-				break;
-			case 'bv.txt':
-				$encode_to = "Windows-1252";
-				$export_data = self::export_posts_bv_txt($posts);
-				break;
-			default:
-				return sprintf('format inconnu : "%s"', $file_format);
-		}
-
-		if($return === 'data')
-			return $export_data;
-		
-		if( ! $export_data)
-			return sprintf('Aucune donnée à exporter');
-		
-		$enc = mb_detect_encoding($export_data);
-		$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
-
-		self::clear_export_history();
-		
-		$file = self::get_export_filename( $file_format );
-
-		$handle = fopen($file, "w");
-		fwrite($handle, $export_data);
-		fclose($handle);
-		
-		if($return === 'file')
-			return $file;
-		
-		$url = self::get_export_url(basename($file));
-		
-		return $url;
-		
-	}
+class Agdp_Covoiturages_Export extends Agdp_Posts_Export {
+	
+	const post_type = Agdp_Covoiturage::post_type;
 	
 	/**
 	 * Retourne les données TXT pour le téléchargement de l'export des covoiturages
@@ -127,51 +78,7 @@ class Agdp_Covoiturages_Export {
 		return implode("\r\n", $txt);
 	}
 	
-	
-	/**
-	 * Retourne les données ICS pour le téléchargement de l'export des covoiturages
-	 */
-	public static function export_posts_ics($posts){
-
-		require_once(AGDP_PLUGIN_DIR . "/includes/icalendar/zapcallib.php");
-		
-		$iCal = self::get_new_ZCiCal();
-		foreach($posts as $post){
-			self::add_covoiturage_to_ZCiCal($post, $iCal);
-		}
-		return $iCal->export();
-		
-		/* require_once(AGDP_PLUGIN_DIR . '/admin/class.ical.php');
-		$iCal = new iCal();
-		$iCal->title = get_bloginfo( 'name', 'display' );
-		$iCal->description = content_url();
-		foreach($posts as $post){
-			$iCal->events[] = new iCal_Event($post);
-		}
-		return $iCal->generate(); */
-	}
-	
-	public static function get_new_ZCiCal(){
-		$ical= new ZCiCal();
-		//TITLE
-		$datanode = new ZCiCalDataNode("TITLE:" . ZCiCal::formatContent( get_bloginfo( 'name', 'display' )));
-		$ical->curnode->data[$datanode->getName()] = $datanode;
-		//DESCRIPTION
-		$page_id = Agdp::get_option('agenda_page_id');
-		if($page_id)
-			$url = get_permalink($page_id);
-		else
-			$url = get_site_url();
-		$datanode = new ZCiCalDataNode("DESCRIPTION:" . ZCiCal::formatContent( $url ));
-		$ical->curnode->data[$datanode->getName()] = $datanode;
-		//VTIMEZONE
-		$vtimezone = new ZCiCalNode("VTIMEZONE", $ical->curnode);
-		$vtimezone->addNode(new ZCiCalDataNode("TZID:Europe/Paris"));
-		
-		return $ical;
-	}
-	
-	public static function add_covoiturage_to_ZCiCal($post, $ical){
+	public static function add_post_to_ZCiCal($post, $ical){
 		$metas = get_post_meta($post->ID, '', true);
 		foreach($metas as $key=>$value)
 			if(is_array($value))
@@ -211,14 +118,22 @@ class Agdp_Covoiturages_Export {
 
 		// Add description
 		$vevent->addNode(new ZCiCalDataNode("DESCRIPTION:" . ZCiCal::formatContent( $post->post_content)));
-
-		// Add fields
+				
 		foreach([
 			'DEPART'=>'cov-depart'
 			, 'ARRIVEE'=>'cov-arrivee'
+			, 'INTENTION'=>'cov-intention'
+			, 'PERIODIQUE'=>'cov-periodique'
+			, 'PERIODIQUE-LABEL'=>'cov-periodique-label'
+			, 'NB-PLACES'=>'cov-nb-places'
 			, 'ORGANISATEUR'=>'cov-organisateur'
 			, 'EMAIL'=>'cov-email'
 			, 'PHONE'=>'cov-phone'
+			, 'PHONE-SHOW'=>'cov-phone-show'
+			, 'UID'=>AGDP_IMPORT_UID
+			, strtoupper(AGDP_COVOIT_SECRETCODE)=>'cov-'.AGDP_COVOIT_SECRETCODE
+			, strtoupper('related_' . Agdp_Evenement::post_type)=>'related_' . Agdp_Evenement::post_type // add source site url
+			
 		] as $node_name => $meta_key)
 			if( ! empty( $metas[$meta_key])
 			&& (($meta_key != 'cov-phone') || (! empty($metas['cov-phone-show']) && $metas['cov-phone-show'])))
@@ -238,98 +153,5 @@ class Agdp_Covoiturages_Export {
 			}
 		}
 		return $vevent;
-	}
-	
-	public static function sanitize_datetime($date, $time, $date_start = false, $time_start = false){
-		if( ! $date ){
-			// debug_log('sanitize_datetime(', $date, $time, $date_start);
-			//if not end date, not time and start date contains time, skip dtend
-			if($date_start
-			&& (! $time || $time == '00:00' || $time == '00:00:00')
-			&& $time_start)
-				return '';
-				
-			$date = $date_start;
-		}
-		if( ! $date )
-			return;
-		if( $date_start
-		&& (! $time || $time == '00:00' || $time == '00:00:00')
-		&& ! $time_start){
-			//date_start without hour, date_end is the next day, meaning 'full day'
-			return date('Y-m-d', strtotime($date . ' + 1 day'));
-		}
-		$dateTime = rtrim($date . ' ' . str_replace('h', ':', $time));
-		if($dateTime[strlen($dateTime)-1] === ':')
-			$dateTime .= '00';
-		$dateTime = preg_replace('/\s+00\:00(\:00)?$/', '', $dateTime);
-		return $dateTime;
-	}
-		
-	public static function get_vcalendar_status($post){
-		switch($post->post_status){
-			case 'publish' :
-				return 'CONFIRMED';
-			default :
-				return strtoupper($post->post_status);//only CANCELLED or DRAFT or TENTATIVE
-		}
-	}
-	
-	
-	/****************
-	*/
-	
-	/**
-	 * Retourne le nom d'un fichier temporaire pour le téléchargement de l'export des covoiturages
-	 */
-	public static function get_export_filename($extension, $sub_path = 'export'){
-		$folder = self::get_export_folder($sub_path);
-		$file = wp_tempnam(AGDP_TAG, $folder . '/');
-		return str_replace('.tmp', '.' . $extension, $file);
-	}
-	/**
-	 * Retourne le répertoire d'exportation pour téléchargement
-	 */
-	public static function get_export_folder($sub_path = 'export'){
-		$folder = WP_CONTENT_DIR;
-		if($sub_path){
-			$folder .= '/' . $sub_path;
-			if( ! file_exists($folder) )
-				mkdir ( $folder );
-		}
-		$period = wp_date('Y-m');
-		$folder .= '/' . $period;
-		if( ! file_exists($folder) )
-			mkdir ( $folder );
-		
-		return $folder;
-	}
-	public static function get_export_url($file = false, $sub_path = 'export'){
-		$url = content_url($sub_path);
-		$period = wp_date('Y-m');
-		$url .= '/' . $period;
-		if($file)
-			$url .= '/' . $file;
-		return $url;
-	}
-	/**
-	 * Nettoie le répertoire d'exportation pour téléchargement
-	 */
-	public static function clear_export_history($sub_path = 'export'){
-		$folder = dirname(self::get_export_folder($sub_path));
-		if( ! file_exists($folder) )
-			return;
-		$period = wp_date('Y-m');
-		$periods_to_keep = [ $period, wp_date('Y-m', strtotime($period . '-01 - 1 month'))];
-		
-		$cdir = scandir($folder);
-		foreach ($cdir as $key => $value){
-			if (!in_array($value, array(".",".."))){
-				if (is_dir($folder . DIRECTORY_SEPARATOR . $value)
-				&& ! in_array($value, $periods_to_keep)){
-					rrmdir($folder . DIRECTORY_SEPARATOR . $value);
-				}
-			}
-		}
 	}
 }

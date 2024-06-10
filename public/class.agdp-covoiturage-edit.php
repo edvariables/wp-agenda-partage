@@ -974,20 +974,21 @@ class Agdp_Covoiturage_Edit {
 			$submission->set_response($error_message);
 			return false;
 		}
-		else {
+		
+		$previous_terms = [];
+		//Taxonomies
+		//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
+		foreach($tax_terms as $tax_name => $tax_inputs){
+			if( $tax_name === Agdp_Covoiturage::taxonomy_diffusion )
+				$previous_terms[$tax_name] = wp_get_post_terms($post_id, $tax_name);
 			
-			//Taxonomies
-			//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
-			foreach($tax_terms as $tax_name => $tax_inputs){
-				
-				$result = wp_set_post_terms($post_id, $tax_inputs, $tax_name, false);
-				if(is_a($result, 'WP_Error') || is_string($result)){
-					$error_message = is_string($result) ? $result : $result->get_error_message();
-					$abort = true;
-					$error_message = sprintf('Erreur d\'enregistrement des catégories (%s). %s. \r\n%s', $tax_name, $error_message, var_export($tax_inputs, true));
-					$submission->set_response($error_message);
-					return false; //TODO
-				}
+			$result = wp_set_post_terms($post_id, $tax_inputs, $tax_name, false);
+			if(is_a($result, 'WP_Error') || is_string($result)){
+				$error_message = is_string($result) ? $result : $result->get_error_message();
+				$abort = true;
+				$error_message = sprintf('Erreur d\'enregistrement des catégories (%s). %s. \r\n%s', $tax_name, $error_message, var_export($tax_inputs, true));
+				$submission->set_response($error_message);
+				return false;
 			}
 		}
 				
@@ -1017,6 +1018,16 @@ class Agdp_Covoiturage_Edit {
 			//En cas de succès, on recharge la page dans laquelle on affichera un message.
 			if($result)
 				set_transient(AGDP_TAG . '_email_sent_' . $post_id, $post_id, 20);
+		}
+		
+		if( ! ( $post_is_new && $postarr['post_status'] === 'pending' ) ){
+			//Taxonomie Diffusion
+			$tax_name = Agdp_Covoiturage::taxonomy_diffusion;
+			if( isset($tax_terms[$tax_name])){
+				$tax_inputs = $tax_terms[$tax_name];
+				$previous_tax_inputs = $previous_terms[$tax_name];
+				Agdp_Covoiturage::send_for_diffusion( $post_id, $tax_name, $tax_inputs, $previous_tax_inputs );
+			}
 		}
 		
 		$url = Agdp_Covoiturage::get_post_permalink($post_id, AGDP_COVOIT_SECRETCODE);
@@ -1313,8 +1324,8 @@ class Agdp_Covoiturage_Edit {
 		//Même lieu
 		$args['meta_query'] = [
 				[ 'key' => 'cov-date-debut', 'value' => $meta_values['cov-date-debut']],
-				[ 'key' => 'cov-depart', 'value' => $meta_values['cov-depart']],
-				[ 'key' => 'cov-arrivee', 'value' => $meta_values['cov-arrivee']]
+				[ 'key' => 'cov-depart', 'value' => empty($meta_values['cov-depart']) ? '' : $meta_values['cov-depart'] ],
+				[ 'key' => 'cov-arrivee', 'value' => empty($meta_values['cov-arrivee']) ? '' : $meta_values['cov-arrivee'] ]
 		];
 		if($meta_values['cov-heure-debut'])
 			$args['meta_query'][] = [ 'key' => 'cov-heure-debut', 'value' => $meta_values['cov-heure-debut']];

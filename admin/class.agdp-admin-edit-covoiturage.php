@@ -357,6 +357,8 @@ class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 		$meta_name = AGDP_IMPORT_UID;
  		if( ! self::$the_post_is_new
 		&& ($imported = get_post_meta($post->ID, $meta_name, true)) ) {
+			$import_refused = get_post_meta($post->ID, AGDP_IMPORT_REFUSED, true);
+			
 			$fields[] = array(
 				'name' => $meta_name,
 				'label' => __('Covoiturage importé', AGDP_TAG),
@@ -364,6 +366,13 @@ class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'text',
 				'value' => $imported,
 				'container_class' => 'side-box',
+				'fields' => [ array(
+								'name' => AGDP_IMPORT_REFUSED,
+								'label' => __('Refusé', AGDP_TAG),
+								'input' => 'checkbox',
+								'value' => $import_refused,
+								'container_class' => 'side-box' . ($import_refused ? ' color-red' : ''),
+							)]
 			);
 		}
 		

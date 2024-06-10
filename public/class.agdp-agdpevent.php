@@ -584,44 +584,6 @@ class Agdp_Evenement extends Agdp_Post {
 	}
 	
 	/**
-	 * Refuse import from an other blog
-	 */
-	public static function do_refuse_import($post_id, $refuse = true) {
-		if(self::user_can_change_post($post_id)){
-			// $post = wp_delete_post($post_id);
-			
-			$meta_name = AGDP_IMPORT_REFUSED;
-			update_post_meta( $post_id, $meta_name, $refuse );
-			
-			if( $refuse ){
-				$post = self::change_post_status($post_id, 'draft');
-				if( is_a($post, 'WP_Error') )
-					return false;
-			}
-			return true;
-		}
-		// echo self::user_can_change_post($post_id, false, true);
-		return false;
-	}
-	
-	/**
-	 * Remove event
-	 */
-	public static function do_remove($post_id) {
-		if(self::user_can_change_post($post_id)){
-			// $post = wp_delete_post($post_id);
-			$post = self::change_post_status($post_id, 'trash');
-			if( is_a($post, 'WP_Error') )
-				return false;
-			
-			self::send_for_diffusion( $post_id );
-			return true;
-		}
-		// echo self::user_can_change_post($post_id, false, true);
-		return false;
-	}
-	
-	/**
 	 * Envoye le mail à l'organisateur de l'évènement
 	 */
 	public static function send_validation_email($post, $subject = false, $message = false, $return_html_result = false){

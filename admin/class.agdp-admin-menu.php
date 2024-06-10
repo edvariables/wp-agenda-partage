@@ -85,22 +85,19 @@ class Agdp_Admin_Menu {
 				add_submenu_page( $parent_slug, $page_title, 'Covoiturages à venir', $capability, $menu_slug);
 			}
 			
-			//Menu Evènements
-			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Evenement::post_type) ;
-			$page_title =  'Evènements en attente de validation';
-			$menu_slug = $parent_slug . '&post_status=pending';
-			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
+			//Menu Evènements et Covoiturages
+			foreach( Agdp_Post::get_post_types() as $post_type ){
+				$type_title = get_post_type_object($post_type)->labels->menu_name;
+				$parent_slug = sprintf('edit.php?post_type=%s', $post_type) ;
+				$page_title =  $type_title . ' en attente de validation';
+				$menu_slug = $parent_slug . '&post_status=pending';
+				add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
-			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Evenement::post_type) ;
-			$page_title =  'Evènements obsolètes d\'un mois';
-			$menu_slug = $parent_slug . '&date_max=' . wp_date('Y-m-d', strtotime('-1 Month'));
-			add_submenu_page( $parent_slug, $page_title, 'Obsolètes', $capability, $menu_slug, '', 2);
-			
-			//Menus Covoiturages
-			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Covoiturage::post_type) ;
-			$page_title =  'Covoiturages en attente de validation';
-			$menu_slug = $parent_slug . '&post_status=pending';
-			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
+				$parent_slug = sprintf('edit.php?post_type=%s', $post_type) ;
+				$page_title =  $type_title . ' obsolètes d\'un mois';
+				$menu_slug = $parent_slug . '&date_max=' . wp_date('Y-m-d', strtotime('-1 Month'));
+				add_submenu_page( $parent_slug, $page_title, 'Obsolètes', $capability, $menu_slug, '', 2);
+			}
 			
 			//Menu Agenda partagé
 			$parent_slug = AGDP_TAG;

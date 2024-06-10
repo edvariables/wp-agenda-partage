@@ -416,8 +416,10 @@ class Agdp_Covoiturage extends Agdp_Post {
 	 */
 	public static function covoiturage_action_unpublish($post_id) {
 		$post_status = 'pending';
-		if( self::change_post_status($post_id, $post_status) )
+		if( self::change_post_status($post_id, $post_status) ){
+			self::send_for_diffusion( $post_id );
 			return 'redir:' . self::get_post_permalink($post_id, true, self::secretcode_argument, 'etat=en-attente');
+		}
 		return 'Impossible de modifier ce covoiturage.';
 	}
 	/**
@@ -427,8 +429,22 @@ class Agdp_Covoiturage extends Agdp_Post {
 		$post_status = 'publish';
 		if( (! self::waiting_for_activation($post_id)
 			|| current_user_can('manage_options') )
-		&& self::change_post_status($post_id, $post_status) )
-			return 'redir:' . self::get_post_permalink($post_id, self::secretcode_argument);
+		&& self::change_post_status($post_id, $post_status) ){
+			self::send_for_diffusion( $post_id );
+			
+			if(isset($_POST['data']) && is_array($_POST['data'])){
+				if( isset($_POST['data']['redir'])
+				&& ( $redir = $_POST['data']['redir'] )
+				)
+					return 'redir:' . $redir;
+					
+				elseif(isset($_POST['data']['reload'])
+				&& ( $redir = $_POST['data']['reload'] )
+				)
+					return 'reload:' . $redir;
+			}
+			return self::get_post_permalink($post_id, self::secretcode_argument);
+		}
 		return 'Impossible de modifier le statut.<br>Ceci peut être effectué depuis l\'e-mail de validation.';
 	}
 	/**
@@ -440,19 +456,6 @@ class Agdp_Covoiturage extends Agdp_Post {
 			self::get_activation_key($post_id, true); //reset
 		}
 		return self::send_validation_email($post_id);
-	}
-	
-	/**
-	 * Remove event
-	 */
-	public static function do_remove($post_id) {
-		if(self::user_can_change_post($post_id)){
-			// $post = wp_delete_post($post_id);
-			$post = self::change_post_status($post_id, 'trash');
-			return ! is_a($post, 'WP_Error');
-		}
-		// echo self::user_can_change_post($post_id, false, true);
-		return false;
 	}
 	
 	/**

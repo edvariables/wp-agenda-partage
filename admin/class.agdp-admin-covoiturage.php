@@ -37,12 +37,18 @@ class Agdp_Admin_Covoiturage {
 	 * Liste de covoiturages
 	 */
 	public static function manage_columns( $columns ) {
+		$dates_label = __( 'Date(s)', AGDP_TAG );
+		if( ! empty( $_REQUEST['date_max'] )
+		 && ( $date_max = strtotime($_REQUEST['date_max']) )
+		){
+			$dates_label .= ' avant le ' . wp_date('d/m/Y', $date_max );
+		}
 		unset( $columns );
 		$columns = array(
 			'cb'     => __( 'Sélection', AGDP_TAG ),
 			'cov_intention'     => __( 'Intention', AGDP_TAG ),
 			'titre'     => __( 'Titre', AGDP_TAG ),
-			'dates'     => __( 'Date(s)', AGDP_TAG ),
+			'dates'     => $dates_label,
 			'details'     => __( 'Détails', AGDP_TAG ),
 			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
 			'diffusion'      => __( 'Diffusion', AGDP_TAG ),
@@ -113,18 +119,28 @@ class Agdp_Admin_Covoiturage {
 	 */
 	public static function on_pre_get_posts( $query ) {
 		global $wpdb;
-		if(empty($query->query_vars)
-		|| empty($query->query_vars['orderby']))
+		if(empty($query->query_vars))
 			return;
-		switch( $query->query_vars['orderby']) {
-			case 'dates':
-				$query->set('meta_key','cov-date-debut');  
-				$query->set('orderby','meta_value'); 
-				break;
-			case 'organisateur':
-				$query->set('meta_key','cov-email');  
-				$query->set('orderby','meta_value');  
-				break;
+		if( ! empty( $_REQUEST['date_max'] ) ){
+			if( ! empty($query->query_vars['orderby']) ){
+				//TODO ?
+			}
+			$query->set('meta_key', 'cov-date-debut');  
+			$query->set('meta_compare', '<');  
+			$query->set('meta_value', $_REQUEST['date_max']);  
+		}
+			
+		if( ! empty($query->query_vars['orderby']) ){
+			switch( $query->query_vars['orderby']) {
+				case 'dates':
+					$query->set('meta_key','cov-date-debut');  
+					$query->set('orderby','meta_value'); 
+					break;
+				case 'organisateur':
+					$query->set('meta_key','cov-email');  
+					$query->set('orderby','meta_value');  
+					break;
+			}
 		}
 	}
 	/****************/

@@ -4,8 +4,9 @@
  * AgendaPartage -> Covoiturages
  * Collection de covoiturages
  */
-class Agdp_Covoiturages_Import {
+class Agdp_Covoiturages_Import extends Agdp_Posts_Import {
 	
+	const post_type = Agdp_Covoiturage::post_type;
 	
 	/**
 	* import_ics
@@ -15,7 +16,8 @@ class Agdp_Covoiturages_Import {
 		
 		$import_source = 'import_ics_' . $iCal['title'];
 		
-		$post_statuses = get_post_statuses();
+		$post_statuses = self::get_post_statuses();
+		
 		$today = strtotime(wp_date("Y-m-d"));
 		$successCounter = 0;
 		$failCounter = 0;
@@ -46,7 +48,7 @@ class Agdp_Covoiturages_Import {
 		else {
 			$post_author = Agdp_User::get_blog_admin_id();
 		}
-		debug_log("\r\nimport_ics covoiturages", $iCal['posts'], "\r\n\r\n\r\n\r\n");
+		// debug_log("\r\nimport_ics covoiturages", $iCal['posts'], "\r\n\r\n\r\n\r\n");
 		foreach($iCal['posts'] as $covoiturage){
 			
 			switch(strtoupper($covoiturage['status'])){
@@ -65,7 +67,33 @@ class Agdp_Covoiturages_Import {
 					$ignoreCounter++;
 					continue 2;
 			}
-			// if(($successCounter + $ignoreCounter) > 5) break;//debug
+			
+			if( $existing_post = self::get_existing_post($covoiturage) ){
+					
+				if( $post_status !== 'trash' ){
+					$meta_name = AGDP_IMPORT_REFUSED;
+					if( get_post_meta( $existing_post->ID, $meta_name, true ) ){
+						$ignoreCounter++;
+						debug_log('[REFUSED]post_status = ' . $meta_name . ' / ' . var_export($post_title, true));
+						continue;
+					}
+				}
+				
+				if( $post_status !== 'publish' ){
+					
+					Agdp_Covoiturage::change_post_status($existing_post->ID, $post_status);
+					$successCounter++;
+					debug_log('[UPDATE]post_status = ' . $post_status . ' / ' . var_export($post_title, true));
+					continue;
+				}
+				//Update
+			}
+			
+			if( $post_status === 'trash' ){
+				$ignoreCounter++;
+				debug_log('[IGNORE]trash = ' . var_export($post_title, true));
+				continue;
+			}
 			
 			$dateStart = $covoiturage['dtstart'];
 			$dateEnd = empty($covoiturage['dtend']) ? '' : $covoiturage['dtend'];
@@ -88,24 +116,43 @@ class Agdp_Covoiturages_Import {
 			}
 			
 			$inputs = array(
-				'cov-date-debut' => $dateStart,
-				'cov-date-fin' => $dateEnd,
-				'cov-heure-debut' =>$timeStart,
-				'cov-heure-fin' => $timeEnd,
-				'cov-localisation' => empty($covoiturage['location']) ? '' : trim($covoiturage['location']),
-				'cov-organisateur' => empty($covoiturage['organisateur']) ? '' : trim($covoiturage['organisateur']),
-				'cov-email' => empty($covoiturage['email']) ? '' : trim($covoiturage['email']),
-				'cov-phone' => empty($covoiturage['phone']) ? '' : trim($covoiturage['phone']),
-				AGDP_IMPORT_UID => empty($covoiturage['uid']) ? '' : $covoiturage['uid'],
-				'cov-date-journee-entiere' => $timeStart ? '' : '1',
-				'cov-codesecret' => Agdp::get_secret_code(6),
-				'_post-source' => $import_source
+				'cov-intention' => 'intention',
+				'cov-depart' => 'depart',
+				'cov-arrivee' => 'arrivee',
+				'cov-nb-places' => 'nb-places',
+				'cov-periodique' => 'periodique',
+				'cov-periodique-label' => 'periodique-label',
+				'cov-'.AGDP_COVOIT_SECRETCODE => AGDP_COVOIT_SECRETCODE,
+				'related_' . Agdp_Evenement::post_type => true,
+				'cov-organisateur' => 'organisateur',
+				'cov-email' => 'email',
+				'cov-phone' => 'phone',
+				'cov-phone-show' => 'phone-show',
+				AGDP_IMPORT_UID => 'uid',
 			);
+			foreach( $inputs as $key => $value ){
+				if( $value === true )
+					$value = $key;
+				if(empty($covoiturage[$value]))
+					$inputs[$key] = '';
+				else
+					$inputs[$key] = trim($covoiturage[$value]);
+			}
+				
+			
+			$inputs = array_merge( $inputs, array(
+				'cov-date-debut' => $dateStart,
+				'cov-heure-debut' =>$timeStart,
+				'cov-date-fin' => $dateEnd,
+				'cov-heure-fin' => $timeEnd,
+				'_post-source' => $import_source
+			));
 			
 			if( ! empty( $data['meta_input'] ) ){
-				$inputs = array_merge( $data['meta_input'], $inputs );
+				$inputs = array_merge( $data['meta_input'], $inputs, $covoiturage );
 			}
-						
+			// debug_log(__FUNCTION__ . ' $inputs', $inputs);
+			
 			$post_title = $covoiturage['summary'];
 			$post_content = empty($covoiturage['description']) ? '' : trim($covoiturage['description']);
 			if ($post_content === null) $post_content = '';
@@ -125,8 +172,7 @@ class Agdp_Covoiturages_Import {
 			$all_taxonomies = Agdp_Covoiturage_Post_type::get_taxonomies();
 			$taxonomies = [];
 			foreach([ 
-				'INTENTIONS' => Agdp_Covoiturage::taxonomy_cov_intention
-				, 'CITIES' => Agdp_Covoiturage::taxonomy_city
+				'CITIES' => Agdp_Covoiturage::taxonomy_city
 				, 'DIFFUSIONS' => Agdp_Covoiturage::taxonomy_diffusion
 			] as $node_name => $tax_name){
 				$node_name = strtolower($node_name);
@@ -168,9 +214,8 @@ class Agdp_Covoiturages_Import {
 			// terms
 			$taxonomies = [];
 			foreach([ 
-				'INTENTIONS' => Agdp_Covoiturage::taxonomy_cov_intention
-				, 'CITIES' => Agdp_Covoiturage::taxonomy_city
-				, 'DIFFUSIONS' => Agdp_Covoiturage::taxonomy_diffusion
+				'CITIES' => Agdp_Covoiturage::taxonomy_city,
+				'DIFFUSIONS' => Agdp_Covoiturage::taxonomy_diffusion,
 			] as $node_name => $term_name){
 				if( ! empty($covoiturage[strtolower($node_name)]))
 					$taxonomies[$term_name] = $covoiturage[strtolower($node_name)];
@@ -219,12 +264,4 @@ class Agdp_Covoiturages_Import {
 		
 		return $successCounter;
 	}
-	/**
-	 * get_vcalendar($file_name)
-	 */
-	public static function get_vcalendar($file_name){
-		return Agdp_Evenements_Import::get_vcalendar($file_name);
-	}
-	/*
-	**/
 }

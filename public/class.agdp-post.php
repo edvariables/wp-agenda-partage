@@ -210,24 +210,10 @@ abstract class Agdp_Post {
 	*
 	*/
 	public static function get_posts_export($posts = false, $file_format = 'ics', $return = 'url', $filters = false) {
-		foreach($posts as $post){
-			if( $post = static::get_post($post))
-				$post_type = $post->post_type;
-			break;
-		}
-		if( empty($post_type) )
-			return false;
 		
-		switch($post_type){
-			case Agdp_Evenement::post_type:
-				require_once( dirname(__FILE__) . '/class.agdp-agdpevents-export.php');
-				return Agdp_Evenements_Export::do_export( [$post], $file_format, $return, $filters);
-			case Agdp_Covoiturage::post_type:
-				require_once( dirname(__FILE__) . '/class.agdp-covoiturages-export.php');
-				return Agdp_Covoiturages_Export::do_export( [$post], $file_format, $return, $filters);
-			default:
-				return false;
-		}
+		require_once( dirname(__FILE__) . '/class.agdp-posts-export.php');
+		return Agdp_Posts_Export::do_export( $posts, $file_format, $return, $filters);
+		
 	}
 	
 	/**
@@ -235,16 +221,8 @@ abstract class Agdp_Post {
 	*
 	*/
 	public static function import_post_type_ics($post_type, $file_name, $default_post_status = 'publish', $original_file_name = null) {
-		switch($post_type){
-			case Agdp_Evenement::post_type:
-				require_once( dirname(__FILE__) . '/class.agdp-agdpevents-import.php');
-				return Agdp_Evenements_Import::import_ics( $file_name, $default_post_status, $original_file_name);
-			case Agdp_Covoiturage::post_type:
-				require_once( dirname(__FILE__) . '/class.agdp-covoiturages-import.php');
-				return Agdp_Covoiturages_Import::import_ics( $file_name, $default_post_status, $original_file_name);
-			default:
-				return false;
-		}
+		require_once( dirname(__FILE__) . '/class.agdp-posts-import.php');
+		return Agdp_Posts_Import::import_post_type_ics( $post_type, $file_name, $default_post_status, $original_file_name);
 	}
 	
 	/**
@@ -607,7 +585,7 @@ abstract class Agdp_Post {
 				$args = array();
 		}
 		if(!$post_id){
-			throw new ArgumentException('get_post_terms : $post_id ne peut être null;');
+			throw new Exception('get_post_terms : $post_id ne peut être null;');
 		}
 		return wp_get_post_terms($post_id, $tax_name, $args);
 	}
@@ -743,6 +721,44 @@ abstract class Agdp_Post {
 		
 		return false;
 		
+	}
+	
+	/**
+	 * Refuse import from an other blog
+	 */
+	public static function do_refuse_import($post_id, $refuse = true) {
+		if(static::user_can_change_post($post_id)){
+			// $post = wp_delete_post($post_id);
+			
+			$meta_name = AGDP_IMPORT_REFUSED;
+			update_post_meta( $post_id, $meta_name, $refuse );
+			
+			if( $refuse ){
+				$post = static::change_post_status($post_id, 'draft');
+				if( is_a($post, 'WP_Error') )
+					return false;
+			}
+			return true;
+		}
+		// echo static::user_can_change_post($post_id, false, true);
+		return false;
+	}
+	
+	/**
+	 * Remove event
+	 */
+	public static function do_remove($post_id) {
+		if(static::user_can_change_post($post_id)){
+			// $post = wp_delete_post($post_id);
+			$post = static::change_post_status($post_id, 'trash');
+			if( is_a($post, 'WP_Error') )
+				return false;
+			
+			static::send_for_diffusion( $post_id );
+			return true;
+		}
+		// echo static::user_can_change_post($post_id, false, true);
+		return false;
 	}
 	
 	/**
@@ -924,23 +940,25 @@ abstract class Agdp_Post {
 			$filters['set_post_status'] = 'trash';
 		
 		// Export file_format .ics or 'export' attribute
-		$export = 'ics';
+		$export_type = 'ics';
 		if( isset($attributes['export']) ){
 			switch( $attributes['export'] ){
 				case '0' :
-					$export = false;
+					$export_type = false;
 					break;
 				case '1' :
 					break;
 				default :
-					$export = $attributes['export'];
+					$export_type = $attributes['export_type'];
 			}
 				
 		}
-		if( $export )
-			$export = static::get_posts_export( [ $post_id ], 'ics', 'file',  $filters );
 		
-		// debug_log('send_for_diffusion $export', $attributes, $filters, $export, $export ? file_get_contents($export) : '-' );
+		if( $export_type )
+			$export = static::get_posts_export( [ $post_id ], $export_type, 'file',  $filters );
+		else
+			$export = false;
+		// debug_log('send_for_diffusion $export', $attributes, $filters, $export_type, $export ? file_get_contents($export) : '-' );
 		
 		//Send
 		switch( $action ){
