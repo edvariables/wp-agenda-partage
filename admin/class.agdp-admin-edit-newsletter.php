@@ -233,7 +233,7 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 				, Agdp_Covoiturage::post_type => 'Covoiturages'
 				, 'agdpstats' => 'Statistiques pour administrateurices'];
 		//Mailboxes
-		foreach(get_posts([ 'post_type' => Agdp_Mailbox::post_type]) as $mailbox){
+		foreach(get_posts([ 'post_type' => Agdp_Mailbox::post_type, 'numberposts' => -1]) as $mailbox){
 			foreach( Agdp_Mailbox::get_emails_dispatch($mailbox->ID) as $email_to => $destination)
 				if( $destination['type'] === 'page'
 				&& ! isset($sources[ 'page.' . $destination['id'] ])){
@@ -259,7 +259,7 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 		$meta_name = 'subscription_parent';
 		//newsletters
 		$sources = ['' => '(aucune)'];
-		foreach(get_posts([ 'post_type' => Agdp_Newsletter::post_type]) as $post)
+		foreach(get_posts([ 'post_type' => Agdp_Newsletter::post_type, 'numberposts' => -1]) as $post)
 			if( $newsletter->ID !== $post->ID ){
 				$sources[ '' . $post->ID ] = $post->post_title;
 			}

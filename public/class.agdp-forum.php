@@ -123,6 +123,7 @@ class Agdp_Forum extends Agdp_Page {
 		$default_args = [
 			'post_type' => self::post_type,
 			'post_status' => 'publish',
+			'numberposts' => -1,
 			'meta_query' => [[
 				'key' => 'agdpmailbox',
 				'value' => '0',

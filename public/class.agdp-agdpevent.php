@@ -214,6 +214,7 @@ class Agdp_Evenement extends Agdp_Post {
 		$covoiturages = get_posts([
 			'post_type' => Agdp_Covoiturage::post_type,
 			'post_status' => 'publish',
+			'numberposts' => -1,
 			'meta_key' => 'related_'.self::post_type,
 			'meta_value' => $agdpevent->ID,
 			'meta_compare' => '=',

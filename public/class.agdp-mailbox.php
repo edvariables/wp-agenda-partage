@@ -105,7 +105,7 @@ class Agdp_Mailbox {
 	 */
 	 public static function get_mailboxes( $published_only = true, $cron_enable_only = false){
 		$posts = [];
-		$query = [ 'post_type' => self::post_type ];
+		$query = [ 'post_type' => self::post_type, 'numberposts' => -1 ];
 		if( $published_only )
 			$query[ 'post_status' ] = 'publish';
 		else

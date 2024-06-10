@@ -158,6 +158,7 @@ class Agdp_Admin_User {
 		<table class="form-table" role="presentation"><?php
 			$active_newsletters = Agdp_Newsletter::get_active_newsletters();
 			$newsletter_counter = 0;
+			
 			foreach(Agdp_Newsletter::get_newsletters_names() as $newsletter_id =>  $newsletter_name){
 				if( ! current_user_can('manage_options')
 				 && ( $newsletter_id == $admin_nl_post_id

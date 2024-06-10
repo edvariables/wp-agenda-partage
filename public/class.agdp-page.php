@@ -143,6 +143,7 @@ abstract class Agdp_Page {
 
 		$query = new WP_Query([
 			'post_type' => Agdp_Newsletter::post_type,
+			'numberposts' => -1,
 			'meta_key' => 'source',
 			'meta_value' => self::get_source_key( $page_id ),
 		]);

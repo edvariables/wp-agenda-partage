@@ -384,6 +384,7 @@ class Agdp_Newsletter {
 		foreach( get_posts([
 			'post_type' => self::post_type
 			, 'fields' => 'post_title'
+			, 'numberposts' => -1
 			]) as $post)
 			$newsletters[ $post->ID . '' ] = $post->post_title;
 		return $newsletters;
@@ -397,6 +398,7 @@ class Agdp_Newsletter {
 		foreach( get_posts([
 			'post_type' => self::post_type
 			, 'post_status' => 'publish'
+			, 'numberposts' => -1
 			, 'meta_key' => 'mailing-enable'
 			, 'meta_value' => '1'
 			, 'meta_compare' => '='
@@ -528,6 +530,7 @@ class Agdp_Newsletter {
 		$newsletter = self::get_newsletter($newsletter);
 		if( ! $newsletter )
 			return false;
+			
 		if( ! $period ){
 			$min_date = 0;
 			$periods_next_dates = self::get_periods_next_dates($newsletter, $after_date);
@@ -556,7 +559,7 @@ class Agdp_Newsletter {
 				
 			case PERIOD_MONTHLY:
 				$month_day = get_post_meta($newsletter->ID, 'mailing-month-day', true);
-				if( ! is_int($month_day) )
+				if( ! is_numeric($month_day) )
 					return $today;
 				if(wp_date('d', $today) > $month_day){
 					if($month_day > 28
@@ -586,7 +589,7 @@ class Agdp_Newsletter {
 				
 			case PERIOD_WEEKLY:
 				$week_day = get_post_meta($newsletter->ID, 'mailing-week-day', true);
-				if( ! is_int($week_day) )
+				if( ! is_numeric($week_day) )
 					return $today;
 				$today_week_day = wp_date('w', $today);
 				if( $week_day >= $today_week_day )
@@ -696,7 +699,7 @@ class Agdp_Newsletter {
 		if( ! current_user_can('moderate_comments') ){
 			global $current_user;
 			foreach( $newsletters as $newsletter_id => $newsletter)
-				if( is_int($newsletter_id)
+				if( is_numeric($newsletter_id)
 				&& ( $forum = self::get_forum_of_newsletter($newsletter_id) )){
 					$approved = Agdp_Forum::get_forum_comment_approved( $forum, $current_user, false );
 					if( $approved !== 1 ){
@@ -892,7 +895,7 @@ class Agdp_Newsletter {
 			if ( $posts = get_posts( array( 
 				'name' => $newsletter, 
 				'post_type' => self::post_type,
-				'posts_per_page' => 1
+				'numberposts' => 1,
 			) ) )
 				return $posts[0];
 			else
@@ -994,6 +997,7 @@ class Agdp_Newsletter {
 		$all_newsletters = get_posts([
 			'post_type' => self::post_type,
 			'post_status' => 'publish',
+			'numberposts' => -1,
 			'meta_query' => [[
 				'key' => 'source',
 				'value' => 'page.',
@@ -1558,14 +1562,17 @@ class Agdp_Newsletter {
 					'subscribers' => $subscribers,
 				];
 			}
-			if( ! $subscribers ) {
+			else {
 				foreach($periods_next_dates as $period => $next_date){
 					if($period === ALL_PERIODS)
 						continue;
 					//Pour les envois quotidiens, on ne change la date que le lendemain
 					if( $period !== PERIOD_DAYLY || $next_date < $today ){
+						$cron_state = sprintf(' | Prochaine date (%s) passe de %s', $period, $next_date);
 						self::$cron_state .= sprintf(' | Prochaine date (%s) passe de %s', $period, $next_date);
+						
 						$next_date = self::get_next_date($period, $newsletter, $today);
+			
 						self::$cron_state .= sprintf(' à %s', $next_date);
 						$next_dates[] = wp_date('d/m/Y', $next_date) . ' ' . $next_hour . 'H';
 						self::set_next_date($period, $newsletter, $next_date);
@@ -1857,10 +1864,6 @@ class Agdp_Newsletter {
 		$today_mysql = wp_date('Y-m-d', $today);
 		$sql = "SELECT subscription.meta_value AS period, user.ID, user.user_email, user.user_nicename"
 			. "\n FROM {$user_prefix}users user"
-			// . "\n INNER JOIN {$user_prefix}usermeta usermetacap"
-			// . "\n ON user.ID = usermetacap.user_id"
-			// . "\n AND usermetacap.meta_key = '{$blog_prefix}capabilities'"
-			// . "\n AND usermetacap.meta_value != 'a:0:{}'"
 			. "\n INNER JOIN {$user_prefix}usermeta subscription"
 				. "\n ON user.ID = subscription.user_id"
 				. "\n AND subscription.meta_key = '{$subscription_meta_key}'"
@@ -1868,7 +1871,8 @@ class Agdp_Newsletter {
 			. "\n INNER JOIN {$blog_prefix}postmeta next_date"
 				. "\n ON next_date.post_id = {$newsletter_id}"
 				. "\n AND next_date.meta_key = CONCAT( '{$meta_next_date}', subscription.meta_value)"
-				. "\n AND next_date.meta_value <= '{$today_mysql}'"
+				. "\n AND ( subscription.meta_value = 'd' AND next_date.meta_value <= '{$today_mysql}'"
+					. "\n OR subscription.meta_value != 'd' AND next_date.meta_value = '{$today_mysql}')"
 			. "\n LEFT JOIN {$user_prefix}usermeta mailing"
 				. "\n ON user.ID = mailing.user_id"
 				. "\n AND mailing.meta_key = '{$mailing_meta_key}'"

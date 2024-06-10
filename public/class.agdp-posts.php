@@ -239,8 +239,9 @@ abstract class Agdp_Posts {
 		}
 		return static::get_posts([
 			'fields' => 'ids',
-			'post_type' => $post_type
-			, 'post_status' => 'pending'
+			'post_type' => $post_type,
+			'numberposts' => -1,
+			'post_status' => 'pending',
 		]);
 	}
 
