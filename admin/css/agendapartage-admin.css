@@ -18,7 +18,7 @@ h3.info {
 	padding-left: 1em;
 }
 .color-red {
-	color: darkred !important;
+	color: #b32d2e !important;
 }
 body.colors-dark .color-red {
 	color: lightsalmon !important;

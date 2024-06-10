@@ -160,6 +160,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		if(empty($codesecret))
 			$secretcode = get_post_meta($post->ID, self::field_prefix . self::secretcode_argument, true);
 		
+		$status = false;
 		switch($post->post_status){
 			case 'pending':
 				$status = 'En attente de relecture';

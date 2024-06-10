@@ -10,8 +10,6 @@
  * Voir aussi Agdp_Forum
  */
 class Agdp_Admin_Forum {
-	
-	public static $forums_parent_id = false;
 
 	public static function init() {
 
@@ -29,12 +27,6 @@ class Agdp_Admin_Forum {
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
 
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
-	}
-	
-	public static function get_forums_parent_id(){
-		if( ! self::$forums_parent_id )
-			self::$forums_parent_id = Agdp::get_option('forums_parent_id');
-		return self::$forums_parent_id;
 	}
 	
 	/**
@@ -56,10 +48,6 @@ class Agdp_Admin_Forum {
 	public static function manage_custom_columns( $column, $post_id ) {
 		switch ( $column ) {
 			case Agdp_Forum::tag :
-				if( $post_id == self::get_forums_parent_id() ){
-					echo '<i>Racine des forums<br>&nbsp;&nbsp;réceptacle des commentaires pour e-mail non-attribuable</i>';
-					return;
-				}
 				if( ! ( $mailbox = Agdp_Mailbox::get_mailbox_of_page( $post_id ) ) ){
 					echo sprintf('<div class="row-actions"><span class="edit"><a href="/wp-admin/post.php?post=%d&action=edit&%s=1">Activer un forum</a></span></div>',
 						$post_id, Agdp_Forum::tag

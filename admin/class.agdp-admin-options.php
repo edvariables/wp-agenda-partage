@@ -398,27 +398,27 @@ class Agdp_Admin_Options {
 			
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
-		add_settings_section(
-			'agdp_section_forums',
-			__( 'Forums', AGDP_TAG ),
-			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG, $section_args
-		);
+		// add_settings_section(
+			// 'agdp_section_forums',
+			// __( 'Forums', AGDP_TAG ),
+			// array(__CLASS__, 'settings_sections_cb'),
+			// AGDP_TAG, $section_args
+		// );
 
-			// 
-			$field_id = 'forums_parent_id';
-			add_settings_field(
-				$field_id, 
-				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agdp_combos_posts_cb'),
-				AGDP_TAG,
-				'agdp_section_forums',
-				[
-					'label_for' => $field_id,
-					'class' => 'agdp_row',
-					'post_type' => 'page'
-				]
-			);
+			
+			// $field_id = 'forums_parent_id';
+			// add_settings_field(
+				// $field_id, 
+				// Agdp::get_option_label($field_id),
+				// array(__CLASS__, 'agdp_combos_posts_cb'),
+				// AGDP_TAG,
+				// 'agdp_section_forums',
+				// [
+					// 'label_for' => $field_id,
+					// 'class' => 'agdp_row',
+					// 'post_type' => 'page'
+				// ]
+			// );
 			
 			
 		//////////////////////////////////////////

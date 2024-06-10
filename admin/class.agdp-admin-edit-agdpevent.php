@@ -321,7 +321,6 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 	public static function get_metabox_admin_fields(){
 		global $post;
 		$fields = array();
-
 		
 		$meta_name = AGDP_IMPORT_UID;
  		if( ! self::$the_post_is_new
@@ -339,6 +338,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 								'name' => AGDP_IMPORT_REFUSED,
 								'label' => __('Refusé', AGDP_TAG),
 								'input' => 'checkbox',
+								'type' => 'bool',
 								'value' => $import_refused,
 								'container_class' => 'side-box' . ($import_refused ? ' color-red' : ''),
 							)]

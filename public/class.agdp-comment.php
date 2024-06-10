@@ -357,7 +357,6 @@ class Agdp_Comment {
 	 */
 	public static function get_attachments_links($comment){
 		$html = '';
-		
 		$attachments = get_comment_meta($comment->comment_ID, 'attachments', true);
 		if($attachments){
 			$upload_dir_info = wp_upload_dir();

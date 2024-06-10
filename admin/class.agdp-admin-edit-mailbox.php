@@ -92,6 +92,10 @@ class Agdp_Admin_Edit_Mailbox extends Agdp_Admin_Edit_Post_Type {
 							$post_id = Agdp::get_option('covoiturages_page_id');
 							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">Covoiturages</a>.', $email, $post_id);
 							break;
+						case Agdp_Mailbox::post_type:
+							$post_id = $post->ID;
+							$links[] = sprintf('%s en commentaires de cette boîte e-mails <a href="%s#comments">%s</a>.', $email, get_permalink( $post ), $post->post_title);
+							break;
 						default:
 							Agdp_Admin::add_admin_notice_now(sprintf('Destination de distribution inconnue : %s > %s', $email, print_r( $destination, true ))
 								, ['type' => 'error']);

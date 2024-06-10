@@ -20,8 +20,9 @@ abstract class Agdp_Posts_Import {
 	* import_post_type_ics
 	*/
 	public static function import_post_type_ics($post_type, $file_name, $default_post_status = 'publish', $original_file_name = null){
-		require_once( sprintf('%s/class.agdp-%ss-import.php', dirname(__FILE__), $post_type);
-		return ($post_type .'s_Import')::import_ics( $file_name, $default_post_status, $original_file_name);
+		require_once( sprintf('%s/class.agdp-%ss-import.php', dirname(__FILE__), $post_type) );
+		$posts_class = Agdp_Page::get_posts_class( $post_type );
+		return ($posts_class .'_Import')::import_ics( $file_name, $default_post_status, $original_file_name);
 	}
 	
 	/**
@@ -36,8 +37,9 @@ abstract class Agdp_Posts_Import {
 				, 'meta_value' => $vevent['uid']
 				, 'meta_compare' => '='
 				, 'numberposts' => 1
-				]) as $post)
-				return $post;
+				]) as $post){
+					return $post;
+			}
 			return false;
 		}
 	}

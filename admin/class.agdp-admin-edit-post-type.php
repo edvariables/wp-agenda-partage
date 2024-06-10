@@ -303,8 +303,9 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		}
 		else
 			$fields = $parent_field['fields'];
+		// debug_log(__FUNCTION__, $_POST, '', $fields );
 		foreach ($fields as $field) {
-			if(!isset($field['type']) || $field['type'] != 'label'){
+			if(!isset($field['type']) || $field['type'] !== 'label'){
 				$name = $field['name'];
 				if($parent_field !== null && isset($parent_field['name']))
 					$name = sprintf($name, $parent_field['name']);//TODO check
@@ -318,6 +319,11 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				}
 				else {
 					// TODO "remember : a checkbox unchecked does not return any value" so is 'default' = true correct ?
+					// debug_log(__FUNCTION__
+						// , $field
+						// , (isset($field['input']) && ($field['input'] === 'checkbox' || $field['input'] === 'bool'))
+						// , (isset($field['type'])  && ($field['type']  === 'checkbox' || $field['type']  === 'bool'))
+					// );
 					if(self::$the_post_is_new
 					&& isset($field['default']) && $field['default'])
 						$val = $field['default'];

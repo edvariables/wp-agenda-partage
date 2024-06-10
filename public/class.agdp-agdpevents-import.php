@@ -70,7 +70,7 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 					continue 2;
 			}
 			
-			if( $existing_post = self::get_existing_post($event) ){
+			if( $existing_post = static::get_existing_post($event) ){
 					
 				if( $post_status !== 'trash' ){
 					$meta_name = AGDP_IMPORT_REFUSED;

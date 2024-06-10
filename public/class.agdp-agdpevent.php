@@ -132,6 +132,7 @@ class Agdp_Evenement extends Agdp_Post {
 				$secretcode = get_post_meta($post->ID, self::field_prefix.self::secretcode_argument, true);
 		}
 		
+		$status = false;
 		switch($post->post_status){
 			case 'pending':
 				$status = 'En attente de relecture';

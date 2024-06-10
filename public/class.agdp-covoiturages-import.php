@@ -50,6 +50,7 @@ class Agdp_Covoiturages_Import extends Agdp_Posts_Import {
 		}
 		// debug_log("\r\nimport_ics covoiturages", $iCal['posts'], "\r\n\r\n\r\n\r\n");
 		foreach($iCal['posts'] as $covoiturage){
+			$post_title = $covoiturage['summary'];
 			
 			switch(strtoupper($covoiturage['status'])){
 				case 'CONFIRMED':
@@ -68,7 +69,7 @@ class Agdp_Covoiturages_Import extends Agdp_Posts_Import {
 					continue 2;
 			}
 			
-			if( $existing_post = self::get_existing_post($covoiturage) ){
+			if( $existing_post = static::get_existing_post($covoiturage) ){
 					
 				if( $post_status !== 'trash' ){
 					$meta_name = AGDP_IMPORT_REFUSED;
@@ -153,23 +154,34 @@ class Agdp_Covoiturages_Import extends Agdp_Posts_Import {
 			}
 			// debug_log(__FUNCTION__ . ' $inputs', $inputs);
 			
+			//email
+			if( ! empty($inputs['cov-user-email']) )
+				$user_email = $inputs['cov-user-email'];
+			elseif( ! empty($inputs['cov-email']) )
+				$user_email = $inputs['cov-email'];
+			else
+				$user_email = false;
+			
 			$post_title = $covoiturage['summary'];
 			$post_content = empty($covoiturage['description']) ? '' : trim($covoiturage['description']);
 			if ($post_content === null) $post_content = '';
 			
-			//Check doublon
-			$doublon = Agdp_Covoiturage_Edit::get_post_idem($post_title, $inputs);
-			if($doublon){
-				//var_dump($doublon);var_dump($post_title);var_dump($inputs);
-				debug_log('[IGNORE]$doublon = ' . var_export($post_title, true));
-				$ignoreCounter++;
-				$url = Agdp_Covoiturage::get_post_permalink($doublon);
-				$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
-				continue;				
+			if( ! $existing_post ){
+				//Check doublon
+				$doublon = Agdp_Covoiturage_Edit::get_post_idem($post_title, $inputs);
+				if($doublon){
+					//var_dump($doublon);var_dump($post_title);var_dump($inputs);
+					debug_log('[IGNORE]$doublon = ' . var_export($post_title, true));
+					$ignoreCounter++;
+					$url = Agdp_Covoiturage::get_post_permalink($doublon);
+					$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
+					continue;				
+				}
 			}
 			
 			// terms
 			$all_taxonomies = Agdp_Covoiturage_Post_type::get_taxonomies();
+			
 			$taxonomies = [];
 			foreach([ 
 				'CITIES' => Agdp_Covoiturage::taxonomy_city
@@ -221,18 +233,30 @@ class Agdp_Covoiturages_Import extends Agdp_Posts_Import {
 					$taxonomies[$term_name] = $covoiturage[strtolower($node_name)];
 			}
 			
-			#DEBUG
-			// if( strlen($postarr['post_title']) >= 10 ){
-				// $postarr['post_title'] = substr($postarr['post_title'], 0, 5) . "[...]";
-				// $postarr['post_name'] = sanitize_title( $postarr['post_title'] );
-			// }
-			// if( strlen($postarr['post_content']) >= 10 )
-				// $postarr['post_content'] = substr($postarr['post_content'], 0, 5) . "[...]";
-			
-			$post_id = wp_insert_post( $postarr, true );
-			
+			if( $existing_post ){
+				$postarr['ID'] = $existing_post->ID;
+				//update
+				$post_id = wp_update_post( $postarr, true );
+			}
+			else {
+				if( $user_email && ($post_author = email_exists($user_email)) ){
+					if( is_multisite() ){
+						$blogs = get_blogs_of_user($post_author, false);
+						if( ! isset( $blogs[ get_current_blog_id() ] ) )
+							$post_author = $default_post_author;
+					}
+				}
+				else
+					$post_author = $default_post_author;
+				$postarr['post_author'] = $post_author;
+				
+				$post_id = wp_insert_post( $postarr, true );
+			}
+				
 			if(!$post_id || is_wp_error( $post_id )){
 				$failCounter++;
+				if( $existing_post )
+					debug_log('[UPDATE]' . $existing_post->ID);
 				debug_log('[INSERT ERROR]$post_title = ' . var_export($post_title, true));
 				debug_log('[INSERT ERROR+]$post_content = ' . var_export($post_content, true));
 				$log[] = '<li class="error">Erreur de création du covoiturage</li>';

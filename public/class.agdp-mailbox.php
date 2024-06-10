@@ -42,9 +42,66 @@ class Agdp_Mailbox {
 		add_filter('wpcf7_before_send_mail', array(__CLASS__, 'wpcf7_before_send_mail'), 10, 3);
 		
 		add_action( self::cron_hook, array(__CLASS__, 'on_cron_exec') );
+		
+		global $pagenow;
+		if ( $pagenow !== 'edit.php' && $pagenow !== 'post.php') {
+			add_action( 'post_class', array(__CLASS__, 'on_post_class_cb'), 10, 3);
+		}
 	}
 	/*
 	 **/
+	/**
+	*/
+	public static function on_post_class_cb( $classes, $css_class, $post_id ){
+		if( get_post_type($post_id) !== self::post_type )
+			return $classes;
+		
+		$mailbox = get_post($post_id);
+		
+		add_filter( 'the_content', array(__CLASS__, 'the_content'), 10, 1 );
+		
+		return $classes;
+	}
+
+	/**
+	 * Hook
+	 */
+ 	public static function the_content( $content ) {
+ 		global $post;
+		// debug_log('the_content', $post);
+		if( ! $post	){
+ 			return $content;
+		}
+		
+		$comments = get_comments([
+			'fields' => 'name',
+			'post_id' => $post->ID,
+			'post_type' => 'any',
+			'status' => 'all',
+		]);
+		if( $comments ) {
+			$content .= '<h3>Messages non affectés</h3>';
+			$content .= '<ul>';
+			foreach($comments as $comment){
+				$metas = get_comment_meta($comment->comment_ID, '', true);
+				$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
+					, $metas['title'][0]
+					, $metas['from'][0]
+					, $metas['to'][0]
+					, date('d/m/Y', strtotime($comment->comment_date))
+					, date('H:i', strtotime($comment->comment_date))
+					, date('H:i', strtotime($metas['send_date'][0]))
+					, $comment->comment_content
+					, Agdp_Comment::get_attachments_links( $comment )
+					// , print_r($metas, true)
+				);
+			}
+			$content .= '</ul>';
+			// $content .= sprintf('<pre>%s</pre>', print_r( $comments, true ));
+			// debug_log(__FUNCTION__,  $comments);
+		}
+	    return $content;
+	}
 	
 	/**
 	 * Retourne la boîte e-mails associée à une page.
@@ -418,8 +475,8 @@ class Agdp_Mailbox {
 		if( ! $destination_filter )
 			$dispatches[ $email = '*' ] = [
 				'email' => $email,
-				'type' => 'page',
-				'id' => Agdp::get_option('forums_parent_id'),
+				'type' => Agdp_Mailbox::post_type/* 'page' */,
+				'id' => $mailbox_id,
 				'page_title' => false,
 				'mailbox' => false,
 				'mailbox_title' => false,
@@ -466,21 +523,23 @@ class Agdp_Mailbox {
 		$all_dispatches = self::get_emails_dispatch($mailbox_id, $page_id_only);
 		// debug_log('get_pages_dispatches $all_dispatches', $all_dispatches);
 		foreach( $all_dispatches as $email => $dispatch ){
-			if($dispatch['type'] === 'page')
-				$page_id = $dispatch['id'].'';
-			//TODO
-			elseif( $dispatch['type'] === Agdp_Evenement::post_type ){
-				$page_id = Agdp::get_option('agenda_page_id');
-			}
-			elseif( $dispatch['type'] === Agdp_Covoiturage::post_type ){
-				$page_id = Agdp::get_option('covoiturages_page_id');
-			}
-			else {
-				debug_log(__CLASS__ . '::get_pages_dispatches'
-					, sprintf('Erreur de configuration de la mailbox %s, le type "%s" est inconnu.'
-						, is_a($mailbox_id, 'WP_Post') ? $mailbox_id->post_title : $mailbox_id
-						, $dispatch['type']));
-				continue;
+			switch($dispatch['type']){
+				case Agdp_Mailbox::post_type :
+				case 'page':
+					$page_id = $dispatch['id'].'';
+					break;
+				case Agdp_Evenement::post_type :
+					$page_id = Agdp::get_option('agenda_page_id');
+					break;
+				case Agdp_Covoiturage::post_type :
+					$page_id = Agdp::get_option('covoiturages_page_id');
+					break;
+				default:
+					debug_log(__CLASS__ . '::get_pages_dispatches'
+						, sprintf('Erreur de configuration de la mailbox %s, le type "%s" est inconnu.'
+							, is_a($mailbox_id, 'WP_Post') ? $mailbox_id->post_title : $mailbox_id
+							, $dispatch['type']));
+					continue 2;
 			}
 			if( $page_id_only &&
 			$page_id_only != $page_id)
@@ -586,11 +645,15 @@ class Agdp_Mailbox {
 				if( isset($dispatch['*']) )
 					$email_to = '*';
 				else {
-					debug_log(__CLASS__ . '.import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
+					debug_log(__CLASS__ . '::import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
 					continue;
 				}
-
+					
 			switch( $dispatch[$email_to]['type'] ){
+				case Agdp_Mailbox::post_type ://Message sans attribution
+					remove_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2);
+					add_filter('pre_comment_approved', function() {return '0';}); //disapprove
+					// add_filter( 'duplicate_comment_id', '__return_false', 99, 2);//DEBUG
 				case 'page' :
 					$page_id = $dispatch[$email_to]['id'];
 					if( ! $page_id )
@@ -601,7 +664,9 @@ class Agdp_Mailbox {
 						throw new Exception(sprintf("La configuration de la boîte e-mails indique une page introuvable : %s > %s.%s.", $email_to, $dispatch[$email_to]['type'], $page_id));
 					else
 						$pages['' . $page_id] = $page;
+					// debug_log(__FUNCTION__.' $message', $message);
 					$comment = self::import_message_to_comment( $mailbox, $message, $page );
+					// debug_log(__FUNCTION__.' $comment', $comment);
 					if($comment && ! is_wp_error($comment))
 						$imported[] = $comment;
 					break;
@@ -753,12 +818,13 @@ class Agdp_Mailbox {
 		// debug_log('import_message_to_comment', $message, 'page '.$page->ID);
 		$mailbox = self::get_mailbox($mailbox);
 		if( ! $mailbox ){
-			// debug_log('import_message_to_comment  ! $mailbox');
+			debug_log('import_message_to_comment  ! $mailbox');
 			return false;
 		}
-
+		// debug_log('import_message_to_comment', $mailbox->ID, $mailbox->ID === $page->ID);
+		
 		if( ($comment = self::get_existing_comment( $page, $message )) ){
-			// debug_log('import_message_to_comment get_existing_comment');
+			debug_log('import_message_to_comment get_existing_comment');
 		}
 		else {
 			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
@@ -808,12 +874,13 @@ class Agdp_Mailbox {
 				]
 			];
 				
-			// var_dump($commentdata);
 			$comment = wp_new_comment($commentdata, true);
+			// var_dump($commentdata, $comment);
 			if( is_wp_error($comment) ){
-				if( ! in_array('comment_duplicate', $comment->get_error_codes())
-				 || get_post_meta($mailbox->ID, 'imap_mark_as_read', true))
-				debug_log('import_message_to_comment !wp_new_comment : ', $comment);
+				// if( get_post_meta($mailbox->ID, 'imap_mark_as_read', true)
+				// || ! in_array('comment_duplicate', $comment->get_error_codes())
+				// )
+					debug_log('import_message_to_comment !wp_new_comment : ', $comment);
 				if( is_admin()
 				&& class_exists('Agdp_Admin'))
 					Agdp_Admin::add_admin_notice(__CLASS__.'::import_message_to_comment(). wp_new_comment returns ',

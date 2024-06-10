@@ -584,10 +584,6 @@ class Agdp_Forum extends Agdp_Page {
 		if( is_numeric($post) )
 			$post = get_post($post);
 		if($post && $post->post_type === 'page'){
-			$field_id = 'forums_parent_id';
-			if( $post->post_parent
-			&& $post->post_parent == Agdp::get_option($field_id) )
-				return true;
 			$meta_key = AGDP_PAGE_META_MAILBOX;
 			if( $mailbox_id = get_post_meta( $post->ID, $meta_key, true)){
 				return true;
@@ -775,7 +771,7 @@ class Agdp_Forum extends Agdp_Page {
 	 * Avant affichage, filtre ou ajoute des commentaires
 	 */
 	public static function on_comments_array($comments, $post_id){
-		// debug_log('on_comments_array IN', $post_id, count($comments));
+		debug_log('on_comments_array IN', $post_id, count($comments));
 			
 		if( current_user_can('moderate_comments') ) 
 			return $comments;

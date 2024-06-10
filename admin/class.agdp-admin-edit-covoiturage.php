@@ -370,6 +370,7 @@ class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 								'name' => AGDP_IMPORT_REFUSED,
 								'label' => __('Refusé', AGDP_TAG),
 								'input' => 'checkbox',
+								'type' => 'bool',
 								'value' => $import_refused,
 								'container_class' => 'side-box' . ($import_refused ? ' color-red' : ''),
 							)]

@@ -37,17 +37,17 @@ class Agdp_Admin_Evenement {
 	 * Liste de évènements
 	 */
 	public static function manage_columns( $columns ) {
-		$dates = __( 'Date(s)', AGDP_TAG );
+		$dates_label = __( 'Date(s)', AGDP_TAG );
 		if( ! empty( $_REQUEST['date_max'] )
 		 && ( $date_max = strtotime($_REQUEST['date_max']) )
 		){
-			$dates .= ' avant le ' . wp_date('d/m/Y', $date_max );
+			$dates_label .= ' avant le ' . wp_date('d/m/Y', $date_max );
 		}
 		unset( $columns );
 		$columns = array(
 			'cb'     => __( 'Sélection', AGDP_TAG ),
 			'titre'     => __( 'Titre', AGDP_TAG ),
-			'dates'     => $dates,
+			'dates'     => $dates_label,
 			'details'     => __( 'Détails', AGDP_TAG ),
 			'ev_category'     => __( 'Catégories', AGDP_TAG ),
 			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
