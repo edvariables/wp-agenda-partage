@@ -91,6 +91,11 @@ class Agdp_Admin_Menu {
 			$menu_slug = $parent_slug . '&post_status=pending';
 			add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
+			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Evenement::post_type) ;
+			$page_title =  'Evènements obsolètes d\'un mois';
+			$menu_slug = $parent_slug . '&date_max=' . wp_date('Y-m-d', strtotime('-1 Month'));
+			add_submenu_page( $parent_slug, $page_title, 'Obsolètes', $capability, $menu_slug, '', 2);
+			
 			//Menus Covoiturages
 			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Covoiturage::post_type) ;
 			$page_title =  'Covoiturages en attente de validation';

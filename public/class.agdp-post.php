@@ -901,15 +901,15 @@ abstract class Agdp_Post {
 			return false;
 		
 		$attributes = [];
-		foreach( explode( '|', $connexion) as $index => $attribute){
+		foreach( preg_split( '/[|\n]/m', $connexion) as $index => $attribute){
 			$attribute = explode( ':', $attribute );
 			if( $index === 0 ) {
 				$attributes['action'] = $action = strtolower($attribute[0]);
 				$first_attribute = false;
 			}
+			// !! strtolower( $key ) !!
 			$attributes[strtolower($attribute[0])] = $attribute[1];
 		}
-		
 		$history_key = sprintf('%d>%s:%s', $post_id, $action, $attributes[$action]);
 		if( in_array( $history_key, self::$send_for_diffusion_history ) ){
 			debug_log('send_for_diffusion - already in send_for_diffusion_history', $action);
@@ -918,13 +918,29 @@ abstract class Agdp_Post {
 		else
 			self::$send_for_diffusion_history[] = $history_key;
 
-		// Export .ics
+		// Export
 		$filters = [ static::secretcode_argument => true ];
 		if( $post_is_deleted )
 			$filters['set_post_status'] = 'trash';
-		$export = static::get_posts_export( [ $post_id ], 'ics', 'file',  $filters );
 		
-		// debug_log('send_for_diffusion $export', $filters, file_get_contents($export) );
+		// Export file_format .ics or 'export' attribute
+		$export = 'ics';
+		if( isset($attributes['export']) ){
+			switch( $attributes['export'] ){
+				case '0' :
+					$export = false;
+					break;
+				case '1' :
+					break;
+				default :
+					$export = $attributes['export'];
+			}
+				
+		}
+		if( $export )
+			$export = static::get_posts_export( [ $post_id ], 'ics', 'file',  $filters );
+		
+		// debug_log('send_for_diffusion $export', $attributes, $filters, $export, $export ? file_get_contents($export) : '-' );
 		
 		//Send
 		switch( $action ){
@@ -947,10 +963,14 @@ abstract class Agdp_Post {
 					$headers[] = 'From:' . $attributes['from'];
 				if( ! empty($attributes['reply-to']) )
 					$headers[] = 'Reply-to:' . $attributes['reply-to'];
-				$attachments = [ $export ];
+				$attachments = [];
+				if( $export )
+					$attachments[] = $export;
+				
+				// if( false ) //debug
 				$result = wp_mail( $attributes['mailto'], $subject, $message, $headers, $attachments );
 				
-				debug_log('send_for_diffusion wp_mail', $attributes['mailto'], $subject, $message, $headers, $attachments );
+				// debug_log('send_for_diffusion debug ! wp_mail', $attributes['mailto'], $subject, $message, $headers, $attachments );
 				
 				break;
 				

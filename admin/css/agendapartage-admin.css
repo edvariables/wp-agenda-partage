@@ -255,6 +255,9 @@ div.edit-post-layout__metaboxes {
   top: 3px;
 }
 
+.agdp-metabox-row code {
+	padding-left:0px;
+}
 /*
  *******/
  

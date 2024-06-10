@@ -251,11 +251,12 @@ abstract class Agdp_Admin_Edit_Post_Type {
 						. ($unit ? ' ' . $unit : '');
 					break;
 			}
-		
+			
+			$need_label = ! in_array( $input, ['input', 'checkbox', 'textarea'] );
 			if($learn_more)
 				foreach($learn_more as $comment){
 					echo '<br>';
-					if( ! in_array( $input, ['input', 'checkbox'] ))
+					if( $need_label )
 						echo '<label></label>';
 					?><span class="dashicons-before dashicons-welcome-learn-more"><?=$comment?></span><?php
 				}
@@ -263,7 +264,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if($comments)
 				foreach($comments as $comment){
 					echo '<br>';
-					if( ! in_array( $input, ['input', 'checkbox'] ))
+					if( $need_label )
 						echo '<label></label>';
 					?><span><?=$comment?></span><?php
 				}
@@ -271,7 +272,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if($warning)
 				foreach($warning as $comment){
 					echo '<br>';
-					if( ! in_array( $input, ['input', 'checkbox'] ))
+					if( $need_label )
 						echo '<label></label>';
 					?><span class="dashicons-before dashicons-warning"><?=$comment?></span><?php
 				}

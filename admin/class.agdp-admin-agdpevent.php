@@ -37,11 +37,17 @@ class Agdp_Admin_Evenement {
 	 * Liste de évènements
 	 */
 	public static function manage_columns( $columns ) {
+		$dates = __( 'Date(s)', AGDP_TAG );
+		if( ! empty( $_REQUEST['date_max'] )
+		 && ( $date_max = strtotime($_REQUEST['date_max']) )
+		){
+			$dates .= ' avant le ' . wp_date('d/m/Y', $date_max );
+		}
 		unset( $columns );
 		$columns = array(
 			'cb'     => __( 'Sélection', AGDP_TAG ),
 			'titre'     => __( 'Titre', AGDP_TAG ),
-			'dates'     => __( 'Date(s)', AGDP_TAG ),
+			'dates'     => $dates,
 			'details'     => __( 'Détails', AGDP_TAG ),
 			'ev_category'     => __( 'Catégories', AGDP_TAG ),
 			'organisateur'     => __( 'Organisateur', AGDP_TAG ),
@@ -121,18 +127,28 @@ class Agdp_Admin_Evenement {
 	 */
 	public static function on_pre_get_posts( $query ) {
 		global $wpdb;
-		if(empty($query->query_vars)
-		|| empty($query->query_vars['orderby']))
+		if(empty($query->query_vars))
 			return;
-		switch( $query->query_vars['orderby']) {
-			case 'dates':
-				$query->set('meta_key','ev-date-debut');  
-				$query->set('orderby','meta_value'); 
-				break;
-			case 'organisateur':
-				$query->set('meta_key','ev-email');  
-				$query->set('orderby','meta_value');  
-				break;
+		if( ! empty( $_REQUEST['date_max'] ) ){
+			if( ! empty($query->query_vars['orderby']) ){
+				//TODO ?
+			}
+			$query->set('meta_key', 'ev-date-debut');  
+			$query->set('meta_compare', '<');  
+			$query->set('meta_value', $_REQUEST['date_max']);  
+		}
+			
+		if( ! empty($query->query_vars['orderby']) ){
+			switch( $query->query_vars['orderby']) {
+				case 'dates':
+					$query->set('meta_key','ev-date-debut');  
+					$query->set('orderby','meta_value'); 
+					break;
+				case 'organisateur':
+					$query->set('meta_key','ev-email');  
+					$query->set('orderby','meta_value');  
+					break;
+			}
 		}
 	}
 	/****************/

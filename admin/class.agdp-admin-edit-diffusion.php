@@ -242,11 +242,24 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
         <th scope="row"><label for="default_checked">Paramètres de connexion</label></th>
         <td><?php
 			$meta_name = 'connexion';
+			$example_email = sprintf('%s@un-autre-site.net',
+				$taxonomy === Agdp_Evenement::taxonomy_diffusion
+					? 'evenement'
+					: ( $taxonomy === Agdp_Covoiturage::taxonomy_diffusion
+						? 'covoiturage'
+						: 'publier'
+					)	
+				);
 			parent::metabox_html([array('name' => $meta_name,
 									// 'label' => __('Paramètres.', AGDP_TAG),
 									'type' => 'input',
 									'input' => 'textarea',
-									// 'default' => $checked
+									'learn-more' => 'Permet d\'exporter l\'enregistrement vers un autre site à chaque mise à jour de celui-ci depuis ce site '
+										. get_bloginfo('name')
+										. '. De la forme : '
+										. '<br><code>mailto:' . $example_email
+										. '<br>export:ics|1|0'
+										. '</code>'
 								)], $tag, null);
         ?></td>
     </tr><?php
