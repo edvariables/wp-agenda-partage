@@ -806,8 +806,9 @@ class Agdp_Covoiturages extends Agdp_Posts {
 				, Agdp::icon('media-default')
 			);
 			
-		$html .= sprintf('<div id="%s%d" class="covoiturage toggle-trigger %s" covoiturage="%s">'
+		$html .= sprintf('<div id="%s%d" class="covoiturage %s %s" covoiturage="%s">'
 			, AGDP_ARG_COVOITURAGEID, $post->ID
+			, $email_mode ? '' : 'toggle-trigger'
 			, $post->ID == $requested_id ? 'active' : ''
 			, esc_attr( json_encode(['id'=> $post->ID, 'date' => $date_debut]) )
 		);
@@ -826,19 +827,24 @@ class Agdp_Covoiturages extends Agdp_Posts {
 		
 		$html .= '</div>';
 		
-		$html .= '<div class="toggle-container">';
+		if( ! $email_mode )
+			$html .= '<div class="toggle-container">';
+		else
+			$html .= '<div>';
 		
 		
 		$value = $post->post_content;
 		if($value)
 			$html .= sprintf('<pre>%s</pre>', htmlentities($value) );
 		
-		$value = get_post_meta($post->ID, 'cov-organisateur', true);
+		$meta_name = 'cov-organisateur';
+		$value = get_post_meta($post->ID, $meta_name, true);
 		if($value){
 			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
 		}
 		
-		$show_phone = /*! is_user_logged_in() &&*/ get_post_meta($post->ID, 'cov-phone-show', true);
+		$meta_name = 'cov-phone-show';
+		$show_phone = /*! is_user_logged_in() &&*/ get_post_meta($post->ID, $meta_name, true);
 		$value = get_post_meta($post->ID, 'cov-phone', true);
 		if($value){
 			if( $email_mode && ! $show_phone)
@@ -856,7 +862,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 				
 			$html .= '<table><tbody><tr>';
 			
-			if(is_user_logged_in()){
+			/* if(is_user_logged_in()){
 				global $current_user;
 				//Rôle autorisé
 				if(	$current_user->has_cap( 'edit_posts' ) ){
@@ -869,7 +875,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 						$html .= '</td></tr><tr>';
 					}
 				}
-			}
+			} */
 			
 			if( ! $email_mode )
 				$html .= '<td class="trigger-collapser"><a href="#replier">'

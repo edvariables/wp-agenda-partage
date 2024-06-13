@@ -259,6 +259,7 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 										. '. De la forme : '
 										. '<br><code>mailto:' . $example_email
 										. '<br>export:ics|1|0'
+										. '<br>format:message|0'
 										. '</code>'
 								)], $tag, null);
         ?></td>

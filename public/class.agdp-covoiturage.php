@@ -46,6 +46,8 @@ class Agdp_Covoiturage extends Agdp_Post {
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_EMAIL4PHONE, array(__CLASS__, 'on_wp_ajax_covoiturage_email4phone_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_EMAIL4PHONE, array(__CLASS__, 'on_wp_ajax_covoiturage_email4phone_cb') );
+		
+		add_filter(self::post_type . '_send_for_diffusion_mailto', array(__CLASS__, 'on_send_for_diffusion_mailto'), 10, 1 );
 	}
  
  	/**
@@ -80,6 +82,8 @@ class Agdp_Covoiturage extends Agdp_Post {
 			$le = "Le";
 			$dates = self::get_covoiturage_dates_text( $covoiturage_id, $data );
 		}
+		if( $no_html)
+			$le = strtolower($le);
 		$de = "de";
 		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage_id, 'cov-depart', true);
 		$vers = "vers";
@@ -863,5 +867,30 @@ class Agdp_Covoiturage extends Agdp_Post {
 				return $html;
 		}
 		echo $html;
+	}
+	
+	/**
+	 * on_send_for_diffusion_mailto
+	 */
+	public static function on_send_for_diffusion_mailto( $data ){
+		if( $data['action'] === 'mailto' 
+		 && isset($data['attributes']['format'])
+		 && $data['attributes']['format'] === 'message' ){
+			$post = get_post($data['post_id']);
+			$meta_name = 'cov-organisateur' ;
+			$organisateur = self::get_post_meta($post, $meta_name, true);
+			$meta_name = 'cov-email' ;
+			if( $email = self::get_post_meta($post, $meta_name, true) ){
+				foreach($data['headers'] as $index => $header)
+					if( stripos($header, 'Reply_to') === 0 )
+						unset($data['headers'][$index]);
+				if($organisateur)
+					$email = sprintf('"%s"<%s>', $organisateur, $email );
+				$data['headers'][] = sprintf('Reply-to: %s', $email);
+			}
+			$data['subject'] = sprintf('[Covoiturage] %s', self::get_post_title( $post, true ) );
+			$data['message'] = /* html_to_plain_text */(Agdp_Covoiturages::get_list_item_html( $post, false, ['mode' => 'email'] ));
+		}
+		return $data;
 	}
 }

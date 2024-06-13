@@ -841,6 +841,7 @@ class Agdp_Mailbox {
 			
 			if( ($pos = strpos($user_name, '@')) !== false)
 				$user_name = substr( $user_name, 0, $pos);
+			$user_name = trim( $user_name, '" ');
 			
 			$dateTime = $message['date'];
 			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
@@ -875,12 +876,13 @@ class Agdp_Mailbox {
 			];
 				
 			$comment = wp_new_comment($commentdata, true);
-			// var_dump($commentdata, $comment);
+			// debug_log(__FUNCTION__, $message, $commentdata['comment_content']);
+			// echo '<pre>'; var_dump($message, $commentdata/* , $comment */);echo '</pre>'; 
 			if( is_wp_error($comment) ){
 				// if( get_post_meta($mailbox->ID, 'imap_mark_as_read', true)
 				// || ! in_array('comment_duplicate', $comment->get_error_codes())
 				// )
-					debug_log('import_message_to_comment !wp_new_comment : ', $comment);
+					debug_log('import_message_to_comment !wp_new_comment error : ', $comment);
 				if( is_admin()
 				&& class_exists('Agdp_Admin'))
 					Agdp_Admin::add_admin_notice(__CLASS__.'::import_message_to_comment(). wp_new_comment returns ',

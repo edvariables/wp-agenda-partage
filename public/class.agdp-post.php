@@ -917,14 +917,14 @@ abstract class Agdp_Post {
 			return false;
 		
 		$attributes = [];
-		foreach( preg_split( '/[|\n]/m', $connexion) as $index => $attribute){
+		foreach( preg_split( '/[|\n]+/m', $connexion) as $index => $attribute){
 			$attribute = explode( ':', $attribute );
 			if( $index === 0 ) {
-				$attributes['action'] = $action = strtolower($attribute[0]);
+				$attributes['action'] = $action = trim(strtolower($attribute[0]), " \n\r\t");
 				$first_attribute = false;
 			}
 			// !! strtolower( $key ) !!
-			$attributes[strtolower($attribute[0])] = $attribute[1];
+			$attributes[strtolower($attribute[0])] = trim($attribute[1], " \n\r\t");
 		}
 		$history_key = sprintf('%d>%s:%s', $post_id, $action, $attributes[$action]);
 		if( in_array( $history_key, self::$send_for_diffusion_history ) ){
@@ -935,7 +935,8 @@ abstract class Agdp_Post {
 			self::$send_for_diffusion_history[] = $history_key;
 
 		// Export
-		$filters = [ static::secretcode_argument => true ];
+		if( static::secretcode_argument ) 
+			$filters = [ static::secretcode_argument => true ];
 		if( $post_is_deleted )
 			$filters['set_post_status'] = 'trash';
 		
@@ -977,6 +978,10 @@ abstract class Agdp_Post {
 					, html_to_plain_text($post_class::get_post_details_for_email( $post_id ))
 				);
 				$headers = [];
+				$headers[] = 'MIME-Version: 1.0';
+				$headers[] = 'Content-type: text/html; charset=utf-8';
+				$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+				
 				if( ! empty($attributes['from']) )
 					$headers[] = 'From:' . $attributes['from'];
 				if( ! empty($attributes['reply-to']) )
@@ -985,10 +990,30 @@ abstract class Agdp_Post {
 				if( $export )
 					$attachments[] = $export;
 				
-				// if( false ) //debug
-				$result = wp_mail( $attributes['mailto'], $subject, $message, $headers, $attachments );
-				
-				// debug_log('send_for_diffusion debug ! wp_mail', $attributes['mailto'], $subject, $message, $headers, $attachments );
+				$data = [
+					'taxonomy' => $post_class::taxonomy_diffusion,
+					'post_type' => $post_class::post_type,
+					'post_id' => $post_id,
+					'post_status' => $post_is_deleted ? 'cancelled' : $post_status,
+					'action' => $action,
+					'attributes' => $attributes,
+					'connexion' => $connexion,
+					'export_type' => $export_type,
+					'export' => $export,
+					'export_filters' => $filters,
+					'to' => $attributes['mailto'],
+					'subject' => $subject,
+					'message' => $message,
+					'headers' => $headers,
+					'attachments' => $attachments,
+				];
+				$data = apply_filters($post_class::post_type . '_send_for_diffusion_' . $action, $data);
+				if( $data ) {
+					$subject = '=?UTF-8?B?' . base64_encode($data['subject']). '?=';
+					// if( false ) //debug
+					$result = wp_mail( $data['to'], $subject, $data['message'], $data['headers'], $data['attachments'] );
+				}
+				// debug_log('send_for_diffusion debug ! wp_mail', $data );
 				
 				break;
 				
