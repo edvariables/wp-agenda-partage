@@ -451,13 +451,13 @@ class Agdp_Admin_Options {
 			$field_id = AGDP_CONNECT_MENU_ENABLE;
 			add_settings_field(
 				$field_id, 
-				__( 'Affichage du menu "Se connecter"', AGDP_TAG ),
+				__( 'Menu "Se connecter"', AGDP_TAG ),
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
 				'agdp_section_security',
 				[
 					'label_for' => $field_id,
-					'label' => __( 'Afficher', AGDP_TAG ),
+					'label' => __( 'Afficher en fin de menu principal', AGDP_TAG ),
 					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]

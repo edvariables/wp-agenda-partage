@@ -282,6 +282,22 @@ class Agdp_Covoiturage_Shortcodes {
 			case 'covoiturage-cities':
 				if(!isset($tax_name) || !$tax_name)
 					$tax_name = Agdp_Covoiturage::taxonomy_city;
+				
+				$meta_name = 'cov-' . substr($shortcode, strlen('covoiturage-')) ;
+				$terms = Agdp_Covoiturage::get_post_terms( $tax_name, $post_id, 'names');
+				if($terms){
+					$val = implode(', ', $terms);
+					if($no_html)
+						$html = $val;
+					else{
+						$html = '<div class="agdp-covoiturage agdp-'. $shortcode .'">'
+							. ($label ? '<span class="label"> '.$label.'<span>' : '')
+							. htmlentities($val)
+							. '</div>';
+					}
+				}
+				return $html;
+
 			case 'covoiturage-message-contact':
 				
 				$meta_name = 'cov-organisateur' ;
@@ -297,7 +313,7 @@ class Agdp_Covoiturage_Shortcodes {
 						, 'Vous ne pouvez pas envoyer de message, le covoiturage n\'a pas d\'adresse email associé.', 'agdp-error-light', 'div');
 				}
 
-				$form_id = Agdp::get_option('covoiturage_message_contact_form_id');
+				$form_id = Agdp::get_option('agdpevent_message_contact_form_id');
 				if(!$form_id){
 					return Agdp::icon('warning'
 						, 'Un formulaire de message aux organisteurs du covoiturage n\'est pas défini dans les réglages de AgendaPartage.', 'agdp-error-light', 'div');
