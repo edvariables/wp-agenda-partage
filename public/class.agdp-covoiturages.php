@@ -9,6 +9,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 	const post_type = Agdp_Covoiturage::post_type;
 	const postid_argument = Agdp_Covoiturage::postid_argument;
 	const page_id_option = Agdp_Covoiturage::posts_page_option;
+	const newsletter_diffusion_term_id = 'covoiturages_nl_diffusion_term_id';
 	
 	const icon = 'car';
 
@@ -515,7 +516,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 			), self::filter_anteriority_option($options));
 		
 		if(Agdp_Covoiturage_Post_type::is_diffusion_managed()){
-			$term_id = Agdp::get_option('newsletter_diffusion_term_id');
+			$term_id = Agdp_Evenements::get_newsletter_diffusion_term_id();
 			self::add_tax_filter(Agdp_Covoiturage::taxonomy_diffusion, $term_id);
 		}
 		
@@ -635,7 +636,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		if( ! current_user_can('manage_options') || Agdp::get_option('newsletter_diffusion_term_id') == -1)
+		if( ! current_user_can('manage_options') || Agdp_Evenements::get_newsletter_diffusion_term_id() == -1)
 			$except_tax = Agdp_Covoiturage::taxonomy_diffusion;
 		else
 			$except_tax = '';

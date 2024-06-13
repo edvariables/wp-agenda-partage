@@ -302,7 +302,7 @@ class Agdp_Evenement_Post_type {
 	 *
 	 */
 	public static function is_diffusion_managed(){
-		return Agdp::get_option('newsletter_diffusion_term_id') != -1;
+		return Agdp_Evenements::get_newsletter_diffusion_term_id() != -1;
 	}
 	
 	/**

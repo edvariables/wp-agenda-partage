@@ -242,7 +242,7 @@ class Agdp_Admin_Options {
 			);
 
 			// 
-			$field_id = 'newsletter_diffusion_term_id';
+			$field_id = Agdp_Evenements::newsletter_diffusion_term_id;
 			add_settings_field(
 				$field_id, 
 				__( 'Diffusion "Lettre-info"', AGDP_TAG ),
@@ -375,6 +375,22 @@ class Agdp_Admin_Options {
 					'post_type' => Agdp_Newsletter::post_type
 				]
 			);
+
+			// 
+			$field_id = Agdp_Covoiturages::newsletter_diffusion_term_id;
+			add_settings_field(
+				$field_id, 
+				__( 'Diffusion "Lettre-info"', AGDP_TAG ),
+				array(__CLASS__, 'agdp_combos_terms_cb'),
+				AGDP_TAG,
+				'agdp_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'taxonomy' => Agdp_Covoiturage::taxonomy_diffusion
+				]
+			);
+
 
 			// 
 			$field_id = 'covoiturage_need_validation';
@@ -931,7 +947,8 @@ class Agdp_Admin_Options {
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'
-		, 'newsletter_diffusion_term_id' => 'term']
+		, 'agdpevents_nl_diffusion_term_id' => 'term'
+		, 'covoiturages_nl_diffusion_term_id' => 'term']
 		as $option_name => $post_type){
 		
 			$option_label = Agdp::get_option_label($option_name);

@@ -1,6 +1,20 @@
 <?php
 
 class Agdp_DB_Update {
+	
+	/**
+	*/
+	public static function update_db_1_2_6(){
+		if(Agdp::get_option('newsletter_diffusion_term_id')){
+			Agdp::update_option('agdpevents_nl_diffusion_term_id', Agdp::get_option('newsletter_diffusion_term_id'));
+			Agdp::update_option('newsletter_diffusion_term_id', null);
+		}
+		if(! Agdp_Covoiturages::get_newsletter_diffusion_term_id()){
+			Agdp::update_option(Agdp_Covoiturages::newsletter_diffusion_term_id, -1);
+		}
+		
+		return true;
+	}
 
 	/**
 	*/
@@ -72,7 +86,7 @@ class Agdp_DB_Update {
 		}
 		
 		if(Agdp::get_option('agdpevent_tax_publication_newsletter_term_id')){
-			Agdp::update_option('newsletter_diffusion_term_id', Agdp::get_option('agdpevent_tax_publication_newsletter_term_id'));
+			Agdp::update_option('agdpevents_nl_diffusion_term_id', Agdp::get_option('agdpevent_tax_publication_newsletter_term_id'));
 			Agdp::update_option('agdpevent_tax_publication_newsletter_term_id', null);
 		}
 		

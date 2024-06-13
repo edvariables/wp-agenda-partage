@@ -95,9 +95,15 @@ class Agdp_Admin_Multisite {
 					}
 					
 					if( $tax_name === Agdp_Evenement::taxonomy_diffusion
-					&& ! empty($source_options['newsletter_diffusion_term_id'])
-					&& $term->term_id == $source_options['newsletter_diffusion_term_id']){
-						Agdp::update_option('newsletter_diffusion_term_id', $new_term['term_id']);
+					&& ! empty($source_options[Agdp_Evenements::newsletter_diffusion_term_id])
+					&& $term->term_id == $source_options[Agdp_Evenements::newsletter_diffusion_term_id]){
+						Agdp::update_option(Agdp_Evenements::newsletter_diffusion_term_id, $new_term['term_id']);
+					};
+					
+					if( $tax_name === Agdp_Covoiturage::taxonomy_diffusion
+					&& ! empty($source_options[Agdp_Covoiturages::newsletter_diffusion_term_id])
+					&& $term->term_id == $source_options[Agdp_Covoiturages::newsletter_diffusion_term_id]){
+						Agdp::update_option(Agdp_Covoiturages::newsletter_diffusion_term_id, $new_term['term_id']);
 					};
 				}
 			}

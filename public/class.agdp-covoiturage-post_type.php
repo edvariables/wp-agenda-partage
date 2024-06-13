@@ -239,10 +239,10 @@ class Agdp_Covoiturage_Post_type {
 	}
 	
 	/**
-	 *
+	 * Nom abusif. Teste si le paramètre du terme de diffusion ("la-lettre-info, par exemple) est définie
 	 */
 	public static function is_diffusion_managed(){
-		return false;//TODO Agdp::get_option('newsletter_diffusion_term_id') != -1;
+		return Agdp_Covoiturages::get_newsletter_diffusion_term_id() != -1;
 	}
 	
 	/**

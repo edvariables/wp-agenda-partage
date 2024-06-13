@@ -385,7 +385,7 @@ class Agdp {
 				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
 			case 'blog_presentation_page_id':
 				return __( 'Page "Page de présentation du site"', AGDP_TAG );
-			case 'newsletter_diffusion_term_id':
+			case 'agdpevents_nl_diffusion_term_id'://Agdp_Evenements::newsletter_diffusion_term_id
 				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 				
 			case 'covoiturage_managed':
@@ -398,6 +398,8 @@ class Agdp {
 				return __( 'Page contenant les covoiturages', AGDP_TAG );
 			case 'covoiturages_nl_post_id':
 				return __( 'Lettre-info des covoiturages à diffuser', AGDP_TAG );
+			case 'covoiturages_nl_diffusion_term_id'://Agdp_Covoiturages::newsletter_diffusion_term_id
+				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 				
 			case 'agdpevent_need_validation':
 				return __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
@@ -803,7 +805,7 @@ class Agdp {
 	 */
 	public static function update_db(){
 		$current_version = self::get_db_version();
-		foreach([ '1.2.5'
+		foreach([ '1.2.6'
 			] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
 				continue;

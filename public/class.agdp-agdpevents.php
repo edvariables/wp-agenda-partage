@@ -9,6 +9,7 @@ class Agdp_Evenements extends Agdp_Posts {
 	const post_type = Agdp_Evenement::post_type;
 	const postid_argument = Agdp_Evenement::postid_argument;
 	const page_id_option = Agdp_Evenement::posts_page_option;
+	const newsletter_diffusion_term_id = 'agdpevents_nl_diffusion_term_id';
 	
 	const icon = 'calendar-alt';
 	
@@ -408,7 +409,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			), self::filter_anteriority_option($options));
 				
 		if(Agdp_Evenement_Post_type::is_diffusion_managed()){
-			$term_id = Agdp::get_option('newsletter_diffusion_term_id');
+			$term_id = Agdp_Evenements::get_newsletter_diffusion_term_id();
 			self::add_tax_filter(Agdp_Evenement::taxonomy_diffusion, $term_id);
 		}
 		
@@ -521,7 +522,7 @@ class Agdp_Evenements extends Agdp_Posts {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		if( ! current_user_can('manage_options') || Agdp::get_option('newsletter_diffusion_term_id') == -1)
+		if( ! current_user_can('manage_options') || Agdp_Evenements::get_newsletter_diffusion_term_id() == -1)
 			$except_tax = Agdp_Evenement::taxonomy_diffusion;
 		else
 			$except_tax = '';

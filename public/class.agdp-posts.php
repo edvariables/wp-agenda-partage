@@ -9,6 +9,7 @@ abstract class Agdp_Posts {
 	const post_type = false; //Must override
 	const page_id_option = false; //Must override
 	const postid_argument = false; //Must override
+	const newsletter_diffusion_term_id = false; //Must override
 	
 	private static $initiated = false;
 	
@@ -61,6 +62,14 @@ abstract class Agdp_Posts {
 	
 	public static function init_default_posts_query() {
 		throw new Exception(__CLASS__.'::'.__FUNCTION__.'() must be inherited');
+	}
+	
+	/**
+	 * Newsletter ID d'envois des posts
+	 * Retourne la valeur de l'option.
+	 */
+	public static function get_newsletter_diffusion_term_id() {
+		Agdp::get_option( static::newsletter_diffusion_term_id);
 	}
 	
 	/**
