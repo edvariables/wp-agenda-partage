@@ -159,8 +159,13 @@ function dateDiff($date1, $date2){
 	if( $laps['day'] > 0 && $laps['hour'] > 12 ){
 		$laps['day'] += 1;
 	}
+	if( $laps['day'] > 60 ){
+		$laps['month'] = round( $laps['day'] / 30 );
+	}
 	
-	if( $laps['day'] )
+	if( ! empty($laps['month']) )
+		$val = sprintf('%s%d mois', $intro, $laps['month']	 );
+	elseif( $laps['day'] )
 		$val = sprintf('%s%d jour%s', $intro, $laps['day'], $laps['day'] == 1 ? '' : 's' );
 	elseif( $laps['hour'] )
 		$val = sprintf('%s%d heure%s', $intro, $laps['hour'], $laps['hour'] == 1 ? '' : 's' );

@@ -822,9 +822,25 @@ class Agdp_Mailbox {
 			return false;
 		}
 		// debug_log('import_message_to_comment', $mailbox->ID, $mailbox->ID === $page->ID);
+		$message['subject'] = trim($message['subject']);
+		$is_cancel_notification = strpos( $message['subject'], AGDP_CANCELED ) === 0;
+		if( $is_cancel_notification )
+			$message['subject'] = trim( substr( $message['subject'], strlen(AGDP_CANCELED) ) );
 		
-		if( ($comment = self::get_existing_comment( $page, $message )) ){
-			debug_log('import_message_to_comment get_existing_comment');
+		if( ($comment_id = self::get_existing_comment( $page, $message )) ){
+			if( $is_cancel_notification ){
+				update_comment_meta( $comment_id, AGDP_CANCELED, sprintf('%s::%s %s', __CLASS__, __FUNCTION__, wp_date('Y-m-d H:i:s')));
+				debug_log('import_message_to_comment get_existing_comment AGDP_CANCELED wp_delete_comment '.$comment_id);
+				wp_delete_comment( $comment_id );
+				
+				return 0;
+			}
+			$comment = get_comment($comment_id);
+			debug_log('import_message_to_comment get_existing_comment said id='.$comment_id);
+		}
+		elseif( $is_cancel_notification ){
+			debug_log('import_message_to_comment AGDP_CANCELED > ! existing_comment = ignore ');
+			return 0;
 		}
 		else {
 			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
@@ -868,7 +884,7 @@ class Agdp_Mailbox {
 					'source_no' => $message['msgno'],
 					'from' => strtolower($message['from']->email),
 					'to' => strtolower($message['to'][0]->email),
-					'title' => trim($message['subject']),
+					'title' => $message['subject'],
 					'attachments' => $message['attachments'],
 					'send_date' => $email_date,
 					'mailbox_id' => $mailbox->ID,
@@ -963,6 +979,19 @@ class Agdp_Mailbox {
 	}
 	//Cherche un message déjà importé
 	private static function get_existing_comment( $page, $message ){
+		$subject = $message['subject'];
+		$comments = get_comments([
+			'post_id' => $page->ID
+			, 'meta_key' => 'title'
+			, 'meta_value' => $subject
+			, 'meta_compare' => '='
+			, 'number' => 1
+			, 'orderby' => 'comment_date'
+		]);
+		foreach($comments as $comment){
+			return $comment->comment_ID;
+		}
+		return 0;
 	}
 	/**
 	 * Cherche un message existant qui serait le parent du message

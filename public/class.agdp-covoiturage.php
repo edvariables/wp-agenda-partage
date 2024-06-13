@@ -64,7 +64,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		$intention = Agdp_Covoiturage_Post_type::get_intention_label($intentionid);
 		$is_periodique = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-periodique', true);
 		if( $is_periodique ){
-			$le = "Tous les";
+			$le = $no_html ? "tous les" : "Tous les";
 			$dates = $data ? $data['cov-periodique-label'] : get_post_meta($covoiturage_id, 'cov-periodique-label', true);
 			if( stripos($dates, "Tou") !== 0)
 				$dates = $le . ' ' . trim($dates);
@@ -79,11 +79,9 @@ class Agdp_Covoiturage extends Agdp_Post {
 
 		}
 		else {
-			$le = "Le";
+			$le = $no_html ? "le" : "Le";
 			$dates = self::get_covoiturage_dates_text( $covoiturage_id, $data );
 		}
-		if( $no_html)
-			$le = strtolower($le);
 		$de = "de";
 		$depart = $data ? $data['cov-depart'] : get_post_meta($covoiturage_id, 'cov-depart', true);
 		$vers = "vers";
@@ -874,22 +872,49 @@ class Agdp_Covoiturage extends Agdp_Post {
 	 */
 	public static function on_send_for_diffusion_mailto( $data ){
 		if( $data['action'] === 'mailto' 
-		 && isset($data['attributes']['format'])
-		 && $data['attributes']['format'] === 'message' ){
-			$post = get_post($data['post_id']);
-			$meta_name = 'cov-organisateur' ;
-			$organisateur = self::get_post_meta($post, $meta_name, true);
-			$meta_name = 'cov-email' ;
-			if( $email = self::get_post_meta($post, $meta_name, true) ){
-				foreach($data['headers'] as $index => $header)
-					if( stripos($header, 'Reply_to') === 0 )
-						unset($data['headers'][$index]);
-				if($organisateur)
-					$email = sprintf('"%s"<%s>', $organisateur, $email );
-				$data['headers'][] = sprintf('Reply-to: %s', $email);
+		 && isset($data['attributes']['format']) ){
+			switch( $data['attributes']['format']) {
+				case 'message' :
+					$post = get_post($data['post_id']);
+					
+					//Flag du post pour ne pas envoyer des messages à chaque mise à jour.
+					$meta_name = sprintf('%s_%s_%s', $data['taxonomy'], $data['action'], $data['attributes'][$data['action']] );
+					$already_sent = self::get_post_meta($post, $meta_name, true);
+					
+					if( $data['post_status'] !== 'publish' ){
+						if( ! $already_sent ){
+							debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && ! already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
+							return false;
+						}
+						debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
+						delete_post_meta($post->ID, $meta_name);
+					}
+					elseif( $already_sent ){
+						debug_log(__CLASS__.'::'.__FUNCTION__ . ' already_sent !', $post->ID . ' > ' . $post->post_title, $already_sent);
+						return false;
+					}
+					else
+						update_post_meta($post->ID, $meta_name, wp_date('Y-m-d H:i:s'));
+					
+					$meta_name = 'cov-organisateur' ;
+					$organisateur = self::get_post_meta($post, $meta_name, true);
+					$meta_name = 'cov-email' ;
+					if( $email = self::get_post_meta($post, $meta_name, true) ){
+						foreach($data['headers'] as $index => $header)
+							if( stripos($header, 'Reply_to') === 0 )
+								unset($data['headers'][$index]);
+						if($organisateur)
+							$email = sprintf('"%s"<%s>', $organisateur, $email );
+						$data['headers'][] = sprintf('Reply-to: %s', $email);
+					}
+					$data['subject'] = sprintf('[Covoiturage] %s', self::get_post_title( $post, true ) );
+					$data['message'] = /* html_to_plain_text */(Agdp_Covoiturages::get_list_item_html( $post, false, ['mode' => 'email'] ));
+					
+					if( $data['post_status'] !== 'publish' ){
+						$data['subject'] = sprintf('%s%s', AGDP_CANCELED, $data['subject']);
+					}
+					break;
 			}
-			$data['subject'] = sprintf('[Covoiturage] %s', self::get_post_title( $post, true ) );
-			$data['message'] = /* html_to_plain_text */(Agdp_Covoiturages::get_list_item_html( $post, false, ['mode' => 'email'] ));
 		}
 		return $data;
 	}
