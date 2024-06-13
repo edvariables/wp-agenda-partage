@@ -805,7 +805,7 @@ class Agdp {
 	 */
 	public static function update_db(){
 		$current_version = self::get_db_version();
-		foreach([ '1.2.6'
+		foreach([ '1.2.8'
 			] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
 				continue;

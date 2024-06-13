@@ -1,16 +1,18 @@
 <?php
-
+/*
+ * see Agdp::update_db
+ */
 class Agdp_DB_Update {
 	
 	/**
 	*/
-	public static function update_db_1_2_6(){
+	public static function update_db_1_2_8(){
 		if(Agdp::get_option('newsletter_diffusion_term_id')){
 			Agdp::update_option('agdpevents_nl_diffusion_term_id', Agdp::get_option('newsletter_diffusion_term_id'));
 			Agdp::update_option('newsletter_diffusion_term_id', null);
 		}
-		if(! Agdp_Covoiturages::get_newsletter_diffusion_term_id()){
-			Agdp::update_option(Agdp_Covoiturages::newsletter_diffusion_term_id, -1);
+		if( ! Agdp::get_option('covoiturages_nl_diffusion_term_id')){
+			Agdp::update_option('covoiturages_nl_diffusion_term_id', -1);
 		}
 		
 		return true;
