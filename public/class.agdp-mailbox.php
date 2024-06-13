@@ -637,7 +637,7 @@ class Agdp_Mailbox {
 		foreach( $messages as $message ){
 			$email_to = false;
 			foreach($message['to'] as $to)
-				if( isset($dispatch[$to->email]) ){
+				if( isset($dispatch[strtolower($to->email)]) ){
 					$email_to = strtolower($to->email);
 					break;
 				}

@@ -171,7 +171,8 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			echo sprintf('<div>%s</div>', Agdp::icon('warning','La connexion est suspendue.'));
 		}
 		//comment_status
-		if( $post->comment_status !== 'open' ){
+		if( $post->comment_status !== 'open'
+		&& ! Agdp_Page::is_agdp_post_type($post->ID)){
 			echo sprintf('<div>%s</div>', Agdp::icon('warning','Les commentaires de cette page ne sont pas activés.'));
 		}
 	}

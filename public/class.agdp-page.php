@@ -19,7 +19,7 @@ abstract class Agdp_Page {
 	 */
 	public static function is_agdp_post_type( $page_id = false ){
 		if( ! $page_id )
-			return self::page_type;
+			return static::page_type;
 		
 		if( is_a($page_id, 'WP_Post') )
 			$page_id = $page_id->ID;
@@ -39,7 +39,7 @@ abstract class Agdp_Page {
 	 */
 	public static function get_page_type( $page_id = false ){
 		if( ! $page_id )
-			return self::page_type;
+			return static::page_type;
 		
 		if( is_a($page_id, 'WP_Post') )
 			$page_id = $page_id->ID;
@@ -59,9 +59,9 @@ abstract class Agdp_Page {
 	 */
 	public static function get_posts_type( $page_id = false ){
 		if( ! $page_id )
-			return self::posts_type;
+			return static::posts_type;
 		
-		$page_type = self::get_page_type( $page_id );
+		$page_type = static::get_page_type( $page_id );
 		
 		if( $page_type === 'page' ){
 			if( Agdp_Forum::post_is_forum( $page_id ) )
@@ -116,7 +116,7 @@ abstract class Agdp_Page {
 	 */
 	public static function get_icon( $page_id, $default = false ){
 		if( ! $page_id )
-			return self::icon;
+			return static::icon;
 		foreach([
 			'new_agdpevent_page_id' => 'welcome-add-page',
 			'new_covoiturage_page_id' => 'welcome-add-page',
@@ -140,7 +140,7 @@ abstract class Agdp_Page {
 	public static function get_source_key( $page_id ){
 		if( is_a($page_id, 'WP_Post') )
 			$page_id = $page_id->ID;
-		$page_type = self::get_page_type( $page_id );
+		$page_type = static::get_page_type( $page_id );
 		switch( $page_type ){
 			case Agdp_Evenement::post_type:
 			case Agdp_Covoiturage::post_type:
@@ -160,7 +160,7 @@ abstract class Agdp_Page {
 			'post_type' => Agdp_Newsletter::post_type,
 			'numberposts' => -1,
 			'meta_key' => 'source',
-			'meta_value' => self::get_source_key( $page_id ),
+			'meta_value' => static::get_source_key( $page_id ),
 		]);
 		$posts = $query->get_posts();
 		
@@ -206,7 +206,7 @@ abstract class Agdp_Page {
 			'type' => 'page', 
 			'id' => $page_id, 
 			'page' => $page, 
-			'newsletters' => self::get_page_newsletters( $page_id ),
+			'newsletters' => static::get_page_newsletters( $page_id ),
 		];
 		
 		//page de posts
@@ -222,13 +222,13 @@ abstract class Agdp_Page {
 		
 		$diagram = array_merge( Agdp_Post::get_diagram( $blog_diagram, $diagram['posts_page'] )
 							, $diagram );
-		$posts_class = self::get_posts_class( $diagram['posts_page'] );
+		$posts_class = static::get_posts_class( $diagram['posts_page'] );
 		if( $posts_class === 'Agdp_Comments' )
 			$diagram['pending'] = $posts_class::get_pending_comments( $page );
 		else
 			$diagram['pending'] = $posts_class::get_pending_posts();
 		
-		if( $children_pages = self::get_pages( $page->ID ) )
+		if( $children_pages = static::get_pages( $page->ID ) )
 			$diagram['pages'] = $children_pages;
 		// var_dump($page->post_title . ' #' . $page->ID , count($children_pages));
 		

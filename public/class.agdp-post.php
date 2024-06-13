@@ -1035,9 +1035,15 @@ abstract class Agdp_Post {
 					foreach( explode( '|', $connexion) as $index => $attribute){
 						$attribute = explode( ':', $attribute );
 						if( $index === 0 ) {
+							if( count($attribute) === 1 ){
+								$attribute[] = $attribute[0];
+								$attribute[0] = 'mailto';
+							}
 							$attributes['action'] = $action = strtolower($attribute[0]);
 							$first_attribute = false;
 						}
+						elseif( count($attribute) === 1 )
+							$attribute[] = true;
 						$attributes[strtolower($attribute[0])] = $attribute[1];
 					}
 					$diffusion['connexion'] = $attributes;

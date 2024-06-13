@@ -771,7 +771,7 @@ class Agdp_Forum extends Agdp_Page {
 	 * Avant affichage, filtre ou ajoute des commentaires
 	 */
 	public static function on_comments_array($comments, $post_id){
-		debug_log('on_comments_array IN', $post_id, count($comments));
+		// debug_log('on_comments_array IN', $post_id, count($comments));
 			
 		if( current_user_can('moderate_comments') ) 
 			return $comments;
