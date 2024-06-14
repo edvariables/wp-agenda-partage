@@ -1045,11 +1045,12 @@ class Agdp_Admin_Options {
 	*/
 	public static function agdp_git_update_page_html() {
 		
-		// if ( ! current_user_can( 'manage_network_plugins' ) ) 
-			// die( 'Accès non autorisé' );
+		if ( ! current_user_can( 'manage_network_plugins' ) ) 
+			die( 'Accès non autorisé' );
 		
-		$cmd = '.git . /pull';
-		$cmd = 'ls -lart';
+		$cmd = "cd " . AGDP_PLUGIN_DIR
+			. "\nls -lart";
+		$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
 		echo sprintf('<h3>%s</h3>', $cmd );
 		$result = shell_exec( $cmd );
 		echo sprintf('<pre>%s</pre>', $result);
