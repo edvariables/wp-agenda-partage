@@ -636,7 +636,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		if( ! current_user_can('manage_options') || Agdp_Evenements::get_newsletter_diffusion_term_id() == -1)
+		if( ! current_user_can('manage_options') || Agdp_Covoiturages::get_newsletter_diffusion_term_id() == -1)
 			$except_tax = Agdp_Covoiturage::taxonomy_diffusion;
 		else
 			$except_tax = '';
@@ -810,7 +810,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 		$html .= sprintf('<div id="%s%d" class="covoiturage %s %s" covoiturage="%s">'
 			, AGDP_ARG_COVOITURAGEID, $post->ID
 			, $email_mode ? '' : 'toggle-trigger'
-			, $post->ID == $requested_id ? 'active' : ''
+			, $email_mode && ($post->ID == $requested_id) ? 'active' : ''
 			, esc_attr( json_encode(['id'=> $post->ID, 'date' => $date_debut]) )
 		);
 		

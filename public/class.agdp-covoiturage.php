@@ -879,7 +879,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 					
 					//Flag du post pour ne pas envoyer des messages à chaque mise à jour.
 					$meta_name = sprintf('%s_%s_%s', $data['taxonomy'], $data['action'], $data['attributes'][$data['action']] );
-				delete_post_meta($post->ID, $meta_name); //DEBUG
+				// delete_post_meta($post->ID, $meta_name); //DEBUG
 					$already_sent = self::get_post_meta($post, $meta_name, true);
 					
 					if( $data['post_status'] !== 'publish' ){
@@ -890,10 +890,10 @@ class Agdp_Covoiturage extends Agdp_Post {
 						debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
 						delete_post_meta($post->ID, $meta_name);
 					}
-					elseif( $already_sent ){
-						debug_log(__CLASS__.'::'.__FUNCTION__ . ' already_sent !', $post->ID . ' > ' . $post->post_title, $already_sent);
-						return false;
-					}
+					// elseif( $already_sent ){
+						// debug_log(__CLASS__.'::'.__FUNCTION__ . ' already_sent !', $post->ID . ' > ' . $post->post_title, $already_sent);
+						// return false;
+					// }
 					else
 						update_post_meta($post->ID, $meta_name, wp_date('Y-m-d H:i:s'));
 					
@@ -912,7 +912,10 @@ class Agdp_Covoiturage extends Agdp_Post {
 					$data['message'] = /* html_to_plain_text */(Agdp_Covoiturages::get_list_item_html( $post, false, ['mode' => 'email'] ));
 					
 					if( $data['post_status'] !== 'publish' ){
-						$data['subject'] = sprintf('%s%s', AGDP_CANCELED, $data['subject']);
+						$data['subject'] = sprintf('%s%s', AGDP_SUBJECT_CANCELED, $data['subject']);
+					}
+					elseif( $already_sent ){
+						$data['subject'] = sprintf('%s%s', AGDP_SUBJECT_UPDATED, $data['subject']);
 					}
 					break;
 			}

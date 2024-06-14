@@ -44,6 +44,8 @@ class Agdp_Evenement extends Agdp_Post {
 		
 		add_action( 'wp_ajax_agdpevent_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
 		add_action( 'wp_ajax_nopriv_agdpevent_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
+		
+		add_filter(self::post_type . '_send_for_diffusion_mailto', array(__CLASS__, 'on_send_for_diffusion_mailto'), 10, 1 );
 	}
  
  	/**
@@ -846,5 +848,61 @@ class Agdp_Evenement extends Agdp_Post {
 		/** set **/
 		$form->set_properties(array('form'=>$html));
 		
+	}
+	
+	/**
+	 * on_send_for_diffusion_mailto
+	 */
+	public static function on_send_for_diffusion_mailto( $data ){
+		if( $data['action'] === 'mailto' 
+		 && isset($data['attributes']['format']) ){
+			switch( $data['attributes']['format']) {
+				case 'message' :
+					$post = get_post($data['post_id']);
+					
+					//Flag du post pour ne pas envoyer des messages à chaque mise à jour.
+					$meta_name = sprintf('%s_%s_%s', $data['taxonomy'], $data['action'], $data['attributes'][$data['action']] );
+				// delete_post_meta($post->ID, $meta_name); //DEBUG
+					$already_sent = self::get_post_meta($post, $meta_name, true);
+					
+					if( $data['post_status'] !== 'publish' ){
+						if( ! $already_sent ){
+							debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && ! already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
+							return false;
+						}
+						debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
+						delete_post_meta($post->ID, $meta_name);
+					}
+					// elseif( $already_sent ){
+						// debug_log(__CLASS__.'::'.__FUNCTION__ . ' already_sent !', $post->ID . ' > ' . $post->post_title, $already_sent);
+						// return false;
+					// }
+					else
+						update_post_meta($post->ID, $meta_name, wp_date('Y-m-d H:i:s'));
+					
+					$meta_name = 'ev-organisateur' ;
+					$organisateur = self::get_post_meta($post, $meta_name, true);
+					$meta_name = 'ev-email' ;
+					if( $email = self::get_post_meta($post, $meta_name, true) ){
+						foreach($data['headers'] as $index => $header)
+							if( stripos($header, 'Reply_to') === 0 )
+								unset($data['headers'][$index]);
+						if($organisateur)
+							$email = sprintf('"%s"<%s>', $organisateur, $email );
+						$data['headers'][] = sprintf('Reply-to: %s', $email);
+					}
+					$data['subject'] = self::get_post_title( $post, true );//sprintf('[Agenda] %s', self::get_post_title( $post, true ) );
+					$data['message'] = /* html_to_plain_text */(Agdp_Evenements::get_list_item_html( $post, false, ['mode' => 'email'] ));
+					
+					if( $data['post_status'] !== 'publish' ){
+						$data['subject'] = sprintf('%s%s', AGDP_SUBJECT_CANCELED, $data['subject']);
+					}
+					elseif( $already_sent ){
+						$data['subject'] = sprintf('%s%s', AGDP_SUBJECT_UPDATED, $data['subject']);
+					}
+					break;
+			}
+		}
+		return $data;
 	}
 }

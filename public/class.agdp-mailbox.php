@@ -829,27 +829,63 @@ class Agdp_Mailbox {
 		}
 		// debug_log('import_message_to_comment', $mailbox->ID, $mailbox->ID === $page->ID);
 		$message['subject'] = trim($message['subject']);
-		$is_cancel_notification = strpos( $message['subject'], AGDP_CANCELED ) === 0;
+		$is_cancel_notification = strpos( $message['subject'], AGDP_SUBJECT_CANCELED ) === 0;
 		if( $is_cancel_notification )
-			$message['subject'] = trim( substr( $message['subject'], strlen(AGDP_CANCELED) ) );
+			$message['subject'] = trim( substr( $message['subject'], strlen(AGDP_SUBJECT_CANCELED) ) );
+		$is_update_notification = strpos( $message['subject'], AGDP_SUBJECT_UPDATED ) === 0;
+		if( $is_update_notification )
+			$message['subject'] = trim( substr( $message['subject'], strlen(AGDP_SUBJECT_UPDATED) ) );
 		
+		$comment = false;
+		$comment_date = wp_date('Y-m-d H:i:s');
+		$comment_date_gmt = date('Y-m-d H:i:s');
 		$comment_id = self::get_existing_comment( $page, $message );
 		if( $comment_id ){
 			if( $is_cancel_notification ){
-				update_comment_meta( $comment_id, AGDP_CANCELED, sprintf('%s::%s %s', __CLASS__, __FUNCTION__, wp_date('Y-m-d H:i:s')));
-				debug_log('import_message_to_comment get_existing_comment AGDP_CANCELED wp_delete_comment '.$comment_id);
+				update_comment_meta( $comment_id, AGDP_SUBJECT_CANCELED, sprintf('%s::%s %s', __CLASS__, __FUNCTION__, wp_date('Y-m-d H:i:s')));
+				debug_log('import_message_to_comment get_existing_comment AGDP_SUBJECT_CANCELED wp_delete_comment '.$comment_id);
 				wp_delete_comment( $comment_id );
 				
 				return 0;
 			}
 			$comment = get_comment($comment_id);
-			debug_log('import_message_to_comment get_existing_comment said id='.$comment_id);
+			if( $is_update_notification ){
+				//TODO AGDP_IMPORT_REFUSED
+				
+				/* $comment_parent = false;// $comment->comment_parent;
+				$comment_content = Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $comment_parent);
+				debug_log(__FUNCTION__ . ' update', $comment_content);
+				$title = $message['subject'];
+				$commentdata = [
+					'comment_ID' => $comment_id,
+					'comment_content' => $comment_content,
+					'comment_meta' => [
+						'title' => $title,
+					],
+				];
+				$result = wp_update_comment( $commentdata, true ); */
+				
+				
+				//wp_update_comment filtre le html de comment_content donc on supprime pour ajouter. TODO
+				
+				$comment_date = $comment->comment_date;
+				$comment_date_gmt = $comment->comment_date_gmt;
+				
+				wp_delete_comment( $comment_id );
+				
+				$comment = false;
+				
+				debug_log('import_message_to_comment update_notification === delete+new of id='.$comment_id);
+			}
+			else {
+				debug_log('import_message_to_comment get_existing_comment said id='.$comment_id);
+			}
 		}
-		elseif( $is_cancel_notification ){
-			debug_log('import_message_to_comment AGDP_CANCELED > ! existing_comment = ignore ');
+		elseif( $is_cancel_notification || $is_update_notification ){
+			debug_log('import_message_to_comment AGDP_SUBJECT_CANCELED|UPDATED > ! existing_comment = ignore ');
 			return 0;
 		}
-		else {
+		if( ! $comment ){
 			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
 			$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
 			
@@ -869,16 +905,14 @@ class Agdp_Mailbox {
 			$dateTime = $message['date'];
 			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
 			//On conserve en date de référence la date d'importation (plus logique pour le traitement des newsletters)
-			$date = wp_date('Y-m-d H:i:s');
-			$date_gmt = date('Y-m-d H:i:s');
 			$commentdata = [
 				'comment_post_ID' => $page->ID,
 				'comment_author' => $user_name,
 				'comment_author_url' => 'mailto:' . $user_email,
 				'comment_author_email' => $user_email,
 				'comment_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $comment_parent),
-				'comment_date' => $date,
-				'comment_date_gmt' => $date_gmt,
+				'comment_date' => $comment_date,
+				'comment_date_gmt' => $comment_date_gmt,
 				'comment_parent' => $comment_parent,
 				'comment_agent' => $imap_email . '@' . $imap_server,
 				'comment_approved' => true,
@@ -907,7 +941,7 @@ class Agdp_Mailbox {
 				// if( get_post_meta($mailbox->ID, 'imap_mark_as_read', true)
 				// || ! in_array('comment_duplicate', $comment->get_error_codes())
 				// )
-					debug_log('import_message_to_comment !wp_new_comment error : ', $comment);
+					debug_log('import_message_to_comment !wp_new_comment error : ', $comment, $message);
 				if( is_admin()
 				&& class_exists('Agdp_Admin'))
 					Agdp_Admin::add_admin_notice(__CLASS__.'::import_message_to_comment(). wp_new_comment returns ',

@@ -684,10 +684,11 @@ class Agdp_Evenements extends Agdp_Posts {
 				]));
 			}
 		}
-		$html .= sprintf('<div id="%s%d" class="agdpevent post-status-%s toggle-trigger %s" agdpevent="%s">'
+		$html .= sprintf('<div id="%s%d" class="agdpevent post-status-%s %s %s" agdpevent="%s">'
 			, AGDP_ARG_EVENTID, $event->ID
 			, $event->post_status
-			, $event->ID == $requested_id ? 'active' : ''
+			, $email_mode ? '' : 'toggle-trigger'
+			, $email_mode && ($event->ID == $requested_id) ? 'active' : ''
 			, esc_attr( json_encode(['id'=> $event->ID, 'date' => $date_debut]) )
 		);
 		
@@ -711,7 +712,10 @@ class Agdp_Evenements extends Agdp_Posts {
 		
 		$html .= '</div>';
 		
-		$html .= '<div class="toggle-container">';
+		if( ! $email_mode )
+			$html .= '<div class="toggle-container">';
+		else
+			$html .= '<div>';
 		
 		
 		$value = $event->post_content;

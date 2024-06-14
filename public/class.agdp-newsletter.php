@@ -1595,7 +1595,7 @@ class Agdp_Newsletter {
 
 		$time_start = time();
 		$all_mails_counter = 0;
-		$have_more_mails = false;
+		$has_more_mails = false;
 		$subscribers_done = [];
 		foreach($newsletters_data as $newsletter_id => $newsletter_data){
 			$newsletter = $newsletter_data['newsletter'];
@@ -1649,7 +1649,7 @@ class Agdp_Newsletter {
 			else {
 				$all_mails_counter += $mails_counter;
 				if($all_mails_counter >= $mails_counter_max){
-					$have_more_mails = true;
+					$has_more_mails = true;
 					$mailing_loops_interval = get_post_meta($newsletter_id, 'mailing-loops-interval', true);
 					break;
 				}
@@ -1670,7 +1670,7 @@ class Agdp_Newsletter {
 			remove_filter( 'wp_mail_failed', array(__CLASS__, 'on_wp_mail_failed'), 10 );
 			self::log_cron_state();
 		
-			if($have_more_mails){
+			if($has_more_mails){
 				if( ! isset($mailing_loops_interval) )
 					throw new Exception('$mailing_loops_interval n\'est pas défini !');
 				self::init_cron($mailing_loops_interval * 60);
