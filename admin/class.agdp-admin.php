@@ -79,6 +79,11 @@ class Agdp_Admin {
 	}
 
 	public static function init_hooks() {
+		
+		if ( current_user_can( 'manage_network_plugins' ) ) {
+			add_filter( 'plugin_action_links_' . AGDP_PLUGIN_BASENAME, array(__CLASS__, 'plugin_action_links'), 10, 4 );
+			add_filter( 'network_admin_plugin_action_links_' . AGDP_PLUGIN_BASENAME, array(__CLASS__, 'plugin_action_links'), 10, 4 );
+		}
 
 	    add_action( 'admin_enqueue_scripts', array(__CLASS__, 'register_plugin_styles') );
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
@@ -121,6 +126,21 @@ class Agdp_Admin {
 			, 'is_admin' => true )
 		);
 	    wp_enqueue_script( AGDP_TAG . '-tools' );
+	}
+	
+	/**
+	 *
+	 */
+	public static function plugin_action_links( $actions, $plugin_file, $plugin_data, $context ) {
+		$action = 'git_update_' . AGDP_TAG;
+		$url = 'wp-admin/admin.php?page=agendapartage-git-update';
+		$actions[ $action ] = sprintf('<a href="%s" id="%s" aria-label="Mise à jour .git">Mise à jour .git</a>',
+			wp_nonce_url( $url, AGDP_TAG),
+			$action,
+		);
+
+		debug_log(__FUNCTION__, $actions );
+		return $actions;
 	}
 
 	/**

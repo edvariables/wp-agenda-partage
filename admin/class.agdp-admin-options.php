@@ -1038,6 +1038,23 @@ class Agdp_Admin_Options {
 		echo sprintf('<pre>%s</pre>', Agdp::blog_diagram_html());
 	}
 	
+	
+	/**
+	* top level menu:
+	* callback functions
+	*/
+	public static function agdp_git_update_page_html() {
+		
+		// if ( ! current_user_can( 'manage_network_plugins' ) ) 
+			// die( 'Accès non autorisé' );
+		
+		$cmd = '.git . /pull';
+		$cmd = 'ls -lart';
+		echo sprintf('<h3>%s</h3>', $cmd );
+		$result = shell_exec( $cmd );
+		echo sprintf('<pre>%s</pre>', $result);
+	}
+	
 }
 
 ?>
