@@ -487,8 +487,7 @@ abstract class Agdp_Posts_Export {
 
 		// UID is a required item in VEVENT, create unique string for this event
 		// Adding your domain to the end is a good way of creating uniqueness
-		$parse = parse_url(content_url());
-		$uid = sprintf('%s[%d]@%s', static::post_type, $post->ID, $parse['host']);
+		$uid = Agdp_post::get_uid($post);
 		$vevent->addNode(new ZCiCalDataNode("UID:" . $uid));
 
 		// Add description

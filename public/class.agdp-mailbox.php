@@ -641,6 +641,12 @@ class Agdp_Mailbox {
 					$email_to = strtolower($to->email);
 					break;
 				}
+			if( ! $email_to && isset($message['cc']))
+				foreach($message['cc'] as $to)
+					if( isset($dispatch[strtolower($to->email)]) ){
+						$email_to = strtolower($to->email);
+						break;
+					}
 			if( ! $email_to )
 				if( isset($dispatch['*']) )
 					$email_to = '*';
@@ -827,7 +833,8 @@ class Agdp_Mailbox {
 		if( $is_cancel_notification )
 			$message['subject'] = trim( substr( $message['subject'], strlen(AGDP_CANCELED) ) );
 		
-		if( ($comment_id = self::get_existing_comment( $page, $message )) ){
+		$comment_id = self::get_existing_comment( $page, $message );
+		if( $comment_id ){
 			if( $is_cancel_notification ){
 				update_comment_meta( $comment_id, AGDP_CANCELED, sprintf('%s::%s %s', __CLASS__, __FUNCTION__, wp_date('Y-m-d H:i:s')));
 				debug_log('import_message_to_comment get_existing_comment AGDP_CANCELED wp_delete_comment '.$comment_id);
@@ -845,7 +852,7 @@ class Agdp_Mailbox {
 		else {
 			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
 			$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
-		
+			
 			$comment_parent = self::find_comment_parent( $page, $message );
 			$user_id = 0;
 			// var_dump($message);
@@ -890,7 +897,9 @@ class Agdp_Mailbox {
 					'mailbox_id' => $mailbox->ID,
 				]
 			];
-				
+			if( ! empty($message[AGDP_IMPORT_UID]))
+				$commentdata['comment_meta'][AGDP_IMPORT_UID] = $message[AGDP_IMPORT_UID];
+			
 			$comment = wp_new_comment($commentdata, true);
 			// debug_log(__FUNCTION__, $message, $commentdata['comment_content']);
 			// echo '<pre>'; var_dump($message, $commentdata/* , $comment */);echo '</pre>'; 
@@ -979,15 +988,29 @@ class Agdp_Mailbox {
 	}
 	//Cherche un message déjà importé
 	private static function get_existing_comment( $page, $message ){
-		$subject = $message['subject'];
-		$comments = get_comments([
-			'post_id' => $page->ID
-			, 'meta_key' => 'title'
-			, 'meta_value' => $subject
-			, 'meta_compare' => '='
-			, 'number' => 1
-			, 'orderby' => 'comment_date'
-		]);
+		
+		if( isset($message[AGDP_IMPORT_UID]) ){
+			$comments = get_comments([
+				'post_id' => $page->ID
+				, 'meta_key' => AGDP_IMPORT_UID
+				, 'meta_value' => $message[AGDP_IMPORT_UID]
+				, 'meta_compare' => '='
+				, 'number' => 1
+			]);
+		}
+		else {
+			$user_email = strtolower($message['reply_to'][0]->email);
+			$subject = $message['subject'];
+			$comments = get_comments([
+				'post_id' => $page->ID
+				, 'author_email' => $user_email
+				, 'author_email' => $user_email
+				, 'meta_key' => 'title'
+				, 'meta_value' => $subject
+				, 'meta_compare' => '='
+				, 'number' => 1
+			]);
+		}
 		foreach($comments as $comment){
 			return $comment->comment_ID;
 		}

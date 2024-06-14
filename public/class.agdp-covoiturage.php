@@ -879,6 +879,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 					
 					//Flag du post pour ne pas envoyer des messages à chaque mise à jour.
 					$meta_name = sprintf('%s_%s_%s', $data['taxonomy'], $data['action'], $data['attributes'][$data['action']] );
+				delete_post_meta($post->ID, $meta_name); //DEBUG
 					$already_sent = self::get_post_meta($post, $meta_name, true);
 					
 					if( $data['post_status'] !== 'publish' ){

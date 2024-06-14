@@ -128,6 +128,39 @@ abstract class Agdp_Post {
 		return Agdp::get_option($option, true);
 	}
 	
+	/**
+	 * Retourne un identifiant unique contenant le type, l'ID et le blog
+	 */
+	public static function get_uid( $post_id, $post_type = false ){
+		if( ! $post_type ){
+			if( ! is_a($post_id, 'WP_Post') ){
+				$post = static::get_post($post_id);
+			}
+			else
+				$post = $post_id;
+			$post_id = $post->ID;
+			$post_type = $post->post_type;
+		}
+		$parse = parse_url(content_url());
+		$uid = sprintf('%s[%d]@%s', $post_type, $post_id, $parse['host']);
+		return $uid;
+	}
+	/**
+	 * Retourne le type, l'ID et le blog d'après un identifiant unique
+	 */
+	public static function parse_uid( $uid ){
+		$matches = [];
+		//TODO to test
+		if( preg_match('/^([^[]+)\[([^\]]+)\]@(.*)$/', $uid, $matches) ){
+			return [
+				'type' => $matches[1],
+				'id' => $matches[2],
+				'host' => $matches[3],
+			];
+		}
+		throw new Exception('L\'argument $uid doit être de la forme post_type[post_id]@host. Valeur fournie : "' . print_r($uid, true) . '"');
+	}
+	
 	/***************
 	 * the_title()
 	 */
@@ -981,6 +1014,9 @@ abstract class Agdp_Post {
 				$headers[] = 'MIME-Version: 1.0';
 				$headers[] = 'Content-type: text/html; charset=utf-8';
 				$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+				
+				// AGDP UID
+				$headers[] = sprintf('X-%s-UID: %s', AGDP_TAG, $post_class::get_uid($post_id));
 				
 				if( ! empty($attributes['from']) )
 					$headers[] = 'From:' . $attributes['from'];

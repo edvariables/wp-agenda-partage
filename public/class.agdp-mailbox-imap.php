@@ -49,23 +49,37 @@ class Agdp_Mailbox_IMAP {
 			
 		$messages = [];
 		foreach($imap->emails() as $email){
+			$agdp_headers = [];
+			$agdp_header = 'X-' . AGDP_TAG;
 			foreach($email->custom_headers as $header => $header_content){
 				if( preg_match('/-SPAMCAUSE$/', $header) )
 					$email->custom_headers[$header] = decode_spamcause( $header_content );
+				elseif( strpos( $header, $agdp_header ) === 0 )
+					$agdp_headers[ substr($header,2) /* X- */] = $header_content;
 			}
-			$messages[] = [
+		
+			$message = [
 				'id' => $email->id,
 				'msgno' => $email->msgno,
 				'date' => $email->date,
 				'udate' => $email->udate,
 				'subject' => $email->subject,
 				'to' => $email->to,
+				'cc' => $email->cc,
 				'from' => $email->from,
 				'reply_to' => $email->reply_to,
 				'attachments' => self::sanitize_attachments($email->attachments),
 				'text_plain' => $email->text_plain,
-				'text_html' => $email->text_html
+				'text_html' => $email->text_html,
+				'headers' => $agdp_headers
 			];
+			
+			$agdp_header_uid = AGDP_TAG . '-UID';
+			if( isset($agdp_headers[$agdp_header_uid]) )
+				$message[AGDP_IMPORT_UID] = $agdp_headers[$agdp_header_uid];
+			
+			$messages[] = $message;
+				
 		}
 		return $messages;
 	}
