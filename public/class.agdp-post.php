@@ -949,7 +949,7 @@ abstract class Agdp_Post {
 		if( ! $connexion )
 			return false;
 		
-		$attributes = [];
+		$attributes = [ 'connexion' => $connexion ];
 		foreach( preg_split( '/[|\n]+/m', $connexion) as $index => $attribute){
 			$attribute = explode( ':', $attribute );
 			if( $index === 0 ) {
@@ -997,67 +997,117 @@ abstract class Agdp_Post {
 		//Send
 		switch( $action ){
 			case 'mailto':
-				// debug_log('send_for_diffusion mailto', $action, $attributes, $export);
-				$subject = sprintf('[%s][%s]%s.%d:status=%s'
-					, get_bloginfo('name')
-					, $post_class::taxonomy_diffusion
-					, $post_class::post_type
-					, $post_id
-					, $post_is_deleted ? 'cancelled' : $post_status
-				);
-				$url = get_post_permalink( $post_id );
-				$message = sprintf("%s\n----\n%s"
-					, $url
-					, html_to_plain_text($post_class::get_post_details_for_email( $post_id ))
-				);
-				$headers = [];
-				$headers[] = 'MIME-Version: 1.0';
-				$headers[] = 'Content-type: text/html; charset=utf-8';
-				$headers[] = 'Content-Transfer-Encoding: quoted-printable';
-				
-				// AGDP UID
-				$headers[] = sprintf('X-%s-UID: %s', AGDP_TAG, $post_class::get_uid($post_id));
-				
-				if( ! empty($attributes['from']) )
-					$headers[] = 'From:' . $attributes['from'];
-				if( ! empty($attributes['reply-to']) )
-					$headers[] = 'Reply-to:' . $attributes['reply-to'];
-				$attachments = [];
-				if( $export )
-					$attachments[] = $export;
-				
-				$data = [
-					'taxonomy' => $post_class::taxonomy_diffusion,
-					'post_type' => $post_class::post_type,
-					'post_id' => $post_id,
-					'post_status' => $post_is_deleted ? 'cancelled' : $post_status,
-					'action' => $action,
-					'attributes' => $attributes,
-					'connexion' => $connexion,
-					'export_type' => $export_type,
-					'export' => $export,
-					'export_filters' => $filters,
-					'to' => $attributes['mailto'],
-					'subject' => $subject,
-					'message' => $message,
-					'headers' => $headers,
-					'attachments' => $attachments,
-				];
-				$data = apply_filters($post_class::post_type . '_send_for_diffusion_' . $action, $data);
-				if( $data ) {
-					$subject = '=?UTF-8?B?' . base64_encode($data['subject']). '?=';
-					// if( false ) //debug
-					$result = wp_mail( $data['to'], $subject, $data['message'], $data['headers'], $data['attachments'] );
-				}
-				// debug_log('send_for_diffusion debug ! wp_mail', $data );
-				
+				static::send_for_diffusion_mailto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type );
 				break;
-				
 			case 'blog' :
 			default:
 				debug_log('send_for_diffusion ! unknown action', $action);
 		}
-	}	
+	}
+	
+	/**
+	 * send_for_diffusion_mailto
+	 */
+	public static function send_for_diffusion_mailto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type ){
+		// debug_log('send_for_diffusion mailto', $action, $attributes, $export);
+		$subject = sprintf('[%s][%s]%s.%d:status=%s'
+			, get_bloginfo('name')
+			, $post_class::taxonomy_diffusion
+			, $post_class::post_type
+			, $post_id
+			, $post_is_deleted ? 'cancelled' : $post_status
+		);
+		$url = get_post_permalink( $post_id );
+		$message = sprintf("%s\n----\n%s"
+			, $url
+			, html_to_plain_text($post_class::get_post_details_for_email( $post_id ))
+		);
+		$headers = [];
+		$headers[] = 'MIME-Version: 1.0';
+		$headers[] = 'Content-type: text/html; charset=utf-8';
+		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+		
+		// AGDP UID
+		$headers[] = sprintf('X-%s-UID: %s', AGDP_TAG, $post_class::get_uid($post_id));
+		
+		if( ! empty($attributes['from']) )
+			$headers[] = 'From:' . $attributes['from'];
+		if( ! empty($attributes['reply-to']) )
+			$headers[] = 'Reply-to:' . $attributes['reply-to'];
+		$attachments = [];
+		if( $export )
+			$attachments[] = $export;
+		
+		$data = [
+			'taxonomy' => $post_class::taxonomy_diffusion,
+			'post_type' => $post_class::post_type,
+			'post_id' => $post_id,
+			'post_status' => $post_is_deleted ? 'cancelled' : $post_status,
+			'action' => $action,
+			'attributes' => $attributes,
+			'export_type' => $export_type,
+			'export' => $export,
+			'export_filters' => $filters,
+			'to' => $attributes['mailto'],
+			'subject' => $subject,
+			'message' => $message,
+			'headers' => $headers,
+			'attachments' => $attachments,
+		];
+		
+		$filter_applied = false;
+		if( isset($attributes['format']) ){
+			switch( $attributes['format']) {
+				case 'message' :
+					$post = get_post($post_id);
+					
+					//Flag du post pour ne pas envoyer des messages à chaque mise à jour.
+					$meta_name = sprintf('%s_%s_%s', $post_class::taxonomy_diffusion, $action, $attributes[$action] );
+				// delete_post_meta($post->ID, $meta_name); //DEBUG
+					$already_sent = static::get_post_meta($post, $meta_name, true);
+					
+					if( $data['post_status'] !== 'publish' ){
+						if( ! $already_sent ){
+							debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && ! already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
+							return false;
+						}
+						debug_log(__CLASS__.'::'.__FUNCTION__ . ' ! publish && already_sent', $post->ID . ' > ' . $post->post_title, $already_sent);
+						delete_post_meta($post->ID, $meta_name);
+					}
+					// elseif( $already_sent ){
+						// debug_log(__CLASS__.'::'.__FUNCTION__ . ' already_sent !', $post->ID . ' > ' . $post->post_title, $already_sent);
+						// return false;
+					// }
+					else
+						update_post_meta($post->ID, $meta_name, wp_date('Y-m-d H:i:s'));
+					
+					$data = apply_filters($post_class::post_type . '_send_for_diffusion_' . $action, $data);
+					$filter_applied = true;
+					if( is_array( $data ) ) {
+						if( $data['post_status'] !== 'publish' ){
+							$data['subject'] = sprintf('%s%s', AGDP_SUBJECT_CANCELED, $data['subject']);
+						}
+						elseif( $already_sent ){
+							$data['subject'] = sprintf('%s%s', AGDP_SUBJECT_UPDATED, $data['subject']);
+						}
+					}
+					break;
+				default:
+			}
+		}
+		if( ! $filter_applied )
+			$data = apply_filters($post_class::post_type . '_send_for_diffusion_' . $action, $data);
+		
+		if( is_array( $data ) ) {
+			$subject = '=?UTF-8?B?' . base64_encode($data['subject']). '?=';
+			// if( false ) //debug
+			$result = wp_mail( $data['to'], $subject, $data['message'], $data['headers'], $data['attachments'] );
+		}
+		else
+			$result = $data;
+		// debug_log('send_for_diffusion debug ! wp_mail', $data );
+		return $result;
+	}
 	
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages

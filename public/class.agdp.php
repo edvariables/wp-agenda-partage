@@ -1000,9 +1000,14 @@ class Agdp {
 	public static function blog_diagram_html( $diagram = false ){
 		if( ! $diagram )
 			$diagram = self::blog_diagram();
+		
+		$html = '';
+		
+		$html .= self::blog_simple_diagram_html( $diagram );
+		
 		$posts_pages = $diagram['posts_pages'];
 
-		$html = '<div class="agdp-diagram">';
+		$html .= '<div class="agdp-diagram">';
 		
 			$icon = 'admin-site-alt3'; //TODO get blog favicon class="blavatar"
 			$html .= sprintf('<h3 class="toggle-trigger active">%s %s</h3>'
@@ -1083,6 +1088,149 @@ class Agdp {
 			$html .= '</div>';
 			
 		$html .= '</div>';
+		return $html;
+	}
+
+	/**
+	 * Rendu Html d'un diagrame simplifié
+	 */
+	public static function blog_simple_diagram_html( $diagram = false ){
+		if( ! $diagram )
+			$diagram = self::blog_diagram();
+		$posts_pages = $diagram['posts_pages'];
+
+		$html = '<table class="agdp-diagram">';
+		
+			$icon = 'admin-site-alt3'; //TODO get blog favicon class="blavatar"
+			$html .= sprintf('<thead><tr><th colspan="5">%s %s</th></tr></thead>'
+				, Agdp::icon($icon)
+				, $diagram['blog']
+			);
+			
+			//forums
+			foreach( $diagram['forums'] as $forum_id => $forum ){
+				
+				$page = $forum['page'];
+				if( $page->post_status !== 'publish' )
+					continue;
+				
+				if( isset($posts_pages[$page->ID.'']) ){
+					$post_class = $posts_pages[$page->ID.'']['class'];
+					$forum = array_merge($forum, $post_class::get_diagram( $diagram, $page ));
+					// var_dump($forum);
+				}
+				
+				$emails = '';
+				foreach( $forum['emails'] as $email ){
+					if( $emails )
+						$emails .= sprintf('<small><br>    ou %s</small>', $email);
+					else
+						$emails = $email;
+				}
+				$forum['IN'] = [ 'emails' => $emails ];
+				if( isset($forum['forms']) )
+					$forum['IN'] = array_merge($forum['IN'], $forum['forms']);
+				
+				$forum['OUT'] = [];
+				if( isset($forum['diffusions']) )
+					$forum['OUT'] = array_merge($forum['OUT'], $forum['diffusions']);
+				if( isset($forum['newsletters']) )
+					$forum['OUT'] = array_merge($forum['OUT'], $forum['newsletters']);
+				
+				$html .= sprintf('<tr>');
+				
+					$html .= sprintf('<td>');
+					foreach( $forum['IN'] as $type => $in ){
+						switch($type){
+							case 'emails':
+								$icon = 'email-alt';
+								break;
+							default:
+								$icon = 'feedback';
+								break;
+						}
+						if( is_a( $in, 'WP_Post') )
+							$title = $in->post_title;
+						else
+							$title = $in;
+						$html .= sprintf('<div rowspan="%d">%s %s</div>'
+							, count( $forum['OUT'] )
+							, Agdp::icon($icon)
+							, $title
+						);
+					}				
+					$html .= sprintf('</td>');
+					
+					$html .= sprintf('<td>%s</td>', 
+						count($forum['IN']) ? Agdp::icon('arrow-right-alt') : ''
+					);
+				
+					$html .= sprintf('<td colspan="%d">'
+						, count($forum['OUT']) ? '1' : '3'
+					);
+					$icon = Agdp_Page::get_icon( $page->ID );
+					$html .= sprintf('<div rowspan="%d">%s %s</div>'
+						, count( $forum['IN'] ) * count( $forum['OUT'] )
+						, Agdp::icon($icon)
+						, $page->post_title
+					);
+					$html .= sprintf('</td>');
+					
+					if( count($forum['OUT']) )
+						$html .= sprintf('<td>%s</td>', 
+							Agdp::icon('arrow-right-alt')
+						);
+					
+					$html .= sprintf('<td>');
+					foreach( $forum['OUT'] as $type => $out ){
+						if( ! $type || is_numeric($type) )
+							if( is_a( $out, 'WP_Post') )
+								$type = $out->post_type;
+						$title = false;
+						$icon = false;
+						if( is_array($out) ){
+							if( isset($out['type']) ){
+								$title = $type;
+								$type = $out['type'];
+								$icon = 'external';
+								if( isset( $out['connexion'] ) ){
+									$out = print_r( $out['connexion'], true );
+								}
+							}
+						}
+						if( ! $icon )
+							switch($type){
+								case 'diffusion':
+									$icon = 'email-alt';
+									break;
+								case Agdp_Newsletter::post_type:
+									$icon = Agdp_Newsletter::icon;
+									break;
+								default:
+										
+									$icon = 'admin-page';
+									break;
+							}
+						if( ! $title )
+							if( is_a( $out, 'WP_Post') )
+								$title = $out->post_title;
+							elseif( is_array( $out ) )
+								$title = print_r($out, true);
+							else
+								$title = $out;
+						$html .= sprintf('<div rowspan="%d">%s %s</div>'
+							, count( $forum['IN'] )
+							, Agdp::icon($icon)
+							, $title
+						);
+					}
+					$html .= sprintf('</td>');
+				
+				$html .= '</tr>';
+				
+			}
+			
+		$html .= '</table>';
 		return $html;
 	}
 }

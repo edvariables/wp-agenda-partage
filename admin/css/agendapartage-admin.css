@@ -224,6 +224,14 @@ body.colors-dark .toggle-trigger a:hover {
 .agdp-diagram :hover > a > .show-mouse-over  {
 	color: inherit;
 }
+table.agdp-diagram  {
+	border-collapse:collapse;
+	margin-bottom: 2em;
+}
+table.agdp-diagram td  {
+	border-bottom: 1px solid;
+	max-width: 33%;
+}
 
 /**
  * comment
