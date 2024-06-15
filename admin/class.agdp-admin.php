@@ -133,7 +133,7 @@ class Agdp_Admin {
 	 */
 	public static function plugin_action_links( $actions, $plugin_file, $plugin_data, $context ) {
 		$action = 'git_update_' . AGDP_TAG;
-		$url = 'wp-admin/admin.php?page=agendapartage-git-update';
+		$url = '/wp-admin/admin.php?page=agendapartage-git-update';
 		$actions[ $action ] = sprintf('<a href="%s" id="%s" aria-label="Mise à jour .git">Mise à jour .git</a>',
 			wp_nonce_url( $url, AGDP_TAG),
 			$action,
