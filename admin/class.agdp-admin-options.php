@@ -1048,12 +1048,22 @@ class Agdp_Admin_Options {
 		if ( ! current_user_can( 'manage_network_plugins' ) ) 
 			die( 'Accès non autorisé' );
 		
-		$cmd = "cd " . AGDP_PLUGIN_DIR
-			. "\nls -lart";
-		$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
-		echo sprintf('<h3>%s</h3>', $cmd );
+		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>', $cmd );
+		
+		if( empty($_REQUEST['action']) ){
+			echo sprintf('<h2>Etat courant</h2>', $cmd );
+			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
+		} else {
+			echo sprintf('<h2>Mise à jour</h2>', $cmd );
+			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
+		}
+		echo sprintf('<label>%s</label>', $cmd );
 		$result = shell_exec( $cmd );
 		echo sprintf('<pre>%s</pre>', $result);
+		
+		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
+			. '<input type="submit" name="action" value="Mettre à jour"/>'
+			. '</form>';
 	}
 	
 }
