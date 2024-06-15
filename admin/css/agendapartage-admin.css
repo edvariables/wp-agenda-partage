@@ -232,6 +232,10 @@ table.agdp-diagram td  {
 	border-bottom: 1px solid;
 	max-width: 33%;
 }
+table.agdp-diagram a  {
+	text-decoration: none;
+	color: inherit;
+}
 
 /**
  * comment

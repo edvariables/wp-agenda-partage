@@ -1114,6 +1114,7 @@ class Agdp {
 				if( $page->post_status !== 'publish' )
 					continue;
 				
+				$post_class = false;
 				if( isset($posts_pages[$page->ID.'']) ){
 					$post_class = $posts_pages[$page->ID.'']['class'];
 					$forum = array_merge($forum, $post_class::get_diagram( $diagram, $page ));
@@ -1187,15 +1188,34 @@ class Agdp {
 							if( is_a( $out, 'WP_Post') )
 								$type = $out->post_type;
 						$title = false;
-						$icon = false;
+						$icon = false;;
 						if( is_array($out) ){
 							if( isset($out['type']) ){
 								$title = $type;
 								$type = $out['type'];
 								$icon = 'external';
-								if( isset( $out['connexion'] ) ){
-									$out = print_r( $out['connexion'], true );
+								if( isset( $out['connexion'] )
+								 && isset( $out['connexion'] ) ){
+									$title = sprintf('%s (%s: %s)'
+										, $title
+										, $out['connexion']['action']
+										, $out['connexion'][$out['connexion']['action']]
+										// , print_r($out['connexion'], true)
+									);
 								}
+								if( $type === 'diffusion'
+								 && $post_class
+								 && $out['name'] === $post_class::taxonomy_diffusion
+								){
+									$posts_class = Agdp_Page::get_posts_class( $post_class::post_type );
+									if( $out['id'] == self::get_option($posts_class::newsletter_diffusion_term_id) )
+										continue;//Skip, la newsletter suit
+								}
+								$title = sprintf('<a href="#%s[%s]">%s</a>'
+									, $type
+									, $out['id']
+									, $title
+								);
 							}
 						}
 						if( ! $icon )
@@ -1212,8 +1232,13 @@ class Agdp {
 									break;
 							}
 						if( ! $title )
-							if( is_a( $out, 'WP_Post') )
-								$title = $out->post_title;
+							if( is_a( $out, 'WP_Post') ){
+								$title = sprintf('<a href="#%s[%s]">%s</a>'
+									, $out->post_type
+									, $out->ID
+									, $out->post_title
+								);
+							}
 							elseif( is_array( $out ) )
 								$title = print_r($out, true);
 							else

@@ -1143,7 +1143,7 @@ abstract class Agdp_Post {
 				$term_meta = 'connexion';
 				if( $connexion = get_term_meta( $term->term_id, $term_meta, true ) ){
 					$attributes = [];
-					foreach( explode( '|', $connexion) as $index => $attribute){
+					foreach( preg_split( '/[|\n]+/m', $connexion) as $index => $attribute){
 						$attribute = explode( ':', $attribute );
 						if( $index === 0 ) {
 							if( count($attribute) === 1 ){
