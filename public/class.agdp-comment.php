@@ -361,11 +361,10 @@ class Agdp_Comment {
 		if($attachments){
 			$upload_dir_info = wp_upload_dir();
 			$upload_dir_info['basedir'] = str_replace('\\', '/', $upload_dir_info['basedir']);
-			$html .= '<ul class="attachments">';
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;
-				$html .= '<li>';
+				
 				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
 				$url = str_replace($upload_dir_info['basedir'], $upload_dir_info['baseurl'], $attachment);
 				switch($extension){
@@ -374,18 +373,23 @@ class Agdp_Comment {
 					case 'jpeg':
 					case 'bmp':
 					case 'tiff':
-						$html .= sprintf('<a href="%s"><img src="%s"/></a>', $url, $url);
+						//Vérifie que l'image n'est pas déjà intégré dans le message
+						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
+						// debug_log( __FUNCTION__, $url, $pattern, $comment->comment_content);
+						$matches = [];
+						if( ! preg_match( $pattern, $comment->comment_content, $matches ) )
+							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url);
 						break;
 					default:
-						$html .= sprintf('<a href="%s">%sTélécharger %s</a>'
+						$html .= sprintf('<li><a href="%s">%sTélécharger %s</a></li>'
 							, $url
 							, '<span class="dashicons-before dashicons-download"></span>'
 							, pathinfo($attachment, PATHINFO_BASENAME));
 						break;
 				}
-				$html .= '</li>';
 			}
-			$html .= '</ul>';
+			if( $html )
+				$html = '<ul class="attachments">' . $html . '</ul>';
 		}
 		return $html;
 	}

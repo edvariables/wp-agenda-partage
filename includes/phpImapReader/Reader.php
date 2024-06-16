@@ -1237,8 +1237,8 @@ class Reader
                 }
 
                 if ($this->save_attachments) {
-                    $attachment->setFilePath(
-                        $this->attachment_dir . DIRECTORY_SEPARATOR . $attachment->name()
+					$attachment->setFilePath(
+                        path_join( $this->attachment_dir, $attachment->name() )
                     );
 
                     if ($this->attachment_dir && $attachment->filePath()) {

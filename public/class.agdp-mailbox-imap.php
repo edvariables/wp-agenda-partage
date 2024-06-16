@@ -68,11 +68,13 @@ class Agdp_Mailbox_IMAP {
 				'cc' => $email->cc,
 				'from' => $email->from,
 				'reply_to' => $email->reply_to,
-				'attachments' => self::sanitize_attachments($email->attachments),
+				'attachments' => $email->attachments,
 				'text_plain' => $email->text_plain,
 				'text_html' => $email->text_html,
 				'headers' => $agdp_headers
 			];
+			
+			$message = self::sanitize_attachments($message);
 			
 			$agdp_header_uid = AGDP_TAG . '-UID';
 			if( isset($agdp_headers[$agdp_header_uid]) )
@@ -162,15 +164,24 @@ class Agdp_Mailbox_IMAP {
 			// die();
 		}
 		
+		if( ! empty($message['attachments']) ){
+			
+		}
+		
 		return trim($content);
 	}
 	
 	/**
 	 * Fait le ménage dans les fichiers attachés
 	 */
-	private static function sanitize_attachments($attachments){
+	private static function sanitize_attachments( $message ){
+		$attachments = $message['attachments'];
 		if( ! $attachments || count($attachments) === 0 )
 			return null;
+		$text_html = $message['text_html'];
+		$upload_dir_info = wp_upload_dir();
+		$upload_dir_info['basedir'] = str_replace('\\', '/', $upload_dir_info['basedir']);
+			
 		$files = [];
 		foreach($attachments as $attachment){
 			if ( ! file_exists( $attachment->file_path ) )
@@ -187,9 +198,19 @@ class Agdp_Mailbox_IMAP {
 					unlink($attachment->file_path);
 					continue 2;
 			}
+			
+			if( $text_html ){
+				$pattern = sprintf('/\<img\s[^>]*src="cid\:%s"([^>]+)\>/', preg_quote($attachment->id, '/'));
+				$url = str_replace($upload_dir_info['basedir'], $upload_dir_info['baseurl'], $attachment->file_path);
+				$replace = sprintf('<a href="%s"><img src="%s"$1/></a>', $url, $url);
+				$text_html = preg_replace( $pattern, $replace, $text_html );
+			}
 			$files[] = $attachment->file_path;
+			
 		}
-		return $files;
+		$message['text_html'] = $text_html;
+		$message['attachments'] = $files;
+		return $message;
 	}
 }
 ?>
