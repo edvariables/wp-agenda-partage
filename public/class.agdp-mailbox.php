@@ -788,7 +788,7 @@ class Agdp_Mailbox {
 				'post_author' => $user_name,
 				'post_author_url' => 'mailto:' . $user_email,
 				'post_author_email' => $user_email,
-				'post_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $post_parent),
+				'post_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $post_parent, $page),
 				'post_date' => $date,
 				'post_date_gmt' => $date_gmt,
 				'post_parent' => $post_parent,
@@ -853,7 +853,7 @@ class Agdp_Mailbox {
 				//TODO AGDP_IMPORT_REFUSED
 				
 				/* $comment_parent = false;// $comment->comment_parent;
-				$comment_content = Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $comment_parent);
+				$comment_content = Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $comment_parent, $page);
 				debug_log(__FUNCTION__ . ' update', $comment_content);
 				$title = $message['subject'];
 				$commentdata = [
@@ -910,7 +910,7 @@ class Agdp_Mailbox {
 				'comment_author' => $user_name,
 				'comment_author_url' => 'mailto:' . $user_email,
 				'comment_author_email' => $user_email,
-				'comment_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $comment_parent),
+				'comment_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $comment_parent, $page),
 				'comment_date' => $comment_date,
 				'comment_date_gmt' => $comment_date_gmt,
 				'comment_parent' => $comment_parent,

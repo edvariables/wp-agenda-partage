@@ -253,6 +253,108 @@ function html_inner_body($html, $wrapper = 'message', $wrapper_class = false){
 	return $html;
 }
 
+/**
+ * Retourne le fichier après en avoir réduit la taille
+ */
+function image_reduce($filename, $max_width = 800, $max_height = 800, $new_file = false){
+	if( $max_width === 0
+	|| ! file_exists( $filename) )
+		return false;
+	
+	return $filename;
+	//TODO
+	
+	//Correction d'auto-rotation
+	$image = imagecreatefromjpeg($filename);
+	$exif = exif_read_data($filename);
+	if(!empty($exif['Orientation'])) {
+		switch($exif['Orientation']) {
+			case 8:
+				$image = imagerotate($image,90,0);
+				break;
+			case 3:
+				$image = imagerotate($image,180,0);
+				break;
+			case 6:
+				$image = imagerotate($image,-90,0);
+				break;
+		}
+	}
+	// Calcul des nouvelles dimensions
+	$size = getimagesize($filename);
+	$width = $size[0];
+	$height = $size[1];
+
+	if( $width <= 0 )
+		return $filename;
+	if( $width > $max_width )
+		$percent = $max_width / $width;
+	elseif( $height > $max_height )
+		$percent = $max_height / $height;
+	else
+		return $filename;
+	debug_log(__FUNCTION__, $size, $width, $height, $percent);
+	$new_width = floor($width * $percent);
+	$new_height = floor($height * $percent);
+	debug_log(__FUNCTION__, $new_width, $new_height);
+	if( $new_width <= 0 || $new_height <= 0 )
+		return $filename;
+	
+	$path_parts = pathinfo($filename);
+
+	if( $new_file ){
+		$new_file = sprintf('%s/%s-%s.%s'
+			, $path_parts['dirname']
+			, $path_parts['filename']
+			, sprintf( '%dx%d', $new_height, $new_width)
+			, $path_parts['extension']
+		);
+		if( file_exists($new_file) )
+			return $new_file;
+		
+		if( ! copy($filename, $new_file) )
+			return false;
+	}
+	else
+		$new_file = $filename;
+
+	// Chargement
+	$thumb = imagecreatetruecolor($new_width, $new_height);
+	$source = imagecreatefromjpeg($filename);
+	
+	// Redimensionnement
+	imagecopyresampled($thumb, $source, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+	
+	switch($path_parts['extension']){
+		case 'png':
+			imagepng($thumb, $new_file);
+			break;
+		case 'gif':
+			imagegif($thumb, $new_file);
+			break;
+		case 'jpeg':
+		case 'jpg':
+		default:
+			imagejpeg($thumb, $new_file);
+			break;
+	}
+	
+    imagedestroy($thumb);
+    imagedestroy($source);
+	
+	return $new_file;
+}
+
+/**
+ * Retourne l'url d'un fichier du répertoire upload_dir_info
+ */
+function upload_file_url( $filename ){
+	
+	$upload_dir_info = wp_upload_dir();
+	$upload_dir_info['basedir'] = str_replace('\\', '/', $upload_dir_info['basedir']);
+		
+	return str_replace($upload_dir_info['basedir'], $upload_dir_info['baseurl'], $filename);
+}
 
 /**
  * Crée le fichier zip d'un dossier, sans ou avec dossier racine dans le zip

@@ -115,19 +115,29 @@ class Agdp_Mailbox_IMAP {
 	/**
 	 * Retourne le contenu expurgé depuis un email.
 	 */
-	public static function get_imap_message_content($mailbox_id, $message, $comment_parent){
-		/* $content = ' '
+	public static function get_imap_message_content($mailbox_id, $message, $comment_parent, $page){
+		if( $page ){
+			$meta_key = 'import_plain_text';
+			$import_plain_text = get_post_meta($page->ID, $meta_key, true);
+		}
+		else
+			$import_plain_text = false;
+		if( $import_plain_text ){
+			$content = ' '
 				. (empty($message['text_plain']) 
 					? html_to_plain_text( $message['text_html'] )
-					: html_entity_decode($message['text_plain'], ENT_QUOTES)); */
-/* 		$content = ' '
-				. ( empty($message['text_plain']) 
-					? $message['text_html']
-					: html_entity_decode($message['text_plain'], ENT_QUOTES));*/
-		$content = ' '
-				. ( ! empty($message['text_html']) 
-					? html_inner_body($message['text_html'])
 					: html_entity_decode($message['text_plain'], ENT_QUOTES));
+		}
+		else {
+	/* 		$content = ' '
+					. ( empty($message['text_plain']) 
+						? $message['text_html']
+						: html_entity_decode($message['text_plain'], ENT_QUOTES));*/
+			$content = ' '
+					. ( ! empty($message['text_html']) 
+						? html_inner_body($message['text_html'])
+						: html_entity_decode($message['text_plain'], ENT_QUOTES));
+		}
 		// debug_log(__FUNCTION__, $message['text_html'], 'content', $content);
 		if( $clear_signatures = get_post_meta($mailbox_id, 'clear_signature', true))
 			foreach( explode("\n", str_replace("\r", '', $clear_signatures)) as $clear_signature ){
@@ -179,14 +189,13 @@ class Agdp_Mailbox_IMAP {
 		if( ! $attachments || count($attachments) === 0 )
 			return null;
 		$text_html = $message['text_html'];
-		$upload_dir_info = wp_upload_dir();
-		$upload_dir_info['basedir'] = str_replace('\\', '/', $upload_dir_info['basedir']);
 			
 		$files = [];
 		foreach($attachments as $attachment){
-			if ( ! file_exists( $attachment->file_path ) )
+			$filename = $attachment->file_path;
+			if ( ! file_exists( $filename ) )
 				continue;
-			$extension = strtolower(pathinfo($attachment->file_path, PATHINFO_EXTENSION));
+			$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 			switch($extension){
 				case 'exe':
 				case 'sh':
@@ -195,17 +204,18 @@ class Agdp_Mailbox_IMAP {
 				case 'vbs':
 				case 'js':
 				case 'php':
-					unlink($attachment->file_path);
+					unlink($filename);
 					continue 2;
 			}
+			$filename = image_reduce($filename, 400, 600, true );
 			
 			if( $text_html ){
 				$pattern = sprintf('/\<img\s[^>]*src="cid\:%s"([^>]+)\>/', preg_quote($attachment->id, '/'));
-				$url = str_replace($upload_dir_info['basedir'], $upload_dir_info['baseurl'], $attachment->file_path);
+				$url = upload_file_url( $filename );
 				$replace = sprintf('<a href="%s"><img src="%s"$1/></a>', $url, $url);
 				$text_html = preg_replace( $pattern, $replace, $text_html );
 			}
-			$files[] = $attachment->file_path;
+			$files[] = $filename;
 			
 		}
 		$message['text_html'] = $text_html;

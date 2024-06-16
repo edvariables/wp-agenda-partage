@@ -28,6 +28,7 @@ class Agdp_Comment {
 		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_pre_comment_approved'), 10, 2 );
+		add_filter('delete_comment', array(__CLASS__, 'on_delete_comment'), 10, 2 );
 		if ( $pagenow === 'wp-comments-post.php' ) {
 			add_filter('preprocess_comment', array(__CLASS__, 'on_preprocess_comment') );
 			add_filter('comment_post', array(__CLASS__, 'on_comment_post'), 10, 3 );
@@ -359,14 +360,12 @@ class Agdp_Comment {
 		$html = '';
 		$attachments = get_comment_meta($comment->comment_ID, 'attachments', true);
 		if($attachments){
-			$upload_dir_info = wp_upload_dir();
-			$upload_dir_info['basedir'] = str_replace('\\', '/', $upload_dir_info['basedir']);
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;
 				
 				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
-				$url = str_replace($upload_dir_info['basedir'], $upload_dir_info['baseurl'], $attachment);
+				$url = upload_file_url( $attachment );
 				switch($extension){
 					case 'png':
 					case 'jpg':
@@ -572,6 +571,22 @@ class Agdp_Comment {
 	}
 	
 	/**
+	 * Action lors de la suppression d'un commentaire
+	 * Supprime les fichiers attachés
+	 */
+	public static function on_delete_comment($comment_id, $comment) {
+
+		$attachments = get_comment_meta($comment_id, 'attachments', true);
+		if($attachments){
+			foreach($attachments as $attachment){
+				if( ! file_exists($attachment) )
+					continue;
+				unlink($attachment);
+			}
+		}
+	}
+	
+	/**
 	 * Requête Ajax sur les commentaires
 	 */
 	public static function on_wp_ajax_comment() {
@@ -620,14 +635,8 @@ class Agdp_Comment {
 		
 		$args = ['comment_ID' => $data['comment_id'], 'comment_approved' => 'trash'];
 		$comment = wp_update_comment($args, true);
-		if ( ! is_a($comment, 'WP_Error') ){		
-			$attachments = get_comment_meta($data['comment_id'], 'attachments', true);
-			if($attachments){
-				foreach($attachments as $attachment){
-					if( file_exists($attachment) )
-						unlink($attachment);
-				}
-			}
+		if ( ! is_a($comment, 'WP_Error') ){
+			//La suppression des fichiers attachés se passe dans on_delete_comment
 			return 'js:$actionElnt.parents(\'.comment:first\').remove();';
 		}
 		

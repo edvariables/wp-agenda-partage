@@ -1035,6 +1035,14 @@ class Agdp_Admin_Options {
 	* callback functions
 	*/
 	public static function agdp_diagram_page_html() {
+		
+		$filename = 'C:\Arbeit\www\agenda-partage/wp-content/uploads/agdpmailbox/3621/2024/6/4F6A9F2D-1CAC-40E2-B66F-3EF5F07B1C9E@home-IMG_2336.jpeg';
+		$filename = str_replace('\\', '/', $filename);
+		echo sprintf('<h3>%s</h3><img src="%s">', $filename, upload_file_url( $filename ));
+		
+		$filename = image_reduce($filename, 30, 300, true );
+		echo sprintf('<h3>%s</h3><img src="%s">', $filename, upload_file_url( $filename ));
+		
 		echo sprintf('<pre>%s</pre>', Agdp::blog_diagram_html());
 	}
 	

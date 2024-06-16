@@ -247,6 +247,13 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'input' => 'checkbox'
 		];
 		
+		//text/html
+		$fields[] = [
+			'name' => 'import_plain_text',
+			'label' => __('Importation des messages en texte brut', AGDP_TAG),
+			'input' => 'checkbox'
+		];
+		
 		//Newsletters
 		foreach( Agdp_Page::get_page_newsletters($post) as $newsletter)
 			$fields[] = [
