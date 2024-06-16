@@ -207,7 +207,7 @@ class Agdp_Mailbox_IMAP {
 					unlink($filename);
 					continue 2;
 			}
-			$filename = image_reduce($filename, 400, 600, true );
+			$filename = image_reduce($filename, 800, 800, false );
 			
 			if( $text_html ){
 				$pattern = sprintf('/\<img\s[^>]*src="cid\:%s"([^>]+)\>/', preg_quote($attachment->id, '/'));

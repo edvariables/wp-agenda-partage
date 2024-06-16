@@ -1211,10 +1211,11 @@ class Agdp {
 									if( $out['id'] == self::get_option($posts_class::newsletter_diffusion_term_id) )
 										continue;//Skip, la newsletter suit
 								}
-								$title = sprintf('<a href="#%s[%s]">%s</a>'
+								$title = sprintf('<a href="#%s[%s]">%s %s</a>'
 									, $type
 									, $out['id']
 									, $title
+									, Agdp::icon('edit show-mouse-over')
 								);
 							}
 						}
@@ -1233,10 +1234,11 @@ class Agdp {
 							}
 						if( ! $title )
 							if( is_a( $out, 'WP_Post') ){
-								$title = sprintf('<a href="#%s[%s]">%s</a>'
+								$title = sprintf('<a href="#%s[%s]">%s %s</a>'
 									, $out->post_type
 									, $out->ID
 									, $out->post_title
+									, Agdp::icon('edit show-mouse-over')
 								);
 							}
 							elseif( is_array( $out ) )

@@ -261,29 +261,48 @@ function image_reduce($filename, $max_width = 800, $max_height = 800, $new_file 
 	|| ! file_exists( $filename) )
 		return false;
 	
-	return $filename;
-	//TODO
-	
-	//Correction d'auto-rotation
-	$image = imagecreatefromjpeg($filename);
-	$exif = exif_read_data($filename);
-	if(!empty($exif['Orientation'])) {
-		switch($exif['Orientation']) {
-			case 8:
-				$image = imagerotate($image,90,0);
-				break;
-			case 3:
-				$image = imagerotate($image,180,0);
-				break;
-			case 6:
-				$image = imagerotate($image,-90,0);
-				break;
-		}
+	$path_parts = pathinfo($filename);
+	switch($path_parts['extension']){
+		case 'png':
+			$source = imagecreatefrompng($filename);
+			break;
+		case 'bmp':
+			$source = imagecreatefrombmp($filename);
+			break;
+		case 'gif':
+			$source = imagecreatefromgif($filename);
+			break;
+		case 'jpeg':
+		case 'jpg':
+		default:
+			$source = imagecreatefromjpeg($filename);
+			break;
 	}
+	
 	// Calcul des nouvelles dimensions
 	$size = getimagesize($filename);
 	$width = $size[0];
 	$height = $size[1];
+	
+	//Correction d'auto-rotation
+	$exif = exif_read_data($filename);
+	if( ! empty($exif['Orientation'])) {
+		switch($exif['Orientation']) {
+			case 8:
+				$source = imagerotate($source,90,0);
+				$width = $size[1];
+				$height = $size[0];
+				break;
+			case 3:
+				$source = imagerotate($source,180,0);
+				break;
+			case 6:
+				$source = imagerotate($source,-90,0);
+				$width = $size[1];
+				$height = $size[0];
+				break;
+		}
+	}
 
 	if( $width <= 0 )
 		return $filename;
@@ -293,14 +312,12 @@ function image_reduce($filename, $max_width = 800, $max_height = 800, $new_file 
 		$percent = $max_height / $height;
 	else
 		return $filename;
-	debug_log(__FUNCTION__, $size, $width, $height, $percent);
+	// debug_log(__FUNCTION__, $size, $width, $height, $percent);
 	$new_width = floor($width * $percent);
 	$new_height = floor($height * $percent);
-	debug_log(__FUNCTION__, $new_width, $new_height);
+	// debug_log(__FUNCTION__, $new_width, $new_height);
 	if( $new_width <= 0 || $new_height <= 0 )
 		return $filename;
-	
-	$path_parts = pathinfo($filename);
 
 	if( $new_file ){
 		$new_file = sprintf('%s/%s-%s.%s'
@@ -320,7 +337,6 @@ function image_reduce($filename, $max_width = 800, $max_height = 800, $new_file 
 
 	// Chargement
 	$thumb = imagecreatetruecolor($new_width, $new_height);
-	$source = imagecreatefromjpeg($filename);
 	
 	// Redimensionnement
 	imagecopyresampled($thumb, $source, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
@@ -328,6 +344,9 @@ function image_reduce($filename, $max_width = 800, $max_height = 800, $new_file 
 	switch($path_parts['extension']){
 		case 'png':
 			imagepng($thumb, $new_file);
+			break;
+		case 'bmp':
+			imagebmp($thumb, $new_file);
 			break;
 		case 'gif':
 			imagegif($thumb, $new_file);

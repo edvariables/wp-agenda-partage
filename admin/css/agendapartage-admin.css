@@ -236,6 +236,9 @@ table.agdp-diagram a  {
 	text-decoration: none;
 	color: inherit;
 }
+/* table.agdp-diagram a .dashicons-before { */
+	/* color: #2271b1; */
+/* } */
 
 /**
  * comment
