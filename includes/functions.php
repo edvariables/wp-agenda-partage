@@ -224,12 +224,33 @@ function decode_spamcause_unrot($pair, $pos, $key = false){
  * Retourne le texte correspondant au html, sans balise html.
  */
 function html_to_plain_text($html){
-	$html = preg_replace('/^.*\<html.*\>([\s\S]*)\<\/html\>.*$/i', '$1', $html);
+	$html = html_inner_body( $html, false );
 	$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol|br))/', "\n$1", $html);
 	return html_entity_decode(
 			htmlspecialchars_decode(
 			wp_strip_all_tags($html)
 			), ENT_QUOTES | ENT_HTML401);
+}
+
+/**
+ * Retourne le texte contenu dans les balises html body. Supprime aussi la balise style
+ */
+function html_inner_body($html, $wrapper = 'message', $wrapper_class = false){
+	$matches = [];
+	if( preg_match('/<body[^>]*\>([\s\S]*)\<\/body\>/', $html, $matches) )
+		$html = $matches[1];
+	elseif( preg_match('/<html[^>]*\>([\s\S]*)\<\/html\>/', $html, $matches) )
+		$html = $matches[1];
+	$html = preg_replace('/\<style[^>]*\>[\s\S]*\<\/style\>$/i', '', $html);
+	if( $wrapper ){
+		$html = sprintf('<%s class="%s">%s</%s>'
+			, $wrapper
+			, $wrapper_class ? $wrapper_class : ''
+			, $html
+			, $wrapper
+		);
+	}
+	return $html;
 }
 
 

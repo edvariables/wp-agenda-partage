@@ -1505,7 +1505,7 @@ class Agdp_Newsletter {
 			wp_unschedule_event( $timestamp, $cron_hook );
 			
 			self::$cron_state = '0|Désactivé'; 
-			log_cron_state();
+			self::log_cron_state();
 		}
 	}
 	/**

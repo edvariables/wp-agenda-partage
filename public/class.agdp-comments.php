@@ -419,6 +419,9 @@ class Agdp_Comments {
 	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
 }
+.a-ul img {
+  max-width: 200px;
+}
 '
 			. '</style>';
 		$html = self::get_list_html($mailbox, $page, $content, $options );
@@ -538,15 +541,19 @@ class Agdp_Comments {
 		if($value){
 			$value = preg_replace('/\n[\s\n]+/', "\n", $value);
 			$more = '';
-			$max_len = 1000;
-			if( strlen($value) > $max_len ){
-				$more = sprintf('<a href="%s">... <b><i>[continuez la lecture sur le site]</i></b></a>', $url);
-				//bugg sic
-				while( strlen(substr($value, 0, $max_len)) === 0 && $max_len < 9999)
-					$max_len += 7;
-				$value = substr($value, 0, $max_len);
-			}
-			$html .= sprintf('<pre>%s%s</pre>', htmlentities($value), $more );
+			//TODO Tronquer le contenu provoque des erreurs html (balises non fermées)
+			// $max_len = 1500;
+			// if( strlen($value) > $max_len ){
+				// $more = sprintf('<a href="%s">... <b><i>[continuez la lecture sur le site]</i></b></a>', $url);
+				// bugg sic
+				// while( strlen(substr($value, 0, $max_len)) === 0 && $max_len < 9999)
+					// $max_len += 7;
+				// $value = substr($value, 0, $max_len);
+			// }
+			if( $email_mode )
+				$html .= sprintf('<pre>%s%s</pre>', $value, $more );
+			else
+				$html .= sprintf('<pre>%s%s</pre>', htmlentities($value), $more );
 		}
 		
 		$html .= Agdp_Comment::get_attachments_links($comment);
