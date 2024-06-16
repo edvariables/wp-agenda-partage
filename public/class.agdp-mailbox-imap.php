@@ -126,7 +126,7 @@ class Agdp_Mailbox_IMAP {
 				. ( ! empty($message['text_html']) 
 					? html_inner_body($message['text_html'])
 					: html_entity_decode($message['text_plain'], ENT_QUOTES));
-		debug_log(__FUNCTION__, $message['text_html'], 'content', $content);
+		// debug_log(__FUNCTION__, $message['text_html'], 'content', $content);
 		if( $clear_signatures = get_post_meta($mailbox_id, 'clear_signature', true))
 			foreach( explode("\n", str_replace("\r", '', $clear_signatures)) as $clear_signature ){
 				if ( ($pos = strpos( $content, $clear_signature) ) > 0)
