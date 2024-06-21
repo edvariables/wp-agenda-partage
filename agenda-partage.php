@@ -60,6 +60,9 @@ define( 'AGDP_IMPORT_REFUSED', 'post-import-refused' );
 define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');
 define( 'AGDP_JS_SKIP_FIELD', '_js_skip_field');
 
+define( 'AGDP_IMG_MAX_WIDTH', 400);
+define( 'AGDP_IMG_MAX_HEIGHT', 400);
+
 define( 'AGDP_SUBJECT_CANCELED', '[ANNULATION]');
 define( 'AGDP_SUBJECT_UPDATED', '[MISE A JOUR]');
 

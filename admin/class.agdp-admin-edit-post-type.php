@@ -58,7 +58,6 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$class = ! array_key_exists ( 'class', $field ) || ! $field['class'] ? '' : $field['class'];
 			$container_class = ! array_key_exists ( 'container_class', $field ) || ! $field['container_class'] ? '' : $field['container_class'];
 			$input_attributes = ! array_key_exists ( 'input_attributes', $field ) || ! $field['input_attributes'] ? '' : $field['input_attributes'];
-			if( is_array($input_attributes) ) $input_attributes = implode(' ', $input_attributes);
 			$readonly = ! array_key_exists ( 'readonly', $field ) || ! $field['readonly'] ? false : $field['readonly'];
 			$unit = ! array_key_exists ( 'unit', $field ) || ! $field['unit'] ? false : $field['unit'];
 			$learn_more = ! array_key_exists ( 'learn-more', $field ) || ! $field['learn-more'] ? false : $field['learn-more'];
@@ -76,6 +75,19 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if($parent_field != null)
 				$container_class .= ' agdp-metabox-subfields';
 
+			$attributes_str = '';
+			if( is_array($input_attributes) ){
+				foreach($input_attributes as $key=>$value){
+					if( $attributes_str )
+						$attributes_str .= ' ';
+					if( is_int($key) )
+						$attributes_str .= $value;
+					else
+						$attributes_str .= $key . '="' . esc_attr( $value ) . '"';
+				}
+				$input_attributes = $attributes_str;
+			}
+			
 			?><div class="<?php echo trim($container_class);?>"><?php
 
 			switch ($input_type) {
@@ -156,7 +168,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					echo '<select id="'.$id.'"'
 						. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 						. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
-						.' name="' . $name
+						.' name="' . $name . '"'
 						. ($readonly ? ' readonly ' : '')
 						. ($input_attributes ? ' '.$input_attributes : '')
 						. '">';

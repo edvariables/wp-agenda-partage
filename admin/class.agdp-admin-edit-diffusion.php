@@ -242,14 +242,50 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
         <th scope="row"><label for="default_checked">Paramètres de connexion</label></th>
         <td><?php
 			$meta_name = 'connexion';
-			$example_email = sprintf('%s@un-autre-site.net',
+			$example_email = sprintf('%s@%s',
 				$taxonomy === Agdp_Evenement::taxonomy_diffusion
 					? 'evenement'
 					: ( $taxonomy === Agdp_Covoiturage::taxonomy_diffusion
 						? 'covoiturage'
 						: 'publier'
-					)	
-				);
+					)
+				, 'un-autre-site.net'
+			);
+			$mode = '';
+			if( $tag 
+			&& ( $connexion = get_term_meta($tag->term_id, $meta_name, true))){
+				if( strpos( $connexion, AGDP_ARG_NEWSLETTERID ) === 0 )
+					$mode = AGDP_ARG_NEWSLETTERID;
+				elseif( strpos( $connexion, 'mailto' ) === 0 )
+					$mode = 'mailto';
+			}
+			/* parent::metabox_html([array('name' => '' ,
+								'type' => 'input',
+								'input' => 'select',
+								'value' => $mode,
+								'values' => [
+										'' => '(aucun)',
+										AGDP_ARG_NEWSLETTERID => 'La lettre-info',
+										'mailto' => 'Envoyer un email'
+									],
+								'input_attributes' => [
+									'onclick' => 'var v = this.value, $input = jQuery(this).next().find("textarea");'
+										. ' if( v === "'.AGDP_ARG_NEWSLETTERID.'" ){ $input.show().val(v + ":"); }'
+										. ' else if( v === "mailto" ){ $input.show().val(v + ":"); }'
+								],
+								'fields' => [array('name' => $meta_name,
+									'type' => 'input',
+									'input' => 'textarea',
+									'style' => $mode === 'mailto' ? '' : 'display: none',
+									'learn-more' => 'Permet d\'exporter l\'enregistrement vers un autre site à chaque mise à jour de celui-ci depuis ce site '
+										. get_bloginfo('name')
+										. '. De la forme : '
+										. '<br><code>mailto:' . $example_email
+										. '<br>export:ics|1|0'
+										. '<br>format:message|0'
+										. '</code>'
+								)],
+							)], $tag, null); */
 			parent::metabox_html([array('name' => $meta_name,
 									// 'label' => __('Paramètres.', AGDP_TAG),
 									'type' => 'input',

@@ -540,20 +540,54 @@ class Agdp_Comments {
 		$value = $comment->comment_content;
 		if($value){
 			$value = preg_replace('/\n[\s\n]+/', "\n", $value);
-			$more = '';
+			$more = $end = '';
 			//TODO Tronquer le contenu provoque des erreurs html (balises non fermées)
-			// $max_len = 1500;
-			// if( strlen($value) > $max_len ){
-				// $more = sprintf('<a href="%s">... <b><i>[continuez la lecture sur le site]</i></b></a>', $url);
-				// bugg sic
-				// while( strlen(substr($value, 0, $max_len)) === 0 && $max_len < 9999)
-					// $max_len += 7;
-				// $value = substr($value, 0, $max_len);
-			// }
+			/* $max_len = 1500;
+			if( strlen($value) > $max_len ){
+				
+				//bugg sic
+				while( strlen(substr($value, 0, $max_len)) === 0 && $max_len < strlen($value)-8)
+					$max_len += 7;
+				
+				$end = substr($value, $max_len);
+				
+				$value = substr($value, 0, $max_len);
+				
+				$pos = strpos( $value, '</', -1);
+				if( $pos === false )
+					$end = '';
+				else {
+					// Déplace </div dans $end
+					$end = substr( $value, $pos ) . $end;
+					$value = substr( $value, 0, $pos );
+
+					//Fermeture de la balise fermante
+					$pos = strpos( $end, '>');
+					if( $pos === false )
+						$end = '?!...'; //qq chose comme </coucou puis plus rien
+					else {
+						// Déplace </div> dans $value
+						$value .= substr( $end, 0, $pos );
+						$end = substr( $end, $pos );
+						
+						debug_log( __FUNCTION__, $end );
+						foreach( ['p', 'div', 'pre' ] as $tag) {
+							$pattern = sprintf('/\<%s[\s\S]+\<\/%s\>/', $tag);
+							debug_log( $pattern);
+							$end = preg_replace($pattern, '', $end );
+						}
+						debug_log( $end );
+					}
+					
+				}
+				
+				$more = sprintf('<a href="%s">... <b><i>[continuez la lecture sur le site]</i></b></a>', $url);
+				
+			} */
 			if( $email_mode )
-				$html .= sprintf('<pre>%s%s</pre>', $value, $more );
+				$html .= sprintf('<pre>%s%s%s</pre>', $value, $more, $end );
 			else
-				$html .= sprintf('<pre>%s%s</pre>', htmlentities($value), $more );
+				$html .= sprintf('<pre>%s%s%s</pre>', htmlentities($value), $more, $end );
 		}
 		
 		$html .= Agdp_Comment::get_attachments_links($comment);

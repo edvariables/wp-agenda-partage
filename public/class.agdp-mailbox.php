@@ -635,6 +635,10 @@ class Agdp_Mailbox {
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
 		add_filter('comment_flood_filter', '__return_false');
 		foreach( $messages as $message ){
+			if( $message === null){
+				debug_log(__CLASS__ . '::import_messages $message === null', $messages);
+				continue;
+			}
 			$email_to = false;
 			foreach($message['to'] as $to)
 				if( isset($dispatch[strtolower($to->email)]) ){

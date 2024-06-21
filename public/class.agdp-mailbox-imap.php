@@ -187,8 +187,7 @@ class Agdp_Mailbox_IMAP {
 	private static function sanitize_attachments( $message ){
 		$attachments = $message['attachments'];
 		if( ! $attachments || count($attachments) === 0 )
-			return null;
-		$text_html = $message['text_html'];
+			return $message;
 			
 		$files = [];
 		foreach($attachments as $attachment){
@@ -207,18 +206,21 @@ class Agdp_Mailbox_IMAP {
 					unlink($filename);
 					continue 2;
 			}
-			$filename = image_reduce($filename, 800, 800, false );
 			
-			if( $text_html ){
+			$filename = image_reduce($filename, AGDP_IMG_MAX_WIDTH, AGDP_IMG_MAX_HEIGHT, false );
+			
+			//Remplace les sources des balises img
+			if( ! empty($message['text_html']) ){
+				$text_html = $message['text_html'];
 				$pattern = sprintf('/\<img\s[^>]*src="cid\:%s"([^>]+)\>/', preg_quote($attachment->id, '/'));
 				$url = upload_file_url( $filename );
 				$replace = sprintf('<a href="%s"><img src="%s"$1/></a>', $url, $url);
 				$text_html = preg_replace( $pattern, $replace, $text_html );
+				$message['text_html'] = $text_html;
 			}
 			$files[] = $filename;
 			
 		}
-		$message['text_html'] = $text_html;
 		$message['attachments'] = $files;
 		return $message;
 	}
