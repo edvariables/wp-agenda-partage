@@ -279,9 +279,10 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 			break;
 		case 'jpeg':
 		case 'jpg':
-		default:
 			$source = imagecreatefromjpeg($filename);
 			break;
+		default:
+			return $filename;
 	}
 	
 	// Calcul des nouvelles dimensions

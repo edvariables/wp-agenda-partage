@@ -128,6 +128,13 @@ abstract class Agdp_Posts_Import {
 							}
 						}
 					}
+					
+					//Sic dtstart appears twice
+					//No array for few fields
+					foreach( ['dtstart', 'dtend'] as $field )
+						if(isset($vevent[$field]) && is_array($vevent[$field]))
+							$vevent[$field] = count($vevent[$field]) ? $vevent[$field][0] : false;
+					
 					//if no hour specified, dtend means the day before
 					if(isset($vevent['dtend']) && $vevent['dtend']){
 						if(strpos($vevent['dtstart'], 'T') === false

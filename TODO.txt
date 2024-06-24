@@ -96,3 +96,5 @@ cf class.agendapartage-agdpevent.php //TODO if( self::waiting_for_activation($po
 	
 do_action( “load-{$pagenow}” )
 https://developer.wordpress.org/reference/hooks/load-pagenow/
+
+export ics d'event : DTStart apparait en double (send_for_diffusion())
