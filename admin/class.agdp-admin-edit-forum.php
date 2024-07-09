@@ -310,6 +310,30 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'default' => true,
 		];
 		
+		//Affichage du lien modifier
+		$forms = get_posts(
+			array(
+				'nopaging' => true,
+				'post_type'=> WPCF7_ContactForm::post_type
+				//'author__in' => self::get_admin_ids(),
+			)
+		);
+		$forms = array_merge([ '' => '' ], $forms);
+		$fields[] = [
+			'name' => 'forum_edit_message',
+			'label' => __('Afficher le bouton "Modifier"', AGDP_TAG),
+			'input' => 'checkbox',
+			'fields' => [
+				//Affichage de la case à cocher
+				[
+					'name' => 'forum_edit_message_form',
+					'label' => __('Formulaire', AGDP_TAG),
+					'input' => 'select',
+					'values' => $forms,
+				],
+			],
+		];
+		
 		//Affichage de la case à cocher  Envoyez votre réponse par e-mail à l'auteur du message
 		$fields[] = [
 			'name' => '',

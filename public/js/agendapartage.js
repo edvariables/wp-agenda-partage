@@ -6,31 +6,72 @@ jQuery( function( $ ) {
 	
 	/**
 	 * agdpevent-edit shortcode
-	 * cf class.agendapartage-agdpevent-edit.php
+	 * cf class.agdp-agdpevent-edit.php
 	 * Hack des form wpcf7
 	 * Les valeurs des champs sont dans un input.agdpevent_edit_form_data hidden
 	 */
 	$( document ).ready(function() {
+		var $body = $( 'body' );
 		// on wpcf7_form_fields-init
-		$( 'body' ).on('wpcf7_form_fields-init', function(){
+		$body.on('wpcf7_form_fields-init', function(){
 			
 			/****************
-			 *	Evènements et covoiturages
+			 *	Evènements, covoiturages et messages
 			 *******************************/
-			$("input.agdpevent_edit_form_data, input.covoiturage_edit_form_data").each(	function(){
-				/** Complète les champs de formulaires avec les valeurs fournies **/
+			$("input.agdpevent_edit_form_data"
+			+ ", input.covoiturage_edit_form_data"
+			+ ", input.agdpmessage_edit_form_data").each( function(){
+				/** Complète les champs de formulaire avec les valeurs fournies via un input **/
 				var $agdpDataInput = $(this);
 				var $form = $agdpDataInput.parents('form.wpcf7-form:first');
 				if($form.length == 0) return;
 				var fields = JSON.parse($agdpDataInput.attr("data"));
 				for(var field_name in fields){
 					var $input = $form.find(':input[name="' + field_name + '"]');
-					if($input.attr('type') == 'checkbox')
-						$input.prop('checked', !! fields[field_name]);
+					if( $input.length === 0 ){
+						if( fields[field_name] instanceof Array )
+							$input = $form.find(':input[name="' + field_name + '[]"]');
+						
+						if( $input.length === 0 )
+							continue;
+					}
+					if($input.attr('type') == 'checkbox'){
+						if( fields[field_name] instanceof Array ){
+							$input.prop('checked', false);
+							for(var i in fields[field_name])
+								$input.filter('[value="' + fields[field_name][i] + '"]')
+									.prop('checked', true);
+						}
+						else
+							$input.prop('checked', !! fields[field_name]);
+					}
 					else if($input.attr('type') == 'radio'){
-						$input.filter('[value="' + fields[field_name] + '"]')
-							.prop('checked', true)
-							.parents('label:first').addClass('radio-checked');
+						if( fields[field_name] instanceof Array ){
+							$input.prop('checked', false)
+								.parents('label:first').removeClass('radio-checked');
+							for(var i in fields[field_name]){
+								var value = fields[field_name][i];
+								var filter = '[value="' + value + '"]';
+								if( value == 1 )
+									filter += ',[value="oui"],[value="Oui"]';
+								else if( value == 0 )
+									filter += ',[value="non"],[value="Non"]';
+								$input.filter(filter)
+									.prop('checked', true)
+									.parents('label:first').addClass('radio-checked');
+							}
+						}
+						else {
+							var value = fields[field_name];
+							var filter = '[value="' + value + '"]';
+							if( value == 1 )
+								filter += ',[value="oui"],[value="Oui"]';
+							else if( value == 0 )
+								filter += ',[value="non"],[value="Non"]';
+							$input.filter(filter)
+								.prop('checked', true)
+								.parents('label:first').addClass('radio-checked');
+						}
 					}
 					else
 						$input.val(fields[field_name]);
@@ -150,7 +191,7 @@ jQuery( function( $ ) {
 					if( $comment_list.length === 0)
 						return;
 					data = { 
-						'action' : 'agdp_comment_action',
+						'action' : 'agendapartage_comment_action',
 						'method' : 'get',
 						'data' : { 'comment_id' : id },
 					};
@@ -163,7 +204,10 @@ jQuery( function( $ ) {
 						success : function( response ) {
 							if(response){
 								if(typeof response === 'string' || response instanceof String){
-									$comment_list.prepend( response );
+									if( $comment_list.find( '#comment-' + id ).length )
+										$comment_list.find( '#comment-' + id ).replaceWith( response );
+									else
+										$comment_list.prepend( response );
 								}
 							}
 						},
@@ -220,7 +264,7 @@ jQuery( function( $ ) {
 		});
 		
 		// preventdefault-reset
-		$( 'body' ).on('reset', 'form.wpcf7-form.preventdefault-reset', function(e) {
+		$body.on('reset', 'form.wpcf7-form.preventdefault-reset', function(e) {
 			e.preventDefault();
 		});
 
@@ -309,7 +353,7 @@ jQuery( function( $ ) {
 		 */
 		//Filtres de l'agenda
 		// Covoiture : obtention du n° de téléphone masqué
-		$( 'body' ).on('click', '#email4phone-title', function(e) {
+		$body.on('click', '#email4phone-title', function(e) {
 			$(this).toggleClass('active');
 		});
 		
@@ -408,7 +452,7 @@ jQuery( function( $ ) {
 		}); 
 	
 		// Forum, commentaire
-		$( 'body' ).on('click', 'a.agdp-ajax-mark_as_ended', function(e) {
+		$body.on('click', 'a.agdp-ajax-mark_as_ended', function(e) {
 			var $actionElnt = $(this);
 			//rétablit une précédente annulation par le même clic
 			if( $actionElnt.attr('data_cancel_ajax')){
@@ -447,11 +491,26 @@ jQuery( function( $ ) {
 		});
 		
 		// Forum, répondre au commentaire
-		$( 'body' ).on('click', 'a.comment-reply-link', function(e) {
+		$body.on('click', 'a.comment-reply-link', function(e) {
 			var $actionElnt = $(this);
 			var title = $actionElnt.parents('article:first').find('.comment-content .comment-title').text();
 			title = 'Re: ' + title;
 			$('#respond .comment-form-title input').val(title);
 		});
+		
+		/* // Forum, éditer le commentaire
+		$body.on('click', 'a.agdp-ajax-action.agdp-ajax-edit', function(e) {
+			var $actionElnt = $(this);
+			var $article = $actionElnt.parents('article:first');
+			var $content = $article.find('.comment-content');
+			var $title = $content.find('.comment-title');
+			var title = $title.text();
+			var text = $title.nextAll().text();
+			var $respond = $article.find('a.comment-reply-link');
+			if( $respond.length )
+				$respond.get(0).click();
+			$('#respond .comment-form-title input').val(title);
+			$('#respond .comment-form-comment textarea').val(text);
+		}); */
 	});
 });

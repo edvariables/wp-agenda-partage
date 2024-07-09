@@ -343,7 +343,7 @@ class Agdp_Evenement_Edit {
 	private static function get_agdpevent_edit_content_forbidden( $post ) {
 		$post_id = $post->ID;
 		
-		$html = '<div class="adgpevent-forbidden">';
+		$html = '<div class="agdp-edit-forbidden">';
 		$html .= '<div>' . Agdp::icon('lock'
 				, 'Vous n\'êtes pas autorisé à modifier cet évènement.', '', 'h4');
 		

@@ -522,7 +522,7 @@ class Agdp_Covoiturage_Edit {
 	private static function get_covoiturage_edit_content_forbidden( $post ) {
 		$post_id = $post->ID;
 		
-		$html = '<div class="covoiturage-forbidden">';
+		$html = '<div class="agdp-edit-forbidden">';
 		$html .= '<div>' . Agdp::icon('lock'
 				, 'Vous n\'êtes pas autorisé à modifier ce covoiturage.', '', 'h4');
 		

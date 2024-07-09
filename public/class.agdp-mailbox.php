@@ -1089,7 +1089,8 @@ class Agdp_Mailbox {
 			return;
 		
 		if( isset($_POST['_wpcf7_container_post']) ){
-			if( ! ($post = get_post($_POST['_wpcf7_container_post']) ) )
+			if( ! $_POST['_wpcf7_container_post']
+			 || ! ($post = get_post($_POST['_wpcf7_container_post']) ) )
 				return;
 			
 			switch($post->post_type){
@@ -1123,18 +1124,20 @@ class Agdp_Mailbox {
 	 * Les emails sortant à destination d'une adresse de mailbox sont interceptés
 	 */
 	public static function import_wpcf7_to_comment($contact_form, &$abort, $submission, $mailbox_id, $dispatch, $page){
-		debug_log(__CLASS__.'::import_wpcf7_to_comment');
+		// debug_log(__CLASS__.'::import_wpcf7_to_comment');
 		
 		$properties = $contact_form->get_properties();
 		$posted_data = $submission->get_posted_data();
 		$mail_properties = $properties['mail'];
 		$email_to = strtolower($mail_properties['recipient']);
 		
+		// debug_log(__FUNCTION__, $posted_data);
+		
 		if( isset($posted_data['is-public'])
 		&& $posted_data['is-public'] ){
 			if( is_array($posted_data['is-public']) )
 				$posted_data['is-public'] = $posted_data['is-public'][0];
-			$posted_data['is-public'] = strtolower($posted_data['is-public']) !== 'non';
+			$posted_data['is-public'] = ! in_array( strtolower($posted_data['is-public']), ['non', '0', 'false']);
 		}
 		$emails = self::get_emails_dispatch();
 		if( ! isset($emails[$email_to]) )
@@ -1185,11 +1188,26 @@ class Agdp_Mailbox {
 				'mailbox_id' => $mailbox_id
 			]
 		];
+		if( isset($_POST['_update_comment_id']) ){
+			$update_comment = $_POST['_update_comment_id'];
+		}
+		else
+			$update_comment = false;
+		
 		foreach( $posted_data as $key=>$value )
 			$commentdata['comment_meta']['posted_data_' . $key] = $value;
-			
-		add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
-		$comment = wp_new_comment($commentdata, true);
+		
+		if( $update_comment ){
+			$commentdata['comment_ID'] = $update_comment;
+			$comment = wp_update_comment($commentdata, true);
+			if( $comment && ! is_wp_error( $comment ) )
+				$comment = $commentdata['comment_ID'];
+		}
+		else {
+			add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+			$comment = wp_new_comment($commentdata, true);
+			remove_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+		}
 		if(	is_wp_error( $comment ) ){
 			$message = 'Erreur : ' . $comment->get_error_message();
 			$submission->set_response($message);

@@ -98,3 +98,13 @@ do_action( “load-{$pagenow}” )
 https://developer.wordpress.org/reference/hooks/load-pagenow/
 
 export ics d'event : DTStart apparait en double (send_for_diffusion())
+
+Bugg : double exécution simultannée du cron d'envoi de la newsletter
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Mailbox::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [agdpmailbox-cron state]0|Aucune boîte e-mails active
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Newsletter::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Mailbox::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [agdpmailbox-cron state]0|Aucune boîte e-mails active
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Newsletter::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:47] [agdpnl-cron state]1|1 abonnés à traiter | mail #0 : 1 destinataire(s) edid@free.fr | Au final, 1 mail(s) envoyé(s) à 1 destinataire(s) en 1 sec. Identifiants : #3.
+[Pays de Saint-Félicien][2024-06-29 12:20:47] [agdpnl-cron state]1|1 abonnés à traiter | mail #0 : 1 destinataire(s) edid@free.fr | Au final, 1 mail(s) envoyé(s) à 1 destinataire(s) en 1 sec. Identifiants : #3.

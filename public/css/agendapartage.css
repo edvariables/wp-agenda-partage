@@ -210,21 +210,24 @@ label.textarea-rows-5 textarea {
 	max-height: 8em;
 }
 
-.adgpevent-forbidden, .covoiturage-forbidden {
+.agdp-edit-forbidden {
 	padding-left: 2em;
 }
-.adgpevent-forbidden ul > li, .covoiturage-forbidden ul > li {
+.agdp-edit-forbidden ul > li {
 	margin-left: 1em;
 }
+.agdp-edit-forbidden a {
+	text-decoration: underline;
+}
+.agdp-edit-forbidden form {
+	display: inline-flex;
+}
+
 .agdp-title-link a {
 	float:right;
 	box-shadow: none !important;
 	text-decoration: none;
 	outline: none;
-}
-
-.adgpevent-forbidden form, .covoiturage-forbidden form {
-	display: inline-flex;
 }
 
 .agdppost-edit-toolbar {
@@ -515,7 +518,7 @@ body.colors-dark #comments #reply-title a {
 #comments .comment-agdp-actions {
 	margin-left: 1em;
 }
-#comments .comment-agdp-actions a {
+#comments .comment-agdp-actions a.agdp-ajax-action {
 	margin-left: 1em;
 }
 #comments .comment-agdp-actions .mark_as_ended {

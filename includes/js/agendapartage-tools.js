@@ -62,6 +62,17 @@ jQuery( function( $ ) {
 									$actionElnt.replaceWith(response);
 									response = false;
 									break;
+								case 'replace_previous_response' :
+									response = response.substring(action.length + 1);
+									var $previous = $actionElnt.parents('.ajax_action-response:first');
+									if( $previous.length ){
+										$previous.html(response)
+											.prepend($('<span class="dashicons dashicons-no-alt close-box"></span>')
+												.click(function(){$msg.remove()})
+											);
+										response = false;
+									}
+									break;
 								case 'download' :
 									var url = response.substring(action.length + 1);
 									response = 'Le téléchargement est lancé. Consultez vos téléchargements.';
@@ -69,8 +80,10 @@ jQuery( function( $ ) {
 									break;
 							}
 							if(response) {
-								var $msg = $('<div class="ajax_action-response"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
-									.click(function(){$msg.remove()});
+								var $msg = $('<div class="ajax_action-response">'+response+'</div>')
+									.prepend($('<span class="dashicons dashicons-no-alt close-box"></span>')
+										.click(function(){$msg.remove()})
+									);
 								$actionElnt.after($msg);
 								// $msg.get(0).scrollIntoView();
 							}

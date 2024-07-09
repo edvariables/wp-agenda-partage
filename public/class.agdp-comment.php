@@ -10,7 +10,9 @@
 class Agdp_Comment {
 
 	private static $initiated = false;
-		
+	
+	const field_prefix = 'msg';
+	const secretcode_argument = AGDP_COMMENT_SECRETCODE;
 		
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -25,8 +27,8 @@ class Agdp_Comment {
 	 */
 	public static function init_hooks() {
 		global $pagenow;
-		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_wp_ajax_comment') );
+		add_action( 'wp_ajax_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_ajax_action') );
+		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_comment_action', array(__CLASS__, 'on_ajax_action') );
 		add_filter('pre_comment_approved', array(__CLASS__, 'on_pre_comment_approved'), 10, 2 );
 		add_filter('delete_comment', array(__CLASS__, 'on_delete_comment'), 10, 2 );
 		if ( $pagenow === 'wp-comments-post.php' ) {
@@ -43,7 +45,6 @@ class Agdp_Comment {
 	/**
 	 * Associe le forum et les commentaires de la page.
 	 * Fonction appelée par le shortcode [forum "nom du forum"]
-	 * Appelle la synchronisation IMAP.
 	 */
 	public static function init_page($mailbox, $page = false){
 		if( is_numeric( $page )){
@@ -68,6 +69,27 @@ class Agdp_Comment {
 				add_filter('get_comment_author_link', array(__CLASS__, 'on_get_comment_author_status'), 11, 3 );
 		
 		return true;
+	}
+	
+	/********************************************/
+	/**
+	 * Retourne le code secret du commentaire 
+	 */
+	public static function get_comment_codesecret($comment_id){
+		if(!$comment_id)
+			return false;
+		if(is_a($comment_id, 'WP_Comment'))
+			$comment_id = $comment_id->comment_ID;
+		
+		$meta_name = self::field_prefix . self::secretcode_argument;
+		$codesecret = get_comment_meta($comment_id, $meta_name, true);
+		debug_log( __FUNCTION__, $meta_name, $comment_id, $codesecret);
+		if( ! $codesecret ){
+			$codesecret = Agdp::get_secret_code(6,'num');
+			update_comment_meta($comment_id, $meta_name, $codesecret);
+		}
+		
+		return $codesecret;
 	}
 	
 	/********************************************/
@@ -108,6 +130,17 @@ class Agdp_Comment {
 			 && $user_email == $comment->comment_author_email ){
 				return true;
 			}
+		}
+		
+		$codesecret = self::get_comment_codesecret($comment);
+		$argument = self::secretcode_argument;
+		if( isset($_REQUEST[ $argument ]) ){
+			if( $codesecret === trim($_REQUEST[$argument]) )
+				return true;
+		}
+		if( isset($_REQUEST['data']) && isset($_REQUEST['data'][ $argument ]) ){
+			if( $codesecret === trim($_REQUEST['data'][$argument]) )
+				return true;
 		}
 		
 		return false;
@@ -403,15 +436,12 @@ class Agdp_Comment {
 		
 		$attachments_links = self::get_attachments_links($comment);
 		echo $attachments_links;
-		
-		$user_can_change_comment = self::user_can_change_comment($comment);
 		 
 		//Statut du message (mark_as_ended). 
 		$comment_actions = self::get_comment_mark_as_ended_link($comment->comment_ID);
 		
-		if( $user_can_change_comment ){
-			$comment_actions .= self::get_comment_delete_link($comment->comment_ID);
-		}
+		$comment_actions .= self::get_comment_delete_link($comment->comment_ID);
+		$comment_actions .= self::get_comment_edit_link($comment->comment_ID);
 		
 		$comment_actions = sprintf('<span class="comment-agdp-actions">%s</span>', $comment_actions);
 		
@@ -457,6 +487,24 @@ class Agdp_Comment {
 		return Agdp::get_ajax_action_link(false, ['comment','mark_as_ended'], $icon, $caption, $title, false, $data);
 	}
 	/**
+	 * Retourne le html d'action pour éditer un message 
+	 */
+	private static function get_comment_edit_link($comment_id){
+		
+		$data = [
+			'comment_id' => $comment_id,
+		];
+		if( isset( $_REQUEST[self::secretcode_argument] ) )
+			$data[self::secretcode_argument] = $_REQUEST[self::secretcode_argument];
+			
+		$caption = "Modifier";
+		$title = "Modifier ce message";
+		$icon = 'edit';
+
+		$confirm = false;
+		return Agdp::get_ajax_action_link(false, ['comment','edit'], $icon, $caption, $title, $confirm, $data);
+	}
+	/**
 	 * Retourne le html d'action pour supprimer un message 
 	 */
 	private static function get_comment_delete_link($comment_id){
@@ -464,15 +512,51 @@ class Agdp_Comment {
 		$data = [
 			'comment_id' => $comment_id
 		];
+		if( isset( $_REQUEST[self::secretcode_argument] ) )
+			$data[self::secretcode_argument] = $_REQUEST[self::secretcode_argument];
 			
 		$caption = "Supprimer";
 		$title = "Vous pouvez supprimer définitivement ce message";
 		$icon = 'trash';
 
 		//La confirmation est gérée dans public/js/agendapartage.js Voir plus bas : on_ajax_action_delete
-		$confirm = 'Etes-vous sûr de vouloir supprimer ce message ?';
+		if( self::user_can_change_comment($comment_id) )
+			$confirm = 'Etes-vous sûr de vouloir supprimer ce message ?';
+		else
+			$confirm = false;
 		return Agdp::get_ajax_action_link(false, ['comment','delete'], $icon, $caption, $title, $confirm, $data);
 	}
+	/**
+	 * Retourne un lien html pour l'envoi d'un mail à l'auteur
+	 */
+	public static function get_message_validation_email_link($comment){
+		$html = '';
+		$email = $comment->comment_author_email;
+		if(!$email){
+			$html .= '<p class="alerte">Ce message n\'a pas d\'adresse e-mail associée.</p>';
+		}
+		else {
+			if(current_user_can('manage_options'))
+				$data = [ 'force-new-activation' => true ];
+			else
+				$data = [];
+			$data['comment_id'] = $comment->comment_ID;
+			
+			$need_can_user_change = false;
+			
+			$email_parts = explode('@', $email);
+			$email_trunc = substr($email, 0, min(strlen($email_parts[0]), 3)) . str_repeat('*', max(2, strlen($email_parts[0])-3));
+			$caption = 'E-mail de validation';
+			$title = sprintf('Cliquez ici pour envoyer un e-mail de validation du message à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
+			$icon = 'email-alt';
+			$confirm = sprintf('Confirmez-vous l\'envoi d\'un e-mail à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
+			
+			$html = Agdp::get_ajax_action_link(false, ['comment','send_validation_email'], $icon, $caption, $title, $confirm, $data);
+		}
+		return $html;
+	}
+	
+	
 	/**
 	 * Retourne le html d'action pour approuver un message 
 	 */
@@ -589,15 +673,16 @@ class Agdp_Comment {
 	/**
 	 * Requête Ajax sur les commentaires
 	 */
-	public static function on_wp_ajax_comment() {
-		if( ! Agdp::check_nonce()
-		|| empty($_POST['method']))
-			wp_die();
+	public static function on_ajax_action() {
+		if( ! Agdp::check_nonce() )
+			wp_die('nonce error');
+		if( empty($_POST['method']))
+			wp_die('method missing');
 		
 		$ajax_response = '';
 		
 		$method = $_POST['method'];
-		$data = $_POST['data'];
+		$data = isset($_POST['data']) ? $_POST['data'] : [];
 		
 		try{
 			//cherche une fonction du nom "on_ajax_action_{method}"
@@ -628,9 +713,96 @@ class Agdp_Comment {
 		return false;
 	}
 	/**
+	 * Requête Ajax d'édition du commentaire
+	 * La page du forum doit être paramétré avec un forumlaire de modification
+	 */
+	public static function on_ajax_action_edit($data, $user_can_change_comment = null) {
+		$comment_id = $data['comment_id'];
+		$comment = get_comment($comment_id);
+		if( ! $comment )
+			return '';
+		
+		// $page_id = $comment->comment_post_ID;
+		$edit_message = Agdp_Forum::get_property('edit_message');
+		if( ! $edit_message )
+			return '';
+		$edit_message = Agdp_Forum::get_property('edit_message_form');
+		if( ! $edit_message )
+			return '';
+		
+		$edit_message = sprintf('contact-form-7 id=%d', $edit_message);
+		
+		if( ! $edit_message ){
+			return 'Désolé, cette page n\'est pas configurée pour modifier les messages.';
+		}
+		
+		if( $user_can_change_comment === null ){
+			$user_can_change_comment = self::user_can_change_comment($comment);
+			if( ! $user_can_change_comment ){
+				//get codesecret
+				return self::get_message_edit_content_forbidden( $comment, __FUNCTION__ );
+			}
+		}
+		
+		//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
+		global $wp_query, $post;
+		$post = $comment->comment_post_ID;
+		$wp_query->in_the_loop = true;
+		
+		//Génération du formulaire
+		$html = do_shortcode( '[' . $edit_message . ']');
+		
+		if( ! $html
+		 || ( substr($html, 0, 1) === '[' ) ){
+			return 'Désolé, cette page n\'est pas configurée pour modifier les messages ([forum-prop edit-message="contact-form-7 id=3dc0507"]).';
+		}
+		
+		$attrs = [];
+		foreach( get_comment_meta( $comment_id ) as $meta_key => $meta_value){
+			if( strpos( $meta_key, 'posted_data_' ) === 0 ){
+				$attrs[ substr($meta_key, strlen('posted_data_')) ] = maybe_unserialize($meta_value[0]);
+				//TODO count( $meta_value ) > 1
+			}
+		}
+		// debug_log(__FUNCTION__, $comment_id, $attrs);
+		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
+		$input = sprintf('<input type="hidden" class="agdpmessage_edit_form_data" data="%s"/>', $attrs);
+		
+		foreach( [
+			'_update_comment_id' => $comment_id,
+		] as $argument => $value){
+			$input .= sprintf('<input type="hidden" name="%s" value="%s"/>', $argument, esc_attr( $value ));
+		}
+		
+		$html = str_ireplace('</form>', $input.'</form>', $html);
+		
+		$html_id = uniqid();
+		
+		$script = 'jQuery("body").trigger("wpcf7_form_fields-init");';
+		$script .= sprintf('wpcf7.init(jQuery("#%s form").get(0));', $html_id);
+		
+		$html = sprintf('<div id="%s">%s</div><script>%s</script>'
+			, $html_id
+			, $html
+			, $script);
+		
+		return 'replace_previous_response:' . $html;
+	}
+	
+	/**
 	 * Requête Ajax de suppression du commentaire
 	 */
-	public static function on_ajax_action_delete($data) {
+	public static function on_ajax_action_delete($data, $user_can_change_comment = null) {
+		$comment = get_comment($data['comment_id']);
+		if( ! $comment )
+			return '';
+		if( $user_can_change_comment === null ){
+			$user_can_change_comment = self::user_can_change_comment($comment);
+			if( ! $user_can_change_comment ){
+				//get codesecret
+				return self::get_message_edit_content_forbidden( $comment, __FUNCTION__ );
+			}
+		}
 		update_comment_meta($data['comment_id'], 'deleted', wp_date(DATE_ATOM));
 		
 		$args = ['comment_ID' => $data['comment_id'], 'comment_approved' => 'trash'];
@@ -642,6 +814,112 @@ class Agdp_Comment {
 		
 		return $comment->get_error_message();
 	}
+	
+	/**
+	 * Requête Ajax de saisie du code secret du commentaire
+	 * Redirige vers le callback
+	 */
+	public static function on_ajax_action_codesecret($data) {
+		$comment = get_comment($data['comment_id']);
+		if( ! $comment
+		|| ! isset( $_POST[self::secretcode_argument] ))
+			return ;
+		
+		$codesecret = self::get_comment_codesecret($comment);
+		if( $codesecret !== trim($_POST[self::secretcode_argument]) ){
+			return 'Code secret incorrect '/* .$codesecret.' !== '.$_POST[self::secretcode_argument] */;
+		}
+		
+		if( isset( $data['callback'] ) ){
+			$callback = $data['callback'];
+			return self::$callback( $data, true );
+		}
+		return '';
+	}
+	
+	/**
+ 	 * Contenu de la page d'édition en cas d'interdiction de modification d'un message
+ 	 */
+	private static function get_message_edit_content_forbidden( $comment, $callback ) {
+		$comment_id = $comment->comment_ID;
+		
+		$html = '<div class="agdp-edit-forbidden">';
+		$html .= '<div>' . Agdp::icon('lock'
+				, 'Vous n\'êtes pas autorisé à modifier ce message.', '', 'h4');
+		
+		if($comment->comment_approved == 'trash'){
+			$html .= 'Le message a été supprimé.';
+		}
+		else {
+			$html .= '<ul>Pour pouvoir modifier un message vous devez remplir l\'une de ces conditions :';
+			
+			$html .= '<li>disposer d\'un code secret reçu par e-mail selon l\'adresse associée au message.';
+			$html .= '<br>' . self::get_message_validation_email_link($comment, true);
+			
+			//Formulaire de saisie du code secret
+			$query = [
+				'action' => AGDP_TAG . '_comment_action',
+				'method' => AGDP_COMMENT_SECRETCODE,
+				'data' => [
+					'comment_id' => $comment_id,
+					'callback' => $callback,
+				],
+			];
+			$html .= sprintf('<br>Vous connaissez le code secret de ce message :&nbsp;'
+				. '<form class="agdp-ajax-action" data="%s">'
+				. wp_nonce_field(AGDP_TAG . '-' . AGDP_COMMENT_SECRETCODE, AGDP_TAG . '-' . AGDP_COMMENT_SECRETCODE, true, false)
+				.'<input type="text" placeholder="ici le code" name="'.AGDP_COMMENT_SECRETCODE.'" size="7"/>
+				<input type="submit" value="Valider" /></form>'
+					, esc_attr(json_encode($query)));
+			$html .= '</li>';
+			
+			$html .= '<li>utiliser la même session internet qu\'à la création du message et, ce, le même jour.';
+
+			$url = get_comment_link( $comment );
+			$url = wp_login_url( sanitize_url($url) );
+			$html .= sprintf('<li>avoir un compte utilisateur sur le site, être <a href="%s">%sconnecté(e)</a> et avoir des droits suffisants.'
+				, $url
+				, Agdp::icon('unlock')
+			);
+			if(is_user_logged_in()){
+				global $current_user;
+				//Rôle autorisé
+				if(	! $current_user->has_cap( 'edit_posts' ) )
+					$html .= '<br><i>De fait, vous êtes connecté(e) mais vous n\'avez pas les droits et le mail associé au message n\'est pas le vôtre.</i>';
+			}
+			$html .= '</li>';
+			
+			$html .= '<li>avoir un compte sur le site et être l\'initiateur du message.</li>';
+			
+			$html .= '<li>vous pouvez nous écrire pour signaler un problème ou demander une modification.';
+			$url = get_page_link( Agdp::get_option('contact_page_id'));
+			$url = add_query_arg(AGDP_ARG_COMMENTID, $comment_id, $url );
+			$html .= sprintf('<br><a href="%s">%s cliquez ici pour nous écrire à propos de ce message.</a>'
+					, esc_url($url)
+					, Agdp::icon('email-alt'));
+			
+			$html .= '</ul>';
+		}
+		$html .= '</div>';
+		$html .= '</div>';
+		return $html;
+	}
+	
+	/**
+	 * Send validation email
+	 */
+	public static function on_ajax_action_send_validation_email( $data ) {
+		if( ! is_array($data)
+		|| ! isset($data['comment_id']) )
+			return '?';
+		$comment_id = $data['comment_id'];
+		if(isset($_POST['data']) && is_array($_POST['data'])
+		&& isset($_POST['data']['force-new-activation']) && $_POST['data']['force-new-activation']){
+			self::get_activation_key($comment_id, true); //reset
+		}
+		return self::send_validation_email($comment_id);
+	}
+	
 	/**
 	 * Requête Ajax d'approbation du commentaire
 	 */
@@ -674,7 +952,13 @@ class Agdp_Comment {
 	 * Requête Ajax de récupération d'un (nouveau) commentaire
 	 */
 	public static function on_ajax_action_get($data) {
-		return wp_list_comments(['echo'=>false], [ get_comment($data['comment_id']) ]);
+		// debug_log(__FUNCTION__, $data, wp_list_comments(['echo'=>false], [ get_comment($data['comment_id']) ]));
+		$comment = get_comment($data['comment_id']);
+		if( ! $comment )
+			return '';
+		$page = $comment->comment_post_ID;
+		self::init_page( false, $page );
+		return wp_list_comments(['echo'=>false], [ $comment ]);
 	}
 	/**
 	 * Requête Ajax d'envoi de message à l'auteur du commentaire
@@ -771,5 +1055,125 @@ class Agdp_Comment {
 
 	/*************************************************/
 	
+	
+	
+	/**
+	 * Envoye le mail à l'auteur du message
+	 */
+	public static function send_validation_email($comment, $subject = false, $message = false, $return_html_result = false){
+		if(is_numeric($comment)){
+			$comment_id = $comment;
+			$comment = get_comment($comment_id);
+		}
+		else
+			$comment_id = $comment->comment_ID;
+		
+		if(!$comment_id)
+			return false;
+		
+		$page = get_post( $comment->comment_post_ID );
+		$title = $page->post_title;
+		
+		$codesecret = self::get_comment_codesecret($comment_id);
+			
+		$email = $comment->comment_author_email;
+		$to = $email;
+		
+		$site = get_bloginfo( 'name' );
+		
+		$subject = sprintf('[%s][Validation] %s', $site, $subject ? $subject : $title);
+		
+		$headers = array();
+		$attachments = array();
+		
+		if( ! $message){
+			$message = sprintf('Bonjour,<br>Vous recevez ce message suite la création du message ci-dessous ou à une demande depuis le site et parce que votre e-mail est associé au message.');
+
+		}
+		else
+			$message .= '<br>'.str_repeat('-', 20);
+		
+		$url = get_comment_link( $comment );
+		
+		$status = false;
+		switch($comment->comment_approved){
+			case '0':
+				$status = 'En attente de relecture';
+			case 'draft':
+				if(!$status) $status = 'Brouillon';
+				$message .= sprintf('<br><br>Ce message n\'est <b>pas visible</b> en ligne, il est marqué comme "%s".', $status);
+				
+				if( self::waiting_for_activation($post) ){
+					$activation_url = add_query_arg(self::secretcode_argument, $codesecret, $url);
+					$activation_url = add_query_arg('action', 'activation', $activation_url);
+					$activation_url = add_query_arg('ak', self::get_activation_key($post), $activation_url);
+					$activation_url = add_query_arg('etat', 'en-attente', $activation_url);
+				}
+				
+				$message .= sprintf('<br><br><a href="%s"><b>Cliquez ici pour rendre ce message public dans la page</b></a>.<br>', $activation_url);
+				break;
+			case 'trash':
+				$message .= sprintf('<br><br>Ce message a été SUPPRIMÉ.');
+				break;
+		}
+		
+		$message .= sprintf('<br><br>Le code secret de ce message est : %s', $codesecret);
+		// $args = self::secretcode_argument .'='. $codesecret;
+		// $codesecret_url = $url . (strpos($url,'?')>0 || strpos($args,'?') ? '&' : '?') . $args;			
+		$codesecret_url = add_query_arg(self::secretcode_argument, $codesecret, $url);
+		$message .= sprintf('<br><br>Pour modifier ce message, <a href="%s">cliquez ici</a>', $codesecret_url);
+		
+		$message .= sprintf('<br><br>La page publique de ce message est : <a href="%s">%s</a>', $url, $url);
+
+		$message .= '<br><br>Bien cordialement,<br>L\'équipe de l\'Agenda partagé.';//TODO aussi dans covoiturage, event
+		
+		$message .= '<br>'.str_repeat('-', 20);
+		$message .= sprintf('<br><br>Détails du message :<br><code>%s</code>', 'todo '.__FUNCTION__/* self::get_post_details_for_email($post) */);
+		
+		$message = quoted_printable_encode(str_replace('\n', '<br>', $message));
+
+		$headers[] = 'MIME-Version: 1.0';
+		$headers[] = 'Content-type: text/html; charset=utf-8';
+		$headers[] = 'Content-Transfer-Encoding: quoted-printable';
+
+		if($success = wp_mail( $to
+			, '=?UTF-8?B?' . base64_encode($subject). '?='
+			, $message
+			, $headers, $attachments )){
+			$html = '<div class="info email-send">L\'e-mail a été envoyé.</div>';
+		}
+		else{
+			$html = sprintf('<div class="email-send alerte">L\'e-mail n\'a pas pu être envoyé.</div>');
+		}
+		if($return_html_result){
+			if($return_html_result === 'bool')
+				return $success;
+			else
+				return $html;
+		}
+		return $html;
+	}
+	
+	/**
+	 * Clé d'activation depuis le mail pour basculer en 'publish'
+	 */
+	public static function get_activation_key($comment_id, $force_new = false){
+		if(is_a($comment_id, 'WP_Comment'))
+			$comment_id = $comment_id->comment_ID;
+		$meta_name = 'activation_key';
+		
+		$value = get_comment_meta($comment_id, $meta_name, true);
+		if($value && $value != 1 && ! $force_new)
+			return $value;
+		
+		$guid = uniqid();
+		
+		$value = crypt($guid, AGDP_TAG . '-' . $meta_name);
+		
+		update_comment_meta($comment_id, $meta_name, $value);
+		
+		return $value;
+		
+	}
 }
 ?>

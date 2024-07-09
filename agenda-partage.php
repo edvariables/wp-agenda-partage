@@ -46,6 +46,7 @@ define( 'AGDP_CONNECT_MENU_ENABLE', 'connect_menu_enable');
 //argument de requête pour modification d'évènement. code généré par Agdp::get_secret_code()
 define( 'AGDP_EVENT_SECRETCODE', 'codesecret' ); 
 define( 'AGDP_COVOIT_SECRETCODE', 'covsecret' ); 
+define( 'AGDP_COMMENT_SECRETCODE', 'codesecret' ); 
 define( 'AGDP_ARG_EVENTID', 'eventid' ); 
 define( 'AGDP_ARG_NEWSLETTERID', 'agdpnlid' ); 
 define( 'AGDP_ARG_COVOITURAGEID', 'covoitid' ); 

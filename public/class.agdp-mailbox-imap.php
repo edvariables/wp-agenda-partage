@@ -116,6 +116,7 @@ class Agdp_Mailbox_IMAP {
 	 * Retourne le contenu expurgé depuis un email.
 	 */
 	public static function get_imap_message_content($mailbox_id, $message, $comment_parent, $page){
+		//import_plain_text
 		if( $page ){
 			$meta_key = 'import_plain_text';
 			$import_plain_text = get_post_meta($page->ID, $meta_key, true);
@@ -139,13 +140,15 @@ class Agdp_Mailbox_IMAP {
 						: html_entity_decode($message['text_plain'], ENT_QUOTES));
 		}
 		// debug_log(__FUNCTION__, $message['text_html'], 'content', $content);
-		if( $clear_signatures = get_post_meta($mailbox_id, 'clear_signature', true))
+		$meta_key = 'clear_signature';
+		if( $clear_signatures = get_post_meta($mailbox_id, $meta_key, true))
 			foreach( explode("\n", str_replace("\r", '', $clear_signatures)) as $clear_signature ){
 				if ( ($pos = strpos( $content, $clear_signature) ) > 0)
 					$content = substr( $content, 0, $pos);
 			}
 			
-		$clear_raws = get_post_meta($mailbox_id, 'clear_raw', true);
+		$meta_key = 'clear_raw';
+		$clear_raws = get_post_meta($mailbox_id, $meta_key, true);
 		foreach( explode("\n", str_replace("\r", '', $clear_raws)) as $clear_raw ){
 			if( ! $clear_raw )
 				continue;
@@ -163,6 +166,7 @@ class Agdp_Mailbox_IMAP {
 			}
 		}
 		
+		//comment_parent
 		if( $comment_parent ){
 			// echo "<br><pre>$content</pre><br><br><br>";
 			$content = preg_replace( '/[\n\r]+Le\s[\S\s]+a\sécrit\s\:\s*([\n\r]+\>\s)/', '$1', $content);
@@ -172,10 +176,6 @@ class Agdp_Mailbox_IMAP {
 			// debug_log($content);
 			// echo "<pre>$content</pre>";
 			// die();
-		}
-		
-		if( ! empty($message['attachments']) ){
-			
 		}
 		
 		return trim($content);
@@ -202,6 +202,7 @@ class Agdp_Mailbox_IMAP {
 				case 'bat':
 				case 'vbs':
 				case 'js':
+				case 'css':
 				case 'php':
 					unlink($filename);
 					continue 2;

@@ -177,7 +177,11 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					if(is_array($values)){
 						$is_associative = is_associative_array($values);
 						foreach($values as $item_key => $item_label){
-							if( ! $is_associative )
+							if( is_a($item_label, 'WP_Post') ){
+								$item_key = $item_label->ID;
+								$item_label = $item_label->post_name;
+							}
+							elseif( ! $is_associative )
 								$item_key = $item_label;
 							echo sprintf('<option %s value="%s">%s</option>', selected( $val, $item_key, false ), $item_key, htmlentities($item_label));
 						}
