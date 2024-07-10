@@ -117,6 +117,18 @@ abstract class Agdp_Page {
 	public static function get_icon( $page_id, $default = false ){
 		if( ! $page_id )
 			return static::icon;
+		
+		if( is_a($page_id, 'WP_Post') ){
+			switch( $page_id->post_type ){
+				case WPCF7_ContactForm::post_type :
+					return Agdp_WPCF7::icon;
+				case Agdp_Covoiturage::post_type :
+					return Agdp_Covoiturage::icon;
+				case Agdp_Evenement::post_type :
+					return Agdp_Evenement::icon;
+			}
+		}
+		
 		foreach([
 			'new_agdpevent_page_id' => 'welcome-add-page',
 			'new_covoiturage_page_id' => 'welcome-add-page',

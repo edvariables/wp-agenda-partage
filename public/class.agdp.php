@@ -1118,7 +1118,7 @@ class Agdp {
 				if( isset($posts_pages[$page->ID.'']) ){
 					$post_class = $posts_pages[$page->ID.'']['class'];
 					$forum = array_merge($forum, $post_class::get_diagram( $diagram, $page ));
-					// var_dump($forum);
+					// echo sprintf('<pre>%s</pre>', print_r($forum, true));
 				}
 				
 				$emails = '';
@@ -1141,6 +1141,7 @@ class Agdp {
 				$html .= sprintf('<tr>');
 				
 					$html .= sprintf('<td>');
+			// echo sprintf('<pre>%s</pre>', print_r($forum['IN'], true));
 					foreach( $forum['IN'] as $type => $in ){
 						switch($type){
 							case 'emails':
@@ -1150,8 +1151,10 @@ class Agdp {
 								$icon = 'feedback';
 								break;
 						}
-						if( is_a( $in, 'WP_Post') )
+						if( is_a( $in, 'WP_Post') ){
+							$icon = Agdp_Page::get_icon( $in );
 							$title = $in->post_title;
+						}
 						else
 							$title = $in;
 						$html .= sprintf('<div rowspan="%d">%s %s</div>'
@@ -1170,7 +1173,7 @@ class Agdp {
 						, count($forum['OUT']) ? '1' : '3'
 					);
 					$icon = Agdp_Page::get_icon( $page->ID );
-					$html .= sprintf('<div rowspan="%d">%s %s</div>'
+					$html .= sprintf('<div rowspan="%d" data="ICICIC">%s %s</div>'
 						, count( $forum['IN'] ) * count( $forum['OUT'] )
 						, Agdp::icon($icon)
 						, $page->post_title

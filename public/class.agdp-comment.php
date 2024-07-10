@@ -174,8 +174,6 @@ class Agdp_Comment {
 		
 		
 		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label>'
-			// . '<label><input name="title-prefix" type="radio">Je propose</label>'
-			// . '<label><input name="title-prefix" type="radio">Je cherche</label>'
 			. '<input id="title" name="title" type="text" maxlength="255" required></p>';
 		
 		$visible = Agdp_Forum::get_property_is_value('reply_email', true);

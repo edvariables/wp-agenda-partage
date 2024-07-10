@@ -7,6 +7,8 @@
 class Agdp_WPCF7 {
 	
 	private static $initiated = false;
+	
+	const icon = 'feedback';
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -547,7 +549,7 @@ class Agdp_WPCF7 {
 		$html = '';
 		
 		$html .= sprintf('<div>%s Formulaire %s%s</div>'
-			, Agdp::icon('feedback')
+			, Agdp::icon(self::icon)
 			, $post->post_title
 			, $admin_edit
 		);
