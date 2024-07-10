@@ -805,7 +805,7 @@ class Agdp_Evenement extends Agdp_Post {
 	}
 	
  	/**
-	 * Filtre le html avant affichage d'un formulaire de contact wpcf7.
+	 * Pré-remplit le formulaire "Contactez nous" avec les informations d'un évènement
 	 */
 	public static function wpcf7_contact_form_init_tags( $form ) { 
 		$html = $form->prop('form');//avec shortcodes du wpcf7

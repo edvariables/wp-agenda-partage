@@ -97,6 +97,8 @@ class Agdp_WPCF7 {
 					Agdp_Evenement::wpcf7_contact_form_init_tags( $form );
 				elseif( isset($_REQUEST[Agdp_Covoiturage::postid_argument]) )
 					Agdp_Covoiturage::wpcf7_contact_form_init_tags( $form );
+				elseif( isset($_REQUEST[AGDP_ARG_COMMENTID]) )
+					Agdp_Comment::wpcf7_contact_form_init_tags( $form );
 				elseif( $post ){
 					if( $post->post_type === Agdp_Evenement::post_type )
 						Agdp_Evenement::wpcf7_contact_form_init_tags( $form );

@@ -83,7 +83,7 @@ class Agdp_Comment {
 		
 		$meta_name = self::field_prefix . self::secretcode_argument;
 		$codesecret = get_comment_meta($comment_id, $meta_name, true);
-		debug_log( __FUNCTION__, $meta_name, $comment_id, $codesecret);
+		// debug_log( __FUNCTION__, $meta_name, $comment_id, $codesecret);
 		if( ! $codesecret ){
 			$codesecret = Agdp::get_secret_code(6,'num');
 			update_comment_meta($comment_id, $meta_name, $codesecret);
@@ -740,7 +740,7 @@ class Agdp_Comment {
 			$user_can_change_comment = self::user_can_change_comment($comment);
 			if( ! $user_can_change_comment ){
 				//get codesecret
-				return self::get_message_edit_content_forbidden( $comment, __FUNCTION__ );
+				return self::get_message_edit_content_forbidden( $comment, 'edit' );
 			}
 		}
 		
@@ -800,7 +800,7 @@ class Agdp_Comment {
 			$user_can_change_comment = self::user_can_change_comment($comment);
 			if( ! $user_can_change_comment ){
 				//get codesecret
-				return self::get_message_edit_content_forbidden( $comment, __FUNCTION__ );
+				return self::get_message_edit_content_forbidden( $comment, 'delete' );
 			}
 		}
 		update_comment_meta($data['comment_id'], 'deleted', wp_date(DATE_ATOM));
@@ -840,12 +840,21 @@ class Agdp_Comment {
 	/**
  	 * Contenu de la page d'édition en cas d'interdiction de modification d'un message
  	 */
-	private static function get_message_edit_content_forbidden( $comment, $callback ) {
+	private static function get_message_edit_content_forbidden( $comment, $action ) {
 		$comment_id = $comment->comment_ID;
 		
+		switch($action){
+			case 'delete' :
+				$callback = 'on_ajax_action_delete';
+				$title = 'Vous n\'êtes pas autorisé à supprimer ce message.';
+				break;
+			default :
+				$callback = 'on_ajax_action_edit';
+				$title = 'Vous n\'êtes pas autorisé à modifier ce message.';
+		}
+		
 		$html = '<div class="agdp-edit-forbidden">';
-		$html .= '<div>' . Agdp::icon('lock'
-				, 'Vous n\'êtes pas autorisé à modifier ce message.', '', 'h4');
+		$html .= '<div>' . Agdp::icon('lock', $title, '', 'h4');
 		
 		if($comment->comment_approved == 'trash'){
 			$html .= 'Le message a été supprimé.';
@@ -1173,6 +1182,60 @@ class Agdp_Comment {
 		update_comment_meta($comment_id, $meta_name, $value);
 		
 		return $value;
+		
+	}
+	
+ 	/**
+	 * Pré-remplit le formulaire "Contactez nous" avec les informations d'un commentaire
+	 */
+	public static function wpcf7_contact_form_init_tags( $form ) { 
+		$html = $form->prop('form');//avec shortcodes du wpcf7
+		$requested_id = isset($_REQUEST[AGDP_ARG_COMMENTID]) ? $_REQUEST[AGDP_ARG_COMMENTID] : false;
+		if( ! ($comment = get_comment($requested_id)))
+			return;
+		$url = get_comment_link( $comment );
+		
+		$date_debut = $comment->comment_date;
+		if(mysql2date( 'j', $date_debut ) === '1')
+			$format_date_debut = 'l j\e\r M Y';
+		else
+			$format_date_debut = 'l j M Y';
+		
+		$forum = get_post( $comment->comment_post_ID );
+		/** init message **/
+		$message = sprintf("Bonjour,\r\nJe vous écris à propos d'un message publié dans \"%s\" du %s à %s.\r\n%s\r\n\r\n-"
+			, $forum->post_title
+			, str_replace(' mar ', ' mars ', strtolower(mysql2date( $format_date_debut, $date_debut)))
+			, date('H:i', strtotime($date_debut))
+			, $url
+		);
+		$matches = [];
+		if( ! preg_match_all('/(\[textarea[^\]]*\])([\s\S]*)(\[\/textarea)?/', $html, $matches))
+			return;
+		for($i = 0; $i < count($matches[0]); $i++){
+			if( strpos( $matches[2][$i], "[/textarea") === false ){
+				$message .= '[/textarea]';
+			}
+			$html = str_replace( $matches[1][$i]
+					, sprintf('%s%s', $matches[1][$i], $message)
+					, $html);
+		}
+		$user = wp_get_current_user();
+		if( $user ){
+		
+			/** init name **/	
+			$html = preg_replace( '/(autocomplete\:name[^\]]*)\]/'
+					, sprintf('$1 "%s"]', $user->display_name)
+					, $html);
+		
+			/** init email **/	
+			$html = preg_replace( '/(\[email[^\]]*)\]/'
+					, sprintf('$1 "%s"]', $user->user_email)
+					, $html);
+		}
+		
+		/** set **/
+		$form->set_properties(array('form'=>$html));
 		
 	}
 }

@@ -669,6 +669,9 @@ class Agdp_Covoiturage extends Agdp_Post {
 		return self::get_post_terms( self::taxonomy_diffusion, $post_id, $args);
 	}
 	
+ 	/**
+	 * Pré-remplit le formulaire "Contactez nous" avec les informations d'un covoiturage
+	 */
  	public static function wpcf7_contact_form_init_tags( $form ) { 
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$requested_id = isset($_REQUEST[self::postid_argument]) ? $_REQUEST[self::postid_argument] : false;
