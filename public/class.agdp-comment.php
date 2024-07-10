@@ -1203,7 +1203,7 @@ class Agdp_Comment {
 		
 		$forum = get_post( $comment->comment_post_ID );
 		/** init message **/
-		$message = sprintf("Bonjour,\r\nJe vous écris à propos d'un message publié dans \"%s\" du %s à %s.\r\n%s\r\n\r\n-"
+		$message = sprintf("Bonjour,\r\nJe vous écris à propos d'un message publié dans \"%s\" le %s à %s.\r\n%s\r\n\r\n-"
 			, $forum->post_title
 			, str_replace(' mar ', ' mars ', strtolower(mysql2date( $format_date_debut, $date_debut)))
 			, date('H:i', strtotime($date_debut))
