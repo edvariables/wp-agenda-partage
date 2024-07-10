@@ -894,7 +894,6 @@ class Agdp_Mailbox {
 			$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
 			
 			$comment_parent = self::find_comment_parent( $page, $message );
-			$user_id = 0;
 			// var_dump($message);
 			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
 				$message['reply_to'] = [ $message['from'] ];
@@ -905,6 +904,10 @@ class Agdp_Mailbox {
 			if( ($pos = strpos($user_name, '@')) !== false)
 				$user_name = substr( $user_name, 0, $pos);
 			$user_name = trim( $user_name, '" ');
+			
+			$user_id = is_user_logged_in() 
+				? get_current_user_id()
+				: email_exists($user_email);
 			
 			$dateTime = $message['date'];
 			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
@@ -938,17 +941,20 @@ class Agdp_Mailbox {
 			if( ! empty($message[AGDP_IMPORT_UID]))
 				$commentdata['comment_meta'][AGDP_IMPORT_UID] = $message[AGDP_IMPORT_UID];
 			
+			//sinon, quand il n'y a pas d'utilisateur connecté, le comment_content est purgé du html
+			remove_filter( 'pre_comment_content', 'wp_filter_kses' );
+			
 			$comment = wp_new_comment($commentdata, true);
-			// debug_log(__FUNCTION__, $message, $commentdata['comment_content']);
+			// debug_log(__FUNCTION__, ! is_wp_error($comment), $message, $commentdata['comment_content']);
 			// echo '<pre>'; var_dump($message, $commentdata/* , $comment */);echo '</pre>'; 
 			if( is_wp_error($comment) ){
 				// if( get_post_meta($mailbox->ID, 'imap_mark_as_read', true)
 				// || ! in_array('comment_duplicate', $comment->get_error_codes())
 				// )
-					debug_log('import_message_to_comment !wp_new_comment error : ', $comment, $message);
+					debug_log(__FUNCTION__.' !wp_new_comment error : ', $comment, $message);
 				if( is_admin()
 				&& class_exists('Agdp_Admin'))
-					Agdp_Admin::add_admin_notice(__CLASS__.'::import_message_to_comment(). wp_new_comment returns ',
+					Agdp_Admin::add_admin_notice(__CLASS__.'::'.__FUNCTION__.'(). wp_new_comment returns ',
 						in_array('comment_duplicate', $comment->get_error_codes()) 
 							? sprintf('Duplication %s : "%s"', $user_email, $commentdata['comment_meta']['title'])
 							: print_r($comment, true));
@@ -1041,7 +1047,7 @@ class Agdp_Mailbox {
 			$subject = $message['subject'];
 			$comments = get_comments([
 				'post_id' => $page->ID
-				, 'author_email' => $user_email
+				, 'comment_approved' => ['0','1']
 				, 'author_email' => $user_email
 				, 'meta_key' => 'title'
 				, 'meta_value' => $subject
@@ -1153,7 +1159,7 @@ class Agdp_Mailbox {
 		$email_replyto = $matches[3][0];
 		$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
 		$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
-		// debug_log('wpcf7_before_send_mail', $subject, $body);
+		// debug_log(__FUNCTION__, $subject, $body);
 		
 		if( $user_id = email_exists($email_replyto) ){
 			$user = new WP_User($user_id);
