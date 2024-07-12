@@ -550,8 +550,8 @@ class Agdp_Comment {
 			
 			$email_parts = explode('@', $email);
 			$email_trunc = substr($email, 0, min(strlen($email_parts[0]), 3)) . str_repeat('*', max(2, strlen($email_parts[0])-3));
-			$caption = 'E-mail de validation';
-			$title = sprintf('Cliquez ici pour envoyer un e-mail de validation du message à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
+			$caption = 'E-mail de modification';
+			$title = sprintf('Cliquez ici pour envoyer un e-mail de modification du message à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
 			$icon = 'email-alt';
 			$confirm = sprintf('Confirmez-vous l\'envoi d\'un e-mail à l\'adresse %s@%s', $email_trunc, $email_parts[1]);
 			
@@ -601,7 +601,12 @@ class Agdp_Comment {
 		if( ! Agdp_Forum::user_can_see_forum_details() )
 			return '';
 		
-		if( ! strpos( $comment_author_link, ' href=' ) 
+		$comment_author_email = current_user_can('moderate_comments')
+								|| Agdp_Forum::get_property('comment_author_email');
+		if( ! $comment_author_email ){
+			$comment_author_link = sprintf('<a href="#">%s</a>', $comment_author);
+		}
+		elseif( ! strpos( $comment_author_link, ' href=' ) 
 		 && ! strpos( $comment_author_link, '@' ) ){
 			$comment = get_comment($comment_id);
 			
