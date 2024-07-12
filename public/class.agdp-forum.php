@@ -534,9 +534,11 @@ class Agdp_Forum extends Agdp_Page {
 	 * Retourne le meta value d'abonnement pour l'utilisateur
 	 * Parameter $user : WP_User | int | email
 	 */
-	public static function get_subscription( $user, $page = false){
+	public static function get_subscription( $user = true, $page = false){
 		// $page = self::get_page($page);
-		if( is_a($user, 'WP_User') )
+		if( $user === true )
+			$user_id = get_current_user_id();
+		elseif( is_a($user, 'WP_User') )
 			$user_id = $user->ID;
 		elseif( is_numeric($user) )
 			$user_id = $user;

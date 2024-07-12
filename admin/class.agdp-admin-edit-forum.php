@@ -289,9 +289,10 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		//Affichage du mail de l'auteur
 		$fields[] = [
 			'name' => 'forum_comment_author_email',
-			'label' => __('Afficher l\'e-mail de l\'auteur', AGDP_TAG),
-			'input' => 'checkbox',
-			'default' => true,
+			'label' => __('Visibilité de l\'e-mail de l\'auteur', AGDP_TAG),
+			'input' => 'select',
+			'values' => [ '0' => 'Masqué', '1' => 'Public', 'M' => 'Réservé aux membres' ],
+			'default' => '1',
 		];
 		
 		//Affichage du titre

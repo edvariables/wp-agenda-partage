@@ -601,14 +601,41 @@ class Agdp_Comment {
 		if( ! Agdp_Forum::user_can_see_forum_details() )
 			return '';
 		
-		$comment_author_email = current_user_can('moderate_comments')
-								|| Agdp_Forum::get_property('comment_author_email');
+		$comment = get_comment($comment_id);
+		
+		if( current_user_can('moderate_comments') )
+			$comment_author_email = true;
+		else {	
+			if( ($current_user = wp_get_current_user())
+			 && $current_user->user_email === $comment->comment_author_email )
+				$comment_author_email = true;
+			else
+				switch( Agdp_Forum::get_property('comment_author_email') ){
+					case '0':
+						$comment_author_email = false;
+						break;
+					case 'M':
+						switch( Agdp_Forum::get_user_subscription( $comment->comment_post_ID ) ){
+							case 'subscriber':
+							case 'moderator':
+							case 'administrator':
+								$comment_author_email = true;
+								break;
+							default:
+								$comment_author_email = false;
+						}
+						break;
+					
+					case '1':
+					default:
+						$comment_author_email = true;
+				}
+		}
 		if( ! $comment_author_email ){
 			$comment_author_link = sprintf('<a href="#">%s</a>', $comment_author);
 		}
 		elseif( ! strpos( $comment_author_link, ' href=' ) 
 		 && ! strpos( $comment_author_link, '@' ) ){
-			$comment = get_comment($comment_id);
 			
 			if( $comment->comment_author_email ) {
 				$comment_author_link = sprintf('<a href="mailto:%s">%s</a>', $comment->comment_author_email, $comment_author);
