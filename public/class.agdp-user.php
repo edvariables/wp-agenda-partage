@@ -89,6 +89,23 @@ class Agdp_User {
 		debug_log_callstack('on_wp_mail_set_reply_to', $args);
 		return $args;
 	}
+	
+	/**
+	 * Retourne un meta d'un user
+	 */
+	public static function get_user_meta( $user, $meta_name = false, $single = false ){
+		if( is_numeric($user) )
+			$user_id = $user;
+		elseif( is_string($user) )
+			$user_id = email_exists($user);
+		elseif( is_a($user, 'WP_User') )
+			$user_id = $user->ID;
+		
+		if( ! $user_id )
+			return false;
+		
+		return get_user_meta( $user_id, $meta_name, $single );
+	}
 
 	/**
 	 *

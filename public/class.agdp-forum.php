@@ -412,7 +412,9 @@ class Agdp_Forum extends Agdp_Page {
 	
 	public static function get_page($page = false){
 		if( ! $page )
-			$page = self::$current_forum;
+			if( ! ($page = self::$current_forum) )
+				return false;
+			
 		if(is_a($page, 'WP_Post'))
 			return $page;
 		
@@ -522,7 +524,9 @@ class Agdp_Forum extends Agdp_Page {
 	}
 	
 	public static function get_subscription_meta_key($page = false){
-		$page = self::get_page($page);
+		if( ! $page
+		 || ! ( $page = self::get_page($page) ) )
+			return false;
 		return sprintf('%s_subscr_%d_%d', self::tag, get_current_blog_id(), $page->ID);
 	}
 	

@@ -179,7 +179,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 						foreach($values as $item_key => $item_label){
 							if( is_a($item_label, 'WP_Post') ){
 								$item_key = $item_label->ID;
-								$item_label = $item_label->post_name;
+								$item_label = $item_label->post_title;
 							}
 							elseif( ! $is_associative )
 								$item_key = $item_label;

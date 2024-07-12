@@ -938,13 +938,20 @@ class Agdp_Mailbox {
 					'mailbox_id' => $mailbox->ID,
 				]
 			];
+			
 			if( ! empty($message[AGDP_IMPORT_UID]))
 				$commentdata['comment_meta'][AGDP_IMPORT_UID] = $message[AGDP_IMPORT_UID];
 			
 			//sinon, quand il n'y a pas d'utilisateur connecté, le comment_content est purgé du html
+			$has_wp_filter_kses = has_filter( 'pre_comment_content', 'wp_filter_kses' );
 			remove_filter( 'pre_comment_content', 'wp_filter_kses' );
 			
+			//wp_new_comment
 			$comment = wp_new_comment($commentdata, true);
+			
+			if( $has_wp_filter_kses )
+				add_filter( 'pre_comment_content', 'wp_filter_kses' );
+			
 			// debug_log(__FUNCTION__, ! is_wp_error($comment), $message, $commentdata['comment_content']);
 			// echo '<pre>'; var_dump($message, $commentdata/* , $comment */);echo '</pre>'; 
 			if( is_wp_error($comment) ){

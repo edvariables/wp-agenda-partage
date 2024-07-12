@@ -61,6 +61,8 @@ class Agdp_Admin_User {
 		
 		$pages = Agdp_Mailbox::get_pages_dispatches();
 		foreach( $pages as $page_id => $dispatches ){
+			if( ! $page_id )
+				continue;			
 			$meta_key = Agdp_Forum::get_subscription_meta_key($page_id);
 			if( array_key_exists($meta_key, $_POST))
 				$custom_meta[$meta_key] = $_POST[$meta_key];
@@ -95,6 +97,8 @@ class Agdp_Admin_User {
 			];
 			$forum_counter = 0;
 			foreach( $pages as $page_id => $dispatches ){
+				if( ! $page_id )
+					continue;
 				$rights = $dispatches[0]['rights'];
 				if( ! Agdp_Forum::get_forum_right_need_subscription( false, $rights )
 				 && ! $current_user_can_moderate_comments )

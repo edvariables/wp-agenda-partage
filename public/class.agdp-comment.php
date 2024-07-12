@@ -715,15 +715,17 @@ class Agdp_Comment {
 		$comment_id = $data['comment_id'];
 		$comment = get_comment($comment_id);
 		if( ! $comment )
-			return '';
-		
+			return '?';
+
+		Agdp_Forum::init_page(false, $comment->comment_post_ID);
+			
 		// $page_id = $comment->comment_post_ID;
 		$edit_message = Agdp_Forum::get_property('edit_message');
 		if( ! $edit_message )
-			return '';
+			return '?!';
 		$edit_message = Agdp_Forum::get_property('edit_message_form');
 		if( ! $edit_message )
-			return '';
+			return '??';
 		
 		$edit_message = sprintf('contact-form-7 id=%d', $edit_message);
 		
@@ -754,11 +756,20 @@ class Agdp_Comment {
 		
 		$attrs = [];
 		foreach( get_comment_meta( $comment_id ) as $meta_key => $meta_value){
-			if( strpos( $meta_key, 'posted_data_' ) === 0 ){
+			if( str_starts_with( $meta_key, 'posted_data_' ) ){
 				$attrs[ substr($meta_key, strlen('posted_data_')) ] = maybe_unserialize($meta_value[0]);
 				//TODO count( $meta_value ) > 1
 			}
 		}
+		
+		//Dans le cas d'un message provenant d'un email, le contenu du mail est affecté à un champ "message"
+		if( count($attrs) === 0 ){
+			$attrs[ 'message' ] = html_to_plain_text( $comment->comment_content );
+			$attrs[ 'user-name' ] = $comment->comment_author;
+			$attrs[ 'user-email' ] = $comment->comment_author_email;
+			$attrs[ 'user-city' ] = Agdp_User::get_user_meta($comment->comment_author_email, 'city');
+		}
+		
 		// debug_log(__FUNCTION__, $comment_id, $attrs);
 		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
 		$input = sprintf('<input type="hidden" class="agdpmessage_edit_form_data" data="%s"/>', $attrs);
