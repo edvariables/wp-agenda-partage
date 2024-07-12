@@ -35,6 +35,8 @@ class Agdp {
 
 		if(!function_exists('toggle_shortcode_cb'))
 			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.toggle.php' );
+		if(!function_exists('parent_page_shortcode_cb'))
+			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.parent-page.php' );
 		if( ! is_admin() ){
 			if(!function_exists('antispam_shortcode_cb'))
 				require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.antispam.php' );

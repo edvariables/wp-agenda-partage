@@ -773,10 +773,14 @@ class Agdp_Comment {
 		
 		//Dans le cas d'un message provenant d'un email, le contenu du mail est affecté à un champ "message"
 		if( count($attrs) === 0 ){
-			$attrs[ 'message' ] = html_to_plain_text( $comment->comment_content );
+			if( $value = html_to_plain_text( $comment->comment_content ) )
+				$attrs[ 'message' ] = $value;
+			if( $value = get_comment_meta( $comment->comment_ID, 'title', true ))
+				$attrs[ 'title' ] = $value;
 			$attrs[ 'user-name' ] = $comment->comment_author;
 			$attrs[ 'user-email' ] = $comment->comment_author_email;
-			$attrs[ 'user-city' ] = Agdp_User::get_user_meta($comment->comment_author_email, 'city');
+			if( $value = Agdp_User::get_user_meta($comment->comment_author_email, 'city') )
+				$attrs[ 'user-city' ] = $value;
 		}
 		
 		// debug_log(__FUNCTION__, $comment_id, $attrs);
