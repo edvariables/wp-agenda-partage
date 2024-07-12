@@ -486,6 +486,15 @@ class Agdp_Comment {
 	 */
 	private static function get_comment_edit_link($comment_id){
 		
+		//TODO Modifier sans formulaire : formulaire de base des commentaires
+		
+		$edit_message = Agdp_Forum::get_property('edit_message');
+		if( ! $edit_message )
+			return '';
+		$edit_message = Agdp_Forum::get_property('edit_message_form');
+		if( ! $edit_message )
+			return '';
+		
 		$data = [
 			'comment_id' => $comment_id,
 		];
