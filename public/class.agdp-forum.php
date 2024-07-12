@@ -235,6 +235,7 @@ class Agdp_Forum extends Agdp_Page {
 			else
 				$error = false;
 			if($error){
+				//TODO mauvais moment, on est en train de définir la class du <div
 				echo sprintf('<code class="error"><h3>%s</h3>%s</code>', 'Synchronisation du forum', $error);
 			}
 		}
@@ -268,10 +269,22 @@ class Agdp_Forum extends Agdp_Page {
 		
 		add_action('pre_get_comments', array(__CLASS__, 'on_pre_get_comments'), 10, 1 );
 		add_action('comments_pre_query', array(__CLASS__, 'on_comments_pre_query'), 10, 2 );
+		add_filter('the_content', array(__CLASS__, 'on_the_content'), 10, 1 );
 		
 		Agdp_Comment::init_page($mailbox, $page);
 		
 		return $import_result;
+	}
+	
+	/**
+	 * on_the_content
+	 * add forum_styles
+	 */
+	public static function on_the_content( $content ) {
+		if( $comment_css = self::get_property('comment_css') ){
+			$content .= '<style>/**ICICIC*/'.  $comment_css . '</style>';
+		}
+		return $content;
 	}
 	
 	/**

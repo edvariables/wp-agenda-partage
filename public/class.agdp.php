@@ -1141,18 +1141,20 @@ class Agdp {
 				$html .= sprintf('<tr>');
 				
 					$html .= sprintf('<td>');
-			// echo sprintf('<pre>%s</pre>', print_r($forum['IN'], true));
+					
 					foreach( $forum['IN'] as $type => $in ){
 						switch($type){
 							case 'emails':
 								$icon = 'email-alt';
 								break;
 							default:
-								$icon = 'feedback';
+								if( is_a( $in, 'WP_Post') )
+									$icon = Agdp_Page::get_icon( $in );
+								else
+									$icon = 'feedback';
 								break;
 						}
 						if( is_a( $in, 'WP_Post') ){
-							$icon = Agdp_Page::get_icon( $in );
 							$title = $in->post_title;
 						}
 						else

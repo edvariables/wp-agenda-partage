@@ -162,9 +162,6 @@ class Agdp_Comment {
 	 * Ajout du champ Titre au formulaire de commentaire
 	 */
 	public static function on_comment_form_fields($fields){
-		if( $comment_css = Agdp_Forum::get_property('comment_css') ){
-			echo '<style>'.  $comment_css . '</style>';
-		}
 		
 		if( ( ! isset($_REQUEST['replytocom']) && Agdp_Forum::get_property_is_value('comment_form', false))
 		|| ! Agdp_Forum::user_can_post_comment()	){
