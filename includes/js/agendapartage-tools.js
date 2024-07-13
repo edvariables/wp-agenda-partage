@@ -223,10 +223,11 @@ jQuery( function( $ ) {
 		} );
 	} );
 	
-	//
+	// Retourne le texte d'un bloc html
 	$.fn.node_to_text = function(){
 		var text = '';
 		const BR_ESC = '{!AGDP_BREAK_ESC!}';
+		//TODO keep <a />
 		jQuery(this).clone()
 			.find('br')
 				.replaceWith(BR_ESC)

@@ -71,6 +71,15 @@ class Agdp_Comment {
 		return true;
 	}
 	
+	
+	/********************************************/
+	/**
+	 * Retourne un nonce pour un commentaire 
+	 */
+	public static function get_nonce_name($comment_id){
+		return sprintf('%s|%s|%s', AGDP_TAG, 'comment', $comment_id);
+	}
+	
 	/********************************************/
 	/**
 	 * Retourne le code secret du commentaire 
@@ -235,6 +244,14 @@ class Agdp_Comment {
 			return $commentdata;
 			
 		if( $update_comment_id ){
+			$nonce = isset($_POST['update_comment_nonce']) ? $_POST['update_comment_nonce'] : false;
+			$nonce_name = self::get_nonce_name($update_comment_id);
+			if( ! wp_verify_nonce($nonce, $nonce_name) ){
+				$commentdata['comment_approved'] = new WP_Error('comment_nonce_error'
+						, sprintf('Impossible de valider l\'enregistrement (%s).', $update_comment_id));
+				return $commentdata;
+			}
+				
 			$comment = get_comment($update_comment_id);
 			if( ! $comment ){
 				do_action( 'comment_id_not_found', $update_comment_id );
@@ -802,6 +819,14 @@ class Agdp_Comment {
 		$comment = get_comment($comment_id);
 		if( ! $comment )
 			return '?';
+		
+		if( $user_can_change_comment === null ){
+			$user_can_change_comment = self::user_can_change_comment($comment);
+			if( ! $user_can_change_comment ){
+				//get codesecret
+				return self::get_message_edit_content_forbidden( $comment, 'edit' );
+			}
+		}
 
 		Agdp_Forum::init_page(false, $comment->comment_post_ID);
 			
@@ -810,10 +835,15 @@ class Agdp_Comment {
 			$edit_message = Agdp_Forum::get_property('edit_message_form');
 		if( ! $edit_message ){
 			//Edition via le formulaire de base des commentaires
+			$nonce_name = self::get_nonce_name( $comment_id );
+			$nonce_value = wp_create_nonce($nonce_name);
+			
 			return 'js:'
 				. 'jQuery("#div-comment-'.$comment_id.' a.comment-reply-link")'
 					. '.trigger("click")'
-					. '.trigger("forum_comment_edit")'
+					. '.trigger("forum_comment_edit", "'.$nonce_value.'")'
+				. ';'
+				. '$actionElnt.parents(".ajax_action-response:first").remove();'
 			;
 		}
 		
@@ -821,14 +851,6 @@ class Agdp_Comment {
 		
 		if( ! $edit_message ){
 			return 'Désolé, cette page n\'est pas configurée pour modifier les messages.';
-		}
-		
-		if( $user_can_change_comment === null ){
-			$user_can_change_comment = self::user_can_change_comment($comment);
-			if( ! $user_can_change_comment ){
-				//get codesecret
-				return self::get_message_edit_content_forbidden( $comment, 'edit' );
-			}
 		}
 		
 		//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post

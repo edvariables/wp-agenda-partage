@@ -451,7 +451,10 @@ jQuery( function( $ ) {
 				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
 		}); 
 	
-		// Forum, commentaire
+		/**
+		 * Forum et actions sur commentaire
+		 */
+		// Clic sur toujours d'actualité
 		$body.on('click', 'a.agdp-ajax-mark_as_ended', function(e) {
 			var $actionElnt = $(this);
 			//rétablit une précédente annulation par le même clic
@@ -490,40 +493,36 @@ jQuery( function( $ ) {
 			}
 		});
 		
-		// Forum, répondre au commentaire
+		// Forum sans formulaire wpcf7 associé : utilisation du formulaire de base des commentaires
+		
+		// Clic sur Répondre au commentaire
 		$body.on('click', 'a.comment-reply-link', function(e) {
 			var $actionElnt = $(this);
 			var title = $actionElnt.parents('article:first').find('.comment-content .comment-title').text();
 			title = 'Re: ' + title;
 			$('#respond')
-				.removeClass('forum-comment-edit')
+				.trigger('forum_clear_respond')
 				.find('.comment-form-title input')
 					.val(title)
 					.end()
 				.find('#cancel-comment-reply-link')
 					.text('Annuler la réponse')
 					.end()
-				.find('input#update_comment_id')
-					.remove()
+				.find('.form-submit #submit')
+					.val('Envoyer')
 					.end()
 			;
 		});
 		
-		// Forum, annuler la réponse au commentaire
+		// Clic sur Annuler la réponse au commentaire
 		$body.on('click', '#cancel-comment-reply-link', function(e) {
 			$('#respond')
-				.removeClass('forum-comment-edit')
-				.find('.comment-form-title input, .comment-form-comment textarea')
-					.val('')
-					.end()
-				.find('input#update_comment_id')
-					.remove()
-					.end()
+				.trigger('forum_clear_respond')
 			;
 		});
 		
-		// Forum, modifier un commentaire
-		$body.on('forum_comment_edit', function(e){
+		// Clic sur modifier un commentaire
+		$body.on('forum_comment_edit', function(e, nonce){
 			var $actionElnt = $(e.target);
 			var comment_id = $actionElnt.attr('data-commentid');
 			var $article = $actionElnt.parents('article:first');
@@ -535,6 +534,7 @@ jQuery( function( $ ) {
 			if( $respond.length )
 				$respond.get(0).click();
 			$('#respond')
+				.trigger('forum_clear_respond')
 				.addClass('forum-comment-edit')
 				.find('.comment-form-title input')
 					.val(title)
@@ -552,33 +552,30 @@ jQuery( function( $ ) {
 					})
 					.end()
 				.find('.form-submit')
-					.find('#submit')
-						.val('Enregistrer')
-						.end()
 					.find('input#comment_parent')
 						.val(0)
 						.end()
-					.find('input#update_comment_id')
-						.remove()
-						.end()
 					.append('<input id="update_comment_id" name="update_comment_id" type="hidden" value="' + comment_id + '">')
+					.append('<input id="update_comment_nonce" name="update_comment_nonce" type="hidden" value="' + nonce + '">')
 					.end()
 			;
 		});
 		
-		/* // Forum, éditer le commentaire
-		$body.on('click', 'a.agdp-ajax-action.agdp-ajax-edit', function(e) {
+		// Nettoyage des champs du formulaire de commentaire
+		$body.on('forum_clear_respond', function(e){
 			var $actionElnt = $(this);
-			var $article = $actionElnt.parents('article:first');
-			var $content = $article.find('.comment-content');
-			var $title = $content.find('.comment-title');
-			var title = $title.text();
-			var text = $title.nextAll().text();
-			var $respond = $article.find('a.comment-reply-link');
-			if( $respond.length )
-				$respond.get(0).click();
-			$('#respond .comment-form-title input').val(title);
-			$('#respond .comment-form-comment textarea').val(text);
-		}); */
+			$('#respond')
+				.removeClass('forum-comment-edit')
+				.find('.comment-form-title input, .comment-form-comment textarea')
+					.val('')
+					.end()
+				.find('input#update_comment_id, input#update_comment_nonce')
+					.remove()
+					.end()
+				.find('.form-submit #submit')
+					.val('Enregistrer')
+					.end()
+			;
+		});
 	});
 });
