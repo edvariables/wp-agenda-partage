@@ -530,12 +530,7 @@ jQuery( function( $ ) {
 			var $content = $article.find('.comment-content');
 			var $title = $content.find('.comment-title');
 			var title = $title.text();
-			var text = '';
-			$title.nextAll().each( function(){
-				if( text )
-					text += "\n";
-				text += $(this).text().replace(/(^\s+|\s+$|\n{2}\n+)/g, '');
-			});
+			var text = $title.nextAll().node_to_text();
 			var $respond = $article.find('a.comment-reply-link');
 			if( $respond.length )
 				$respond.get(0).click();
@@ -549,7 +544,7 @@ jQuery( function( $ ) {
 					.end()
 				.find('#reply-title #cancel-comment-reply-link').each(function(){
 						var $a = $(this);
-						$a.text('Abandonner');
+						$a.text('Annuler la modification');
 						$a.parents('#reply-title')
 							.text('Modifier le message')
 							.append($a)
@@ -557,6 +552,9 @@ jQuery( function( $ ) {
 					})
 					.end()
 				.find('.form-submit')
+					.find('#submit')
+						.val('Enregistrer')
+						.end()
 					.find('input#comment_parent')
 						.val(0)
 						.end()

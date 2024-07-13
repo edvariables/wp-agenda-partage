@@ -222,5 +222,33 @@ jQuery( function( $ ) {
 				$(this).removeClass( "active" ).nextAll(".toggle-container:first").slideUp( "normal" );
 		} );
 	} );
+	
+	//
+	$.fn.node_to_text = function(){
+		var text = '';
+		const BR_ESC = '{!AGDP_BREAK_ESC!}';
+		jQuery(this).clone()
+			.find('br')
+				.replaceWith(BR_ESC)
+				.end()
+			.each( function(){
+				if( this.localName === "style"
+				 || this.localName === "script")
+					return;
+				if( text )
+					text += "\n";
+				text += jQuery(this).text().trim()
+					.replaceAll(/(^\s+|\s+$)/g, '')
+				;
+			})
+		;
+		text = text
+				.replaceAll(BR_ESC + '\n', '\n')
+				.replaceAll(BR_ESC, '\n')
+				.replaceAll(/[ \t]+\n/g, '\n')//espaces en fin de ligne
+				.replaceAll(/\s+$/g, '')//espaces en fin de texte
+				.replaceAll(/\n{3,}/g, '\n\n')//retours à la ligne multiples >= 3 deviennent 2
+		;
+		return text;
+	}
 } );
-

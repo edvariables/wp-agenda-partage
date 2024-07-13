@@ -509,9 +509,13 @@ body.colors-dark #commentform > .logged-in-as a {
 	color: lightblue;
 }
 
+#comments #reply-title {
+	font-weight: bold;
+}
 #comments #reply-title a {
 	margin-left: 1em;
-	font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+	font-size: 70%;
+	padding: 0.5em;
 	color: rgb(51, 51, 115);
 }
 body.colors-dark #comments #reply-title a {
