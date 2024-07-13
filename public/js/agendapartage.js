@@ -495,7 +495,77 @@ jQuery( function( $ ) {
 			var $actionElnt = $(this);
 			var title = $actionElnt.parents('article:first').find('.comment-content .comment-title').text();
 			title = 'Re: ' + title;
-			$('#respond .comment-form-title input').val(title);
+			$('#respond')
+				.removeClass('forum-comment-edit')
+				.find('.comment-form-title input')
+					.val(title)
+					.end()
+				.find('#cancel-comment-reply-link')
+					.text('Annuler la réponse')
+					.end()
+				.find('input#update_comment_id')
+					.remove()
+					.end()
+			;
+		});
+		
+		// Forum, annuler la réponse au commentaire
+		$body.on('click', '#cancel-comment-reply-link', function(e) {
+			$('#respond')
+				.removeClass('forum-comment-edit')
+				.find('.comment-form-title input, .comment-form-comment textarea')
+					.val('')
+					.end()
+				.find('input#update_comment_id')
+					.remove()
+					.end()
+			;
+		});
+		
+		// Forum, modifier un commentaire
+		$body.on('forum_comment_edit', function(e){
+			var $actionElnt = $(e.target);
+			var comment_id = $actionElnt.attr('data-commentid');
+			var $article = $actionElnt.parents('article:first');
+			var $content = $article.find('.comment-content');
+			var $title = $content.find('.comment-title');
+			var title = $title.text();
+			var text = '';
+			$title.nextAll().each( function(){
+				if( text )
+					text += "\n";
+				text += $(this).text().replace(/(^\s+|\s+$|\n{2}\n+)/g, '');
+			});
+			var $respond = $article.find('a.comment-reply-link');
+			if( $respond.length )
+				$respond.get(0).click();
+			$('#respond')
+				.addClass('forum-comment-edit')
+				.find('.comment-form-title input')
+					.val(title)
+					.end()
+				.find('.comment-form-comment textarea')
+					.val(text)
+					.end()
+				.find('#reply-title #cancel-comment-reply-link').each(function(){
+						var $a = $(this);
+						$a.text('Abandonner');
+						$a.parents('#reply-title')
+							.text('Modifier le message')
+							.append($a)
+						;
+					})
+					.end()
+				.find('.form-submit')
+					.find('input#comment_parent')
+						.val(0)
+						.end()
+					.find('input#update_comment_id')
+						.remove()
+						.end()
+					.append('<input id="update_comment_id" name="update_comment_id" type="hidden" value="' + comment_id + '">')
+					.end()
+			;
 		});
 		
 		/* // Forum, éditer le commentaire

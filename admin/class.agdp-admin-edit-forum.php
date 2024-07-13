@@ -272,24 +272,16 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		//Visibilité les messages
 		$fields[] = [
 			'name' => 'forum_show_comments',
-			'label' => __('Visibilité des messages ?', AGDP_TAG),
+			'label' => __('Visibilité des messages', AGDP_TAG),
 			'input' => 'select',
 			'values' => Agdp_Forum::show_comments_modes,
 			'learn-more' => 'Dans le cas des forums avec Adhésion, l\'affichage aux non-membres se limite aux titres des messages.'
 		];
 		
-		//Afficher le formulaire
-		$fields[] = [
-			'name' => 'forum_comment_form',
-			'label' => __('Formulaire "Laisser un message"', AGDP_TAG),
-			'input' => 'checkbox',
-			'default' => true,
-		];
-		
 		//Affichage du mail de l'auteur
 		$fields[] = [
 			'name' => 'forum_comment_author_email',
-			'label' => __('Visibilité de l\'e-mail de l\'auteur', AGDP_TAG),
+			'label' => __('Visibilité de l\'e-mail des auteurs des messages', AGDP_TAG),
 			'input' => 'select',
 			'values' => [ '0' => 'Masqué', '1' => 'Public', 'M' => 'Réservé aux membres' ],
 			'default' => '1',
@@ -311,14 +303,6 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'default' => true,
 		];
 		
-		//Affichage du lien reply
-		$fields[] = [
-			'name' => 'forum_reply_link',
-			'label' => __('Afficher le bouton "Répondre"', AGDP_TAG),
-			'input' => 'checkbox',
-			'default' => true,
-		];
-		
 		//Affichage du lien modifier
 		$forms = get_posts(
 			array(
@@ -327,7 +311,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 				//'author__in' => self::get_admin_ids(),
 			)
 		);
-		$forms = array_merge([ '' => '' ], $forms);
+		$forms = array_merge([ '' => '(par défaut)' ], $forms);
 		$fields[] = [
 			'name' => 'forum_edit_message',
 			'label' => __('Afficher le bouton "Modifier"', AGDP_TAG),
@@ -341,6 +325,22 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 					'values' => $forms,
 				],
 			],
+		];
+		
+		//Afficher le formulaire
+		$fields[] = [
+			'name' => 'forum_comment_form',
+			'label' => __('Formulaire "Laisser un message"', AGDP_TAG),
+			'input' => 'checkbox',
+			'default' => true,
+		];
+		
+		//Affichage du lien reply
+		$fields[] = [
+			'name' => 'forum_reply_link',
+			'label' => __('Afficher le bouton "Répondre"', AGDP_TAG),
+			'input' => 'checkbox',
+			'default' => true,
 		];
 		
 		//Affichage de la case à cocher  Envoyez votre réponse par e-mail à l'auteur du message

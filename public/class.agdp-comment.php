@@ -207,14 +207,17 @@ class Agdp_Comment {
 	 * Vérifie les données lors de l'enregistrement du commentaire
 	 */
 	public static function on_pre_comment_approved( $approved, $commentdata ){
+		
 		if( ! ($mailbox = Agdp_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) ))
 			return $approved;
 		if( ! Agdp_Forum::get_forum_comment_approved($commentdata['comment_post_ID']) )
 			return 0;
 		
 		if( empty( $_POST['title'] )
-		&& empty($commentdata['comment_meta'])
-		&& empty($commentdata['comment_meta']['title']) )
+		 && empty($commentdata['comment_meta'])
+		 && empty($commentdata['comment_meta']['title'])
+		 && Agdp_Forum::get_property_is_value( 'comment_title', true, $commentdata['comment_post_ID'])
+		)
 			return new WP_Error( 'require_valid_comment', __( '<strong>Erreur :</strong> Veuillez indiquer un titre à votre message.' ), 200 );
 
 		return $approved;
@@ -225,10 +228,24 @@ class Agdp_Comment {
 	 */
 	public static function on_preprocess_comment($commentdata ){
 		// debug_log('on_preprocess_comment');
+		$update_comment_id = isset($_POST['update_comment_id']) ? $_POST['update_comment_id'] : false;
 		
-		if( ! ($mailbox = Agdp_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) ))
+		if( ! $update_comment_id
+		 && ! Agdp_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) )
 			return $commentdata;
-		// debug_log($commentdata);
+			
+		if( $update_comment_id ){
+			$comment = get_comment($update_comment_id);
+			if( ! $comment ){
+				do_action( 'comment_id_not_found', $update_comment_id );
+				$commentdata['comment_approved'] = new WP_Error('comment_id_not_found'
+						, sprintf('Impossible de retrouver l\'enregistrement d\'origine (%s).', $update_comment_id));
+				return $commentdata;
+			}
+			$commentdata['comment_ID'] = $update_comment_id;
+			$commentdata['_update_comment'] = true;
+			$commentdata['comment_parent'] = $comment->comment_parent;
+		}
 		
 		if( empty($commentdata['comment_meta']) )
 			$commentdata['comment_meta'] = [];
@@ -238,22 +255,48 @@ class Agdp_Comment {
 				$parent_subject = get_comment_meta( $commentdata['comment_parent'], 'title', true);
 				$_POST['title'] = sprintf('Re: %s', $parent_subject);
 			}
-			else {
+			elseif( Agdp_Forum::get_property_is_value( 'comment_title', true, $commentdata['comment_post_ID'] ) ) {
 				//on_pre_comment_approved se charge de l'erreur
 				return $commentdata;
 			}
 		}
 		$commentdata['comment_meta'] = array_merge([ 'title' => $_POST['title'] ], $commentdata['comment_meta']);
 		
-		if( ! empty( $_POST['send-email'] )){
-			$commentdata['comment_meta'] = array_merge([ 'send-email' => $_POST['send-email'] ], $commentdata['comment_meta']);
-		}
-		if( ! empty( $_POST['is-private'] )){
-			$parent_comment = get_comment( $commentdata['comment_parent']);
-			//Mémorise l'email de l'auteur du commentaire parent pour le filtrage
-			$commentdata['comment_meta']['is-private'] = $parent_comment->comment_author_email;
+		if( $commentdata['comment_parent'] ){
+			if( ! empty( $_POST['send-email'] )){
+				$commentdata['comment_meta'] = array_merge([ 'send-email' => $_POST['send-email'] ], $commentdata['comment_meta']);
+			}
+			if( ! empty( $_POST['is-private'] )){
+				$parent_comment = get_comment( $commentdata['comment_parent']);
+				//Mémorise l'email de l'auteur du commentaire parent pour le filtrage
+				$commentdata['comment_meta']['is-private'] = $parent_comment->comment_author_email;
+			}
 		}
 		
+		if( $update_comment_id ){
+			$update = wp_update_comment($commentdata, true);
+			if( is_wp_error($update) )				
+				$commentdata['comment_approved'] = $update;
+			else {
+				//Ce qui suit est la copie de wp-comments-post.php
+				$user            = wp_get_current_user();
+				$cookies_consent = ( isset( $_POST['wp-comment-cookies-consent'] ) );
+				do_action( 'set_comment_cookies', $comment, $user, $cookies_consent );
+				$location = empty( $_POST['redirect_to'] ) ? get_comment_link( $comment ) : $_POST['redirect_to'] . '#comment-' . $comment->comment_ID;
+				if ( ! $cookies_consent && 'unapproved' === wp_get_comment_status( $comment ) && ! empty( $comment->comment_author_email ) ) {
+					$location = add_query_arg(
+						array(
+							'unapproved'      => $comment->comment_ID,
+							'moderation-hash' => wp_hash( $comment->comment_date_gmt ),
+						),
+						$location
+					);
+				}
+				$location = apply_filters( 'comment_post_redirect', $location, $comment );
+				wp_safe_redirect( $location );
+				exit;
+			}
+		}
 		return $commentdata;
 	}
 	
@@ -489,11 +532,13 @@ class Agdp_Comment {
 		//TODO Modifier sans formulaire : formulaire de base des commentaires
 		
 		$edit_message = Agdp_Forum::get_property('edit_message');
-		if( ! $edit_message )
-			return '';
-		$edit_message = Agdp_Forum::get_property('edit_message_form');
-		if( ! $edit_message )
-			return '';
+		if( $edit_message )
+			$edit_message = Agdp_Forum::get_property('edit_message_form');
+		if( ! $edit_message ){
+			$reply_link = Agdp_Forum::get_property('reply_link');
+			if( ! $reply_link )
+				return '';
+		}
 		
 		$data = [
 			'comment_id' => $comment_id,
@@ -760,13 +805,17 @@ class Agdp_Comment {
 
 		Agdp_Forum::init_page(false, $comment->comment_post_ID);
 			
-		// $page_id = $comment->comment_post_ID;
 		$edit_message = Agdp_Forum::get_property('edit_message');
-		if( ! $edit_message )
-			return '?!';
-		$edit_message = Agdp_Forum::get_property('edit_message_form');
-		if( ! $edit_message )
-			return '??';
+		if( $edit_message )
+			$edit_message = Agdp_Forum::get_property('edit_message_form');
+		if( ! $edit_message ){
+			//Edition via le formulaire de base des commentaires
+			return 'js:'
+				. 'jQuery("#div-comment-'.$comment_id.' a.comment-reply-link")'
+					. '.trigger("click")'
+					. '.trigger("forum_comment_edit")'
+			;
+		}
 		
 		$edit_message = sprintf('contact-form-7 id=%d', $edit_message);
 		

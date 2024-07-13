@@ -56,6 +56,7 @@ jQuery( function( $ ) {
 								case 'js' :
 									response = response.substring(action.length + 1);
 									eval('(function(){'+response+';})').apply($actionElnt);
+									$spinner.remove();
 									return;
 								case 'replace' :
 									response = response.substring(action.length + 1);

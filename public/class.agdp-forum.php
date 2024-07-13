@@ -88,17 +88,22 @@ class Agdp_Forum extends Agdp_Page {
 	public static function set_property($key, $value){
 		self::$properties[$key] = $value;
 	}
-	public static function get_property($key){
+	public static function get_property($key, $forum_id = false){
+		if( $forum_id !== false ){
+			$meta_key = 'forum_' . $key;
+			return get_post_meta($forum_id, $meta_key, true);
+		}
 		if( isset(self::$properties[$key]) )
 			return self::$properties[$key];
 		$meta_key = 'forum_' . $key;
 		if( ! ($forum = self::get_page() ) )
 			return null;
-		self::set_property( $key, $meta_value = get_post_meta($forum->ID, $meta_key, true));
+		$meta_value = get_post_meta($forum->ID, $meta_key, true);
+		self::set_property( $key, $meta_value );
 		return $meta_value;
 	}
-	public static function get_property_is_value($key, $value){
-		$property_value = self::get_property($key, $value);
+	public static function get_property_is_value($key, $value, $forum_id = false){
+		$property_value = self::get_property($key, $forum_id);
 		return $property_value == $value;
 	}
 	

@@ -486,6 +486,9 @@ article.use-agdpforum + #comments .if-respond {
 article.use-agdpforum + #comments .comment-list .if-respond {
 	display: inline-block;
 }
+article.use-agdpforum + #comments .comment-list .forum-comment-edit .if-respond {
+	display: none;
+}
 
 article.use-agdpforum + #comments ul.attachments {
 	list-style: none;
@@ -538,6 +541,19 @@ body.colors-dark #comments #reply-title a {
 #comments a + .comment-user-status {
 	padding-left: 1em;
 }
+#cancel-comment-reply-link {
+	font-size: smaller;
+	border: solid 1px;
+	border-radius: 4px;
+	padding: 6px;
+	background-color: #222;
+	color: #fff !important;
+}
+body.colors-dark #cancel-comment-reply-link {
+	background-color: #fff;
+	color: #222 !important;
+}
+
 .agdp-notif {
 	border-left: 3px solid green;
 	padding-left: 4px;

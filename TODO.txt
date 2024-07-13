@@ -108,3 +108,7 @@ Bugg : double exécution simultannée du cron d'envoi de la newsletter
 [Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Newsletter::on_cron_exec
 [Pays de Saint-Félicien][2024-06-29 12:20:47] [agdpnl-cron state]1|1 abonnés à traiter | mail #0 : 1 destinataire(s) edid@free.fr | Au final, 1 mail(s) envoyé(s) à 1 destinataire(s) en 1 sec. Identifiants : #3.
 [Pays de Saint-Félicien][2024-06-29 12:20:47] [agdpnl-cron state]1|1 abonnés à traiter | mail #0 : 1 destinataire(s) edid@free.fr | Au final, 1 mail(s) envoyé(s) à 1 destinataire(s) en 1 sec. Identifiants : #3.
+
+
+update comment : add nonce
+edit comment : perte du html et des sauts de lignes
