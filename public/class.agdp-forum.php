@@ -102,7 +102,7 @@ class Agdp_Forum extends Agdp_Page {
 		self::set_property( $key, $meta_value );
 		return $meta_value;
 	}
-	public static function get_property_is_value($key, $value, $forum_id = false){
+	public static function get_property_equals($key, $value, $forum_id = false){
 		$property_value = self::get_property($key, $forum_id);
 		return $property_value == $value;
 	}
@@ -129,11 +129,18 @@ class Agdp_Forum extends Agdp_Page {
 			'post_type' => self::post_type,
 			'post_status' => 'publish',
 			'numberposts' => -1,
-			'meta_query' => [[
-				'key' => 'agdpmailbox',
-				'value' => '0',
-				'compare' => '>'
-			]]
+			'meta_query' => [
+				'relation' => 'OR',
+				[
+					'key' => 'agdpmailbox',
+					'value' => '0',
+					'compare' => '>'
+				],[
+					'key' => 'agdpmailbox',
+					'value' => AUTO_MAILBOX,
+					'compare' => '='
+				]
+			]
 		];
 		if( is_array($args) ) 
 			$args = array_merge( $default_args, $args );
@@ -383,7 +390,6 @@ class Agdp_Forum extends Agdp_Page {
 	
 	public static function on_comments_pre_query($comment_data, $wp_query){
 		$current_user_can_moderate_comments = current_user_can('moderate_comments');
-		// debug_log('on_comments_pre_query IN', $comment_data, "current_user_can_moderate_comments $current_user_can_moderate_comments");
 		if( $current_user_can_moderate_comments ) {
 		}
 		elseif( ! self::user_can_see_comments() )

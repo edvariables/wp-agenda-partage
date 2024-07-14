@@ -27,6 +27,8 @@ class Agdp_Mailbox {
 	public static function init() {
 		if ( ! self::$initiated ) {
 			self::$initiated = true;
+			
+			define('AUTO_MAILBOX', '*');
 
 			self::init_hooks();
 		
@@ -190,6 +192,8 @@ class Agdp_Mailbox {
 	 * Retourne l'objet mailbox.
 	 */
 	public static function get_mailbox($mailbox = false){
+		if( $mailbox === AUTO_MAILBOX )
+			return $mailbox;
 		$mailbox = get_post($mailbox);
 		if(is_a($mailbox, 'WP_Post')
 		&& $mailbox->post_type == self::post_type)
@@ -394,15 +398,15 @@ class Agdp_Mailbox {
 	    global $wpdb;
 		$sql = 
 			'SELECT page.ID as page_id, page.post_title as page_title
-				, mailbox.ID AS mailbox_id, mailbox.post_title AS mailbox_title, mailbox_email.meta_value AS mailbox_email
+				, mailbox_id.meta_value AS mailbox_id, mailbox.post_title AS mailbox_title, mailbox_email.meta_value AS mailbox_email
 				, email.meta_value AS email, rights.meta_value AS rights, moderate.meta_value AS moderate 
 			FROM ' . $wpdb->posts . ' AS page
 			INNER JOIN '.$wpdb->postmeta. ' AS mailbox_id
 				ON page.ID = mailbox_id.post_id 
 				AND mailbox_id.meta_key = "' . AGDP_PAGE_META_MAILBOX . '"
-			INNER JOIN '.$wpdb->posts. ' AS mailbox
+			LEFT JOIN '.$wpdb->posts. ' AS mailbox
 				ON mailbox.ID = mailbox_id.meta_value 
-			INNER JOIN '.$wpdb->postmeta. ' AS mailbox_email
+			LEFT JOIN '.$wpdb->postmeta. ' AS mailbox_email
 				ON mailbox.ID = mailbox_email.post_id
 				AND mailbox_email.meta_key = "imap_email"
 			LEFT JOIN '.$wpdb->postmeta. ' AS email
@@ -418,7 +422,7 @@ class Agdp_Mailbox {
 		';
 		if( $mailbox_id !== false ){
 			$sql .= '
-				AND mailbox.ID = ' . $mailbox_id . '
+				AND mailbox_id.meta_value = \'' . $mailbox_id . '\'
 			';
 		}
 		if( $destination_filter ){
@@ -443,7 +447,7 @@ class Agdp_Mailbox {
 		$dispatches = [];
 		foreach( $wpdb->get_results( $sql ) as $dbrow )	{
 			$email = $dbrow->email;
-			$mailbox_domain = explode('@', $dbrow->mailbox_email)[1];
+			$mailbox_domain = $dbrow->mailbox_email ? explode('@', $dbrow->mailbox_email)[1] : $_SERVER['HTTP_HOST'];
 			if( strpos($email, '@') === false )
 				$email .= '@' . $mailbox_domain;
 			elseif( strpos($email, '@*') !== false )
@@ -580,7 +584,10 @@ class Agdp_Mailbox {
 	 */
 	public static function synchronize($mailbox){
 		// debug_log( __CLASS__ . '::synchronize()');
-		
+		if( ! $mailbox
+		|| ($mailbox === AUTO_MAILBOX) )
+			return true;
+			
 		$mailbox = self::get_mailbox($mailbox);
 		
 		$time = get_post_meta($mailbox->ID, self::sync_time_meta_key, true);
@@ -1144,7 +1151,7 @@ class Agdp_Mailbox {
 		$mail_properties = $properties['mail'];
 		$email_to = strtolower($mail_properties['recipient']);
 		
-		// debug_log(__FUNCTION__, $posted_data);
+		debug_log(__FUNCTION__, $posted_data, $mail_properties);
 		
 		if( isset($posted_data['is-public'])
 		&& $posted_data['is-public'] ){
@@ -1155,15 +1162,21 @@ class Agdp_Mailbox {
 		$emails = self::get_emails_dispatch();
 		if( ! isset($emails[$email_to]) )
 			return;
-		// debug_log('$emails[$email]', $emails[$email_to]);
+		debug_log(__FUNCTION__, '$emails[$email]', $emails[$email_to]);
 		
 		//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
 		$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
+		debug_log(__FUNCTION__ . ' email_replyto', $email_replyto);
 		$matches = [];
-		preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches);
-		//$email_replyto = preg_replace('/^[\s\S]*reply-to\s*:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})[\s\S]*$/', '$1', $email_replyto);
-		$user_name = $matches[2][0];
-		$email_replyto = $matches[3][0];
+		if( preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches)) {
+			$user_name = $matches[2][0];
+			$email_replyto = $matches[3][0];
+		}
+		else {
+			$user_name = false;
+			$email_replyto = false;
+		}
+		debug_log(__FUNCTION__ . ' user', $user_name, $email_replyto);
 		$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
 		$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
 		// debug_log(__FUNCTION__, $subject, $body);
@@ -1229,12 +1242,14 @@ class Agdp_Mailbox {
 		}
 		else {					
 			//$html = wp_list_comments(['echo'=>false], [ get_comment($comment) ]);
+			$nonce = Agdp_Comment::get_nonce( $comment );
 			$messages = ($contact_form->get_properties())['messages'];
 			$messages['mail_sent_ok'] = str_replace("\t", '', str_replace("\n", '', 
 				sprintf('js:(function( id ){
-					show_new_comment( id );
+					show_new_comment( id, "%s" );
 					return "%s";
 				})(%d)'
+				, $nonce
 				, str_replace('"', '\\"', $messages['mail_sent_ok'])
 				, $comment
 			)));

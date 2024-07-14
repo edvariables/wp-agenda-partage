@@ -22,7 +22,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		if( ! is_array($fields) )
 			return;
 		foreach ($fields as $field) {
-			$name = $field['name'];
+			$name = empty($field['name']) ? '' : $field['name'];
 			$is_array_field = strpos( $name, '[]' ) !== false;//TODO pour autre que textarea
 			if($parent_field !== null)
 				$name = sprintf($name, $parent_field['name']);

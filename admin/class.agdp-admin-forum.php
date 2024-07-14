@@ -56,15 +56,22 @@ class Agdp_Admin_Forum {
 				}
 				
 				$is_suspended = Agdp_Mailbox::is_suspended( $mailbox );
-					
-				echo sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s%s</a>'
-					, $mailbox->ID
-					, $mailbox->post_title
-					, $is_suspended ? ' ' . Agdp::icon('warning', 'Suspendu !') : ''
-				);
 				
+				if( is_a($mailbox, 'WP_Post') ){
+					echo sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s%s</a>'
+						, $mailbox->ID
+						, $mailbox->post_title
+						, $is_suspended ? ' ' . Agdp::icon('warning', 'Suspendu !') : ''
+					);
+					$mailbox_id = $mailbox->ID;
+				}
+				else {
+					$mailbox_id = $mailbox;
+					if( $mailbox_id === AUTO_MAILBOX )
+						echo '(interne)';
+				}
 				$emails = '';
-				foreach( Agdp_Mailbox::get_emails_dispatch( $mailbox->ID, $post_id ) as $email => $dispatch ){
+				foreach( Agdp_Mailbox::get_emails_dispatch( $mailbox_id, $post_id ) as $email => $dispatch ){
 					$emails .= '<br>';
 					$emails .= sprintf('%s (%s)'
 						, $email
@@ -72,6 +79,7 @@ class Agdp_Admin_Forum {
 				}
 				if( $emails )
 					echo sprintf('%s', $emails);
+				
 				break;
 			default:
 				break;

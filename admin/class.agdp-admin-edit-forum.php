@@ -52,7 +52,8 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		
 		self::on_admin_notices_import_result( $post );
 		
-		if( $mailbox = Agdp_Mailbox::get_mailbox_of_page( $post ) ){
+		if( ( $mailbox = Agdp_Mailbox::get_mailbox_of_page( $post ) )
+		 && ( $mailbox !== AUTO_MAILBOX ) ){
 			$mailbox_id = $mailbox->ID;
 			// is_suspended
 			if( Agdp_Mailbox::is_suspended( $mailbox ) )
@@ -199,7 +200,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		
 		//Boîte imap 
 		$meta_key = AGDP_PAGE_META_MAILBOX;
-		$values = ['' => '(aucune gestion de forum)'];
+		$values = ['' => '(aucune gestion de forum)', AUTO_MAILBOX => '(forum interne)'];
 		$post_statuses = get_post_statuses();
 		foreach( Agdp_Mailbox::get_mailboxes( false ) as $mailbox_id => $mailbox ){
 			$is_suspended = Agdp_Mailbox::is_suspended( $mailbox );
@@ -226,8 +227,10 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		$fields[] = [
 			'name' => 'forum_email[]',
 			'label' => __('Comptes e-mail', AGDP_TAG),
-			'input' => 'textarea'
+			'input' => 'textarea',
+			'unit' => sprintf('Par exemple, %s@%s', $post->post_name, $_SERVER['HTTP_HOST']),
 		];
+		
 		
 		//Droits
 		$rights = ['' => '(non défini = public)'];
@@ -290,7 +293,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		//Affichage du titre
 		$fields[] = [
 			'name' => 'forum_comment_title',
-			'label' => __('Afficher le titre', AGDP_TAG),
+			'label' => __('Gérer un titre pour les messages / commentaires', AGDP_TAG),
 			'input' => 'checkbox',
 			'default' => true,
 		];
@@ -330,7 +333,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		//Afficher le formulaire
 		$fields[] = [
 			'name' => 'forum_comment_form',
-			'label' => __('Formulaire "Laisser un message"', AGDP_TAG),
+			'label' => __('Afficher le formulaire de base "Laisser un message"', AGDP_TAG),
 			'input' => 'checkbox',
 			'default' => true,
 		];
@@ -361,7 +364,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 					'name' => 'forum_reply_email_default',
 					'label' => __('Cocher par défaut', AGDP_TAG),
 					'input' => 'checkbox',
-					'default' => true,
+					'default' => false,
 				],
 			],
 		];

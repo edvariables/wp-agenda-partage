@@ -79,6 +79,20 @@ class Agdp_Comment {
 	public static function get_nonce_name($comment_id){
 		return sprintf('%s|%s|%s', AGDP_TAG, 'comment', $comment_id);
 	}
+	/**
+	 * Retourne un nonce pour un commentaire 
+	 */
+	public static function get_nonce($comment_id){
+		$nonce_name = self::get_nonce_name( $comment_id );
+		return wp_create_nonce($nonce_name);
+	}
+	/**
+	 * Vérifie un nonce pour un commentaire 
+	 */
+	public static function verify_nonce($nonce, $comment_id){
+		$nonce_name = self::get_nonce_name( $comment_id );
+		return wp_verify_nonce($nonce, $nonce_name);
+	}
 	
 	/********************************************/
 	/**
@@ -171,19 +185,31 @@ class Agdp_Comment {
 	 * Ajout du champ Titre au formulaire de commentaire
 	 */
 	public static function on_comment_form_fields($fields){
+		$comment_form = Agdp_Forum::get_property('comment_form');
+		$reply_link = Agdp_Forum::get_property('reply_link');
 		
-		if( ( ! isset($_REQUEST['replytocom']) && Agdp_Forum::get_property_is_value('comment_form', false))
-		|| ! Agdp_Forum::user_can_post_comment()	){
+		if( ! Agdp_Forum::user_can_post_comment()
+		 || ( ! $comment_form && ! $reply_link ) ){
 			$fields['comment'] = '<script>jQuery("#respond.comment-respond").remove();</script>';
 			return $fields;
 		}
+		if( ! isset($_REQUEST['replytocom'])
+		 && ! $comment_form ){
+			//TODO remplacer remove() par hide(). Dans .js : .show() ou gestion / css + secure via nonce
+			$fields['comment'] = ( empty($fields['comment']) ? '' : $fields['comment'] )
+				. '<script>jQuery("#respond.comment-respond").hide();</script>';
+			// return $fields;
+		}
 		
+		if( Agdp_Forum::get_property_equals('comment_title', true) ){
+			$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label>'
+				. '<input id="title" name="title" type="text" maxlength="255" required></p>';
+		}
+		else
+			$title_field = '';
 		
-		$title_field = '<p class="comment-form-title"><label for="title">Titre <span class="required">*</span></label>'
-			. '<input id="title" name="title" type="text" maxlength="255" required></p>';
-		
-		$visible = Agdp_Forum::get_property_is_value('reply_email', true);
-		$checked = Agdp_Forum::get_property_is_value('reply_email_default', true);
+		$visible = Agdp_Forum::get_property_equals('reply_email', true);
+		$checked = Agdp_Forum::get_property_equals('reply_email_default', true);
 		$send_email_field 
 			= sprintf('<div class="comment-form-send-email if-respond %s"><label for="send-email">'
 				, $visible ? '' : 'hidden cache')
@@ -191,8 +217,8 @@ class Agdp_Comment {
 				, $checked ? ' checked="checked"' : '')
 			. ' Envoyez votre réponse par e-mail à l\'auteur du message</label></div>';
 		
-		$visible = Agdp_Forum::get_property_is_value('reply_is_private', true);
-		$checked = Agdp_Forum::get_property_is_value('reply_is_private_default', true);
+		$visible = Agdp_Forum::get_property_equals('reply_is_private', true);
+		$checked = Agdp_Forum::get_property_equals('reply_is_private_default', true);
 		$is_private_field 
 			= sprintf('<p class="comment-form-is-private if-respond %s"><label for="is-private">'
 				, $visible ? '' : 'hidden')
@@ -225,7 +251,7 @@ class Agdp_Comment {
 		if( empty( $_POST['title'] )
 		 && empty($commentdata['comment_meta'])
 		 && empty($commentdata['comment_meta']['title'])
-		 && Agdp_Forum::get_property_is_value( 'comment_title', true, $commentdata['comment_post_ID'])
+		 && Agdp_Forum::get_property_equals( 'comment_title', true, $commentdata['comment_post_ID'])
 		)
 			return new WP_Error( 'require_valid_comment', __( '<strong>Erreur :</strong> Veuillez indiquer un titre à votre message.' ), 200 );
 
@@ -233,20 +259,20 @@ class Agdp_Comment {
 	}
 	
 	/**
+	 * Enregistrement du commentaire depuis wp-comments-post.php.
 	 * Ajout des metas (title, send-email, is-private) lors de l'enregistrement du commentaire
 	 */
 	public static function on_preprocess_comment($commentdata ){
-		// debug_log('on_preprocess_comment');
 		$update_comment_id = isset($_POST['update_comment_id']) ? $_POST['update_comment_id'] : false;
 		
 		if( ! $update_comment_id
 		 && ! Agdp_Mailbox::get_mailbox_of_page($commentdata['comment_post_ID']) )
 			return $commentdata;
-			
+		
+		// update
 		if( $update_comment_id ){
 			$nonce = isset($_POST['update_comment_nonce']) ? $_POST['update_comment_nonce'] : false;
-			$nonce_name = self::get_nonce_name($update_comment_id);
-			if( ! wp_verify_nonce($nonce, $nonce_name) ){
+			if( ! self::verify_nonce($nonce, $update_comment_id) ){
 				$commentdata['comment_approved'] = new WP_Error('comment_nonce_error'
 						, sprintf('Impossible de valider l\'enregistrement (%s).', $update_comment_id));
 				return $commentdata;
@@ -267,17 +293,24 @@ class Agdp_Comment {
 		if( empty($commentdata['comment_meta']) )
 			$commentdata['comment_meta'] = [];
 		
+		/* var_dump($_POST); 
+		var_dump($commentdata); 
+		var_dump( ! Agdp_Forum::get_property_equals( 'comment_title', true, $commentdata['comment_post_ID'] )); 
+		die(); */
+		
 		if( empty( $_POST['title'] )){
 			if($commentdata['comment_parent']){
 				$parent_subject = get_comment_meta( $commentdata['comment_parent'], 'title', true);
 				$_POST['title'] = sprintf('Re: %s', $parent_subject);
 			}
-			elseif( Agdp_Forum::get_property_is_value( 'comment_title', true, $commentdata['comment_post_ID'] ) ) {
+			elseif( Agdp_Forum::get_property_equals( 'comment_title', true, $commentdata['comment_post_ID'] ) ) {
 				//on_pre_comment_approved se charge de l'erreur
 				return $commentdata;
 			}
 		}
-		$commentdata['comment_meta'] = array_merge([ 'title' => $_POST['title'] ], $commentdata['comment_meta']);
+		if( ! empty( $_POST['title'] )){
+			$commentdata['comment_meta'] = array_merge([ 'title' => $_POST['title'] ], $commentdata['comment_meta']);
+		}
 		
 		if( $commentdata['comment_parent'] ){
 			if( ! empty( $_POST['send-email'] )){
@@ -421,7 +454,7 @@ class Agdp_Comment {
 			echo sprintf('<div class="unapproved-action-links">%s</div>',
 				implode('&nbsp;&nbsp;&nbsp;', self::get_comment_approve_links($comment->comment_ID)));
 		}
-		if( ! Agdp_Forum::get_property_is_value('comment_title', false) ){
+		if( ! Agdp_Forum::get_property_equals('comment_title', false) ){
 			$title = get_comment_meta($comment->comment_ID, 'title', true);	
 			echo sprintf('<h3 class="comment-title">%s</h3>', $title);
 		}
@@ -500,7 +533,7 @@ class Agdp_Comment {
 		
 		$comment_actions = sprintf('<span class="comment-agdp-actions">%s</span>', $comment_actions);
 		
-		if( Agdp_Forum::get_property_is_value('reply_link', false) )
+		if( Agdp_Forum::get_property_equals('reply_link', false) )
 			$comment_reply_link = $comment_actions;
 		else
 			$comment_reply_link = preg_replace('/(\<\/div>)$/', $comment_actions . '$1', $comment_reply_link);
@@ -512,7 +545,7 @@ class Agdp_Comment {
 	 * Retourne le html d'action pour marqué un message comme étant terminé
 	 */
 	private static function get_comment_mark_as_ended_link($comment_id){
-		if( Agdp_Forum::get_property_is_value('mark_as_ended', false) )
+		if( Agdp_Forum::get_property_equals('mark_as_ended', false) )
 			return '';
 			
 		$data = [
@@ -739,7 +772,7 @@ class Agdp_Comment {
 		else
 			$status = 'inconnu-e';
 		if( $status ){
-			if( $user_id )
+			if( ! empty($user_id) )
 				$status = sprintf('<a href="/wp-admin/user-edit.php?user_id=%d#forums" class="comment-user-status">(%s)</a>'
 					, $user_id, $status);
 			else
@@ -829,19 +862,23 @@ class Agdp_Comment {
 		}
 
 		Agdp_Forum::init_page(false, $comment->comment_post_ID);
-			
-		$edit_message = Agdp_Forum::get_property('edit_message');
-		if( $edit_message )
-			$edit_message = Agdp_Forum::get_property('edit_message_form');
+		
+		if( $comment->comment_parent ){
+			$edit_message = false;
+		}
+		else {
+			$edit_message = Agdp_Forum::get_property('edit_message');
+			if( $edit_message )
+				$edit_message = Agdp_Forum::get_property('edit_message_form');
+		}
 		if( ! $edit_message ){
 			//Edition via le formulaire de base des commentaires
-			$nonce_name = self::get_nonce_name( $comment_id );
-			$nonce_value = wp_create_nonce($nonce_name);
+			$nonce_value = self::get_nonce( $comment_id );
 			
 			return 'js:'
 				. 'jQuery("#div-comment-'.$comment_id.' a.comment-reply-link")'
 					. '.trigger("click")'
-					. '.trigger("forum_comment_edit", "'.$nonce_value.'")'
+					. sprintf('.trigger("forum_comment_edit", {"nonce":"%s", "user_name":"%s", "user_email":"%s"})', $nonce_value, $comment->comment_author, $comment->comment_author_email )
 				. ';'
 				. '$actionElnt.parents(".ajax_action-response:first").remove();'
 			;
@@ -1087,6 +1124,11 @@ class Agdp_Comment {
 		$comment = get_comment($data['comment_id']);
 		if( ! $comment )
 			return '';
+		if( ! empty($data['nonce'])
+		 && self::verify_nonce( $data['nonce'], $comment->comment_ID ) ){
+			$_REQUEST[self::secretcode_argument] = self::get_comment_codesecret($comment->comment_ID);
+		}
+			
 		$page = $comment->comment_post_ID;
 		self::init_page( false, $page );
 		return wp_list_comments(['echo'=>false], [ $comment ]);

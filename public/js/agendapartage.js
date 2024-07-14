@@ -186,14 +186,14 @@ jQuery( function( $ ) {
 			
 			//Forum comments
 			$("article.use-agdpforum").each(	function(){
-				function show_new_comment(id){
+				function show_new_comment(id, nonce){
 					var $comment_list = $('#comments .comment-list');
 					if( $comment_list.length === 0)
 						return;
 					data = { 
 						'action' : 'agendapartage_comment_action',
 						'method' : 'get',
-						'data' : { 'comment_id' : id },
+						'data' : { 'comment_id' : id, 'nonce' : nonce },
 					};
 					jQuery.ajax({
 						url : agdp_ajax.ajax_url,
@@ -511,6 +511,7 @@ jQuery( function( $ ) {
 				.find('.form-submit #submit')
 					.val('Envoyer')
 					.end()
+				.show()
 			;
 		});
 		
@@ -522,14 +523,15 @@ jQuery( function( $ ) {
 		});
 		
 		// Clic sur modifier un commentaire
-		$body.on('forum_comment_edit', function(e, nonce){
+		$body.on('forum_comment_edit', function(e, data){
 			var $actionElnt = $(e.target);
 			var comment_id = $actionElnt.attr('data-commentid');
 			var $article = $actionElnt.parents('article:first');
 			var $content = $article.find('.comment-content');
 			var $title = $content.find('.comment-title');
 			var title = $title.text();
-			var text = $title.nextAll().node_to_text();
+			var text = ($title.length ? $title.nextAll() : $content).node_to_text();
+			if( ! data ) data = {};
 			var $respond = $article.find('a.comment-reply-link');
 			if( $respond.length )
 				$respond.get(0).click();
@@ -556,8 +558,15 @@ jQuery( function( $ ) {
 						.val(0)
 						.end()
 					.append('<input id="update_comment_id" name="update_comment_id" type="hidden" value="' + comment_id + '">')
-					.append('<input id="update_comment_nonce" name="update_comment_nonce" type="hidden" value="' + nonce + '">')
+					.append('<input id="update_comment_nonce" name="update_comment_nonce" type="hidden" value="' + data['nonce'] + '">')
 					.end()
+				.find('input#author')
+					.val(data['user_name'])
+					.end()
+				.find('input#email')
+					.val(data['user_email'])
+					.end()
+					
 			;
 		});
 		
