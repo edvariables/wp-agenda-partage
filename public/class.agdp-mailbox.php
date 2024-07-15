@@ -1272,41 +1272,44 @@ class Agdp_Mailbox {
 	 * Retourne l'analyse du forum
 	 */
 	public static function get_diagram( $blog_diagram, $mailbox ){
-		$mailbox_id = $mailbox->ID;
 		$diagram = [ 
 			'mailbox' => $mailbox, 
 		];
 		
-		//post_status
-		$diagram['post_status'] = $mailbox->post_status;
+		if( is_a($mailbox, 'WP_Post') ){
+			$mailbox_id = $mailbox->ID;
+			//post_status
+			$diagram['post_status'] = $mailbox->post_status;
 		
-		//imap
-		$meta_key = 'imap_server';
-		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
-		$meta_key = 'imap_email';
-		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
-		
-		$meta_key = 'cron-enable';
-		$diagram[ $meta_key ] = get_post_meta($mailbox_id, $meta_key, true);
-		if( $diagram[ $meta_key ] ){
-			if( $cron_state = self::get_cron_state() ){
-				$cron_comment = substr($cron_state, 2);
-				$diagram[ 'cron_state' ] = str_starts_with( $cron_state, '1|') 
-								? 'Actif' 
-								: (str_starts_with( $cron_state, '0|')
-									? 'A l\'arrêt'
-									: $cron_state);
+			//imap
+			$meta_key = 'imap_server';
+			$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
+			$meta_key = 'imap_email';
+			$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
+			
+			$meta_key = 'cron-enable';
+			$diagram[ $meta_key ] = get_post_meta($mailbox_id, $meta_key, true);
+			if( $diagram[ $meta_key ] ){
+				if( $cron_state = self::get_cron_state() ){
+					$cron_comment = substr($cron_state, 2);
+					$diagram[ 'cron_state' ] = str_starts_with( $cron_state, '1|') 
+									? 'Actif' 
+									: (str_starts_with( $cron_state, '0|')
+										? 'A l\'arrêt'
+										: $cron_state);
+				}
 			}
+			
+			//imap_email
+			$meta_key = 'imap_suspend';
+			$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
+			
+			//imap_mark_as_read
+			$meta_key = 'imap_mark_as_read';
+			$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
+			
+			
 		}
-		
-		//imap_email
-		$meta_key = 'imap_suspend';
-		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
-		
-		//imap_mark_as_read
-		$meta_key = 'imap_mark_as_read';
-		$diagram[$meta_key] = get_post_meta($mailbox_id, $meta_key, true);
-		
 		
 		return $diagram;
 	}
@@ -1320,58 +1323,62 @@ class Agdp_Mailbox {
 			$diagram = self::get_diagram( $blog_diagram, $mailbox );
 		}
 		$admin_edit = is_admin() ? sprintf(' <a href="/wp-admin/post.php?post=%d&action=edit">%s</a>'
-				, $mailbox->ID
+				, is_a($mailbox, 'WP_Post') ? $mailbox->ID : $mailbox
 				, Agdp::icon('edit show-mouse-over')
 			) : '';
 			
 		$html = '';
 		$icon = 'email';
+		
+		if( is_a($mailbox, 'WP_Post') ){
+			$html .= sprintf('<div>Boîte e-mails <a href="%s">%s</a>%s</div>'
+				, get_permalink($mailbox)
+				, $mailbox->post_title
+				, $admin_edit
+			);
+			
+			$meta_key = 'imap_server';
+			if( ! empty($diagram[$meta_key]) ){
+				$imap_server = $diagram[$meta_key];
+				$meta_key = 'imap_email';
+				$imap_email = $diagram[$meta_key];				
+				$html .= sprintf('<div>Connexion à %s via %s</div>'
+					, $imap_email
+					, $imap_server
+				);
+			}
 				
-		$html .= sprintf('<div>Boîte e-mails <a href="%s">%s</a>%s</div>'
-			, get_permalink($mailbox)
-			, $mailbox->post_title
-			, $admin_edit
-		);
-			
-		$meta_key = 'imap_server';
-		if( ! empty($diagram[$meta_key]) ){
-			$imap_server = $diagram[$meta_key];
-			$meta_key = 'imap_email';
-			$imap_email = $diagram[$meta_key];				
-			$html .= sprintf('<div>Connexion à %s via %s</div>'
-				, $imap_email
-				, $imap_server
-			);
-		}
-			
-		$meta_key = 'imap_suspend';
-		if( ! empty($diagram[$meta_key]) ){
-			$icon = 'warning';
-			$html .= sprintf('<div>%s La connexion est suspendue.</div>'
-					, Agdp::icon($icon)
-			);
-		}
-		else {
-			$meta_key = 'cron-enable';
-			if( $diagram[ $meta_key ] ){
-				if( ! empty($diagram[ 'cron_state' ]) )
-					$html .= sprintf('<div>%s %s</div>'
-						, Agdp::icon('controls-repeat')
-						, $diagram[ 'cron_state' ]
+			$meta_key = 'imap_suspend';
+			if( ! empty($diagram[$meta_key]) ){
+				$icon = 'warning';
+				$html .= sprintf('<div>%s La connexion est suspendue.</div>'
+						, Agdp::icon($icon)
+				);
+			}
+			else {
+				$meta_key = 'cron-enable';
+				if( $diagram[ $meta_key ] ){
+					if( ! empty($diagram[ 'cron_state' ]) )
+						$html .= sprintf('<div>%s %s</div>'
+							, Agdp::icon('controls-repeat')
+							, $diagram[ 'cron_state' ]
+						);
+				}
+				else
+					$html .= sprintf('<div>%s L\'importation automatique n\'est pas active</div>'
+						, Agdp::icon('warning')
 					);
 			}
-			else
-				$html .= sprintf('<div>%s L\'importation automatique n\'est pas active</div>'
-					, Agdp::icon('warning')
+			$meta_key = 'imap_mark_as_read';
+			if( empty($diagram[$meta_key]) ){
+				$icon = 'warning';
+				$html .= sprintf('<div>%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée. Les e-mails seront lus indéfiniment.</div>'
+						, Agdp::icon($icon)
 				);
+			}
 		}
-		$meta_key = 'imap_mark_as_read';
-		if( empty($diagram[$meta_key]) ){
-			$icon = 'warning';
-			$html .= sprintf('<div>%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée. Les e-mails seront lus indéfiniment.</div>'
-					, Agdp::icon($icon)
-			);
-		}
+		elseif( $mailbox === AUTO_MAILBOX )
+			$html .= '<div>Boîte e-mails interne</div>';
 		
 		return $html;
 	}
