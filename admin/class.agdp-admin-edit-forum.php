@@ -243,11 +243,19 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'values' => $rights,
 		];
 		
+		
 		//Modération
+		if( Agdp_Forum::get_property_equals('forum_moderate', false, $post)
+		 && get_option( 'comment_moderation' ) == 1)
+			$warning = sprintf('La <a href="%s">configuration des commentaires</a> indique : "Le commentaire doit être approuvé manuellement "'
+						, '/wp-admin/options-discussion.php#comment_moderation');
+		else
+			$warning = false;
 		$fields[] = [
 			'name' => 'forum_moderate',
 			'label' => __('Modération de tous les messages', AGDP_TAG),
-			'input' => 'checkbox'
+			'input' => 'checkbox',
+			'warning' => $warning,
 		];
 		
 		//text/html
