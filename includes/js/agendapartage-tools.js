@@ -66,6 +66,9 @@ jQuery( function( $ ) {
 								case 'replace_previous_response' :
 									response = response.substring(action.length + 1);
 									var $previous = $actionElnt.parents('.ajax_action-response:first');
+									if( ! $previous.length ){
+										$previous = $actionElnt.nextAll('.ajax_action-response:first');
+									}
 									if( $previous.length ){
 										$previous.html(response)
 											.prepend($('<span class="dashicons dashicons-no-alt close-box"></span>')

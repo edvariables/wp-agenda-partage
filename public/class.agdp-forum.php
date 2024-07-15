@@ -423,8 +423,14 @@ class Agdp_Forum extends Agdp_Page {
 	
 	public static function get_page($page = false){
 		if( ! $page )
-			if( ! ($page = self::$current_forum) )
-				return false;
+			if( ! ($page = self::$current_forum) ){
+				global $post;
+				if( $post && $post->post_type === Agdp_Newsletter::post_type ){
+					$page = Agdp_Mailbox::get_forum_page($post);
+				}
+				if( ! $page )
+					return false;
+			}
 			
 		if(is_a($page, 'WP_Post'))
 			return $page;

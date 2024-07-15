@@ -1151,7 +1151,7 @@ class Agdp_Mailbox {
 		$mail_properties = $properties['mail'];
 		$email_to = strtolower($mail_properties['recipient']);
 		
-		debug_log(__FUNCTION__, $posted_data, $mail_properties);
+		// debug_log(__FUNCTION__, $posted_data, $mail_properties);
 		
 		if( isset($posted_data['is-public'])
 		&& $posted_data['is-public'] ){
@@ -1162,11 +1162,11 @@ class Agdp_Mailbox {
 		$emails = self::get_emails_dispatch();
 		if( ! isset($emails[$email_to]) )
 			return;
-		debug_log(__FUNCTION__, '$emails[$email]', $emails[$email_to]);
+		// debug_log(__FUNCTION__, '$emails[$email]', $emails[$email_to]);
 		
 		//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
 		$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));
-		debug_log(__FUNCTION__ . ' email_replyto', $email_replyto);
+		// debug_log(__FUNCTION__ . ' email_replyto', $email_replyto);
 		$matches = [];
 		if( preg_match_all('/^[\s\S]*reply-to\s*:\s*("(.*)"\s*)?\<?([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\>?[\s\S]*$/', $email_replyto, $matches)) {
 			$user_name = $matches[2][0];
@@ -1176,7 +1176,7 @@ class Agdp_Mailbox {
 			$user_name = false;
 			$email_replyto = false;
 		}
-		debug_log(__FUNCTION__ . ' user', $user_name, $email_replyto);
+		// debug_log(__FUNCTION__ . ' user', $user_name, $email_replyto);
 		$subject = wpcf7_mail_replace_tags($mail_properties['subject'], $mail_properties);
 		$body = wpcf7_mail_replace_tags($mail_properties['body'], $mail_properties);
 		// debug_log(__FUNCTION__, $subject, $body);

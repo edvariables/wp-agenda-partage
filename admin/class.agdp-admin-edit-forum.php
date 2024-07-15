@@ -326,6 +326,13 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 					'label' => __('Formulaire', AGDP_TAG),
 					'input' => 'select',
 					'values' => $forms,
+					'unit' => sprintf('<a href="#" %s="%s" onclick="%s">Editer</a>.'
+						, 'href_mod', '/wp-admin/post.php?page=wpcf7&post=[post_id]&action=edit'
+						, esc_attr('javascript:var $this=jQuery(this);'
+							. ' var post_id=$this.parents("div:first").find("select").val(); if( ! post_id ) return false;'
+							. ' var href=$this.attr("href_mod").replace("[post_id]", post_id);'
+							. ' $this.attr("href", href);')
+						)
 				],
 			],
 		];
