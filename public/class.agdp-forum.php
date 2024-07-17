@@ -423,17 +423,19 @@ class Agdp_Forum extends Agdp_Page {
 	
 	public static function get_page($page = false){
 		if( ! $page )
-			if( ! ($page = self::$current_forum) ){
-				global $post;
-				if( $post && $post->post_type === Agdp_Newsletter::post_type ){
-					$page = Agdp_Mailbox::get_forum_page($post);
-				}
-				if( ! $page )
-					return false;
-			}
+			$page = self::$current_forum;
+		if( ! $page ){
+			global $post;
+			$page = $post;
+		}
+		if( ! $page )
+			$page = Agdp_Newsletter::is_sending_email();
+		
+		if( ! $page )
+			return false;
 			
 		if(is_a($page, 'WP_Post'))
-			return $page;
+			return Agdp_Mailbox::get_forum_page($page);
 		
 		if( ! ($page = get_post($page)) ){
 			//Ajax
@@ -441,12 +443,9 @@ class Agdp_Forum extends Agdp_Page {
 				$comment = get_comment($_REQUEST['data']['comment_id']);
 				return get_post($comment->comment_post_ID);
 			}
-			else
-				$page = Agdp_Newsletter::is_sending_email();
+			return false;
 		}
-		if( $page->post_type === Agdp_Newsletter::post_type)
-			$page = Agdp_Mailbox::get_forum_page($page);
-		return $page;
+		return Agdp_Mailbox::get_forum_page($page);
 	}
 	
 	/**

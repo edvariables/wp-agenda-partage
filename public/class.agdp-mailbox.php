@@ -130,7 +130,7 @@ class Agdp_Mailbox {
 			return get_post( Agdp::get_option('agenda_page_id') );
 		elseif( $page_id === Agdp_Covoiturage::post_type )
 			return get_post( Agdp::get_option('covoiturages_page_id') );
-		else {
+		elseif( ! isset($page) ) {
 			$page = get_post($page_id);
 		}
 		if( $page->post_type === Agdp_Newsletter::post_type){
