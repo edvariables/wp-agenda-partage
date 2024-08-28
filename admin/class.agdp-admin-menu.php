@@ -134,8 +134,13 @@ class Agdp_Admin_Menu {
 			//Menu Pages
 			$capability = 'moderate_comments';
 			$parent_slug = 'edit.php?post_type=page';
+			
 			$page_title = 'Forums';
 			$menu_slug = sprintf('edit.php?post_type=%s&orderby=%s&order=asc', Agdp_Forum::post_type, Agdp_Forum::tag);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+			
+			$page_title = 'Ajouter un forum';
+			$menu_slug = sprintf('post-new.php?post_type=%s&%s=1', Agdp_Forum::post_type, Agdp_Forum::tag);
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
 		}
 		

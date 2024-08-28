@@ -81,6 +81,13 @@ function icon_shortcode_cb( $atts, $content = null ) {
 				if( $value )
 					$attributes = $value;
 				break;
+			case 'blog-to':
+				if( $value ){
+					$title = $content = get_bloginfo( 'name' );
+					$icon = 'admin-site-alt';
+					$href = get_bloginfo( 'url' );
+				}
+				break;
 			default:
 				$attributes .= sprintf(' %s=%s', $att, $value);
 				break;

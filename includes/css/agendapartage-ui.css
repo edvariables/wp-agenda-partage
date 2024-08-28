@@ -111,3 +111,22 @@ div.agdp-tabs .agdp-panel fieldset legend {
 	line-height: 1.5;
 	margin: .6em 0 .4em;
 }
+
+/**
+ * https://agenda-partage.fr/documentation/
+ */
+/* .wp-block-page-list li {
+  list-style: none;
+} */
+.wp-block-page-list.toggle li > .toggle-trigger {
+	cursor:pointer;
+}
+.parent-page {
+	margin-bottom: 1em;
+	display: block;
+	/* position: relative;
+	top: -3em; */
+}
+.parent-page .dashicons-before, .parent-page a {
+	color: #0489B7;
+}

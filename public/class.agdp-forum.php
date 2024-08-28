@@ -349,7 +349,13 @@ class Agdp_Forum extends Agdp_Page {
 				
 			case 'public':
 				return true;
+				
 			case '':// '(par défaut)',
+				if( $user === null) $user = wp_get_current_user();
+				if( ! $user ) return false;
+				if( user_can( $user, 'manage_options') )
+					return true;
+				
 			default:
 		}
 	}

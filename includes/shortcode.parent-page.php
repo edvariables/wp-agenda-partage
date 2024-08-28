@@ -26,8 +26,11 @@ function parent_page_shortcode_cb( $atts, $content = null ) {
 	else
 		$title = '';
 	
-	if(isset($atts['icon']) )
+	if(isset($atts['icon']) ){
 		$icon = $atts['icon'];
+		if( ! $icon && $icon !== 'false' && $icon !== '0' )
+			$icon = 'arrow-left';
+	}
 	else
 		$icon = '';
 	

@@ -117,6 +117,12 @@ function style_shortcode_cb( $atts, $content = null ) {
 				if( $value )
 					$attributes = $value;
 				break;
+			case 'date':
+				if( $value ){
+					$date_format = $value;
+					$content .= ' CIICIC';
+				}
+				break;
 			default:
 				$attributes .= sprintf(' %s=%s', $att, $value);
 				break;

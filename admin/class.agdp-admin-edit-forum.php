@@ -21,7 +21,8 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 	
 	public static function init_hooks() {
 		global $pagenow;
-		if ( $pagenow === 'post.php' ) {
+		if ( $pagenow === 'post.php'
+		 || $pagenow === 'post-new.php') {
 			//TODO theme without block-editor
 			add_filter('use_block_editor_for_post', array( __CLASS__, 'on_use_block_editor_for_post_cb'), 10, 2);
 			add_action( 'save_post_' . Agdp_Forum::post_type, array(__CLASS__, 'save_post_forum_cb'), 10, 3 );
@@ -228,7 +229,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'name' => 'forum_email[]',
 			'label' => __('Comptes e-mail', AGDP_TAG),
 			'input' => 'textarea',
-			'unit' => sprintf('Par exemple, %s@%s', $post->post_name, $_SERVER['HTTP_HOST']),
+			'unit' => sprintf('Par exemple, %s@%s', $post ? $post->post_name : 'ce-forum', $_SERVER['HTTP_HOST']),
 		];
 		
 		
@@ -273,6 +274,20 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 					. sprintf(' <a href="post.php?post=%d&action=edit">%s</a>', $newsletter->ID, $newsletter->post_title),
 				'input' => 'link'
 			];
+		
+		//purge
+		$fields[] = [
+			'name' => 'comments_purge_delay',
+			'label' => __('Purge automatique des messages', AGDP_TAG),
+			'input' => 'select',
+			'values' => [
+				'' => '(jamais)',
+				'm' => '1 mois',
+				'2m' => '2 mois',
+				'6m' => '6 mois',
+				'12m' => '12 mois',
+			],
+		];
 		return $fields;
 	}
 		

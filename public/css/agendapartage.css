@@ -258,11 +258,13 @@ div.ajax_action-response {
 }
 
 input.wpcf7-form-control[name^="ev-date-"],
-input.wpcf7-form-control[name^="cov-date-"] {
+input.wpcf7-form-control[name^="cov-date-"],
+input.wpcf7-form-control[name^="msg-date-"] {
 	width: 11em;
 }
 input.wpcf7-form-control[name^="ev-heure-"],
-input.wpcf7-form-control[name^="cov-heure-"] {
+input.wpcf7-form-control[name^="cov-heure-"],
+input.wpcf7-form-control[name^="msg-heure-"] {
 	width: 5em;
 }
 input.wpcf7-form-control[name="cov-nb-places"] {

@@ -221,7 +221,7 @@ class Reader
             $this->retry
         );
 
-        if (!$stream) {
+        if ( ! $stream) {
             $last_error = imap_last_error();
 
             imap_errors();
