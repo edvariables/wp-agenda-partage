@@ -232,21 +232,19 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 		$sources = [ Agdp_Evenement::post_type => 'Evènements'
 				, Agdp_Covoiturage::post_type => 'Covoiturages'
 				, 'agdpstats' => 'Statistiques pour administrateurices'];
-		//Mailboxes
-		foreach(get_posts([ 'post_type' => Agdp_Mailbox::post_type, 'numberposts' => -1]) as $mailbox){
-			foreach( Agdp_Mailbox::get_emails_dispatch($mailbox->ID) as $email_to => $destination)
-				if( $destination['type'] === 'page'
-				&& ! isset($sources[ 'page.' . $destination['id'] ])){
-					if( $page = get_post($destination['id']) ){
-						$title = $page->post_title . ' ('. $email_to . ')';
-						if( stripos($title, 'forum') === false)
-							$title = 'Forum ' . $title;
-						if( $page->comment_status != 'open' )
-							$title .= ' (Commentaires fermés !)';
-						$sources[ 'page.' . $page->ID ] = $title;
-					}
+		//Forums
+		foreach( Agdp_Mailbox::get_emails_dispatch() as $email_to => $destination)
+			if( $destination['type'] === 'page'
+			&& ! isset($sources[ 'page.' . $destination['id'] ])){
+				if( $page = get_post($destination['id']) ){
+					$title = $page->post_title . ' ('. $email_to . ')';
+					if( stripos($title, 'forum') === false)
+						$title = 'Forum ' . $title;
+					if( $page->comment_status != 'open' )
+						$title .= ' (Commentaires fermés !)';
+					$sources[ 'page.' . $page->ID ] = $title;
 				}
-		}
+			}
 		$sources[''] = '(autre)';
 		$fields[] = array('name' => $meta_name,
 						'label' => __('Source des données', AGDP_TAG),
