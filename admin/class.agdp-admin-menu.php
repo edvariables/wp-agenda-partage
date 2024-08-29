@@ -226,7 +226,7 @@ class Agdp_Admin_Menu {
 	 * Callback
 	 */
 	public static function blog_diagram_cb($post , $widget) {
-		echo Agdp::blog_diagram_html();
+		echo Agdp::blog_simple_diagram_html();
 	}
 
 	// TODO parametrage initiale pour chaque utilisateur
