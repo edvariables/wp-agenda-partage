@@ -847,6 +847,8 @@ class Agdp_Mailbox {
 		if( $is_update_notification )
 			$message['subject'] = trim( substr( $message['subject'], strlen(AGDP_SUBJECT_UPDATED) ) );
 		
+		//TODO forum sans Title : merge subject + body
+		
 		$comment = false;
 		$comment_date = wp_date('Y-m-d H:i:s');
 		$comment_date_gmt = date('Y-m-d H:i:s');
@@ -854,7 +856,7 @@ class Agdp_Mailbox {
 		if( $comment_id ){
 			if( $is_cancel_notification ){
 				update_comment_meta( $comment_id, AGDP_SUBJECT_CANCELED, sprintf('%s::%s %s', __CLASS__, __FUNCTION__, wp_date('Y-m-d H:i:s')));
-				debug_log('import_message_to_comment get_existing_comment AGDP_SUBJECT_CANCELED wp_delete_comment '.$comment_id);
+				debug_log('import_message_to_comment get existing_comment AGDP_SUBJECT_CANCELED wp_delete_comment '.$comment_id);
 				wp_delete_comment( $comment_id );
 				
 				return 0;
@@ -889,7 +891,7 @@ class Agdp_Mailbox {
 				debug_log('import_message_to_comment update_notification === delete+new of id='.$comment_id);
 			}
 			else {
-				debug_log('import_message_to_comment get_existing_comment said id='.$comment_id);
+				debug_log('import_message_to_comment existing_comment id='.$comment_id);
 			}
 		}
 		elseif( $is_cancel_notification || $is_update_notification ){
@@ -965,6 +967,9 @@ class Agdp_Mailbox {
 				// if( get_post_meta($mailbox->ID, 'imap_mark_as_read', true)
 				// || ! in_array('comment_duplicate', $comment->get_error_codes())
 				// )
+				if( in_array('comment_duplicate', $comment->get_error_codes()) )
+					debug_log(__FUNCTION__.' !wp_new_comment : comment_duplicate existing_comment : id=', $comment->get_error_data('comment_duplicate'), $message['subject']);
+				else
 					debug_log(__FUNCTION__.' !wp_new_comment error : ', $comment, $message);
 				if( is_admin()
 				&& class_exists('Agdp_Admin'))
@@ -1066,6 +1071,11 @@ class Agdp_Mailbox {
 				, 'meta_key' => 'title'
 				, 'meta_value' => $subject
 				, 'meta_compare' => '='
+				, 'date_query' => [
+					'after' => $message['date']->format(DateTimeInterface::W3C ),
+					'before' => $message['date']->format(DateTimeInterface::W3C ),
+					'inclusif' => true,
+				]
 				, 'number' => 1
 			]);
 		}
