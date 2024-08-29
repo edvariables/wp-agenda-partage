@@ -1068,14 +1068,24 @@ class Agdp_Mailbox {
 				'post_id' => $page->ID
 				, 'comment_approved' => ['0','1']
 				, 'author_email' => $user_email
-				, 'meta_key' => 'title'
-				, 'meta_value' => $subject
-				, 'meta_compare' => '='
-				, 'date_query' => [
-					'after' => $message['date']->format(DateTimeInterface::W3C ),
-					'before' => $message['date']->format(DateTimeInterface::W3C ),
-					'inclusif' => true,
+				, 'meta_query' => [
+					[
+						'meta_key' => 'title',
+						'meta_value' => $subject,
+						'meta_compare' => '=',
+					],
+					'relation' => 'AND',
+					[
+						'meta_key' => 'send_date',
+						'meta_value' => $message['date']->format('Y-m-d H:i:s' ),
+						'meta_compare' => '=',
+					]
 				]
+				// , 'date_query' => [
+					// 'after' => $message['date']->format('Y-m-d H:i:s' ),
+					// 'before' => $message['date']->format('Y-m-d H:i:s'),
+					// 'inclusif' => true,
+				// ]
 				, 'number' => 1
 			]);
 		}
