@@ -729,6 +729,7 @@ class Agdp_Mailbox {
 				debug_log(__CLASS__ . '::import_messages $message === null', $messages);
 				continue;
 			}
+			
 			$email_to = false;
 			foreach($message['to'] as $to)
 				if( isset($dispatch[strtolower($to->email)]) ){
@@ -741,11 +742,17 @@ class Agdp_Mailbox {
 						$email_to = strtolower($to->email);
 						break;
 					}
+			if( ! $email_to && isset($message['from']))//chained mailing lists
+				foreach($message['from'] as $from)
+					if( isset($dispatch[strtolower($from)]) ){
+						$email_to = strtolower($from);
+						break;
+					}
 			if( ! $email_to )
 				if( isset($dispatch['*']) )
 					$email_to = '*';
 				else {
-					debug_log(__CLASS__ . '::import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée : %s.", print_r($message['to'], true)));
+					debug_log(__CLASS__ . '::import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée comme forum : %s.", print_r($message['to'], true)));
 					continue;
 				}
 					
@@ -754,6 +761,8 @@ class Agdp_Mailbox {
 					remove_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2);
 					add_filter('pre_comment_approved', function() {return '0';}); //disapprove
 					// add_filter( 'duplicate_comment_id', '__return_false', 99, 2);//DEBUG
+					debug_log(__CLASS__ . '::import_messages', sprintf("Un e-mail est enregistré par défaut comme commentaire de la boite e-mails. Il est destiné à une adresse non référencée comme forum : %s.", print_r($message['to'], true)));
+					
 				case 'page' :
 					$page_id = $dispatch[$email_to]['id'];
 					if( ! $page_id )
