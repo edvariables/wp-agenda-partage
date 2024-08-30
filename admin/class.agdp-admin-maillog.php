@@ -111,7 +111,7 @@ class Agdp_Admin_Maillog {
 		
 	    global $wp_meta_boxes;
 		add_meta_box( 'dashboard_agdpmaillogs',
-			__('Traces mail', AGDP_TAG),
+			__('Traces mails', AGDP_TAG),
 			array(__CLASS__, 'on_dashboard_agdpmaillogs'),
 			'dashboard',
 			'normal',

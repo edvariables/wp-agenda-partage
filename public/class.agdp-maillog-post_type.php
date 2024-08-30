@@ -18,25 +18,25 @@ class Agdp_Maillog_Post_type {
 	public static function register_post_type() {
 
 		$labels = array(
-			'name'                  => _x( 'Traces mail', 'Post Type General Name', AGDP_TAG ),
+			'name'                  => _x( 'Traces mails', 'Post Type General Name', AGDP_TAG ),
 			'singular_name'         => _x( 'Trace mail', 'Post Type Singular Name', AGDP_TAG ),
-			'menu_name'             => __( 'Traces mail', AGDP_TAG ),
-			'name_admin_bar'        => __( 'Trace mail', AGDP_TAG ),
-			'archives'              => __( 'Traces mail', AGDP_TAG ),
+			'menu_name'             => __( 'Traces mails', AGDP_TAG ),
+			'name_admin_bar'        => __( 'Trace mails', AGDP_TAG ),
+			'archives'              => __( 'Traces mails', AGDP_TAG ),
 			'attributes'            => __( 'Attributs', AGDP_TAG ),
 			'parent_item_colon'     => __( 'Trace mail parent:', AGDP_TAG ),
-			'all_items'             => __( 'Toutes les traces mail', AGDP_TAG ),
-			'add_new_item'          => __( 'Ajouter une trace mail', AGDP_TAG ),
+			'all_items'             => __( 'Toutes les traces mails', AGDP_TAG ),
+			'add_new_item'          => __( 'Ajouter une trace mails', AGDP_TAG ),
 			'add_new'               => __( 'Ajouter', AGDP_TAG ),
 			'new_item'              => __( 'Nouvelle trace mail', AGDP_TAG ),
 			'edit_item'             => __( 'Modifier', AGDP_TAG ),
 			'update_item'           => __( 'Mettre à jour', AGDP_TAG ),
 			'view_item'             => __( 'Afficher', AGDP_TAG ),
-			'view_items'            => __( 'Voir les traces mail', AGDP_TAG ),
-			'search_items'          => __( 'Rechercher des traces mail', AGDP_TAG ),
-			'items_list'            => __( 'Liste de traces mail', AGDP_TAG ),
-			'items_list_navigation' => __( 'Navigation dans la liste de traces mail', AGDP_TAG ),
-			'filter_items_list'     => __( 'Filtrer la liste des traces mail', AGDP_TAG ),
+			'view_items'            => __( 'Voir les traces mails', AGDP_TAG ),
+			'search_items'          => __( 'Rechercher des traces mails', AGDP_TAG ),
+			'items_list'            => __( 'Liste de traces mails', AGDP_TAG ),
+			'items_list_navigation' => __( 'Navigation dans la liste de traces mails', AGDP_TAG ),
+			'filter_items_list'     => __( 'Filtrer la liste des traces mails', AGDP_TAG ),
 		);
 		$capabilities = self::post_type_capabilities();
 		$args = array(

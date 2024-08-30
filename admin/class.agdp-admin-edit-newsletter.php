@@ -34,6 +34,7 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function register_newsletter_metaboxes($post){
 				
+		add_meta_box('agdp_newsletter-signature', __('Signature', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-source', __('Source liée', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-test', __('Test d\'envoi', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Newsletter::post_type, 'normal', 'high');
 		add_meta_box('agdp_newsletter-mailing', __('Envoi automatique', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Newsletter::post_type, 'normal', 'high');
@@ -47,6 +48,10 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 		//var_dump(func_get_args());
 		
 		switch ($metabox['id']) {
+			
+			case 'agdp_newsletter-signature':
+				parent::metabox_html( self::get_metabox_signature_fields(), $post, $metabox );
+				break;
 			
 			case 'agdp_newsletter-source':
 				parent::metabox_html( self::get_metabox_source_fields(), $post, $metabox );
@@ -71,6 +76,7 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 
 	public static function get_metabox_all_fields(){
 		return array_merge(
+			self::get_metabox_signature_fields(),
 			self::get_metabox_source_fields(),
 			self::get_metabox_mailing_fields(),
 			self::get_metabox_subscribers_fields(),
@@ -216,6 +222,24 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 				'type' => 'number'
 			]
 		];
+		return $fields;
+				
+	}
+	
+	/**
+	 * Metabox des champs Source
+	 */
+	public static function get_metabox_signature_fields(){
+		$newsletter = get_post();
+		
+		$fields = [];
+		
+		$meta_name = 'signature';
+		$fields[] = array('name' => $meta_name,
+						'input' => 'tinymce',
+						'settings' => [ 'textarea_rows' => 4 ],
+		);
+		
 		return $fields;
 				
 	}
@@ -375,7 +399,7 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 		foreach($dbresults as $dbresult)
 			if(isset($periods[$dbresult->period])){
 				$periods[$dbresult->period]['subscribers_count'] = $dbresult->count;
-				if( $dbresult->period !== '0' && $dbresult->period !== 'none' )
+				if( $dbresult->period !== '0' && $dbresult->period !== PERIOD_NONE )
 					$subscribers_count += $dbresult->count;
 			}
 		
@@ -406,10 +430,10 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 			echo sprintf("<li><h3><u>%s</u> : %d %s</h3>"
 				, $data['name']
 				, $data['subscribers_count']
-				, $period === 'none' ? ' non-abonné.e(s)' : ' abonné.e(s)'
+				, $period === PERIOD_NONE ? ' non-abonné.e(s)' : ' abonné.e(s)'
 				);
 			
-			if($period !== 'none'){
+			if($period !== PERIOD_NONE && $period !== PERIOD_EACH){
 				$meta_name = sprintf('next_date_%s', strtoupper( $period ));
 				echo '<ul>';
 				// if(count($data['mailing']) == 0){

@@ -38,6 +38,8 @@ class Agdp_Newsletter {
 			self::$initiated = true;
 
 			define('ALL_PERIODS', '*');
+			define('PERIOD_NONE', 'none');
+			define('PERIOD_EACH', 'each');
 			define('PERIOD_DAYLY', 'd');
 			define('PERIOD_WEEKLY', 'w');
 			define('PERIOD_BIWEEKLY', '2w');
@@ -66,6 +68,7 @@ class Agdp_Newsletter {
 		Agdp::add_action_on_queried_object( 'page', 'newsletter_subscribe_page_id', array(__CLASS__, 'on_page_newsletter_subscribe'), 10, 2 );
 		
 		add_filter( 'the_title', array(__CLASS__, 'the_title'), 10, 2 );
+		add_filter( 'the_content', array(__CLASS__, 'the_content'), 10, 2 );
 		
 		add_action( 'wp_ajax_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
 		add_action( 'wp_ajax_nopriv_agdpnl_get_subscription', array(__CLASS__, 'on_wp_ajax_agdpnl_get_subscription') );
@@ -119,6 +122,26 @@ class Agdp_Newsletter {
 		//$separator = $no_html ? ', ' : '<br>';
 		$html = do_shortcode($post_title);
 		return $html;
+	}
+ 
+ 	/***********
+	 * the_content()
+	 */
+ 	public static function the_content( $more_link_text = null, $strip_teaser = false ) {
+ 		global $post;
+	    return get_the_content( $more_link_text = null, $strip_teaser, $post )
+			 . "\n" . self::get_the_signature( $post );
+	}
+	/**
+ 	 * Retourne la signature de la page
+ 	 */
+	public static function get_the_signature( $newsletter_id ) {
+ 		if( is_a($newsletter_id, 'WP_Post') ){
+			$newsletter_id = $newsletter_id->ID;
+		}
+		
+		$meta_name = 'signature';
+		return get_post_meta( $newsletter_id, $meta_name, true);
 	}
 	/*
 	 **********/
@@ -483,13 +506,17 @@ class Agdp_Newsletter {
 	 *     si false, cherche toutes les périodes dont la prochaine date est aujourd'hui ou avant
 	 */
 	public static function set_next_date($period, $newsletter, $next_date){
-		if( $period === 'none')
-			throw new Exception('set_next_date("none") ne devrait pas être.');
+		if( $period === PERIOD_NONE
+		 || $period === PERIOD_EACH)
+			throw new Exception('set_next_date("none|each") ne devrait pas être.');
 		
 		if( ! $period){
 			$today = strtotime(wp_date('Y-m-d'));
 			foreach(self::subscription_periods($newsletter) as $period=>$period_name)
-				if( $period && $period !== 'none'){
+				if( $period 
+				 && $period !== PERIOD_NONE
+				 && $period !== PERIOD_EACH
+				){
 					if( self::get_next_date( $period, $newsletter ) <= $today)
 						self::set_next_date($period, $newsletter, $next_date);
 				}
@@ -512,7 +539,7 @@ class Agdp_Newsletter {
 		$periods_next_dates = [];
 		$min_date = 0;
 		foreach(self::subscription_periods($newsletter) as $period=>$period_name)
-			if( $period && $period !== 'none'){
+			if( $period && $period !== PERIOD_NONE && $period !== PERIOD_EACH){
 				$period_next_date = self::get_next_date($period, $newsletter, $after_date);
 				$periods_next_dates[$period] = $period_next_date;
 				if( $min_date === 0 )
@@ -766,7 +793,7 @@ class Agdp_Newsletter {
 				switch($_REQUEST['action']){
 					case 'unsubscribe':
 					case 'desinscription':
-						$user_subscription = 'none';
+						$user_subscription = PERIOD_NONE;
 						$subscription_periods[$user_subscription] = 'Désinscription à valider';
 						break;
 					default:
@@ -775,7 +802,7 @@ class Agdp_Newsletter {
 			if( $user_subscription === null && $email)
 				$user_subscription = self::get_subscription($email, $newsletter);
 			if( ! $user_subscription)
-				$user_subscription = 'none';
+				$user_subscription = PERIOD_NONE;
 			
 			$checkboxes = sprintf('"%s"', AGDP_WPCF7_RADIO_NO_CHANGE);//option masquée
 			$selected = '';
@@ -1084,7 +1111,7 @@ class Agdp_Newsletter {
 		
 		$user_id = email_exists( $email );
 		if( ! $user_id){
-			if( ! $period || $period == 'none')
+			if( ! $period || $period === PERIOD_NONE || $period === PERIOD_EACH)
 				return true;
 			$user = self::create_subscriber_user($email, false, false);
 			if( ! $user )
@@ -1150,7 +1177,7 @@ class Agdp_Newsletter {
 					}
 					else {
 						$subscriptions[$forum_option] = [
-							'subscription' => 'none'
+							'subscription' => PERIOD_NONE
 							, 'field_extension' => $field_extension
 							, 'input_prefixe' => 'forum-subscription'
 							, 'input_type' => 'select'
@@ -1344,7 +1371,7 @@ class Agdp_Newsletter {
 			 && $period !== AGDP_WPCF7_RADIO_NO_CHANGE ){
 				 
 				if(is_array($period))
-					$period = count($period) && $period[0] ? $period[0] : 'none';//wpcf7 is strange with first radio option
+					$period = count($period) && $period[0] ? $period[0] : PERIOD_NONE;//wpcf7 is strange with first radio option
 				
 				$subscription_periods = self::subscription_periods($newsletter);
 				
@@ -1355,7 +1382,7 @@ class Agdp_Newsletter {
 							break;
 						}
 				if( ! $found)
-					$period = 'none';
+					$period = PERIOD_NONE;
 				
 				if( $forum )
 					$newsletter_name = $forum->post_title;
@@ -1366,11 +1393,11 @@ class Agdp_Newsletter {
 				
 				$user_subscription = self::get_subscription( $email, $newsletter );
 				if( ! $user_subscription )
-					$user_subscription = 'none';
+					$user_subscription = PERIOD_NONE;
 				
 				if( $user_subscription !== $period ){
 					
-					if($period === 'none'){
+					if($period === PERIOD_NONE){
 						if( ! self::remove_subscription( $email, $newsletter) ) {
 							$abort = true;
 							$error_message = sprintf('Désolé, une erreur est survenue, la suppression de votre abonnement à "%s" n\'a pas été enregistrée.', $newsletter_name);
@@ -1707,6 +1734,8 @@ class Agdp_Newsletter {
 			$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
 		
 		$message = do_shortcode( get_the_content(false, false, $newsletter) );
+		die( static::get_the_signature($newsletter) );
+		$message .= do_shortcode( static::get_the_signature($newsletter) );
 		
 		if( ! self::content_is_empty() ) {
 			//TODO move <script>
@@ -1833,7 +1862,8 @@ class Agdp_Newsletter {
 		$periods = [];
 		$periods_in = '';
 		foreach(self::subscription_periods($newsletter) as $period => $period_name){
-			if( $period === 'none'
+			if( $period === PERIOD_NONE
+			|| $period === PERIOD_EACH
 			|| self::get_next_date($period, $newsletter) > $today )
 				continue;
 			$periods[$period] = [

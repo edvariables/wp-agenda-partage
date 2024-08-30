@@ -475,7 +475,7 @@ class Agdp_Admin_Options {
 					'label_for' => $field_id,
 					'label' => __( 'Activer', AGDP_TAG ),
 					'learn-more' => [__( 'A n\'utiliser que pour la poursuite d\'envois abusifs ou de robots.', AGDP_TAG )
-									, __( 'Pensez à purger les Traces mail et à vider la corbeille.', AGDP_TAG )],
+									, __( 'Pensez à purger les Traces mails et à vider la corbeille.', AGDP_TAG )],
 					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
