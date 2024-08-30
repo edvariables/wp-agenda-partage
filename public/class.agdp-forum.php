@@ -476,6 +476,28 @@ class Agdp_Forum extends Agdp_Page {
 	}
 	
 	/**
+	 * get_blacklist()
+	 */
+	public static function get_blacklist( $page ){
+		$meta_name = 'forum_blacklist';
+		$blacklist = get_post_meta( $page->ID, $meta_name, true );
+		if( ! $blacklist )
+			return [];
+		if( is_string($blacklist) )
+			$blacklist = preg_split( '/[,;\n]+/', $blacklist );
+		elseif( ! is_array( $blacklist ) )
+			return false;
+		return $blacklist;
+	}
+	
+	/**
+	 * is_email_blacklisted($user_email)
+	 */
+	public static function is_email_blacklisted( $page, $user_email){
+		return in_array( $user_email, static::get_blacklist( $page ) );
+	}
+	
+	/**
 	 * user_can_post_comment
 	 */
 	public static function user_can_post_comment( $page = false, $user = false){

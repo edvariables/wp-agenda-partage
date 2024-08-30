@@ -232,6 +232,14 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'unit' => sprintf('Par exemple, %s@%s', $post ? $post->post_name : 'ce-forum', $_SERVER['HTTP_HOST']),
 		];
 		
+		//Blacklist Adresses e-mails
+		$fields[] = [
+			'name' => 'forum_blacklist[]',
+			'label' => __('E-mails blacklistés', AGDP_TAG),
+			'input' => 'textarea',
+			'unit' => sprintf('Par exemple, pour bloquer une boucle infinie qui passerait par la newsletter.'),
+		];
+		
 		
 		//Droits
 		$rights = ['' => '(non défini = public)'];

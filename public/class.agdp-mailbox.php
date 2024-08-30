@@ -930,6 +930,7 @@ class Agdp_Mailbox {
 			debug_log('import_message_to_comment  ! $mailbox');
 			return false;
 		}
+		
 		// debug_log('import_message_to_comment', $mailbox->ID, $mailbox->ID === $page->ID);
 		$message['subject'] = trim($message['subject']);
 		$is_cancel_notification = strpos( $message['subject'], AGDP_SUBJECT_CANCELED ) === 0;
@@ -1000,6 +1001,13 @@ class Agdp_Mailbox {
 				$message['reply_to'] = [ $message['from'] ];
 			
 			$user_email = strtolower($message['reply_to'][0]->email);
+			
+			if( Agdp_Forum::is_email_blacklisted( $page, $user_email) ){
+				debug_log(__CLASS__.'::'.__FUNCTION__ . ' is_email_blacklisted ' . $user_email);
+				return 0;
+			}
+				
+			
 			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
 			
 			if( ($pos = strpos($user_name, '@')) !== false)
