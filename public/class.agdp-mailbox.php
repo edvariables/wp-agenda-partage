@@ -75,32 +75,64 @@ class Agdp_Mailbox {
  			return $content;
 		}
 		
-		$comments = get_comments([
-			'fields' => 'name',
-			'post_id' => $post->ID,
-			'post_type' => 'any',
-			'status' => 'all',
-		]);
-		if( $comments ) {
-			$content .= '<h3>Messages non affectés</h3>';
-			$content .= '<ul>';
-			foreach($comments as $comment){
-				$metas = get_comment_meta($comment->comment_ID, '', true);
-				$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
-					, $metas['title'][0]
-					, $metas['from'][0]
-					, $metas['to'][0]
-					, date('d/m/Y', strtotime($comment->comment_date))
-					, date('H:i', strtotime($comment->comment_date))
-					, date('H:i', strtotime($metas['send_date'][0]))
-					, $comment->comment_content
-					, Agdp_Comment::get_attachments_links( $comment )
-					// , print_r($metas, true)
-				);
+		if( current_user_can('manage_options') ){
+			$comments = get_comments([
+				'fields' => 'name',
+				'post_id' => $post->ID,
+				'post_type' => 'any',
+				'status' => 'all',
+			]);
+			if( $comments ) {
+				$content .= '<h3 class="toggle-trigger">Messages non affectés</h3>';
+				$content .= '<ul class="toggle-container">';
+				foreach($comments as $comment){
+					$metas = get_comment_meta($comment->comment_ID, '', true);
+					$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
+						, $metas['title'][0]
+						, $metas['from'][0]
+						, $metas['to'][0]
+						, date('d/m/Y', strtotime($comment->comment_date))
+						, date('H:i', strtotime($comment->comment_date))
+						, date('H:i', strtotime($metas['send_date'][0]))
+						, $comment->comment_content
+						, Agdp_Comment::get_attachments_links( $comment )
+						// , print_r($metas, true)
+					);
+				}
+				$content .= '</ul>';
+				// $content .= sprintf('<pre>%s</pre>', print_r( $comments, true ));
+				// debug_log(__FUNCTION__,  $comments);
 			}
-			$content .= '</ul>';
-			// $content .= sprintf('<pre>%s</pre>', print_r( $comments, true ));
-			// debug_log(__FUNCTION__,  $comments);
+		}
+		
+		foreach( static::get_forums( $post->ID ) as $forum_id => $forum ){
+			$comments = get_comments([
+				'fields' => 'name',
+				'post_id' => $forum->ID,
+				'post_type' => 'any',
+				'status' => 'all',
+			]);
+			if( $comments ) {
+				$content .= sprintf('<h3 class="toggle-trigger">%s</h3>', $forum->post_title );
+				$content .= '<ul class="toggle-container">';
+				foreach($comments as $comment){
+					$metas = get_comment_meta($comment->comment_ID, '', true);
+					$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
+						, $metas['title'][0]
+						, $metas['from'][0]
+						, $metas['to'][0]
+						, date('d/m/Y', strtotime($comment->comment_date))
+						, date('H:i', strtotime($comment->comment_date))
+						, empty($metas['send_date']) ? '' : date('H:i', strtotime($metas['send_date'][0]))
+						, $comment->comment_content
+						, Agdp_Comment::get_attachments_links( $comment )
+						// , print_r($metas, true)
+					);
+				}
+				$content .= '</ul>';
+				// $content .= sprintf('<pre>%s</pre>', print_r( $comments, true ));
+				// debug_log(__FUNCTION__,  $comments);
+			}
 		}
 	    return $content;
 	}
@@ -116,6 +148,54 @@ class Agdp_Mailbox {
 		if($mailbox_id = get_post_meta( $page_id, AGDP_PAGE_META_MAILBOX, true))
 			return self::get_mailbox($mailbox_id);
 		return false;
+	}
+		
+	
+	/**
+	 * Retourne un tableau de pages de forum
+	 */
+	public static function get_forums( $mailbox_id = false, $args = false){
+		$default_args = [
+			'post_type' => Agdp_Forum::post_type,
+			'post_status' => 'publish',
+			'numberposts' => -1,
+		];
+		if( ! $mailbox_id )
+			$default_args['meta_query'] = [
+				'relation' => 'OR',
+				[
+					'key' => 'agdpmailbox',
+					'value' => '0',
+					'compare' => '>'
+				],[
+					'key' => 'agdpmailbox',
+					'value' => AUTO_MAILBOX,
+					'compare' => '='
+				]
+			];
+		else{
+			$default_args['meta_key'] = 'agdpmailbox';
+			$default_args['meta_value'] = $mailbox_id;
+			$default_args['meta_compare'] = '=';
+		}
+		
+		if( is_array($args) ) 
+			$args = array_merge( $default_args, $args );
+		else
+			$args = $default_args;
+		//Forums
+		$posts = get_posts( $args );
+		// debug_log("get_forums", count($posts), $args);
+		$pages = [];
+		foreach($posts as $page){
+			if( is_numeric($page) )
+				$pages[] = $page;
+			else {
+				$post_id = $page->ID;
+				$pages[ $post_id . '' ] = $page;
+			}
+		}
+		return $pages;
 	}
 	
 	/**
@@ -1069,16 +1149,16 @@ class Agdp_Mailbox {
 				, 'comment_approved' => ['0','1']
 				, 'author_email' => $user_email
 				, 'meta_query' => [
-					[
-						'meta_key' => 'title',
-						'meta_value' => $subject,
-						'meta_compare' => '=',
-					],
 					'relation' => 'AND',
 					[
-						'meta_key' => 'send_date',
-						'meta_value' => $message['date']->format('Y-m-d H:i:s' ),
-						'meta_compare' => '=',
+						'key' => 'title',
+						'value' => $subject,
+						'compare' => '=',
+					],
+					[
+						'key' => 'send_date',
+						'value' => $message['date']->format('Y-m-d H:i:s' ),
+						'compare' => '=',
 					]
 				]
 				// , 'date_query' => [
