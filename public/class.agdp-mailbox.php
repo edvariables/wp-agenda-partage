@@ -87,7 +87,7 @@ class Agdp_Mailbox {
 				$content .= '<ul class="toggle-container">';
 				foreach($comments as $comment){
 					$metas = get_comment_meta($comment->comment_ID, '', true);
-					$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
+					$content .= sprintf('<li><h4 class="toggle-trigger">%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code><div class="toggle-container"><pre>%s</pre><div>%s</div></div></li>'
 						, $metas['title'][0]
 						, $comment->comment_author_email
 						, empty($metas['to']) ? '#' : $metas['to'][0]
@@ -120,7 +120,7 @@ class Agdp_Mailbox {
 				$content .= '<ul class="toggle-container">';
 				foreach($comments as $comment){
 					$metas = get_comment_meta($comment->comment_ID, '', true);
-					$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
+					$content .= sprintf('<li><h4 class="toggle-trigger">%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code><div class="toggle-container"><pre>%s</pre><div>%s</div></div></li>'
 						, $metas['title'][0]
 						, $comment->comment_author_email //, empty($metas['from']) ? '#' : $metas['from'][0]
 						, empty($metas['to']) ? '#' : $metas['to'][0]
