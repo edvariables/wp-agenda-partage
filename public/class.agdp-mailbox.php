@@ -89,8 +89,8 @@ class Agdp_Mailbox {
 					$metas = get_comment_meta($comment->comment_ID, '', true);
 					$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
 						, $metas['title'][0]
-						, $metas['from'][0]
-						, $metas['to'][0]
+						, $comment->comment_author_email
+						, empty($metas['to']) ? '#' : $metas['to'][0]
 						, date('d/m/Y', strtotime($comment->comment_date))
 						, date('H:i', strtotime($comment->comment_date))
 						, date('H:i', strtotime($metas['send_date'][0]))
@@ -106,6 +106,9 @@ class Agdp_Mailbox {
 		}
 		
 		foreach( static::get_forums( $post->ID ) as $forum_id => $forum ){
+			if( ! current_user_can('moderate_comments')
+			&& Agdp_Forum::get_forum_comment_approved( $forum ) !== 'publish' )
+				continue;
 			$comments = get_comments([
 				'fields' => 'name',
 				'post_id' => $forum->ID,
@@ -119,8 +122,8 @@ class Agdp_Mailbox {
 					$metas = get_comment_meta($comment->comment_ID, '', true);
 					$content .= sprintf('<li><div><h4>%s</h4><code>De %s à %s</code><br><code>Le %s à %s (envoyé à %s)</code></div><code>%s</code><pre>%s</pre></li>'
 						, $metas['title'][0]
-						, $metas['from'][0]
-						, $metas['to'][0]
+						, $comment->comment_author_email //, empty($metas['from']) ? '#' : $metas['from'][0]
+						, empty($metas['to']) ? '#' : $metas['to'][0]
 						, date('d/m/Y', strtotime($comment->comment_date))
 						, date('H:i', strtotime($comment->comment_date))
 						, empty($metas['send_date']) ? '' : date('H:i', strtotime($metas['send_date'][0]))
