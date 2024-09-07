@@ -1737,7 +1737,7 @@ class Agdp_Newsletter {
 			$subject = sprintf('[%s] %s', get_bloginfo( 'name', 'display' ), $subject);
 		
 		$message = do_shortcode( get_the_content(false, false, $newsletter) );
-		die( static::get_the_signature($newsletter) );
+		
 		$message .= do_shortcode( static::get_the_signature($newsletter) );
 		
 		if( ! self::content_is_empty() ) {
