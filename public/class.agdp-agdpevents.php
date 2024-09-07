@@ -315,7 +315,6 @@ class Agdp_Evenements extends Agdp_Posts {
 				break;
 			}
 		}
-		
 		if( $events_count === 0)
 			return false;
 		

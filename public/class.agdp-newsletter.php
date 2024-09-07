@@ -127,12 +127,13 @@ class Agdp_Newsletter {
  	/***********
 	 * the_content()
 	 */
- 	public static function the_content( $more_link_text = null, $strip_teaser = false ) {
+ 	public static function the_content( $content  ) {
  		global $post;
 		if( $post && $post->post_type === static::post_type ){
-			return get_the_content( $more_link_text = null, $strip_teaser, $post )
+			return get_the_content( null, false, $post )
 				 . "\n" . self::get_the_signature( $post );
 		}
+		return $content;
 	}
 	/**
  	 * Retourne la signature de la page
