@@ -288,6 +288,11 @@ class Agdp_Comment {
 			$commentdata['comment_ID'] = $update_comment_id;
 			$commentdata['_update_comment'] = true;
 			$commentdata['comment_parent'] = $comment->comment_parent;
+			$commentdata['user_id'] = $comment->user_id;
+			$commentdata['comment_author'] = $comment->comment_author;
+			$commentdata['comment_author_email'] = $comment->comment_author_email;
+			$commentdata['comment_author_url'] = $comment->comment_author_url;
+			$commentdata['comment_author_IP'] = $comment->comment_author_IP;
 		}
 		
 		if( empty($commentdata['comment_meta']) )
