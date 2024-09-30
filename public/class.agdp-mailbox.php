@@ -1360,7 +1360,14 @@ class Agdp_Mailbox {
 			
 			$abort = true;
 		}
-		else {					
+		else {
+			if( ! empty($_POST['nl-period-agdpforum']) || ! empty($_POST['nl-period-agdpforum[]']) ){
+				debug_log(__FUNCTION__, empty($_POST['nl-period-agdpforum[]']));
+				foreach( Agdp_Page::get_page_newsletters($page, true) as $newsletter ){
+					Agdp_Newsletter::update_subscription( $email_replyto, PERIOD_DAYLY, $newsletter);
+					break;
+				}
+			}
 			//$html = wp_list_comments(['echo'=>false], [ get_comment($comment) ]);
 			$nonce = Agdp_Comment::get_nonce( $comment );
 			$messages = ($contact_form->get_properties())['messages'];
