@@ -199,32 +199,49 @@ class Agdp_Forum_Shortcodes {
 				break;
 				
 			case 'forum':
-			
-				$meta_name = $atts['info'] ;
-				if(!$meta_name)
-					return '<div class="error">Le paramètre info="xxx" du shortcode "forum" n\'est pas fourni.</div>';
 				$val = false;
-				switch($meta_name){
-					case 'imap_email' :
-					case 'email' :
-						$meta_name = 'imap_email';
-						$val = Agdp_Mailbox::get_page_email($page);
-						break;
-				}
-				if($val === false)
-					$val = get_post_meta($page->ID, $meta_name, true, false);
 				
-				if($val)
+				if( ! empty($atts['form']) 
+				 || ! empty($atts['formulaire']) ){
+						
+					$form_id = Agdp_Forum::get_property('edit_message_form', $page->ID);
+					$val = sprintf('[contact-form-7 id="%d"]', $form_id);
+				}
+				else {
+					if( empty($atts['info']) ){
+						if( ! empty($atts['mailto']) )
+							$atts['info'] = 'imap_email';
+						elseif( ! empty($atts['email']) ){
+							$atts['info'] = 'imap_email';
+							if( ! isset($atts['mailto']) )
+								$atts['mailto'] = true;
+						}
+						else
+							return '<div class="error">Le paramètre info="xxx" du shortcode "forum" n\'est pas fourni.</div>';
+					}
+					$meta_name = $atts['info'] ;
 					switch($meta_name){
 						case 'imap_email' :
-							$val = antispambot(esc_html($val), -0.5);
-							if( isset($atts['mailto']) && $atts['mailto'])
-								$val = sprintf('<a href="mailto:%s">%s</a>', $val,
-									$atts['mailto'] === '1' || $atts['mailto'] === true ? $val : $atts['mailto']
-								);
-							return $val;
+						case 'email' :
+							$meta_name = 'imap_email';
+							$val = Agdp_Mailbox::get_page_email($page);
 							break;
 					}
+					if($val === false)
+						$val = get_post_meta($page->ID, $meta_name, true, false);
+					
+					if($val)
+						switch($meta_name){
+							case 'imap_email' :
+								$val = antispambot(esc_html($val), -0.5);
+								if( isset($atts['mailto']) && $atts['mailto'] && ($atts['mailto'] !== '0'))
+									$val = sprintf('<a href="mailto:%s">%s</a>', $val,
+										$atts['mailto'] === '1' || $atts['mailto'] === true ? $val : $atts['mailto']
+									);
+								return $val;
+								break;
+						}
+				}
 				if($val || $content){
 					if($label)
 						return '<div class="agdp-forum">'
