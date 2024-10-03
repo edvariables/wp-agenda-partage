@@ -14,7 +14,7 @@ class Agdp_Admin_Comments {
 		global $pagenow;
 		if ( $pagenow === 'edit-comments.php' ) {
 			add_filter( 'get_comment', array( __CLASS__, 'on_get_comment_cb' ), 10, 1 );
-			add_action( 'manage_comments_nav', array( __CLASS__, 'on_manage_comments_nav' ), 10, 2 );
+			add_action( 'manage_comments_nav', array( __CLASS__, 'on_manage_comments_nav' ), 9, 2 );
 			
 		}
 		
