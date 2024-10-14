@@ -192,6 +192,16 @@ abstract class Agdp_Page {
 		
 		return $newsletters;
 	}
+
+	/**
+	 * Retourne la première newsletter utilisant une page.
+	 */
+	public static function get_page_main_newsletter($page_id = false){
+		foreach( self::get_page_newsletters($page_id, true) as $newsletter )
+			return $newsletter;
+		
+		return false;
+	}
 	
 	/**
 	* Retourne les pages

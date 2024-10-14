@@ -894,6 +894,9 @@ class Agdp_Newsletter {
 		return self::get_user_email();
 	}
 	
+	/**
+	 * get_newsletter
+	 */
 	public static function get_newsletter($newsletter = false){
 		$default_newsletter = $newsletter === true;
 		if( (! $newsletter) || $default_newsletter){
@@ -916,10 +919,12 @@ class Agdp_Newsletter {
 			}
 		}
 		
-		if(is_a($newsletter, 'WP_Post')
-		&& $newsletter->post_type === self::post_type)
-			return $newsletter;
-			
+		if(is_a($newsletter, 'WP_Post')){
+			if( $newsletter->post_type === self::post_type )
+				return $newsletter;
+			if( $newsletter->post_type === Agdp_Forum::post_type )
+				return Agdp_Page::get_page_main_newsletter( $newsletter );
+		}
 		//slug
 		if( is_string($newsletter) && ! is_numeric($newsletter) ){
 			if ( $posts = get_posts( array( 
