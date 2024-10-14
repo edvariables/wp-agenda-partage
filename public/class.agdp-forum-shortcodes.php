@@ -305,14 +305,24 @@ class Agdp_Forum_Shortcodes {
 				$shortcode .= '-' . $atts['0'];
 		}
 		
+		$options = [];
+		foreach( [
+			'summary' => 'summary',
+			'sommaire' => 'summary',
+			'ajax' => 'ajax',
+			] as $option_in =>  $option_key )
+			if(array_key_exists($option_in, $atts))
+				$options[$option_key] = $atts[$option_in];
+			
+		
 		switch($shortcode){
 			case 'agdpforum-messages-list':
 				
-				return Agdp_Comments::get_list_html( $mailbox, $page, $content );
+				return Agdp_Comments::get_list_html( $mailbox, $page, $content, $options );
 				
 			case 'agdpforum-messages-email':
 				
-				$html = Agdp_Comments::get_list_for_email( $mailbox, $page, $content );
+				$html = Agdp_Comments::get_list_for_email( $mailbox, $page, $content, $options );
 				return $html;
 
 			default:

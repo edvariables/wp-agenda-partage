@@ -266,6 +266,7 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 	|| ! file_exists( $filename) )
 		return false;
 	
+	$use_exif = false;
 	$path_parts = pathinfo($filename);
 	switch($path_parts['extension']){
 		case 'png':
@@ -280,6 +281,7 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 		case 'jpeg':
 		case 'jpg':
 			$source = imagecreatefromjpeg($filename);
+			$use_exif = true;
 			break;
 		default:
 			return $filename;
@@ -291,22 +293,24 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 	$height = $size[1];
 	
 	//Correction d'auto-rotation
-	$exif = exif_read_data($filename);
-	if( ! empty($exif['Orientation'])) {
-		switch($exif['Orientation']) {
-			case 8:
-				$source = imagerotate($source,90,0);
-				$width = $size[1];
-				$height = $size[0];
-				break;
-			case 3:
-				$source = imagerotate($source,180,0);
-				break;
-			case 6:
-				$source = imagerotate($source,-90,0);
-				$width = $size[1];
-				$height = $size[0];
-				break;
+	if( $use_exif ) {
+		$exif = exif_read_data($filename); //JPEG/TIFF images
+		if( ! empty($exif['Orientation'])) {
+			switch($exif['Orientation']) {
+				case 8:
+					$source = imagerotate($source,90,0);
+					$width = $size[1];
+					$height = $size[0];
+					break;
+				case 3:
+					$source = imagerotate($source,180,0);
+					break;
+				case 6:
+					$source = imagerotate($source,-90,0);
+					$width = $size[1];
+					$height = $size[0];
+					break;
+			}
 		}
 	}
 

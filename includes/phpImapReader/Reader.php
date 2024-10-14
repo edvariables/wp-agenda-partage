@@ -1069,13 +1069,16 @@ class Reader
         $email->setRawBody(imap_fetchbody($this->stream(), $uid, '', $options));
 
         $body = imap_fetchstructure($this->stream(), $uid, FT_UID);
-        if (isset($body->parts) && count($body->parts)) {
+		
+		if (isset($body->parts) && count($body->parts)) {
+			$email->setParts($body->parts);
             foreach ($body->parts as $part_number => $part) {
                 $this->decodePart($email, $part, $part_number + 1, $body->subtype);
             }
 			
         } else {
             $this->decodePart($email, $body);
+			$email->setParts( [$body] );
         }
 
         $msgno = imap_msgno($this->stream(), $uid);
@@ -1119,6 +1122,7 @@ class Reader
         if ($headers) {
 
             $headers_array = explode("\n", imap_fetchheader($this->stream(), $email->msgno()));
+			$email->SetHeaders($headers_array);
 
             foreach ($headers_array as $header) {
                 if (strpos($header, "X-") !== false) {
@@ -1229,6 +1233,8 @@ class Reader
                 $attachment = new EmailAttachment();
                 $attachment->setId($attachment_id);
                 $attachment->setName($file_name);
+                $attachment->setEncoding($part->encoding);
+                $attachment->setSubtype($part->subtype);
 
                 if ($is_inline_attachment) {
                     $attachment->setType('inline');

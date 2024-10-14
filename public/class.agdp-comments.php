@@ -271,6 +271,10 @@ class Agdp_Comments {
 		$messages_count = 0;
 		
 		$html .= '<ul>';
+		$all_messages = [];
+		if( $add_summary = empty( $options['summary'] ) ? false : $options['summary'] )
+			unset($options['summary']);
+		
 		foreach($weeks as $week => $week_messages_count) {
 			
 			$week_dates = get_week_dates(substr($week, 0,4), substr($week, 5,2));
@@ -305,7 +309,9 @@ class Agdp_Comments {
 					, $week
 				);
 			if( $week_messages_count){
-				$html .= self::get_week_comments_list_html( $week, $options );
+				$messages = self::get_week_comments( $week, $options );
+				$all_messages = array_merge( $all_messages, $messages );
+				$html .= self::get_week_comments_list_html( $week, $options, $messages );
 			}
 		
 			$html .= '</ul></li>';
@@ -318,6 +324,21 @@ class Agdp_Comments {
 		$html .= '</ul>';
 		
 		$html .= '</div>' . $content;
+		
+		//summary
+		if( $add_summary ){
+			$options['summary'] = $add_summary;
+			$summary = sprintf('<div class="agdp-agdpforummsgs agdp-agdpforummsgs-summary agdp-agdpforummsgs-%s">', $options['mode']);
+			$summary .= sprintf('<ul>Au sommaire, %d message%s :', count($all_messages), count($all_messages) > 1 ? 's' : '' );
+			foreach($all_messages as $message){
+				$summary .= sprintf(
+					'<li>%s</li>'
+					, self::get_list_item_html( $message, $options )
+				);
+			}
+			$summary .= '</ul></div>' ;
+			$html = $summary . $html;
+		}
 		
 		return $html;
 	}
@@ -415,6 +436,15 @@ class Agdp_Comments {
 	font-size: smaller;
 	font-style: italic;
 }
+
+.agdp-agdpforummsgs-summary  {
+	border-bottom: gray 1px solid;
+	margin-bottom: 1em;
+	margin-top: 0.5em;
+} 
+.agdp-agdpforummsgs-summary .a-li {
+	font-size: smaller;
+} 
 .footer {
 	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
@@ -466,9 +496,10 @@ class Agdp_Comments {
 	/**
 	* Rendu Html des messages d'un mois sous forme de liste
 	*/
-	public static function get_week_comments_list_html($week, $options = false){
+	public static function get_week_comments_list_html($week, $options = false, $messages = false){
 		
-		$messages = self::get_week_comments($week, $options);
+		if( ! $messages )
+			$messages = self::get_week_comments($week, $options);
 		
 		if(is_wp_error( $messages)){
 			$html = sprintf('<p class="alerte no-messages">%s</p>%s', __('Erreur lors de la recherche de messages.', AGDP_TAG), var_export($messages, true));
@@ -498,8 +529,12 @@ class Agdp_Comments {
 		return $html;
 	}
 	
+	/**
+	 * get_list_item_html
+	 */
 	public static function get_list_item_html($comment, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
+		$summary_dest = is_array($options) && isset($options['summary']) && $options['summary'];
 			
 		$date_debut = $comment->comment_date;
 					
@@ -534,102 +569,104 @@ class Agdp_Comments {
 		
 		$html .= '</div>';
 		
-		$html .= '<div class="toggle-container">';
-		
-		
-		$value = $comment->comment_content;
-		if($value){
-			$value = preg_replace('/\n[\s\n]+/', "\n", $value);
-			$more = $end = '';
-			//TODO Tronquer le contenu provoque des erreurs html (balises non fermées)
-			/* $max_len = 1500;
-			if( strlen($value) > $max_len ){
-				
-				//bugg sic
-				while( strlen(substr($value, 0, $max_len)) === 0 && $max_len < strlen($value)-8)
-					$max_len += 7;
-				
-				$end = substr($value, $max_len);
-				
-				$value = substr($value, 0, $max_len);
-				
-				$pos = strpos( $value, '</', -1);
-				if( $pos === false )
-					$end = '';
-				else {
-					// Déplace </div dans $end
-					$end = substr( $value, $pos ) . $end;
-					$value = substr( $value, 0, $pos );
-
-					//Fermeture de la balise fermante
-					$pos = strpos( $end, '>');
+		if( ! $summary_dest ){
+			$html .= '<div class="toggle-container">';
+			
+			
+			$value = $comment->comment_content;
+			if($value){
+				$value = preg_replace('/\n[\s\n]+/', "\n", $value);
+				$more = $end = '';
+				//TODO Tronquer le contenu provoque des erreurs html (balises non fermées)
+				/* $max_len = 1500;
+				if( strlen($value) > $max_len ){
+					
+					//bugg sic
+					while( strlen(substr($value, 0, $max_len)) === 0 && $max_len < strlen($value)-8)
+						$max_len += 7;
+					
+					$end = substr($value, $max_len);
+					
+					$value = substr($value, 0, $max_len);
+					
+					$pos = strpos( $value, '</', -1);
 					if( $pos === false )
-						$end = '?!...'; //qq chose comme </coucou puis plus rien
+						$end = '';
 					else {
-						// Déplace </div> dans $value
-						$value .= substr( $end, 0, $pos );
-						$end = substr( $end, $pos );
-						
-						debug_log( __FUNCTION__, $end );
-						foreach( ['p', 'div', 'pre' ] as $tag) {
-							$pattern = sprintf('/\<%s[\s\S]+\<\/%s\>/', $tag);
-							debug_log( $pattern);
-							$end = preg_replace($pattern, '', $end );
+						// Déplace </div dans $end
+						$end = substr( $value, $pos ) . $end;
+						$value = substr( $value, 0, $pos );
+
+						//Fermeture de la balise fermante
+						$pos = strpos( $end, '>');
+						if( $pos === false )
+							$end = '?!...'; //qq chose comme </coucou puis plus rien
+						else {
+							// Déplace </div> dans $value
+							$value .= substr( $end, 0, $pos );
+							$end = substr( $end, $pos );
+							
+							debug_log( __FUNCTION__, $end );
+							foreach( ['p', 'div', 'pre' ] as $tag) {
+								$pattern = sprintf('/\<%s[\s\S]+\<\/%s\>/', $tag);
+								debug_log( $pattern);
+								$end = preg_replace($pattern, '', $end );
+							}
+							debug_log( $end );
 						}
-						debug_log( $end );
+						
 					}
 					
-				}
-				
-				$more = sprintf('<a href="%s">... <b><i>[continuez la lecture sur le site]</i></b></a>', $url);
-				
-			} */
-			if( $email_mode )
-				$html .= sprintf('<pre>%s%s%s</pre>', $value, $more, $end );
-			else
-				$html .= sprintf('<pre>%s%s%s</pre>', htmlentities($value), $more, $end );
-		}
-		
-		$html .= Agdp_Comment::get_attachments_links($comment);
-		
-		$value = $comment->comment_author;
-		if($value){
-			if($comment->comment_author_email){
-				if($comment->comment_author != $comment->comment_author_email)
-					$value .= sprintf(' <%s>', $comment->comment_author_email);
-				$html .= sprintf('<div>Répondre à <a href="mailto:%s?body=Bonjour,&subject=%s">%s</a></div>'
-					, $comment->comment_author_email
-					, str_replace('&', '%20', str_replace(' ', '%20', str_replace("'", '%27', 'Re: ' . $title)))
-					, htmlentities($value) );
+					$more = sprintf('<a href="%s">... <b><i>[continuez la lecture sur le site]</i></b></a>', $url);
+					
+				} */
+				if( $email_mode )
+					$html .= sprintf('<pre>%s%s%s</pre>', $value, $more, $end );
+				else
+					$html .= sprintf('<pre>%s%s%s</pre>', htmlentities($value), $more, $end );
 			}
-			else
-				$html .= sprintf('<div>Publié par : %s</div>',  htmlentities($value) );
+			
+			$html .= Agdp_Comment::get_attachments_links($comment);
+			
+			$value = $comment->comment_author;
+			if($value){
+				if($comment->comment_author_email){
+					if($comment->comment_author != $comment->comment_author_email)
+						$value .= sprintf(' <%s>', $comment->comment_author_email);
+					$html .= sprintf('<div>Répondre à <a href="mailto:%s?body=Bonjour,&subject=%s">%s</a></div>'
+						, $comment->comment_author_email
+						, str_replace('&', '%20', str_replace(' ', '%20', str_replace("'", '%27', 'Re: ' . $title)))
+						, htmlentities($value) );
+				}
+				else
+					$html .= sprintf('<div>Publié par : %s</div>',  htmlentities($value) );
+			}
+			
+			$html .= date_diff_text($comment->comment_date, true, '<div class="created-since">', '</div>');
+			
+			$html .= '<div class="footer">';
+					
+				$html .= '<table><tbody><tr>';
+				
+				if( ! $email_mode )
+					$html .= '<td class="trigger-collapser"><a href="#replier">'
+						.Agdp::icon('arrow-up-alt2')
+						.'</a></td>';
+
+				$html .= sprintf(
+					'<td class="comment-edit"><a href="%s">'
+						.'Afficher le message (et vérifier qu\'il est toujours d\'actualité)'
+						. ($email_mode  ? '' : Agdp::icon('media-default'))
+						.'</a>'
+					.'</td>'
+					, $url);
+					
+				$html .= '</tr></tbody></table>';
+				
+			$html .= '</div>';
+			
+			$html .= '</div>';
 		}
-		
-		$html .= date_diff_text($comment->comment_date, true, '<div class="created-since">', '</div>');
-		
-		$html .= '<div class="footer">';
-				
-			$html .= '<table><tbody><tr>';
-			
-			if( ! $email_mode )
-				$html .= '<td class="trigger-collapser"><a href="#replier">'
-					.Agdp::icon('arrow-up-alt2')
-					.'</a></td>';
-
-			$html .= sprintf(
-				'<td class="comment-edit"><a href="%s">'
-					.'Afficher le message (et vérifier qu\'il est toujours d\'actualité)'
-					. ($email_mode  ? '' : Agdp::icon('media-default'))
-					.'</a>'
-				.'</td>'
-				, $url);
-				
-			$html .= '</tr></tbody></table>';
-			
-		$html .= '</div>';
-
-		$html .= '</div>';
 		
 		return $html;
 	}

@@ -43,6 +43,13 @@ class EmailAttachment
     public $type;
 
     /**
+     * The attachment subtype.
+     * 
+     * @var string
+     */
+    public $subtype;
+
+    /**
      * The attachment mime type.
      * 
      * @var string
@@ -55,6 +62,13 @@ class EmailAttachment
      * @var string
      */
     public $attachment_data;
+
+    /**
+     * The attachment encoding.
+     *
+     * @var string
+     */
+    public $encoding;
 
     /**
      * Sets the attachments id.
@@ -99,6 +113,20 @@ class EmailAttachment
     }
 
     /**
+     * Sets the attachment subtype.
+     * 
+     * @param string $subtype The attachment subtype.
+     * 
+     * @return EmailAttachment
+     */
+    public function setSubtype($subtype)
+    {
+        $this->subtype = $subtype;
+
+        return $this;
+    }
+
+    /**
      * Sets the attachment mime type.
      * 
      * @param string $mime_type The attachment mime type.
@@ -136,6 +164,20 @@ class EmailAttachment
     public function setAttachmentData($data)
     {
         $this->attachment_data = $data;
+
+        return $this;
+    }
+
+    /**
+     * Sets the attachment encoding
+     * 
+     * @param string $encoding The attachment encoding.
+     * 
+     * @return EmailAttachment
+     */
+    public function setEncoding($encoding)
+    {
+        $this->encoding = $encoding;
 
         return $this;
     }
@@ -188,6 +230,16 @@ class EmailAttachment
     public function type()
     {
         return $this->type;
+    }
+
+    /**
+     * Get the attachments subtype.
+     * 
+     * @return string
+     */
+    public function subtype()
+    {
+        return $this->subtype;
     }
 
     /**

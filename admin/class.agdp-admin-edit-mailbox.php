@@ -34,9 +34,19 @@ class Agdp_Admin_Edit_Mailbox extends Agdp_Admin_Edit_Post_Type {
 		global $post;
 		if( ! $post )
 			return;
+		
 		switch($post->post_type){
 			// Edition d'une mailbox
 			case Agdp_Mailbox::post_type:
+		
+				//DEBUG
+				if( FALSE ) {
+					if( ! class_exists('Agdp_Mailbox_IMAP') )
+						require_once( AGDP_PLUGIN_DIR . "/public/class.agdp-mailbox-imap.php");
+					
+					Agdp_Mailbox_IMAP::redirect_message($post, 96, 'publier@agenda-partage.fr' );
+				}
+				
 				$alerts = [];
 				$errors = [];
 				//post_status
@@ -95,6 +105,12 @@ class Agdp_Admin_Edit_Mailbox extends Agdp_Admin_Edit_Post_Type {
 						case Agdp_Mailbox::post_type:
 							$post_id = $post->ID;
 							$links[] = sprintf('%s en commentaires de cette boîte e-mails <a href="%s#comments">%s</a>.', $email, get_permalink( $post ), $post->post_title);
+							break;
+						case 'redirection':
+							$redir_to = $destination['redir_to'];
+							$links[] = sprintf('E-mails vers %s redirigés vers %s.'
+								, $email, $redir_to
+							);
 							break;
 						default:
 							Agdp_Admin::add_admin_notice_now(sprintf('Destination de distribution inconnue : %s > %s', $email, print_r( $destination, true ))
@@ -306,6 +322,12 @@ class Agdp_Admin_Edit_Mailbox extends Agdp_Admin_Edit_Post_Type {
 				'label' => __('Périodicité', AGDP_TAG),
 				'unit' => 'minutes',
 				'type' => 'number'
+			],
+			[	'name' => 'redirections',
+				'label' => __('Redirections', AGDP_TAG),
+				'type' => 'text',
+				'input' => 'textarea',
+				'unit' => 'du type destinataire@mailbox.net > redirection@ailleurs.net',
 			],
 		];
 		return $fields;

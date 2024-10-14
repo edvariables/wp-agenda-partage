@@ -435,7 +435,8 @@ class Agdp_Mailbox {
 		$cron_period_min = 60;
 		foreach($mailboxes as $mailbox){
 			$cron_period = get_post_meta($mailbox->ID, 'cron-period', true);
-			if( $cron_period_min > $cron_period )
+			if( is_numeric($cron_period)
+			 && $cron_period_min > $cron_period )
 				$cron_period_min = $cron_period;
 		
 			if( ! $simulate )
@@ -560,7 +561,7 @@ class Agdp_Mailbox {
 			];
 		}
 		if( ! $destination_filter )
-			$dispatches[ $email = '*' ] = [
+			$dispatches[ $email = AUTO_MAILBOX ] = [
 				'email' => $email,
 				'type' => Agdp_Mailbox::post_type/* 'page' */,
 				'id' => $mailbox_id,
@@ -569,13 +570,51 @@ class Agdp_Mailbox {
 				'mailbox_title' => false,
 				'mailbox_email' => false,
 				'mailbox_domain' => false,
-				'rights' => 'M',
+				'rights' => 'M', //Agdp_Forum::rights
 				'moderate' => true
 			];
 		
 		// debug_log('get_emails_dispatch', $sql, $dispatches );
 		
+		$dispatches = array_merge( $dispatches, static::get_emails_redirections( $mailbox_id ) );
 		return $dispatches;
+	}
+	
+	/**
+	 * Retourne les paramètres de redirections des e-mails.
+	 * $destination_filter est une page de forum
+	 */
+	public static function get_emails_redirections( $mailbox_id = false ){
+		if( ! $mailbox_id || $mailbox_id === AUTO_MAILBOX )
+			return [];
+		if( is_a($mailbox_id, 'WP_POST') )
+			$mailbox_id = $mailbox_id->ID;
+		$redirections = get_post_meta($mailbox_id, 'redirections', true);
+		if( ! $redirections )
+			return [];
+		$matches = [];
+		if( ! preg_match_all( '/(([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\s*>\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})\s*)+/', $redirections, $matches ) )
+			return [];
+		$redirections = [];
+		for( $match = 0; $match < count($matches[0]); $match++){
+			$email = strtolower($matches[2][$match]);
+			$redir_to = strtolower($matches[3][$match]);
+			if( isset($redirections[$email]) ){
+				debug_log(__FUNCTION__, $email . ' existe dans un forum ET dans une redirection.' );
+			}
+			$redirections[$email] = [
+				'email' => $email,
+				'type' => 'redirection',
+				'mailbox' => $mailbox_id,
+				// 'mailbox_title' => $dbrow->mailbox_title,
+				// 'mailbox_email' => $dbrow->mailbox_email,
+				// 'mailbox_domain' => $mailbox_domain,
+				'rights' => 'P', //Agdp_Forum::rights
+				'moderate' => false,
+				'redir_to' => $redir_to,
+			];
+		}
+		return $redirections;
 	}
 	
 	/**
@@ -749,8 +788,8 @@ class Agdp_Mailbox {
 						break;
 					}
 			if( ! $email_to )
-				if( isset($dispatch['*']) )
-					$email_to = '*';
+				if( isset($dispatch[AUTO_MAILBOX]) )
+					$email_to = AUTO_MAILBOX;
 				else {
 					debug_log(__CLASS__ . '::import_messages', sprintf("Un e-mail ne peut pas être importé. Il est destiné à une adresse non référencée comme forum : %s.", print_r($message['to'], true)));
 					continue;
@@ -788,6 +827,10 @@ class Agdp_Mailbox {
 					$post = self::import_message_to_post_type( $mailbox, $message, $dispatch[$email_to]['type'] );
 					if($post && ! is_wp_error($post))
 						$imported[] = $post;
+					break;
+					
+				case 'redirection' :
+					Agdp_Mailbox_IMAP::redirect_message( $mailbox, $message, $dispatch[$email_to]['redir_to'] );
 					break;
 				default:
 					throw new Exception(sprintf("La configuration de la boîte e-mails indique un type inconnu : %s.", $dispatch[$email_to]['type']));
@@ -1509,6 +1552,5 @@ class Agdp_Mailbox {
 		
 		return $html;
 	}
-	
 }
 ?>

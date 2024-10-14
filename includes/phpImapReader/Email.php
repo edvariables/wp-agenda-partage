@@ -46,6 +46,13 @@ class Email
     public $udate;
     
     /**
+     * An array containing all the headers of the email.
+     * 
+     * @var array
+     */
+    public $headers = array();
+    
+    /**
      * An array containing the custom headers of the email.
      * 
      * @var array
@@ -165,6 +172,20 @@ class Email
     public $raw_body;
 
     /**
+     * Raw Parts
+     *
+     * @var string
+     */
+    public $raw_parts;
+
+    /**
+     * Parts
+     *
+     * @var []
+     */
+    public $parts;
+
+    /**
      * Checks if the email recipient matches the given email address.
      * 
      * @param string $email The email address to match against the recipient.
@@ -240,6 +261,16 @@ class Email
     public function customHeaders()
     {
         return $this->custom_headers;
+    }
+    
+    /**
+     * Get all the headers of this email.
+     * 
+     * @return array All the headers of the email.
+     */
+    public function headers()
+    {
+        return $this->headers;
     }
     
     /**
@@ -458,7 +489,52 @@ class Email
     public function setRawBody($body)
     {
         $this->raw_body = $body;
+		
+		if( ($pos = strpos($body, "\r\n\r\n"))
+		 || ($pos = strpos($body, "\n\n"))
+		 || ($pos = strpos($body, "\r\r"))
+		 ) {
+			$this->raw_parts = ltrim( substr( $body, $pos ), "\n\r");
+		}
+		else
+			$this->raw_parts = '';
 
+        return $this;
+    }
+
+    /**
+     * Sets the parts.
+     *
+     * @param string $parts
+     *
+     * @return Email
+     */
+    public function setParts($parts)
+    {
+        $this->parts = $parts;
+
+        return $this;
+    }
+
+    /**
+     * Sets the headers.
+     *
+     * @param string $headers
+     *
+     * @return Email
+     */
+    public function setHeaders($headers)
+    {
+		$this->headers = [];
+		$current_header_name = false;
+		foreach($headers as $header_name => $header_value){
+			if( is_numeric( $header_name ) ){
+				$current_header_name = $this->addHeader( $header_value, $current_header_name );
+			}
+			else
+				$this->headers[ $header_name ] = $header_value;
+		}
+		
         return $this;
     }
 
@@ -646,6 +722,44 @@ class Email
         $this->reply_to[] = $reply_to;
 
         return $this;
+    }
+
+    /**
+     * Adds a header to this email.
+     * 
+     * @param string $header The header to append to the array.
+     * 
+     * @return header name
+     */
+    public function addHeader($header, $previous_header_name = false)
+    {
+        if ( ! $header || ! trim($header) ) {
+            return $previous_header_name;
+        }
+
+		if( substr($header, 0, 1) === ' '
+		 || strpos($header, ':') === FALSE ){
+			//complete le précédent
+			if( ! $previous_header_name
+			 || ! isset($this->headers[$previous_header_name])
+			)
+				return false;
+			$this->headers[$previous_header_name] .= "\r\n" . trim( $header, "\r\n" );
+			return $previous_header_name;
+		}
+
+		if( ($pos = strpos($header, ':') ) !== false ){
+			$header_name = substr($header, 0, $pos);
+			if( strlen($header) > $pos )
+				$header_value = substr($header, $pos + 1);
+			else
+				$header_value = '';
+        	$this->headers[$header_name] = (string) trim($header_value);
+        }
+		else
+			$header_name = false;
+
+        return $header_name;
     }
 
     /**
