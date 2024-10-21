@@ -52,7 +52,8 @@ class Agdp_WPCF7 {
 	// define the wpcf7_skip_mail callback 
 	public static function wpcf7_skip_mail( $skip_mail, $contact_form ){ 
 		if($skip_mail
-		|| $contact_form->id() == Agdp::get_option('newsletter_subscribe_form_id'))
+		|| ! empty( $_POST['nl-email'] ) //champ présent dans tous les formulaires d'abonnement
+		)
 			return true;
 			
 		return Agdp::$skip_mail;
@@ -110,6 +111,9 @@ class Agdp_WPCF7 {
 				// else
 					// debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : BUT NONE', $_REQUEST);
 				$preventdefault_reset = true;
+				break;
+			case Agdp::get_option('agdpforum_subscribe_form_id') :
+				$form_class = Agdp_Newsletter::on_wpcf7_form_class_attr_cb( $form_class );
 				break;
 			default:
 				break;
@@ -174,34 +178,37 @@ class Agdp_WPCF7 {
 
 		$form_id = $contact_form->id();
 
-		switch($form_id){
-			case Agdp::get_option('newsletter_subscribe_form_id') :
-			case Agdp::get_option('agdpevent_edit_form_id') :
-			case Agdp::get_option('covoiturage_edit_form_id') :
-				break;
-			default:
-				if( self::check_submission_is_abuse($submission) ){
-					$abort = true;
-					return;
-				}
-				break;
+		$is_newsletter_subscription = ! empty( $_POST['nl-email'] );
+		if( ! $is_newsletter_subscription ){
+			switch($form_id){
+				case Agdp::get_option('agdpevent_edit_form_id') :
+				case Agdp::get_option('covoiturage_edit_form_id') :
+					break;
+				default:
+					if( self::check_submission_is_abuse($submission) ){
+						$abort = true;
+						return;
+					}
+					break;
+			}
 		}
 		
-		switch($form_id){
-			case Agdp::get_option('admin_message_contact_form_id') :
-				Agdp_Evenement::change_email_recipient($contact_form);
-				Agdp_Covoiturage::change_email_recipient($contact_form);
-				break;
-			case Agdp::get_option('agdpevent_edit_form_id') :
-				Agdp_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
-				break;
-			case Agdp::get_option('covoiturage_edit_form_id') :
-				Agdp_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
-				break;
-			case Agdp::get_option('newsletter_subscribe_form_id') :
-				Agdp_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
-				break;
-				
+		if( $is_newsletter_subscription ){
+			Agdp_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
+		}
+		else {
+			switch($form_id){
+				case Agdp::get_option('admin_message_contact_form_id') :
+					Agdp_Evenement::change_email_recipient($contact_form);
+					Agdp_Covoiturage::change_email_recipient($contact_form);
+					break;
+				case Agdp::get_option('agdpevent_edit_form_id') :
+					Agdp_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
+					break;
+				case Agdp::get_option('covoiturage_edit_form_id') :
+					Agdp_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
+					break;
+			}
 		}		
 
 		return;
@@ -490,6 +497,7 @@ class Agdp_WPCF7 {
 		$properties = $wpcf7->get_properties();
 		$mail = [];
 		$no_mail_sent = in_array($wpcf7->id(), [
+			$agdpforum_subscribe_form_id = Agdp::get_option('agdpforum_subscribe_form_id'),
 			$newsletter_subscribe_form_id = Agdp::get_option('newsletter_subscribe_form_id'),
 			$covoiturage_edit_form_id = Agdp::get_option('covoiturage_edit_form_id'),
 			$agdpevent_edit_form_id = Agdp::get_option('agdpevent_edit_form_id')] );
@@ -503,6 +511,12 @@ class Agdp_WPCF7 {
 								break;
 							case $covoiturage_edit_form_id :
 								$mail[] = 'Genère un covoiturage';
+								break;
+							case $agdpforum_subscribe_form_id :
+								$mail[] = 'Abonnement';
+								break;
+							case $newsletter_subscribe_form_id :
+								$mail[] = 'Abonnements aux lettres-infos';
 								break;
 						}
 					}

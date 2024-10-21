@@ -223,6 +223,11 @@ class Agdp {
 	 * Param $object_id : post_id ou nom d'option
 	 */
 	public static function add_action_on_queried_object( $object_type, $object_id, $callback, int $priority = 10, int $accepted_args = 1 ){
+		if( is_array($object_id) ){
+			foreach($object_id as $object_id_item)
+				self::add_action_on_queried_object( $object_type, $object_id_item, $callback, $priority, $accepted_args); 
+			return;
+		}
 		if( ! is_numeric($object_id) )
 			$object_id = self::get_option($object_id);
 		$do_action = AGDP_TAG.'_queried_object_';
@@ -363,6 +368,9 @@ class Agdp {
 				return __( 'Message de la part de l\'administrateur', AGDP_TAG );
 			case 'admin_nl_post_id':
 				return __( 'Lettre-info des statistiques d\'administration', AGDP_TAG );
+				
+			case 'agdpforum_subscribe_form_id':
+				return __( 'Formulaire générique d\'abonnement à un forum', AGDP_TAG );
 				
 			case 'newsletter_subscribe_form_id':
 				return __( 'Formulaire de lettre-info', AGDP_TAG );
@@ -807,7 +815,7 @@ class Agdp {
 	 */
 	public static function update_db(){
 		$current_version = self::get_db_version();
-		foreach([ '1.2.8'
+		foreach([ '1.2.25'
 			] as $version){
 			if( $current_version && version_compare($current_version, $version, '>='))
 				continue;

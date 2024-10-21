@@ -72,7 +72,7 @@ class Agdp_Admin_Options {
 			$field_id = 'newsletter_subscribe_page_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Page d\'inscription à la lettre-info', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_pages',
@@ -87,7 +87,22 @@ class Agdp_Admin_Options {
 			$field_id = 'newsletter_subscribe_form_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Formulaire d\'inscription à la lettre-info', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
+				AGDP_TAG,
+				'agdp_section_pages',
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+
+			// 
+			$field_id = 'agdpforum_subscribe_form_id';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_pages',
@@ -102,7 +117,7 @@ class Agdp_Admin_Options {
 			$field_id = 'contact_page_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Page "Ecrivez-nous".', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_pages',
@@ -117,7 +132,7 @@ class Agdp_Admin_Options {
 			$field_id = 'contact_form_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Formulaire "Ecrivez-nous"', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_pages',
@@ -155,7 +170,7 @@ class Agdp_Admin_Options {
 			$field_id = 'agenda_page_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Page de l\'agenda', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_agdpevents',
@@ -185,7 +200,7 @@ class Agdp_Admin_Options {
 			$field_id = 'agdpevent_edit_form_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Formulaire d\'ajout et modification des évènements', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_agdpevents',
@@ -200,7 +215,7 @@ class Agdp_Admin_Options {
 			$field_id = 'agdpevent_message_contact_form_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Message à l\'organisateur d\'évènement', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_agdpevents',
@@ -215,7 +230,7 @@ class Agdp_Admin_Options {
 			$field_id = 'admin_message_contact_form_id';
 			add_settings_field(
 				$field_id, 
-				__( 'Message de la part de l\'administrateur à l\'organisateur', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
 				'agdp_section_agdpevents',

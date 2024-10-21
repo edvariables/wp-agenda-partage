@@ -380,12 +380,16 @@ jQuery( function( $ ) {
 			if( ! post_id || ! post_id.startsWith('post-'))
 				return;
 			post_id = post_id.substr('post-'.length);
+			
+			var form_id = $form.find('input[name="_wpcf7"]:first').val();
+			
 			jQuery.ajax({
 				url : agdp_ajax.ajax_url,
 				type : 'post',
 				data : {
 					'action' : 'agdpnl_get_subscription', //newsletters + forums
 					'post_id' : post_id,
+					'form_id' : form_id,
 					'email' : email,
 					'_nonce' : agdp_ajax.check_nonce
 				},

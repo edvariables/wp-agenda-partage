@@ -113,6 +113,7 @@ class Agdp_Admin_Multisite {
 		foreach([
 		  'admin_message_contact_form_id' => 'WPCF7_Contact_Form'
 		, 'newsletter_subscribe_form_id' => 'WPCF7_Contact_Form'
+		, 'agdpforum_subscribe_form_id' => 'WPCF7_Contact_Form'
 		, 'events_nl_post_id' => 'agdpnl'
 		, 'newsletter_subscribe_page_id' => 'page'
 		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'

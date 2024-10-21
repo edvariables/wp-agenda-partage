@@ -303,7 +303,9 @@ class Agdp_Admin {
 				, 'admin_message_contact_form_id'
 				, 'agdpevent_message_contact_form_id'
 				, 'contact_form_id'
-				, 'newsletter_subscribe_form_id'] as $option){
+				, 'newsletter_subscribe_form_id'
+				, 'agdpforum_subscribe_form_id'
+			] as $option){
 			if($contact_form->id() == Agdp::get_option($option)){
 				$label = Agdp::get_option_label($option);
 				break;
@@ -413,6 +415,7 @@ class Agdp_Admin {
 		$html = false;
 		switch($args['id']){
 			case Agdp::get_option('newsletter_subscribe_form_id'):
+			case Agdp::get_option('agdpforum_subscribe_form_id'):
 				$html = Agdp_Newsletter::init_wpcf7_form_html( $args['form'] );
 				break;
 			case Agdp::get_option('agdpevent_edit_form_id'):
@@ -454,6 +457,8 @@ class Agdp_Admin {
 		if( is_array($post_type) )
 			$post_type = $post_type[0];
 		switch( $post_type ){
+			//TODO what's up with agdpforum_subscribe_form_id ?
+			
 			case Agdp_Newsletter::post_type :
 				$option_form_id = 'newsletter_subscribe_form_id';
 				$function = 'Agdp_Newsletter::init_wpcf7_form_html';

@@ -137,8 +137,9 @@ class Agdp_Forum_Shortcodes {
 		}
 
 		//De la forme [agdpforum-messages]
-		if($shortcode == 'agdpforum-messages'){
-			return self::shortcodes_messages_callback($atts, $content, $shortcode);
+		switch($shortcode){
+			case 'agdpforum-messages':
+				return self::shortcodes_messages_callback($atts, $content, $shortcode);
 		}
 
 		return self::shortcodes_forum_callback($atts, $content, $shortcode);
@@ -201,12 +202,36 @@ class Agdp_Forum_Shortcodes {
 			case 'forum':
 				$val = false;
 				
+				// formulaire
 				if( ! empty($atts['form']) 
 				 || ! empty($atts['formulaire']) ){
 						
 					$form_id = Agdp_Forum::get_property('edit_message_form', $page->ID);
 					$val = sprintf('[contact-form-7 id="%d"]', $form_id);
 				}
+				// subscription
+				elseif( ! empty($atts['subscription']) 
+				 || ! empty($atts['abonnement']) ){
+						
+					$val = sprintf('<div class="agdpforum-subscription">%s</div>',
+						do_shortcode( sprintf('[contact-form-7 id=%d]',
+							Agdp::get_option('agdpforum_subscribe_form_id'),
+						))
+					);
+					$delim = ['{{', '}}'];
+					foreach( [
+						'title' => $page->post_title,
+						'titre' => $page->post_title,
+						'forum' => $page->post_name,
+					 ] as $field_name => $field_value ){
+						$field = $delim[0]. $field_name .$delim[1];
+						$val = str_replace( $field, $field_value, $val );
+						$field = $delim[0]. $field_name . '_in_attr' .$delim[1];
+						if( strpos( $val, $field ) !== FALSE )
+							$val = str_replace( $field, esc_attr($field_value), $val );
+					 }
+				}
+				// infos
 				else {
 					if( empty($atts['info']) ){
 						if( ! empty($atts['mailto']) )

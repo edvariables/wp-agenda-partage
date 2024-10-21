@@ -39,7 +39,7 @@ class Agdp_Newsletter {
 
 			define('ALL_PERIODS', '*');
 			define('PERIOD_NONE', 'none');
-			define('PERIOD_EACH', 'each');
+			define('PERIOD_EACH', 'each'); //TODO
 			define('PERIOD_DAYLY', 'd');
 			define('PERIOD_WEEKLY', 'w');
 			define('PERIOD_BIWEEKLY', '2w');
@@ -366,6 +366,9 @@ class Agdp_Newsletter {
 			return $periods[$period];
 		if($false_if_none)
 			return false;
+		if( isset($periods[PERIOD_NONE]) )
+			return $periods[PERIOD_NONE];
+		//First
 		foreach( $periods as $period => $label)
 			return $label;
 	}
@@ -688,6 +691,7 @@ class Agdp_Newsletter {
  	public static function on_wpcf7_form_class_attr_cb( $form_class ) { 
 		$form = WPCF7_ContactForm::get_current();
 		switch($form->id()){
+			case Agdp::get_option('agdpforum_subscribe_form_id') :
 			case Agdp::get_option('newsletter_subscribe_form_id') :
 				self::wpcf7_newsletter_form_init_tags( $form );
 				$form_class .= ' preventdefault-reset events_newsletter_register';
@@ -707,7 +711,17 @@ class Agdp_Newsletter {
 		
 		$email = self::get_email();
 		
-		$newsletters = self::get_newsletters();
+		if( $form->id() == Agdp::get_option('agdpforum_subscribe_form_id') ){
+			global $post;
+			$generic_forum = Agdp_Forum::get_page( $post );
+			$newsletter = Agdp_Page::get_page_main_newsletter( $generic_forum );
+			if( $newsletter )
+				$newsletters = [ AGDP_FORUM_GENERIC => $newsletter ];
+			else
+				$newsletters = [];
+		}
+		else
+			$newsletters = self::get_newsletters();
 		
 		$html = self::init_wpcf7_form_html( $html, $newsletters, $email );
 		
@@ -741,6 +755,14 @@ class Agdp_Newsletter {
 						
 					}
 				}
+		}
+		if( ! empty($newsletters[ AGDP_FORUM_GENERIC ]) ){
+			$newsletter = $newsletters[ AGDP_FORUM_GENERIC ];
+			$periods = self::subscription_periods( $newsletter );
+			$attrs = [ 'forum-periods' => $periods ];
+			$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
+			$input = sprintf('<input type="hidden" class="%s_edit_form_data" data="%s"/>', AGDP_FORUM_GENERIC, $attrs);
+			$html .= $input;
 		}
 		
 		/** email **/
@@ -786,7 +808,10 @@ class Agdp_Newsletter {
 				$forum = self::get_forum_of_newsletter( $newsletter_option );
 			else
 				$forum = false;
-			$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
+			if( $newsletter_option === AGDP_FORUM_GENERIC )
+				$field_extension = $newsletter_option;
+			else
+				$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
 			/** périodicité de l'abonnement **/
 			$input_name = 'nl-period-' . $field_extension;
 			$subscription_periods = self::subscription_periods($newsletter);
@@ -1150,22 +1175,40 @@ class Agdp_Newsletter {
 					wp_die();
 				}
 			}
+			$post_id = $_POST['post_id'];
+			if(array_key_exists('form_id', $_POST)){
+				$form_id = $_POST['form_id'];
+				if( $form_id == Agdp::get_option('agdpforum_subscribe_form_id') ){
+					$newsletters = [ AGDP_FORUM_GENERIC => Agdp_Page::get_page_main_newsletter( $post_id ) ];
+				}
+			}
+			if( ! isset($newsletters) )
+				$newsletters = self::get_newsletters();
+			
 			$subscriptions = array();
-			foreach( self::get_newsletters() as $newsletter_option => $newsletter){
+			foreach( $newsletters as $newsletter_option => $newsletter){
+				$field_extension = false;
 				if( is_numeric($newsletter_option) )
 					$forum = self::get_forum_of_newsletter( $newsletter_option );
+				elseif( $newsletter_option === AGDP_FORUM_GENERIC ){
+					$forum = Agdp_Forum::get_page( $post_id );
+					$field_extension = $newsletter_option;
+				}
 				else
 					$forum = false;
-				$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
+				if( ! $field_extension )
+					$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
 				//Subscription
 				$subscription = self::get_subscription($email, $newsletter);
-				if($subscription !== false)
-					$subscriptions[$newsletter_option] = [
-						'subscription' => $subscription
-						, 'subscription_name' => self::subscription_period_name($subscription)
-						, 'field_extension' => $field_extension
-						, 'input_prefixe' => 'nl-period'
-					];
+				
+				if( ! $subscription)
+					$subscription = PERIOD_NONE;
+				$subscriptions[$newsletter_option] = [
+					'subscription' => $subscription
+					, 'subscription_name' => self::subscription_period_name($subscription, PERIOD_NONE)
+					, 'field_extension' => $field_extension
+					, 'input_prefixe' => 'nl-period'
+				];
 				//Forum subscription
 				if( $forum ){
 					$forum_option = $forum->ID;
@@ -1305,6 +1348,8 @@ class Agdp_Newsletter {
 
 	/**
 	 * Mise à jour ou création des abonnements aux newsletters
+	 * 1er cas : newsletter_subscribe_form_id : traite plusieurs newsletters
+	 * 2ème cas : agdpforum_subscribe_form_id générique : newsletter unique du forum, de façon générique
 	 */
 	public static function submit_subscription_form($contact_form, &$abort, $submission){
 		$error_message = false;
@@ -1312,7 +1357,6 @@ class Agdp_Newsletter {
 		$inputs = $submission->get_posted_data();
 		// nl-email, nl-period-{newsletter_option}, nl-create-user, nl-user-name, nl-user-city
 				
-		$newsletters = self::get_newsletters();
 		
 		$email = sanitize_email( $inputs['nl-email'] );
 		if(! is_email($email)){
@@ -1321,6 +1365,28 @@ class Agdp_Newsletter {
 			$submission->set_response($error_message);
 			return false;
 		}
+		
+		
+		$form_id = $contact_form->id();
+		if( $form_id == Agdp::get_option('agdpforum_subscribe_form_id') ){
+			if( empty( $inputs['nl-period-agdpforum-generic'] ) ){
+				$abort = true;
+				$error_message = sprintf('Désolé, une erreur interne au formulaire empêche la poursuite de l\'opération (%s).', 'nl-period-agdpforum-generic');
+				$submission->set_response($error_message);
+				return false;
+			}
+			$generic_forum = Agdp_Forum::get_page( $_POST['_wpcf7_container_post'] );
+			$newsletter = Agdp_Page::get_page_main_newsletter( $generic_forum );
+			if( ! $newsletter ){
+				$abort = true;
+				$error_message = sprintf('Désolé, impossible de trouver la lettre-info associée.');
+				$submission->set_response($error_message);
+				return false;
+			}
+			$newsletters = [AGDP_FORUM_GENERIC => $newsletter];
+		}
+		else
+			$newsletters = self::get_newsletters();
 		
 		/** create user */
 		$user_is_new = false;
@@ -1364,11 +1430,17 @@ class Agdp_Newsletter {
 		
 		// foreach newsletter type (events, covoiturage, admin, forums)
 		foreach($newsletters as $newsletter_option => $newsletter){
+			$field_extension = false;
 			if( is_numeric($newsletter_option) )
 				$forum = self::get_forum_of_newsletter( $newsletter_option );
+			elseif( $newsletter_option === AGDP_FORUM_GENERIC ){
+				$forum = $generic_forum;
+				$field_extension = $newsletter_option;
+			}
 			else
 				$forum = false;
-			$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
+			if( ! $field_extension )
+				$field_extension = self::get_form_newsletter_field_extension($newsletter_option, $forum);
 			
 			$field_name = 'nl-period-' . $field_extension;
 			if( empty($inputs[$field_name]) )
@@ -1398,7 +1470,7 @@ class Agdp_Newsletter {
 					$newsletter_name = $newsletter->post_title;
 				else
 					$newsletter_name = Agdp::get_option_label($newsletter_option);
-				
+					
 				$user_subscription = self::get_subscription( $email, $newsletter );
 				if( ! $user_subscription )
 					$user_subscription = PERIOD_NONE;

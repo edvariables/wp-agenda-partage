@@ -6,6 +6,57 @@ class Agdp_DB_Update {
 	
 	/**
 	*/
+	public static function update_db_1_2_25(){
+		if(Agdp::get_option('agdpforum_subscribe_form_id'))
+			return true;
+		if( ! Agdp::get_option('newsletter_subscribe_form_id')){
+			debug_log(__FUNCTION__, 'Impossible de trouver le modèle');
+			return true;
+		}
+		
+		//Création d'un formulaire wpcf7 sur la base du newsletter_subscribe_form_id
+		$form = WPCF7_ContactForm::get_instance(Agdp::get_option('newsletter_subscribe_form_id'));
+		add_filter('wpcf7_copy', [__CLASS__, 'update_db_1_2_25_wpcf7_copy_agdpforum_generic'], 10, 2);
+		$form->copy();
+		remove_filter('wpcf7_copy', [__CLASS__, 'update_db_1_2_25_wpcf7_copy_agdpforum_generic'], 10, 2);
+		return FALSE;
+	}
+	public static function update_db_1_2_25_wpcf7_copy_agdpforum_generic( $copy, $src_form ){
+		$copy->set_title( 'Abonnement générique à la lettre-info d\'un forum' );
+		$properties = $copy->get_properties();
+		//debug_log(__FUNCTION__, $properties);
+		$properties['form'] = "<label> Votre adresse e-mail
+    [email* nl-email autocomplete:email] </label>
+
+<label class=\"next-radio-br\"> Votre abonnement à \"{{titre}}\"</label>[radio nl-period-agdpforum-generic default:2 use_label_element \"(no_change)\" \"Aucun abonnement|none\" \"Tous les jours|d\" \"Toutes les semaines|w\" \"Tous les quinze jours|2w\" \"Tous les mois|m\"]
+
+<div class=\"moderator-user-only\">
+    <label> Rôle en tant que membre</label>[select forum-subscription-agdpforum-generic default:4 use_label_element  \"(non membre)|\" \"Membre|subscriber\" \"Modérateurice|moderator\" \"Administrateurice|administrator\" \"Banni-e|banned\"]
+</div>
+
+[checkbox nl-send_newsletter-now-agdpforum-generic use_label_element \"Recevoir maintenant les messages\"]
+
+
+<div class=\"nl-user-fields\">
+<table>
+<tr><td colspan=\"2\"><label>Se connecter pour ajouter plus facilement les messages </label>[checkbox nl-create-user use_label_element \"Créer un compte|1\"]</td></tr>
+<tr><td><label for=\"nl-user-name\">Pour le compte, votre nom</label></td><td>[text nl-user-name size:20]</td></tr>
+<tr><td><label for=\"nl-user-city\">Votre commune</label></td><td>[text nl-user-city size:20]</td></tr>
+</table>
+</div>
+
+[response]
+[submit \"Valider\"]";
+		$copy->set_properties($properties);
+	
+		$form_id = $copy->save();
+		
+		Agdp::update_option('agdpforum_subscribe_form_id', $form_id);
+	}
+	
+	
+	/**
+	*/
 	public static function update_db_1_2_8(){
 		if(Agdp::get_option('newsletter_diffusion_term_id')){
 			Agdp::update_option('agdpevents_nl_diffusion_term_id', Agdp::get_option('newsletter_diffusion_term_id'));

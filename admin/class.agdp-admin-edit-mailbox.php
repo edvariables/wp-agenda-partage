@@ -323,12 +323,13 @@ class Agdp_Admin_Edit_Mailbox extends Agdp_Admin_Edit_Post_Type {
 				'unit' => 'minutes',
 				'type' => 'number'
 			],
-			[	'name' => 'redirections',
-				'label' => __('Redirections', AGDP_TAG),
-				'type' => 'text',
-				'input' => 'textarea',
-				'unit' => 'du type destinataire@mailbox.net > redirection@ailleurs.net',
-			],
+			// TODO les redirections ne fonctionnent pas encore...
+			// [	'name' => 'redirections',
+				// 'label' => __('Redirections', AGDP_TAG),
+				// 'type' => 'text',
+				// 'input' => 'textarea',
+				// 'unit' => 'du type destinataire@mailbox.net > redirection@ailleurs.net',
+			// ],
 		];
 		return $fields;
 				
