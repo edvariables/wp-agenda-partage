@@ -119,6 +119,9 @@ class Agdp_Comments {
 			'nopaging' => true
 			
 		);
+		if( is_array($options) && ! empty($options['orderby']) )
+			$query['orderby'] = $options['orderby'];
+		
 		$comments = self::get_comments($query);
 		
 		return $comments;
@@ -237,8 +240,10 @@ class Agdp_Comments {
 				'mode' => 'list' //list|email|text|calendar|TODO...
 			), $options);
 		$options = self::filter_anteriority_option($options, ANTERIORITY_ALL);
-		if( $options['mode'] == 'email' ){
+		$for_email = $options['mode'] == 'email';
+		if( $for_email ){
 			$options['ajax'] = false;
+			$options['orderby']['comment_date'] = 'ASC';
 		}
 		$option_ajax = (bool)$options['ajax'];
 		
@@ -293,7 +298,7 @@ class Agdp_Comments {
 			
 			$week_label = sprintf('du %s au %s', $week_dates['start'], $week_dates['end']);
 			
-			if( $options['mode'] == 'email' )
+			if( $for_email )
 				$html .= sprintf(
 					'<li><div class="week-title toggle-trigger active"></div><ul id="week-%s" class="agdpforummsgs-week toggle-container">'
 					, $week
