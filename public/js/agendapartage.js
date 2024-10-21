@@ -271,23 +271,27 @@ jQuery( function( $ ) {
 		/**
 		 * Scroll jusqu'au #hash de la forme #(event|covoiturage)id%d (correction de la hauteur du menu)
 		 */
-		if( window.location.hash
-		&& /(event|covoiturage)id[0-9]+/.test(window.location.hash)) {
-			$( 'body ').ready(function(){
-			 
-			var matches = window.location.hash.match(/(event|covoiturage)id[0-9]+/);
-			var $dom = $('#' + matches[0]);
-			if( $dom.length === 0)
-				return;
-			
-			$dom.get(0).scrollIntoView();
-			
-			$dom.addClass('agdp-scrolled-to');
-			return false;
-			 
-		 });
+		if( window.location.hash ){
+			if( /(event|covoiturage)id[0-9]+/.test(window.location.hash)) {
+				$( 'body ').ready(function(){
+				 
+				var matches = window.location.hash.match(/(event|covoiturage)id[0-9]+/);
+				var $dom = $('#' + matches[0]);
+				if( $dom.length === 0)
+					return;
+				
+				$dom.get(0).scrollIntoView();
+				
+				$dom.addClass('agdp-scrolled-to');
+				return false;
+				 
+			 });
+			}
+			else {
+				$(window.location.hash + '.toggle-trigger:not(.active)').addClass('active');
+			}
 		}
-
+		
 		/**
 		 * Liste d'évènements ou de covoiturages
 		 */

@@ -19,6 +19,7 @@ function toggle_shortcode_cb( $atts, $content = null ) {
 				'action' => AGDP_TAG.'_shortcode',
 				'data' => $content
 			)));
+		$ajax = sprintf(' ajax=1 data="%s"', $ajax);
 		$content = '';
 	}
 	else{
@@ -33,13 +34,22 @@ function toggle_shortcode_cb( $atts, $content = null ) {
 		$class = '';
 	}
 	
+	if(isset($atts['id']) && $atts['id']){
+		$id = sprintf(' id="%s"', $atts['id']);
+		unset($atts['id']);
+	}
+	else {
+		$id = '';
+	}
+	
 	if(isset($atts['title']) )
 		$title = $atts['title'];
 	else
 		$title = '';
-	return sprintf('<h3 class="toggle-trigger %s" %s><a href="#">%s</a></h3><div class="toggle-container">%s</div>'
+	return sprintf('<h3 class="toggle-trigger %s%s" %s><a href="#">%s</a></h3><div class="toggle-container">%s</div>'
 			, $class
-			, $ajax ? ' ajax=1 data="' . $ajax . '"' : ''
+			, $ajax
+			, $id
 			, esc_html( $title  )
 			, $content
 	);
