@@ -562,19 +562,24 @@ class Agdp_Comments {
 			$format_date_debut = 'l j\e\r M Y';
 		else
 			$format_date_debut = 'l j M Y';
-		
+		$heure_debut = date('H:i', strtotime($date_debut));
+		if( $heure_debut === '00:00' )
+			$heure_debut = '';
 		$title = get_comment_meta($comment->comment_ID, 'title', true);
 		$html .= sprintf(
-				'<div class="date">%s à %s</div>'
+				'<div class="date">%s%s</div>'
 				.'<div class="titre">%s</div>'
 			.''
 			, str_replace(' mar ', ' mars ', strtolower(mysql2date( $format_date_debut, $date_debut)))
-			, date('H:i', strtotime($date_debut))
+			, $heure_debut ? ' à ' . $heure_debut : ''
 			, htmlentities($title));
 		
 		$html .= '</div>';
 		
-		if( ! $summary_dest ){
+		if( $summary_dest ){
+		
+		}
+		else {
 			$html .= '<div class="toggle-container">';
 			
 			

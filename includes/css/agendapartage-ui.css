@@ -130,3 +130,26 @@ div.agdp-tabs .agdp-panel fieldset legend {
 .parent-page .dashicons-before, .parent-page a {
 	color: #0489B7;
 }
+
+/* agdpreport */
+table.agdpreport {
+	margin: 4px;
+	border-collapse: collapse;
+	border: 1px solid black;
+}
+table.agdpreport th, table.agdpreport td {
+	border: 1px solid black;
+	padding: 4px;
+}
+body.colors-dark table.agdpreport, body.colors-dark table.agdpreport th, body.colors-dark table.agdpreport td {
+	border-color: white;
+}
+table.agdpreport th {
+	background-color: lightgray;
+}
+body.colors-dark table.agdpreport th {
+	background-color: darkgray;
+}
+table.agdpreport tr {
+	border-width: 2px;
+}

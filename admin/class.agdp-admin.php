@@ -35,6 +35,12 @@ class Agdp_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-mailbox.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Mailbox', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-report.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Report', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-report.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Report', 'init' ) );
+
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-forum.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Forum', 'init' ) );
 

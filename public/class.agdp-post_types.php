@@ -25,6 +25,10 @@ class Agdp_Post_Types {
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox-post_type.php' );
 		
+		if(!class_exists('Agdp_Report'))
+			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report.php' );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report-post_type.php' );
+		
 		if(!class_exists('Agdp_Evenement'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-post_type.php' );
@@ -52,6 +56,8 @@ class Agdp_Post_Types {
 		do_action( 'agdp_register_post_types' );
 
 		Agdp_Mailbox_Post_type::register_post_type();
+		
+		Agdp_Report_Post_type::register_post_type();
 		
 		Agdp_Evenement_Post_type::register_post_type();
 		Agdp_Evenement_Post_type::register_taxonomy_ev_category();

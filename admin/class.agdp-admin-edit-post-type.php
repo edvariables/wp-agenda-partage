@@ -25,7 +25,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			static::metabox_field_html($field, $post, $metabox, $parent_field);
 	}
 	/**
-	 * HTML render in metaboxes
+	 * HTML render of a metaboxe field
 	 */
 	public static function metabox_field_html($field, $post, $metabox, $parent_field = null){
 		$name = empty($field['name']) ? '' : $field['name'];
@@ -355,6 +355,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					else
 						$val = null;
 				}
+						
 				if( $is_array_field ){
 					delete_post_meta($post_ID, $name);
 					//TODO pour autre que textarea

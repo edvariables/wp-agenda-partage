@@ -1,6 +1,5 @@
 /**
- * ED20200326
- * Feuille de styles pour CoopEShop mode Admin
+ * Feuille de styles pour Agdp mode Admin
  */
 
 h3.alert {
@@ -37,6 +36,9 @@ body.colors-dark .color-red {
 .agdp-metabox-row > textarea {
 	width: 25em;
 	display: inline-block;
+}
+.agdp-metabox-row > textarea#sql {
+	width: 100%;
 }
 .agdp-metabox-row.side-box > input, 
 .agdp-metabox-row.side-box > textarea {

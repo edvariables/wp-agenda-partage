@@ -558,10 +558,10 @@ class Agdp_Comment {
 		];
 		
 		$status = get_comment_meta($comment_id, 'status', true);
-		$status_class = $status == 'ended' ? 'comment-mark_as_ended' : 'comment-not-mark_as_ended';
-		$comment_actions = sprintf('<a href="#mark_as_ended" class="comment-agdp-action comment-agdp-action-mark_as_ended %s comment-reply-link">%s</a>'
-			, $status_class
-			, "Toujours d'actualité ?");
+		// $status_class = $status == 'ended' ? 'comment-mark_as_ended' : 'comment-not-mark_as_ended';
+		// $comment_actions = sprintf('<a href="#mark_as_ended" class="comment-agdp-action comment-agdp-action-mark_as_ended %s comment-reply-link">%s</a>'
+			// , $status_class
+			// , "Toujours d'actualité ?");
 			
 		switch($status){
 			case 'ended' :

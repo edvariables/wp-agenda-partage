@@ -57,6 +57,9 @@ class Agdp {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Mailbox', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Report', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Evenement', 'init' ) );
@@ -640,6 +643,10 @@ class Agdp {
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-mailbox-post_type.php';
 					break;
 
+				case 'Agdp_Report_Post_type':
+		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-report-post_type.php';
+					break;
+
 				case 'Agdp_Evenement_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-post_type.php';
 					break;
@@ -668,6 +675,8 @@ class Agdp {
 	private static function register_user_roles(){
 		self::include_and_init('Agdp_Mailbox_Post_type');
 		Agdp_Mailbox_Post_type::register_user_role();
+		self::include_and_init('Agdp_Report_Post_type');
+		Agdp_Report_Post_type::register_user_role();
 		self::include_and_init('Agdp_Evenement_Post_type');
 		Agdp_Evenement_Post_type::register_user_role();
 		self::include_and_init('Agdp_Newsletter_Post_type');
@@ -794,11 +803,13 @@ class Agdp {
 	
 	
 	/**
+	 * check_nonce
 	 */
 	public static function check_nonce(){
 		if( ! isset($_POST['_nonce']))
 			return false;
-		return wp_verify_nonce( $_POST['_nonce'], 'agdp-nonce' );
+		$nonce_key = is_admin() ? 'agdp-admin-nonce' : 'agdp-nonce';
+		return wp_verify_nonce( $_POST['_nonce'], $nonce_key );
 	}
 
 	/**

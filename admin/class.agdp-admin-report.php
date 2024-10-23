@@ -1,15 +1,15 @@
 <?php 
 /**
- * AgendaPartage Admin -> Mailbox
+ * AgendaPartage Admin -> Report
  * Custom post type for WordPress in Admin UI.
  * 
  * Capabilities
- * Colonnes de la liste des mailboxes
+ * Colonnes de la liste des reportes
  * Dashboard
  *
- * Voir aussi Agdp_Mailbox
+ * Voir aussi Agdp_Report
  */
-class Agdp_Admin_Mailbox {
+class Agdp_Admin_Report {
 
 	public static function init() {
 
@@ -23,19 +23,19 @@ class Agdp_Admin_Mailbox {
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 		
 		//add custom columns for list view
-		add_filter( 'manage_' . Agdp_Mailbox::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
-		add_action( 'manage_' . Agdp_Mailbox::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
+		add_filter( 'manage_' . Agdp_Report::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
+		add_action( 'manage_' . Agdp_Report::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		
 	}
 	/**
 	 * N'affiche le bloc Auteur qu'en Archive (liste) / modification rapide
-	 * N'affiche l'éditeur que pour l'évènement modèle ou si l'option Agdp::agdpmailbox_show_content_editor
+	 * N'affiche l'éditeur que pour l'évènement modèle ou si l'option Agdp::agdpreport_show_content_editor
 	 */
 	public static function init_post_type_supports(){
 		global $post;
 		if( current_user_can('manage_options') ){
 			if(is_archive()){
-				add_post_type_support( Agdp_Mailbox::post_type, 'author' );
+				add_post_type_support( Agdp_Report::post_type, 'author' );
 			}
 		}
 	}
@@ -52,7 +52,7 @@ class Agdp_Admin_Mailbox {
 			/*echo "<br>\n-----------------------------------------------------------------------------";
 			print_r($caps);*/
 		}
-		if($cap == 'edit_agdpmailboxes'){
+		if($cap == 'edit_agdpreportes'){
 			//var_dump($cap, $caps);
 					$caps = array();
 					//$caps[] = ( current_user_can('manage_options') ) ? 'read' : 'do_not_allow';
@@ -60,7 +60,7 @@ class Agdp_Admin_Mailbox {
 			return $caps;
 		}
 		/* If editing, deleting, or reading an event, get the post and post type object. */
-		if ( 'edit_agdpmailbox' == $cap || 'delete_agdpmailbox' == $cap || 'read_agdpmailbox' == $cap ) {
+		if ( 'edit_agdpreport' == $cap || 'delete_agdpreport' == $cap || 'read_agdpreport' == $cap ) {
 			$post = get_post( $args[0] );
 			$post_type = get_post_type_object( $post->post_type );
 
@@ -69,7 +69,7 @@ class Agdp_Admin_Mailbox {
 		}
 
 		/* If editing an event, assign the required capability. */
-		if ( 'edit_agdpmailbox' == $cap ) {
+		if ( 'edit_agdpreport' == $cap ) {
 			if ( $user_id == $post->post_author )
 				$caps[] = $post_type->cap->edit_posts;
 			else
@@ -77,7 +77,7 @@ class Agdp_Admin_Mailbox {
 		}
 
 		/* If deleting an event, assign the required capability. */
-		elseif ( 'delete_agdpmailbox' == $cap ) {
+		elseif ( 'delete_agdpreport' == $cap ) {
 			if ( $user_id == $post->post_author )
 				$caps[] = $post_type->cap->delete_posts;
 			else
@@ -85,7 +85,7 @@ class Agdp_Admin_Mailbox {
 		}
 
 		/* If reading a private event, assign the required capability. */
-		elseif ( 'read_agdpmailbox' == $cap ) {
+		elseif ( 'read_agdpreport' == $cap ) {
 
 			if ( 'private' != $post->post_status )
 				$caps[] = 'read';
@@ -112,7 +112,6 @@ class Agdp_Admin_Mailbox {
 				break;
 		}
 		$new_columns['associated-page'] = __( 'Page associée', AGDP_TAG );
-		$new_columns['imap'] = __( 'Compte email', AGDP_TAG );
 		return array_merge($new_columns, $columns);
 	}
 	/**
@@ -125,37 +124,16 @@ class Agdp_Admin_Mailbox {
 					$post_statuses = get_post_statuses();
 					echo sprintf('%sstatut "%s"<br>', Agdp::icon('warning'), $post_statuses[$post->post_status]);
 				}
-				$emails = '';
-				foreach( Agdp_Mailbox::get_emails_dispatch( $post_id ) as $email => $dispatch ){
-					if( $emails ) $emails .= '<br>';
-					if( $dispatch['type'] === 'redirection' )
-						$emails .= sprintf('%s > %s (%s)'
-							, $email
-							, $dispatch['redir_to']
-							, $dispatch['type']
-						);
-					else 
-						$emails .= sprintf('%s > %s (%s)'
-							, $email
-							, sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s</a>', $dispatch['id'], $dispatch['page_title'])
-							, $dispatch['rights'] . ($dispatch['moderate'] ? ' - modéré' : ''));
-				}
-				if( $emails )
-					echo sprintf('<code>%s</code>', $emails);
-				break;
-			case 'imap' :
-				//imap_suspend
-				$meta_key = 'imap_suspend';
-				if( get_post_meta($post_id, $meta_key, true)) 
-					echo sprintf('%s Suspendu !<br>', Agdp::icon('warning'));
-				//imap_mark_as_read
-				$meta_key = 'imap_mark_as_read';
-				if( ! get_post_meta($post_id, $meta_key, true) )
-					echo sprintf('%s L\'option "Marquer les messages comme étant lus" n\'est pas cochée.<br>', Agdp::icon('warning'));
-				
-				$imap_server = get_post_meta($post_id, 'imap_server', true);
-				$imap_email = get_post_meta($post_id, 'imap_email', true);
-				echo sprintf('<code>%s@%s</code>', $imap_email, $imap_server);
+				// $emails = '';
+				// foreach( Agdp_Report::get_emails_dispatch( $post_id ) as $email => $dispatch ){
+					// if( $emails ) $emails .= '<br>';
+					// $emails .= sprintf('%s > %s (%s)'
+						// , $email
+						// , sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s</a>', $dispatch['id'], $dispatch['page_title'])
+						// , $dispatch['rights'] . ($dispatch['moderate'] ? ' - modéré' : ''));
+				// }
+				// if( $emails )
+					// echo sprintf('<code>%s</code>', $emails);
 				break;
 			default:
 				break;

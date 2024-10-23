@@ -100,7 +100,8 @@ class Agdp_Admin_Menu {
 			}
 			
 			//Menu Agenda partagé
-			$parent_slug = AGDP_TAG;
+			//Mailboxes
+			$parent_slug = AGDP_TAG;			
 			$page_title = get_post_type_object(Agdp_Mailbox::post_type)->labels->menu_name;
 			$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Mailbox::post_type);
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
@@ -110,6 +111,12 @@ class Agdp_Admin_Menu {
 			$menu_slug = $parent_slug . '-rights';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
 				array('Agdp_Admin_Options', 'agdp_rights_page_html'), null);
+			
+			//Report
+			$parent_slug = AGDP_TAG;			
+			$page_title = get_post_type_object(Agdp_Report::post_type)->labels->menu_name;
+			$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Report::post_type);
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
 			
 			if( class_exists('Agdp_Maillog') ){
 				$parent_slug = AGDP_TAG;

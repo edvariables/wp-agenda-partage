@@ -1,0 +1,45 @@
+/**
+ * Feuille de styles pour Agdp mode Admin, edit Report
+ */
+ 
+ 
+#agdp_report-inputs .sql_variable > label {
+	min-width: 12em;
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 8px;
+}
+#agdp_report-inputs .sql_variable {
+	margin-bottom: 0.6em;
+}
+#agdp_report-inputs .sql_variable .var_edit {
+	margin-right: 0.6em;
+	opacity: 50%;
+}
+#agdp_report-inputs .sql_variable .var_edit:hover {
+	opacity: inherit;
+}
+
+#agdp_report-inputs .var_editor {
+	border: gray 1px solid;
+	margin: 0.5em;
+	padding: 0.5em;
+	display: inline-block;
+}
+#agdp_report-inputs .var_editor_header {
+	font-weight: bold;
+	background-color: gray;
+	padding-left: 1em;
+	margin-bottom: 0.5em;
+}
+#agdp_report-inputs .var_editor label {
+	min-width: 4em;
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 8px;
+}
+
+#agdp_report-render .report_refresh {
+	float: right;
+	width: 5em;
+}
