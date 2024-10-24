@@ -58,7 +58,7 @@ define( 'AGDP_FORUM_META_PAGE', 'comments-page' );
 define( 'AGDP_IMPORT_UID', 'post-import-uid' ); 
 define( 'AGDP_IMPORT_REFUSED', 'post-import-refused' ); 
 define( 'AGDP_FORUM_GENERIC', 'agdpforum-generic' ); 
-define( 'AGDP_BLOG_PREFIX', '@WP.'); 
+define( 'AGDP_BLOG_PREFIX', '@__.'); 
 define( 'AGDP_REPORT_VAR_PREFIX', 'rv_'); 
 
 define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');

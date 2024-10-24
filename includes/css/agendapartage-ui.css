@@ -132,24 +132,28 @@ div.agdp-tabs .agdp-panel fieldset legend {
 }
 
 /* agdpreport */
-table.agdpreport {
+.agdpreport {
+	overflow-x: scroll;
+	width: 100%;
+}
+.agdpreport table {
 	margin: 4px;
 	border-collapse: collapse;
 	border: 1px solid black;
 }
-table.agdpreport th, table.agdpreport td {
+.agdpreport th, .agdpreport td {
 	border: 1px solid black;
 	padding: 4px;
 }
-body.colors-dark table.agdpreport, body.colors-dark table.agdpreport th, body.colors-dark table.agdpreport td {
+body.colors-dark .agdpreport table, body.colors-dark .agdpreport th, body.colors-dark .agdpreport td {
 	border-color: white;
 }
-table.agdpreport th {
+.agdpreport th {
 	background-color: lightgray;
 }
-body.colors-dark table.agdpreport th {
+body.colors-dark .agdpreport th {
 	background-color: darkgray;
 }
-table.agdpreport tr {
+.agdpreport tr {
 	border-width: 2px;
 }

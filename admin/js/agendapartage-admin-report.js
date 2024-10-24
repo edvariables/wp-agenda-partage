@@ -1,4 +1,4 @@
-const AGDP_BLOG_PREFIX = '@WP.';
+const AGDP_BLOG_PREFIX = '@__.';
 
 jQuery( function( $ ) {
 	
@@ -7,9 +7,32 @@ jQuery( function( $ ) {
 	 * 
 	 */
 	$( document ).ready(function() {
+		
+		
+		var input_types = {
+			'text' : 'Texte',
+			'bool' : 'Case à cocher',
+			'number' : 'Nombre',
+			'date' : 'Date',
+			'time' : 'Heure',
+			'select' : 'Sélection',
+			'radio' : 'Cases d\'options (à faire)',
+			'checkbox' : 'Options multiples (à faire)',
+			'password' : 'Mot de passe',
+			'email' : 'E-mail',
+			'color' : 'Couleur',
+			'forum' : 'Forum',
+			'newsletter' : 'Lettre-info',
+			'report' : 'Rapport',
+		};
+		var input_options_types = ['select', 'radio', 'checkbox'];
+		
+		//Init
 		$('#agdp_report-inputs').each(function(e){
 			var $sql = $(this).find('textarea#sql')
 			var $variables = $(this).find('textarea#sql_variables')
+			
+			//Affiche les variables
 			$sql.on('change', function(e){
 				var sql = this.value;
 				
@@ -65,16 +88,28 @@ jQuery( function( $ ) {
 						if( variables[variable] ){
 							value = variables[variable]['value'];
 							type = variables[variable]['type'];
-							options = variables[variable]['options'];
+							if( options = variables[variable]['options'] )
+								options = options.split('\n');
 						}
+						if( options === undefined )
+							options = [];
+						
 						var $input;
 						switch(type){
 							case 'select' :
 								$input = $('<select></select>');
-								for(var opt in options.split('\n'))
-									$input.append('<option value="' + opt + '"'
-										+ ( opt == value ? ' selected' : '')
-										+ '>' + opt + '</option>');
+								var value_found = false;
+								for(var i in options){
+									if( options[i] == value )
+										value_found = true;
+									$input.append('<option value="' + options[i] + '"'
+										+ ( options[i] == value ? ' selected' : '')
+										+ '>' + options[i] + '</option>');
+								}
+								if( value && ! value_found )
+									$input.append('<option value="' + value + '"'
+										+ ' selected'
+										+ '>' + value + '</option>');
 								break;
 							case 'bool' :
 							case 'boolean' :
@@ -116,11 +151,49 @@ jQuery( function( $ ) {
 								$input = $('<input type="color">')
 									.val( value );
 								break;
+							case 'forum' :
+							case 'newsletter' :
+							case 'report' :
+								var options = {};
+								var post_type;
 								
+								switch(type){
+									case 'forum' :
+										post_type = 'page';
+										break;
+									case 'newsletter' :
+										post_type = 'agdpnl';
+										break;
+									case 'report' :
+										post_type = 'agdpreport';
+										break;
+								}
+								$input = $('<select></select>');
+								//Asynchronous fill
+								admin_report_get_posts( post_type, options, function( posts, options ){
+									var value_found = false;
+									for(var post_id in posts){
+										if( post_id == options.value )
+											value_found = true;
+										options.$input.append('<option value="' + post_id + '"'
+											+ ( post_id == value ? ' selected' : '')
+											+ '>' + posts[post_id] + '</option>');
+									}
+									if( value && ! value_found )
+										$input.append('<option value="' + value + '"'
+											+ ' selected'
+											+ '>' + value + ' (inconnu !)</option>');
+								}, { '$input': $input, 'value': value } );
+								options = false;
+								break;
 							default:
 								$input = $('<input/>')
 									.val( value );
 						}
+						if( ! options )
+							options = {};
+						else 
+							options = options.join('\n');
 						$input
 							.addClass( 'var_value' )
 							.attr( 'var_name', variable )
@@ -128,7 +201,7 @@ jQuery( function( $ ) {
 							.attr( 'var_options', options )
 						;
 						$('<div class="sql_variable"></div>')
-							.append('<label>' + variable + '</label>')
+							.append('<label>@' + variable + '</label>')
 							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
 							.append($input)
 							.appendTo( $container )
@@ -188,27 +261,14 @@ jQuery( function( $ ) {
 							.attr('var_type', var_type = this.value)
 							.trigger('change')
 						;
-						$options.parent().toggle( this.value === 'select' || this.value === 'radio' );
+						$options.parent().toggle( input_options_types.includes(this.value) );
 						$sql.trigger('change');
 					})
 				;
-				var types = {
-					'text' : 'Texte',
-					'bool' : 'Case à cocher',
-					'number' : 'Nombre',
-					'date' : 'Date',
-					'time' : 'Heure',
-					'select' : 'Sélection',
-					'radio' : 'Cases d\'options (à faire)',
-					'checkbox' : 'Options multiples (à faire)',
-					'password' : 'Mot de passe',
-					'email' : 'email',
-					'color' : 'color',
-				};
-				for( var type in types){
+				for( var type in input_types){
 					$type.append('<option value="' + type + '"'
 							+ (var_type == type ? ' selected' : '') + '>'
-							+ types[type]
+							+ input_types[type]
 						+ '</option>')
 					;
 				}
@@ -217,7 +277,7 @@ jQuery( function( $ ) {
 					.appendTo(
 						$('<div class="var_options"><label>Options</label></div>')
 							.appendTo($editor)
-							.toggle( var_type === 'select' || var_type === 'radio' )
+							.toggle( input_options_types.includes(var_type) )
 					)
 					.text(var_options)
 					.on('change', function(e){
@@ -231,6 +291,46 @@ jQuery( function( $ ) {
 				
 				return false;
 			});
+		
+			//get_posts
+			function admin_report_get_posts( post_type, options, callback, callback_options ){
+				if( options && options['clear_cache']
+				 || ! admin_report_get_posts._cache)
+					admin_report_get_posts._cache = {};
+					
+				if( ! options ) options = {};
+				options['post_type'] = post_type;
+					
+				if( admin_report_get_posts._cache[post_type] ){ //cache
+					if( callback ){
+						return callback.call( this, admin_report_get_posts._cache[post_type], callback_options );
+					}
+					return admin_report_get_posts._cache[post_type];
+				}
+				
+				//Ajax request
+				var data = {
+					action : "agendapartage_posts_action",
+					method : "get_posts",
+					contentType: "application/json; charset=utf-8",
+					data: JSON.stringify(options) //needs stripslashes() at server side
+				};
+				jQuery.ajax({
+					url : agdp_ajax.ajax_url,
+					method : 'POST',
+					data : Object.assign(data, {
+						_nonce : agdp_ajax.check_nonce
+					}),
+					success : function( response ) {
+						admin_report_get_posts._cache[post_type] = response;
+						callback.call( this, response, callback_options );
+					},
+					fail : function( response ){
+						console.log( "agdp-admin-report.js / ajax.get_posts : \n" + response );
+					}
+				});
+				return false;
+			}
 		});
 		
 		$('#agdp_report-render').each(function(e){

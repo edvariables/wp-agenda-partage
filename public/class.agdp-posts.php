@@ -36,6 +36,8 @@ abstract class Agdp_Posts {
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.static::post_type.'s_action', array(get_called_class(), 'on_wp_ajax_posts') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.static::post_type.'s_action', array(get_called_class(), 'on_wp_ajax_posts') );
+
+		add_action( 'wp_ajax_'.AGDP_TAG.'_posts_action', array(get_called_class(), 'on_wp_ajax_posts') );
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.static::post_type.'s_download_action', array(get_called_class(), 'on_wp_ajax_posts_download') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.static::post_type.'s_download_action', array(get_called_class(), 'on_wp_ajax_posts_download') );
@@ -291,6 +293,9 @@ abstract class Agdp_Posts {
 		$method = $_POST['method'];
 		$data = $_POST['data'];
 		
+		if( $data && is_string($data) && ! empty($_POST['contentType']) && strpos( $_POST['contentType'], 'json' ) )
+			$data = json_decode(stripslashes( $data), true);
+		
 		try{
 			//cherche une fonction du nom "on_ajax_action_{method}"
 			$function = array(get_called_class(), sprintf('on_ajax_action_%s', $method));
@@ -328,5 +333,38 @@ abstract class Agdp_Posts {
 		flush(); // Flush system output buffer
 		echo $content;
 		wp_die();
+	}
+	
+
+	/**
+	 * Requête Ajax de récupération de liste de posts
+	 */
+	public static function on_ajax_action_get_posts( $data ) {
+		
+		$query = [
+			'post_type' => 'post'
+			, 'fields' => 'post_title'
+			, 'numberposts' => 5
+		];
+		if( is_array($data) )
+			$query = array_merge($query, $data);
+		$posts = [];
+		foreach( get_posts($query) as $post_id => $post ){
+			$item = [];
+				
+			if( is_a($post, 'WP_Post') ){
+				$post_id = $post->ID;
+				if( $field = $query['fields'] )
+					$item = $post->$field;
+				else
+					foreach( ['post_title', 'post_name', 'post_content'] as $field )
+						$item[$field] = $post->$field;
+			}
+			else {
+				$item = $post;
+			}
+			$posts[$post_id] = $item;
+		}
+		return $posts;
 	}
 }

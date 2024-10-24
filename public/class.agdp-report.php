@@ -195,7 +195,7 @@ class Agdp_Report {
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre></div>'
 				, $report_id, $dbresults);
 		
-		$content = sprintf('<table class="agdpreport" agdp_report="%d">',
+		$content = sprintf('<div class="agdpreport" agdp_report="%d"><table>',
 				$report_id
 		);
 		$content .= '<thead><tr>';
@@ -218,7 +218,7 @@ class Agdp_Report {
 			
 		}
 	    $content .= '</tbody>';
-	    $content .= '</table>';
+	    $content .= '</table></div>';
 		
 		return $content;
 	}
@@ -294,7 +294,7 @@ class Agdp_Report {
 		
 		try {
 			//cherche une fonction du nom "on_ajax_action_{method}"
-			$function = array(__CLASS__, sprintf('on_ajax_action_%s', $method));
+			$function = array(get_called_class(), sprintf('on_ajax_action_%s', $method));
 			$ajax_response = call_user_func( $function, $data);
 		}
 		catch( Exception $e ){

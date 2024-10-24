@@ -820,9 +820,12 @@ class Agdp_Comment {
 		$method = $_POST['method'];
 		$data = isset($_POST['data']) ? $_POST['data'] : [];
 		
+		if( $data && is_string($data) && ! empty($_POST['contentType']) && strpos( $_POST['contentType'], 'json' ) )
+			$data = json_decode(stripslashes( $data), true);
+		
 		try{
 			//cherche une fonction du nom "on_ajax_action_{method}"
-			$function = array(__CLASS__, sprintf('on_ajax_action_%s', $method));
+			$function = array(get_called_class(), sprintf('on_ajax_action_%s', $method));
 			$ajax_response = call_user_func( $function, $data);
 		}
 		catch( Exception $e ){
