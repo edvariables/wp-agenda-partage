@@ -42,4 +42,6 @@
 #agdp_report-render .report_refresh {
 	float: right;
 	width: 5em;
+	top: -3em;
+	position: relative;
 }

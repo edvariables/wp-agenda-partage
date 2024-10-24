@@ -91,7 +91,10 @@ class Agdp_Report {
 			$sql_variables = json_decode($sql_variables, true);
 		$default_sql_variables = get_post_meta( $report_id, 'sql_variables', true );
 		if( $default_sql_variables && is_string($default_sql_variables) ){
-			$sql_variables = array_merge(json_decode($default_sql_variables, true), $sql_variables);
+			if( ! $sql_variables )
+				$sql_variables = json_decode($default_sql_variables, true);
+			else
+				$sql_variables = array_merge(json_decode($default_sql_variables, true), $sql_variables);
 		}
 			
 		//comments
@@ -124,9 +127,9 @@ class Agdp_Report {
 						$value = $sql_strings[$variable];
 					}
 					else {
-						$meta_key = sprintf('%s%s', AGDP_REPORT_VAR_PREFIX, $variable);
-						if( isset($_REQUEST[ $meta_key ]) )
-							$value = $_REQUEST[ $meta_key ];
+						$request_key = sprintf('%s%s', AGDP_REPORT_VAR_PREFIX, $variable);
+						if( isset($_REQUEST[ $request_key ]) )
+							$value = $_REQUEST[ $request_key ];
 						elseif( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['value']) )
 							$value = $sql_variables[$variable]['value'];
 						else
@@ -167,23 +170,33 @@ class Agdp_Report {
 			return;
 		
 		global $wpdb;
-		return $wpdb->get_results($sql);
+		$wpdb->suppress_errors(true);
+		$result = $wpdb->get_results($sql);
+		$wpdb->suppress_errors(false);
+		if($wpdb->last_error)
+			$result = new Exception($wpdb->last_error);
+		return $result;
 	}
 
 	/**
 	 * SQL results as html table
 	 */
  	public static function get_report_html( $report = false, $sql = false, $sql_variables = false ) {
+		
 		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
 		
 		if( ! $dbresults )
-			return $dbresults;
-		
-		if( is_a($dbresults, 'WP_Error') )
-			return $dbresults;
+			return '';
+		$report_id = is_a($report, 'WP_Post') ? $report->ID : $report;
+		if( is_a($dbresults, 'Exception') )
+			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre></div>'
+				, $report_id, $dbresults->getMessage());
+		if( ! is_array($dbresults) )
+			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre></div>'
+				, $report_id, $dbresults);
 		
 		$content = sprintf('<table class="agdpreport" agdp_report="%d">',
-				is_a($report, 'WP_Post') ? $report->ID : $report
+				$report_id
 		);
 		$content .= '<thead><tr>';
 		foreach($dbresults as $row){
@@ -276,7 +289,10 @@ class Agdp_Report {
 		$method = $_POST['method'];
 		$data = isset($_POST['data']) ? $_POST['data'] : [];
 		
-		try{
+		if( $data && is_string($data) && ! empty($_POST['contentType']) && strpos( $_POST['contentType'], 'json' ) )
+			$data = json_decode(stripslashes( $data), true);
+		
+		try {
 			//cherche une fonction du nom "on_ajax_action_{method}"
 			$function = array(__CLASS__, sprintf('on_ajax_action_%s', $method));
 			$ajax_response = call_user_func( $function, $data);
@@ -302,24 +318,22 @@ class Agdp_Report {
 			$report_id = $_POST['post_id'];
 		else
 			$report_id = false;
-		if( isset($data['sql_variables']) )
+		if( isset($data['sql_variables']) ){
 			$sql_variables = $data['sql_variables'];
+			if( $sql_variables === 'false' )
+				$sql_variables = false;
+		}
 		else
 			$sql_variables = false;
-		if( isset($data['sql']) )
+		if( isset($data['sql']) ){
 			$sql = $data['sql'];
+			if( $sql === 'false' )
+				$sql = false;
+		}
 		else
 			$sql = false;
-		$html = self::get_report_html($report_id, $sql, $sql_variables);
-		$html .= wp_date('H:i:s');
-		if( is_admin())
-			return sprintf('js:$(this).parents(".postbox:first").find(".agdpreport").replaceWith("%s");'
-				, str_replace( '"', '\"', 
-					str_replace( "\n", ' ', $html))
-			);
 		
-		else
-			return 'replace:' . $html;
+		return self::get_report_html($report_id, $sql, $sql_variables);
 	}
 	
 	/**

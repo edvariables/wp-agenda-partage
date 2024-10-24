@@ -173,10 +173,10 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$report = get_post();
 		
 		$data = [];
-		$label = Agdp::get_ajax_action_link( $report, ['report', 'report_html'], 'update'
-			, 'Rafraîchir', 'Rafraîchir le rendu'
-			, /*$confirmation = */false, $data);
-		// sprintf('<a href="" onclick="return false;">%s</a>', 'Rafraîchir');
+		// $label = Agdp::get_ajax_action_link( $report, ['report', 'report_html'], 'update'
+			// , 'Rafraîchir', 'Rafraîchir le rendu'
+			// , /*$confirmation = */false, $data);
+		$label = sprintf('<a href="" onclick="return false;">%s%s</a>', Agdp::icon('update'), 'Rafraîchir');
 		$fields = [
 			[	'name' => '',
 				'label' => $label,

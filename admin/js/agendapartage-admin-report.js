@@ -163,6 +163,7 @@ jQuery( function( $ ) {
 				$variables.text( JSON.stringify( var_values ) );
 			});
 			
+			//Editeur d'une variable
 			$(this).on('click', '.var_edit', function(e){
 				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
 				var variable = $input.attr('var_name');
@@ -232,5 +233,58 @@ jQuery( function( $ ) {
 			});
 		});
 		
+		$('#agdp_report-render').each(function(e){
+			$(this).on('click', '.report_refresh a', function(e){
+				
+				var $actionElnt = $(this);
+				var $form = $actionElnt.parents('form:first');
+				var post_id = $form.find('#post_ID').val();
+				var sql = $form.find('#sql').val();
+				var sql_variables = $form.find('#sql_variables').val();
+				var data = {
+					action : "agendapartage_report_action",
+					method : "report_html",
+					post_id : post_id,
+					contentType: "application/json; charset=utf-8",
+					data: JSON.stringify({ //needs stripslashes() at server side
+						sql : sql,
+						sql_variables : sql_variables ? JSON.parse(sql_variables) : 0,
+						report_id : post_id,
+					})
+				};
+				var report_id = $actionElnt
+				jQuery.ajax({
+					url : agdp_ajax.ajax_url,
+					method : 'POST',
+					data : Object.assign(data, {
+						_nonce : agdp_ajax.check_nonce
+					}),
+					success : function( response ) {
+						if(response){
+							if(typeof response === 'string' || response instanceof String){
+								if(response.endsWith('null'))
+									response = substr(response, 0, response.length-4);
+								$form.find('.agdpreport').replaceWith(response);
+							}
+						}
+						else
+							$form.find('.agdpreport').html('!');
+						$spinner.remove();
+					},
+					fail : function( response ){
+						$spinner.remove();
+						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+							.click(function(){$msg.remove()});
+						$actionElnt.after($msg);
+						// $msg.get(0).scrollIntoView();
+					}
+				});
+				var $spinner = $actionElnt.next('.wpcf7-spinner');
+				if($spinner.length == 0)
+						$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
+				event.preventDefault();  
+				return false;
+			});
+		});
 	});
 });
