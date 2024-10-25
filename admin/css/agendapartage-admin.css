@@ -181,7 +181,7 @@ body.colors-dark .toggle-trigger a:hover {
 	float: right;
 }
 
-.toggle-trigger.active{
+.toggle-trigger.active:not(.dashicons-before){
 	background-image: url('../../public/images/toggle-minus.png') !important;
 	background-repeat: no-repeat;
 }

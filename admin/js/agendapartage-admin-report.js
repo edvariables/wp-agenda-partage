@@ -1,4 +1,4 @@
-const AGDP_BLOG_PREFIX = '@__.';
+const AGDP_BLOG_PREFIX = '@.';
 
 jQuery( function( $ ) {
 	
@@ -29,8 +29,9 @@ jQuery( function( $ ) {
 		
 		//Init
 		$('#agdp_report-inputs').each(function(e){
-			var $sql = $(this).find('textarea#sql')
-			var $variables = $(this).find('textarea#sql_variables')
+			var $this = $(this);
+			var $sql = $this.find('textarea#sql');
+			var $variables = $this.find('textarea#sql_variables');
 			
 			//Affiche les variables
 			$sql.on('change', function(e){
@@ -62,15 +63,13 @@ jQuery( function( $ ) {
 				//Variables présentes dans la requête
 				var matches;
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-				pattern = "\@([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFi])?";
+				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFi])?";
 				if( matches = sql.matchAll( new RegExp(pattern, "g") ) ){
 					matches = matches.toArray();
 					var variables = {};
 					var index = 0;
 					for(var i in matches){
 						var variable = matches[i][1];
-						if( AGDP_BLOG_PREFIX === '@' + variable + '.' )
-							continue;
 						if( ! variables[variable] ){
 							var value = var_values[variable];//get_post_meta( $report_id, $meta_key, true );
 							variables[variable] = value;
@@ -172,10 +171,12 @@ jQuery( function( $ ) {
 								//Asynchronous fill
 								admin_report_get_posts( post_type, options, function( posts, options ){
 									var value_found = false;
+									var value = options.value;
+									var $input = options.$input;
 									for(var post_id in posts){
-										if( post_id == options.value )
+										if( post_id == value )
 											value_found = true;
-										options.$input.append('<option value="' + post_id + '"'
+										$input.append('<option value="' + post_id + '"'
 											+ ( post_id == value ? ' selected' : '')
 											+ '>' + posts[post_id] + '</option>');
 									}
@@ -191,7 +192,7 @@ jQuery( function( $ ) {
 									.val( value );
 						}
 						if( ! options )
-							options = {};
+							options = '';
 						else 
 							options = options.join('\n');
 						$input
@@ -201,7 +202,7 @@ jQuery( function( $ ) {
 							.attr( 'var_options', options )
 						;
 						$('<div class="sql_variable"></div>')
-							.append('<label>@' + variable + '</label>')
+							.append('<label>:' + variable + '</label>')
 							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
 							.append($input)
 							.appendTo( $container )
@@ -211,7 +212,7 @@ jQuery( function( $ ) {
 			}).trigger('change');
 			
 			//Sauvegarde des variables vers le textarea
-			$(this).on('change', '.var_value', function(e){
+			$this.on('change', '.var_value', function(e){
 				var var_values = {};
 				$variables.nextAll('.sql_variables_wrap:first')
 					.find('.sql_variable').each(function(e){
@@ -237,7 +238,7 @@ jQuery( function( $ ) {
 			});
 			
 			//Editeur d'une variable
-			$(this).on('click', '.var_edit', function(e){
+			$this.on('click', '.var_edit', function(e){
 				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
 				var variable = $input.attr('var_name');
 				var var_type = $input.attr('var_type');
@@ -292,6 +293,12 @@ jQuery( function( $ ) {
 				return false;
 			});
 		
+			//Editeur d'une variable
+			$this.on('click', '.sql-helper-tables a', function(e){
+				var $sql = $this.find('textarea#sql');
+				$sql.get(0).insertAtCaret( $(this).text() );
+			});
+			
 			//get_posts
 			function admin_report_get_posts( post_type, options, callback, callback_options ){
 				if( options && options['clear_cache']
@@ -333,6 +340,7 @@ jQuery( function( $ ) {
 			}
 		});
 		
+		//Rendu
 		$('#agdp_report-render').each(function(e){
 			$(this).on('click', '.report_refresh a', function(e){
 				
@@ -388,3 +396,29 @@ jQuery( function( $ ) {
 		});
 	});
 });
+
+
+/**
+ * insertAtCaret in textarea
+ */
+if( ! HTMLTextAreaElement.prototype.insertAtCaret )
+HTMLTextAreaElement.prototype.insertAtCaret = function (text) {
+  text = text || '';
+  if (document.selection) {
+    // IE
+    this.focus();
+    var sel = document.selection.createRange();
+    sel.text = text;
+  } else if (this.selectionStart || this.selectionStart === 0) {
+    // Others
+    var startPos = this.selectionStart;
+    var endPos = this.selectionEnd;
+    this.value = this.value.substring(0, startPos) +
+      text +
+      this.value.substring(endPos, this.value.length);
+    this.selectionStart = startPos + text.length;
+    this.selectionEnd = startPos + text.length;
+  } else {
+    this.value += text;
+  }
+};

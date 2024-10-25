@@ -110,13 +110,13 @@ class Agdp_Report {
 			$string = $matches[1];
 			$variable = sprintf('%s_%d', $strings_prefix, count($sql_strings));
 			$sql_strings[$variable] = $string;
-			$sql = str_replace( $matches[0], '@' . $variable, $sql );
+			$sql = str_replace( $matches[0], ':' . $variable, $sql );
 		}
 		
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-		$pattern = "/\@([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFi])?/";
+		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFi])?/";
 		if( preg_match_all( $pattern, $sql, $matches ) ){
 			$variables = [];
 			$prepare = [];
@@ -185,9 +185,11 @@ class Agdp_Report {
 		
 		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
 		
-		if( ! $dbresults )
-			return '';
 		$report_id = is_a($report, 'WP_Post') ? $report->ID : $report;
+		
+		if( ! $dbresults )
+			return sprintf('<div class="agdpreport" agdp_report="%d">?</div>', $report_id);
+		
 		if( is_a($dbresults, 'Exception') )
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre></div>'
 				, $report_id, $dbresults->getMessage());

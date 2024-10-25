@@ -369,7 +369,7 @@ class Agdp_Comments {
 		|| ($page && ( $mailbox = Agdp_Mailbox::get_mailbox_of_page($page) ))){
 			$synchronize = Agdp_Mailbox::synchronize($mailbox);
 			if( $synchronize === false || is_a($synchronize, 'Exception')){
-				debug_log(__CLASS__.'::get_list_for_email init_page failed', $synchronize);
+				debug_log(__CLASS__.'::get_list_for_email init_page, synchronization failed', $synchronize);
 			}
 		}
 		if(!isset($options) || !is_array($options))
@@ -377,12 +377,14 @@ class Agdp_Comments {
 		$options = array_merge(
 			array(
 				'ajax' => false,
-				'mode' => 'email'
-			), self::filter_anteriority_option($options));
+				'mode' => 'email',
+			), self::filter_anteriority_option($options))
+		;
 		
 		// Limite les messages à ceux publiés depuis le dernier envoi aux destinataires
 		if( ( $newsletter = Agdp_Newsletter::is_sending_email() )
-		&& ( $newsletter_to_emails = Agdp_Newsletter::is_sending_email_to() )){
+		 && ( $newsletter_to_emails = Agdp_Newsletter::is_sending_email_to() )
+		){
 			//Jamais plus d'un mois
 			$min_date = Agdp_Newsletter::get_anteriority_date( $newsletter, date('Y-m-d',strtotime("-1 Month")) );
 			$since_date = Agdp_Newsletter::get_user_mailing_date( $newsletter_to_emails, $newsletter, $min_date );
@@ -390,6 +392,8 @@ class Agdp_Comments {
 			if( $since_date )
 				$options['since'] = $since_date;
 		}
+		
+		// css
 		$css = '<style>'
 			. '
 .entry-content {
@@ -540,9 +544,10 @@ class Agdp_Comments {
 	public static function get_list_item_html($comment, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 		$summary_dest = is_array($options) && isset($options['summary']) && $options['summary'];
+		$hide_author_email = /* $email_mode &&  */is_array($options) && isset($options['hide_author_email']) && $options['hide_author_email'];
 			
 		$date_debut = $comment->comment_date;
-					
+		
 		$url = get_comment_link( $comment );
 		$html = '';
 		
@@ -638,9 +643,15 @@ class Agdp_Comments {
 			
 			$html .= Agdp_Comment::get_attachments_links($comment);
 			
+			$show_author_email = Agdp_Forum::get_property('comment_author_email');
+			if( $show_author_email === 'M' ){
+				//TODO s'assurer que les destinataires sont bien tous membres
+			}
+			
 			$value = $comment->comment_author;
 			if($value){
-				if($comment->comment_author_email){
+				if( $show_author_email
+				 && $comment->comment_author_email){
 					if($comment->comment_author != $comment->comment_author_email)
 						$value .= sprintf(' <%s>', $comment->comment_author_email);
 					$html .= sprintf('<div>Répondre à <a href="mailto:%s?body=Bonjour,&subject=%s">%s</a></div>'

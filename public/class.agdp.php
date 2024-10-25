@@ -52,6 +52,7 @@ class Agdp {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post.php' );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Posts', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-page.php' );
 		

@@ -118,7 +118,37 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				break;
 		}
 	}
-
+	
+	/**
+	 * Retourne la liste de toutes les tables
+	 */
+	public static function get_sql_helper(){
+		
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$tables = [];
+		$sql = 'SHOW TABLES';
+		foreach($wpdb->get_results($sql) as $row){
+			foreach($row as $table){
+				if($blog_prefix)
+					$table = substr($table, strlen($blog_prefix));
+				if( is_numeric($table[0]) )
+					continue;
+				$tables[] = $table;
+				break;
+			}
+		}
+		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
+			. '<div class="toggle-container sql-helper-tables"><code>';
+		foreach($tables as $index => $table){
+			if( $index )
+				$html .= ' - ';
+			$html .= sprintf('<a href="#">%s</a>', $table);
+		}
+		$html .= '</code></div>';
+		return $html;
+	}
+	
 	public static function get_metabox_all_fields(){
 		return array_merge(
 			self::get_metabox_inputs_fields(),
@@ -132,28 +162,17 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		// $tables = [];
-		// $sql = 'SHOW TABLES';
-		// foreach($wpdb->get_results($sql) as $row){
-			// foreach($row as $table){
-				// if($blog_prefix)
-					// $table = substr($table, strlen($blog_prefix));
-				// if( is_numeric($table[0]) )
-					// continue;
-				// $tables[] = $table;
-				// break;
-			// }
-		// }
-			
+		
 		$fields = [
 			[	'name' => 'sql',
 				'label' => '',//__('Requête', AGDP_TAG),
 				'type' => 'text',
 				'input' => 'textarea',
-				'input_attributes' => 'rows="20" spellcheck="false"',
-				'learn-more' => [sprintf("Utilisez le préfixe \"%s\" avant chaque nom de table.", AGDP_BLOG_PREFIX)
-						// , sprintf('Liste des tables : <code>%s</code>', implode(', ', $tables))
-					],
+				'input_attributes' => 'rows="10" spellcheck="false"',
+				'learn-more' => 
+						sprintf("Utilisez le préfixe \"%s\" avant chaque nom de table.", AGDP_BLOG_PREFIX)
+						.'<br>'.static::get_sql_helper()
+					,
 			],
 			[	'name' => 'sql_variables',
 				'label' => 'Variables',

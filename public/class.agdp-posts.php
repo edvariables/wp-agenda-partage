@@ -30,17 +30,19 @@ abstract class Agdp_Posts {
 	 * Hook
 	 */
 	public static function init_hooks() {
-		
-		add_action( 'wp_ajax_'.static::post_type.'_show_more', array(get_called_class(), 'on_wp_ajax_posts_show_more_cb') );
-		add_action( 'wp_ajax_nopriv_'.static::post_type.'_show_more', array(get_called_class(), 'on_wp_ajax_posts_show_more_cb') );
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_'.static::post_type.'s_action', array(get_called_class(), 'on_wp_ajax_posts') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.static::post_type.'s_action', array(get_called_class(), 'on_wp_ajax_posts') );
+		if(static::post_type){ //inherited
+			add_action( 'wp_ajax_'.static::post_type.'_show_more', array(get_called_class(), 'on_wp_ajax_posts_show_more_cb') );
+			add_action( 'wp_ajax_nopriv_'.static::post_type.'_show_more', array(get_called_class(), 'on_wp_ajax_posts_show_more_cb') );
+			
+			add_action( 'wp_ajax_'.AGDP_TAG.'_'.static::post_type.'s_action', array(get_called_class(), 'on_wp_ajax_posts') );
+			add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.static::post_type.'s_action', array(get_called_class(), 'on_wp_ajax_posts') );
 
-		add_action( 'wp_ajax_'.AGDP_TAG.'_posts_action', array(get_called_class(), 'on_wp_ajax_posts') );
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_'.static::post_type.'s_download_action', array(get_called_class(), 'on_wp_ajax_posts_download') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.static::post_type.'s_download_action', array(get_called_class(), 'on_wp_ajax_posts_download') );
+			add_action( 'wp_ajax_'.AGDP_TAG.'_'.static::post_type.'s_download_action', array(get_called_class(), 'on_wp_ajax_posts_download') );
+			add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.static::post_type.'s_download_action', array(get_called_class(), 'on_wp_ajax_posts_download') );
+		}
+		else {
+			add_action( 'wp_ajax_'.AGDP_TAG.'_posts_action', array(__CLASS__, 'on_wp_ajax_posts') );
+		}
 	}
 	/*
 	 * Hook
