@@ -214,7 +214,7 @@ class Agdp_Report {
 			$content .= '<tr>';
 			$content .= sprintf('<th>%d</th>', $row_index+1);
 			foreach($row as $field_name => $field_value){
-				$content .= sprintf('<td>%s</td>', $field_value);
+				$content .= sprintf('<td>%s</td>', htmlspecialchars( $field_value ));
 			}
 			$content .= '</tr>';
 			

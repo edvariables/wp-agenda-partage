@@ -11,6 +11,9 @@
  */
 class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 
+	const post_type = Agdp_Forum::post_type; 
+	static $can_duplicate = true;
+
 	private static $block_editor_is_used;
 
 	public static function init() {

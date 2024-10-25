@@ -99,11 +99,20 @@ jQuery( function( $ ) {
 								$input = $('<select></select>');
 								var value_found = false;
 								for(var i in options){
-									if( options[i] == value )
+									var opt = options[i];
+									var opt, label;
+									var separator = opt.indexOf(':');
+									if( separator >= 0 ){
+										label = opt.substr(separator+1).trim();
+										opt = separator ? opt.substr(0, separator).trim() : '';
+									}
+									else
+										label = opt;
+									if( opt == value )
 										value_found = true;
-									$input.append('<option value="' + options[i] + '"'
-										+ ( options[i] == value ? ' selected' : '')
-										+ '>' + options[i] + '</option>');
+									$input.append('<option value="' + opt + '"'
+										+ ( opt == value ? ' selected' : '')
+										+ '>' + label + '</option>');
 								}
 								if( value && ! value_found )
 									$input.append('<option value="' + value + '"'
@@ -171,8 +180,10 @@ jQuery( function( $ ) {
 								//Asynchronous fill
 								admin_report_get_posts( post_type, options, function( posts, options ){
 									var value_found = false;
-									var value = options.value;
+									var value = options.value === undefined ? '' : options.value;
 									var $input = options.$input;
+									if( posts[''] === undefined )
+										posts[''] = '';
 									for(var post_id in posts){
 										if( post_id == value )
 											value_found = true;
@@ -193,8 +204,9 @@ jQuery( function( $ ) {
 						}
 						if( ! options )
 							options = '';
-						else 
+						else if( typeof options === "object" )
 							options = options.join('\n');
+						
 						$input
 							.addClass( 'var_value' )
 							.attr( 'var_name', variable )
@@ -250,7 +262,12 @@ jQuery( function( $ ) {
 						.appendTo( $wrap )
 					;
 				}
-				$editor.html('<div class="var_editor_header">' + variable + '</div>');
+				$editor
+					.html($('<div class="var_editor_header">' + variable + '</div>')
+						.append($('<a class="close-box" href=""><span class="dashicons-before dashicons-no"></span></a>')
+							.on('click', function(){ $editor.remove(); return false; })
+						)
+					);
 				
 				var $type = $('<select/>')
 					.appendTo(
@@ -293,7 +310,7 @@ jQuery( function( $ ) {
 				return false;
 			});
 		
-			//Editeur d'une variable
+			//Liste de tables
 			$this.on('click', '.sql-helper-tables a', function(e){
 				var $sql = $this.find('textarea#sql');
 				$sql.get(0).insertAtCaret( $(this).text() );

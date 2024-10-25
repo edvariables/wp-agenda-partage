@@ -11,6 +11,10 @@
  */
 class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 
+	const post_type = Agdp_Report::post_type;
+	
+	static $can_duplicate = true;
+
 	public static function init() {
 		parent::init();
 
@@ -20,15 +24,15 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function init_hooks() {
 		global $pagenow;
 		if ( $pagenow === 'post.php' ) {
-			add_action( 'add_meta_boxes_' . Agdp_Report::post_type, array( __CLASS__, 'register_report_metaboxes' ), 10, 1 ); //edit
-			add_action( 'save_post_' . Agdp_Report::post_type, array(__CLASS__, 'save_post_report_cb'), 10, 3 );
+			add_action( 'add_meta_boxes_' . self::post_type, array( __CLASS__, 'register_report_metaboxes' ), 10, 1 ); //edit
+			add_action( 'save_post_' . self::post_type, array(__CLASS__, 'save_post_report_cb'), 10, 3 );
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_styles'), 10, 1);
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_scripts'), 10, 1);
 		}
 	}
 	/****************/
-			
+	
 	/**
 	 * Register Meta Boxes (boite en édition du forum)
 	 */

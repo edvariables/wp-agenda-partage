@@ -32,6 +32,9 @@
 	padding-left: 1em;
 	margin-bottom: 0.5em;
 }
+#agdp_report-inputs .var_editor_header .close-box {
+	float: right;
+}
 #agdp_report-inputs .var_editor label {
 	min-width: 4em;
 	display: inline-block;

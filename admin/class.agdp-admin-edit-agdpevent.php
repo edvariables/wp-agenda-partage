@@ -11,6 +11,8 @@
  */
 class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 
+	const post_type = Agdp_Evenement::post_type;
+
 	public static function init() {
 		parent::init();
 

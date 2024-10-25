@@ -11,6 +11,9 @@
  */
 class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 
+	const post_type = Agdp_Covoiturage::post_type; 
+	static $can_duplicate = true;
+
 	public static function init() {
 		parent::init();
 

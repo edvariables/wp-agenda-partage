@@ -8,12 +8,45 @@
  */
 abstract class Agdp_Admin_Edit_Post_Type {
 
+	const post_type = false; //must inherit
+	
+	private static $initiated = false;
+
 	static $the_post_is_new = false;
 
+	static $can_duplicate = false; //can inherit
+	private static $can_duplicate_post_types = [];
+
 	public static function init() {
-		self::$the_post_is_new = basename($_SERVER['PHP_SELF']) == 'post-new.php';
+		static::$the_post_is_new = basename($_SERVER['PHP_SELF']) == 'post-new.php';
+		
+		if( static::$can_duplicate )
+			self::$can_duplicate_post_types[] = static::post_type;
+		
+		if( ! self::$initiated ){
+			add_action( 'current_screen', array( __CLASS__, 'init_hooks' ));
+			//self::init_hooks();
+			self::$initiated = true;
+		}
 	}
 	
+	public static function init_hooks() {
+		global $pagenow;
+		if( current_user_can('edit_posts') ){
+			switch ( $pagenow ){
+			case 'edit.php' :
+				add_filter( 'post_row_actions', array( __CLASS__, 'duplicateButtonLink' ), 10, 2 );
+				add_filter( 'page_row_actions', array( __CLASS__, 'duplicateButtonLink' ), 10, 2 );
+				break;
+			case 'post.php' :
+				add_action( 'post_submitbox_start', array( __CLASS__, 'addPostDuplicateButton') );
+				break;
+			case 'admin.php' :
+				add_action( 'admin_action_njt_duplicate_page_save_as_new_post', array( __CLASS__, 'duplicateNewPageAction' ) );
+				break;
+			}
+		}
+	}
 	
 	/**
 	 * HTML render in metaboxes
@@ -382,6 +415,184 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Duplicate
+	 * Sources : https://plugins.trac.wordpress.org/browser/wp-duplicate-page, https://plugins.trac.wordpress.org/browser/duplicate-pp/
+	 */
+	/**
+	 * duplicateButtonLink in posts list
+	 */
+	public static function duplicateButtonLink( $actions, $post ) {
+		if( in_array( $post->post_type, self::$can_duplicate_post_types ) ){
+			$duplicateTextLink             = 'Dupliquer';
+			$actions['njt_duplicate_page'] = sprintf(
+				'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
+				self::getDuplicateLink( $post->ID ),
+				esc_attr( __( 'Dupliquer' ) ),
+				/* translators: %s: Button Duplicate text. */
+				esc_html( sprintf( __( ' %s ' ), $duplicateTextLink ) )
+			);
+		}
+		return $actions;
+	}
+	/**
+	 * getDuplicateLink
+	 */
+	public static function getDuplicateLink( $postId = 0 ) {
+
+		// if ( ! Utils::isCurrentUserAllowedToCopy() ) {
+			// return;
+		// }
+
+		if ( ! $post = get_post( $postId ) ) {
+			return;
+		}
+
+		// if ( ! Utils::checkPostTypeDuplicate( $post->post_type ) ) {
+			// return;
+		// }
+
+		$action_name = 'njt_duplicate_page_save_as_new_post';
+		$action      = '?action=' . $action_name . '&amp;post=' . $post->ID;
+		$postType    = get_post_type_object( $post->post_type );
+
+		if ( ! $postType ) {
+			return;
+		}
+
+		return wp_nonce_url( admin_url( 'admin.php' . $action ), 'njt-duplicate-page_' . $post->ID );
+	}
+	/**
+	 * Duplicate Post
+	 */
+	public static function duplicateNewPageAction() {
+		global $pagenow;
+		if ( ! current_user_can('edit_posts') ) 
+			wp_die('No allowed to duplicate');
+		
+		if ( ! ( isset( $_GET['post'] ) || isset( $_POST['post'] ) || ( isset( $_REQUEST['action'] ) && 'njt_duplicate_page_save_as_new_post' === $_REQUEST['action'] ) ) ) {
+			wp_die( esc_html__( 'No post to duplicate!', 'wp-duplicate-page' ) );
+		}
+
+		// Get the original post
+		// $postId = ( isset( $_GET['post'] ) ? sanitize_text_field( $_GET['post'] ) : sanitize_text_field( $_POST['post'] ) );
+		
+		/*
+		 * get the original post id
+		 */
+		$dpp_post_id = (isset($_GET['post']) ? absint(sanitize_text_field($_GET['post'])) : absint(sanitize_text_field($_POST['post'])));
+
+		check_admin_referer( 'njt-duplicate-page_' . $dpp_post_id );
+		
+		global $wpdb;
+
+		/*
+		 * and all the original post data then
+		 */
+		$dpp_post = get_post($dpp_post_id);
+
+		/*
+		 * if you don't want the current user to be the new post author,
+		 * then change the next couple of lines to this: $new_post_author = $post->post_author;
+		 */
+		$dpp_current_user = wp_get_current_user();
+		$dpp_new_post_author = $dpp_current_user->ID;
+
+		/*
+		 * if post data exists, create the post duplicate
+		 */
+		if (isset($dpp_post) && $dpp_post != null) {
+
+			/*
+			 * new post data array
+			 */
+			$dpp_args = array(
+				'comment_status' => $dpp_post->comment_status,
+				'ping_status'    => $dpp_post->ping_status,
+				'post_author'    => $dpp_new_post_author,
+				'post_content'   => $dpp_post->post_content,
+				'post_excerpt'   => $dpp_post->post_excerpt,
+				'post_name'      => sprintf('%s_copie', $dpp_post->post_name),
+				'post_parent'    => $dpp_post->post_parent,
+				'post_password'  => $dpp_post->post_password,
+				'post_status'    => 'draft',
+				'post_title'     => sprintf('%s (copie)', $dpp_post->post_title),
+				'post_type'      => $dpp_post->post_type,
+				'to_ping'        => $dpp_post->to_ping,
+				'menu_order'     => $dpp_post->menu_order
+			);
+
+			/*
+			 * insert the post by wp_insert_post() function
+			 */
+			$dpp_new_post_id = wp_insert_post($dpp_args);
+
+			/*
+			 * get all current post terms and set them to the new post draft
+			 */
+			$dpp_taxonomies = get_object_taxonomies($dpp_post->post_type); // returns an array of taxonomy names for the post type, e.g., array("category", "post_tag");
+			foreach ($dpp_taxonomies as $ddp_taxonomy) {
+				$dpp_post_terms = wp_get_object_terms($dpp_post_id, $ddp_taxonomy, array('fields' => 'slugs'));
+				wp_set_object_terms($dpp_new_post_id, $dpp_post_terms, $ddp_taxonomy, false);
+			}
+
+			// Duplicate all post meta
+			$dpp_post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$dpp_post_id");
+			if (count($dpp_post_meta_infos) != 0) {
+				foreach ($dpp_post_meta_infos as $dpp_meta_info) {
+					$dpp_meta_key = $dpp_meta_info->meta_key;
+					if ($dpp_meta_key == '_wp_old_slug') continue;
+					$dpp_meta_value = $dpp_meta_info->meta_value;
+					update_post_meta($dpp_new_post_id, $dpp_meta_key, $dpp_meta_value); // Copy the post meta to the new post
+				}
+			}
+
+			/*
+			 * finally, redirect to the edit post screen for the new draft
+			 */
+			$dpp_all_post_types = get_post_types([], 'names');
+
+			foreach ($dpp_all_post_types as $dpp_key => $dpp_value) {
+				$dpp_names[] = $dpp_key;
+			}
+
+			$dpp_current_post_type =  get_post_type($dpp_post_id);
+			
+			$postType        = $dpp_post->post_type;
+			$newPostId       = $dpp_new_post_id;
+			$redirect        = sprintf('/wp-admin/post.php?post=%d&action=edit">',$dpp_new_post_id);
+			
+			wp_safe_redirect( $redirect );
+
+			exit;
+		} else {
+			wp_die('Failed. Not Found Post: ' . $dpp_post_id);
+		}
+	}
+	
+	/**
+	 * addPostDuplicateButton in post.php
+	 */
+	public static function addPostDuplicateButton(){
+		global $post;
+		if( ! $post || ! $post->ID )
+			return;
+		if( in_array( $post->post_type, self::$can_duplicate_post_types ) ){
+			$duplicateTextLink = 'Dupliquer';
+			
+			$html  = '<div>';
+			$html .= sprintf(
+				'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
+				self::getDuplicateLink( $post->ID ),
+				esc_attr( __( 'Dupliquer' ) ),
+				/* translators: %s: Button Duplicate text. */
+				esc_html( sprintf( __( ' %s ' ), $duplicateTextLink ) )
+			);
+			$html .= '</div>';
+		}
+        echo $html;
 	}
 }
 ?>
