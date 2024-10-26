@@ -23,10 +23,14 @@ jQuery( function( $ ) {
 			'checkboxes' : 'Options multiples', 
 			'password' : 'Mot de passe',
 			'email' : 'E-mail',
+			// 'month' : 'Mois',
+			// 'week' : 'Semaine',
+			// 'search' : 'Recherche',
 			'color' : 'Couleur',
+			'tel' : 'Téléphone',
 			'forum' : 'Forum',
 			'newsletter' : 'Lettre-info',
-			'report' : 'Rapport',
+			'report' : 'Sous-requête',
 			'field' : 'Champ de requête',
 			'asc_desc' : 'Ordre de tri',
 		};
@@ -108,8 +112,14 @@ jQuery( function( $ ) {
 						var $input;
 						switch(type){
 							case 'select' :
+								$input = $('<select></select>');
+								$input = add_input_options($input, options, variable, value);
+								break;
 							case 'field' :
 								$input = $('<select></select>');
+								if( ! options || options.length === 0 )
+									options = get_sql_fields;
+								
 								$input = add_input_options($input, options, variable, value);
 								break;
 							case 'bool' :
@@ -168,18 +178,6 @@ jQuery( function( $ ) {
 								$input = $('<input type="time">')
 									.val( value );
 								break;
-							case 'password' :
-								$input = $('<input type="password">')
-									.val( value );
-								break;
-							case 'email' :
-								$input = $('<input type="email">')
-									.val( value );
-								break;
-							case 'color' :
-								$input = $('<input type="color">')
-									.val( value );
-								break;
 							case 'forum' :
 							case 'newsletter' :
 							case 'report' :
@@ -198,25 +196,21 @@ jQuery( function( $ ) {
 										break;
 								}
 								$input = $('<select></select>');
-								//Asynchronous fill
-								admin_report_get_posts( post_type, options, function( posts, options ){
-									var value_found = false;
-									var value = options.value === undefined ? '' : options.value;
-									var $input = options.$input;
-									if( posts[''] === undefined )
-										posts[''] = '';
-									for(var post_id in posts){
-										if( post_id == value )
-											value_found = true;
-										$input.append('<option value="' + post_id + '"'
-											+ ( post_id == value ? ' selected' : '')
-											+ '>' + posts[post_id] + '</option>');
-									}
-									if( value && ! value_found )
-										$input.append('<option value="' + value + '"'
-											+ ' selected'
-											+ '>' + value + ' (inconnu !)</option>');
-								}, { '$input': $input, 'value': value } );
+								//Ajax asynchronous fill
+								if( ! value ){ //chargement asynchrone lors du mousedown
+									value = '';
+									$input = add_input_options($input, admin_report_get_posts, variable, value
+										, [ post_type, options, add_input_options,
+											{ 	'variable' : variable,
+												'value' : value,
+												'$input' : $input,
+											}
+										]);
+								}
+								else { //chargement asynchrone, maintenant
+									$input.append($('<option selected>' + value + '</option>').attr('value', value));//temporairement
+									admin_report_get_posts( post_type, options, add_input_options, { '$input': $input, 'variable': variable, 'value': value } );
+								}
 								options = false;
 								break;
 							case 'asc_desc' :
@@ -225,13 +219,18 @@ jQuery( function( $ ) {
 							
 								break;
 							default:
-								$input = $('<input/>')
+								$input = $('<input type="' + type + '"/>')
 									.val( value );
 						}
-						if( ! options )
+						if( ! options
+						 || typeof options === "function")
 							options = '';
-						else if( typeof options === "object" )
-							options = options.join('\n');
+						else if( typeof options === "object" ){
+							if( options.join !== undefined )
+								options = options.join('\n');
+							else
+								options = Object.keys(options).join('\n');
+						}
 						
 						$input
 							.addClass( 'var_value' )
@@ -344,10 +343,16 @@ jQuery( function( $ ) {
 							+ '<br>2nde ligne : maxi'
 							+ '<br>ou une seule ligne : le maxi';
 					break;
+				case 'report' :
+					helper = 'Pour une inclusion dans un IN,'
+						+ '<br>ajoutez le format %IN à la variable.';
+					break;
 				default :
-					rows = 3;
-					helper = 'Un élément par ligne.'
-							+ '<br>Séparez les valeurs des labels par <code>:</code>';
+					if( input_options_types.includes(var_type) ){
+						rows = 3;
+						helper = 'Un élément par ligne.'
+								+ '<br>Séparez les valeurs des labels par <code>:</code>';
+					}
 				}
 				var $options = $('<textarea rows="' + rows + '"></textarea>')
 					.appendTo(
@@ -356,7 +361,6 @@ jQuery( function( $ ) {
 							.toggle( input_options_types.includes(var_type) )
 					)
 					.text(var_options)
-					.after('<div class="learn-more">' + helper + '</div>')
 					.on('change', function(e){
 						$input
 							.attr('var_options', this.value)
@@ -365,6 +369,8 @@ jQuery( function( $ ) {
 						$sql.trigger('change');
 					})
 				;
+				if( helper )
+					$editor.append('<div class="learn-more">' + helper + '</div>')
 				
 				return false;
 			});
@@ -386,10 +392,15 @@ jQuery( function( $ ) {
 					
 				if( admin_report_get_posts._cache[post_type] ){ //cache
 					if( callback ){
-						return callback.call( this, admin_report_get_posts._cache[post_type], callback_options );
+						if( callback === add_input_options )
+							return callback.call( this, callback_options['$input'], admin_report_get_posts._cache[post_type], callback_options['variable'], callback_options['value']);
+						else
+							return callback.call( this, admin_report_get_posts._cache[post_type], callback_options );
 					}
 					return admin_report_get_posts._cache[post_type];
 				}
+				if( callback_options['$input'] )
+					callback_options['$input'].addClass('cursor_pointer');
 				
 				//Ajax request
 				var data = {
@@ -406,7 +417,16 @@ jQuery( function( $ ) {
 					}),
 					success : function( response ) {
 						admin_report_get_posts._cache[post_type] = response;
-						callback.call( this, response, callback_options );
+						if( response[''] === undefined )
+							response[''] = '';
+						if( callback === add_input_options )
+							callback.call( this, callback_options['$input'], response, callback_options['variable'], callback_options['value']);
+						else
+							callback.call( this, response, callback_options );
+						
+						if( callback_options['$input'] )
+							callback_options['$input'].removeClass('cursor_pointer');
+						
 					},
 					fail : function( response ){
 						console.log( "agdp-admin-report.js / ajax.get_posts : \n" + response );
@@ -414,55 +434,78 @@ jQuery( function( $ ) {
 				});
 				return false;
 			}
-			
+			////////////////////
 			// add_input_options
-			function add_input_options($input, options, variable, value){
+			function add_input_options($input, options, variable, value, callback_options){
 				var value_found = false;
 				var $last_input = $input;
-					
-				for(var i in options){
-					var opt, label;
-					if( ! jQuery.isNumeric( i ) ){
-						opt = i;
-						label = options[i];
+				
+				if( typeof options === 'function' ){
+					if( $input.is('select') ){
+						//async load on mousedown
+						$input.on('mousedown', function(){
+							if( typeof options !== 'function' )
+								return;
+							if( ! callback_options )
+								callback_options = [];
+							var callback = options;
+							options = callback.apply( $input, callback_options );
+							if( options && options.jquery )
+								return;
+						});
 					}
-					else {
-						opt = options[i];
-						var separator = opt.indexOf(':');
-						if( separator >= 0 ){
-							label = opt.substr(separator+1).trim();
-							opt = separator ? opt.substr(0, separator).trim() : '';
+					else
+						options = options.call($input);
+				}
+				
+				$input.html('');
+				
+				if( typeof options === 'object' ){
+					var is_associative = options.join === undefined;
+					for(var i in options){
+						var opt, label;
+						if( is_associative /* ! jQuery.isNumeric( i ) */ ){
+							opt = i;
+							label = options[i];
 						}
-						else
-							label = opt;
-					}
-					var select_option = false;
-					if( typeof value === 'object' ){
-						if( value.indexOf( opt ) >= 0 ){
+						else {
+							opt = options[i];
+							var separator = opt.indexOf(':');
+							if( separator >= 0 ){
+								label = opt.substr(separator+1).trim();
+								opt = separator ? opt.substr(0, separator).trim() : '';
+							}
+							else
+								label = opt;
+						}
+						var select_option = false;
+						if( typeof value === 'object' ){
+							if( value.indexOf( opt ) >= 0 ){
+								select_option = true;
+								value_found = true;
+							}
+						}
+						else if( opt == value ){
 							select_option = true;
 							value_found = true;
 						}
-					}
-					else if( opt == value ){
-						select_option = true;
-						value_found = true;
-					}
-					if( $input.is('select') ){
-						$input.append('<option value="' + opt + '"'
-							+ ( select_option ? ' selected' : '')
-							+ '>' + label + '</option>');
-					}
-					else if( $input.is('input[type="radio"]') ){
-						$input = $input.add('<label><input type="radio" value="' + opt + '"'
-							+ ' name="__' + variable + '"'
-							+ ( select_option ? ' checked' : '')
-							+ '>' + label + '</label>');
-					}
-					else if( $input.is('input[type="checkbox"]') ){ //TODO non fonctionnel coté serveur
-						$input = $input.add('<label><input type="checkbox" value="' + opt + '"'
-							+ ' name="__' + variable + '[]"'
-							+ ( select_option ? ' checked' : '')
-							+ '>' + label + '</label>');
+						if( $input.is('select') ){
+							$input.append('<option value="' + opt + '"'
+								+ ( select_option ? ' selected' : '')
+								+ '>' + label + '</option>');
+						}
+						else if( $input.is('input[type="radio"]') ){
+							$input = $input.add('<label><input type="radio" value="' + opt + '"'
+								+ ' name="__' + variable + '"'
+								+ ( select_option ? ' checked' : '')
+								+ '>' + label + '</label>');
+						}
+						else if( $input.is('input[type="checkbox"]') ){ //TODO non fonctionnel coté serveur
+							$input = $input.add('<label><input type="checkbox" value="' + opt + '"'
+								+ ' name="__' + variable + '[]"'
+								+ ( select_option ? ' checked' : '')
+								+ '>' + label + '</label>');
+						}
 					}
 				}
 				if( value && ! value_found ){
@@ -492,6 +535,16 @@ jQuery( function( $ ) {
 			//add_input_options
 			///////////////////
 			
+			//get_sql_fields
+			function get_sql_fields(){
+				var fields = {};
+				$('.agdpreport tr.report_fields th[field]').each(function(){
+					var name = this.getAttribute('field');
+					if( name )
+						fields[name] = this.textContent ;
+				});
+				return fields;
+			}
 		});
 		
 		//Rendu

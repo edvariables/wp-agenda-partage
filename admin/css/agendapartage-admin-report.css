@@ -2,6 +2,9 @@
  * Feuille de styles pour Agdp mode Admin, edit Report
  */
  
+#agdp_report-inputs .cursor_pointer {
+	cursor: wait;
+}
 #agdp_report-inputs label[for="sql_variables"] {
 	font-weight: bold;
 	text-decoration: underline;
@@ -25,6 +28,9 @@
 }
 #agdp_report-inputs .sql_variable .var_edit:hover {
 	opacity: inherit;
+}
+#agdp_report-inputs .sql_variable input[type="number"] {
+	width: 5em;
 }
 
 #agdp_report-inputs .var_editor {

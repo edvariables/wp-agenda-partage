@@ -333,11 +333,12 @@ class Agdp_Report {
 		$content = sprintf('<div class="agdpreport" agdp_report="%d"><table>',
 				$report_id
 		);
-		$content .= '<thead><tr>';
+		$content .= '<thead><tr class="report_fields">';
 		foreach($dbresults as $row){
 			$content .= sprintf('<th>#</th>');
 			foreach($row as $field_name => $field_value){
-				$content .= sprintf('<th>%s</th>', $field_name);
+				$field_label = $field_name;//TODO
+				$content .= sprintf('<th field="%s">%s</th>', $field_name, $field_label);
 			}
 			break;
 		}
