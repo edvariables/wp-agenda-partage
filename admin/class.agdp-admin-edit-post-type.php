@@ -231,7 +231,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			
 			////////////////
 			case 'checkbox':
-				echo '<label>';
+				echo '<label for="'.$name.'">';
 				echo '<input id="'.$id.'" type="checkbox" name="'.$name.'" '
 					. (($val && $val !== 'unchecked') || ( $val === '' && $default_val) ? ' checked="checked"' : '')
 					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 

@@ -176,12 +176,16 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		// $label = Agdp::get_ajax_action_link( $report, ['report', 'report_html'], 'update'
 			// , 'Rafraîchir', 'Rafraîchir le rendu'
 			// , /*$confirmation = */false, $data);
-		$label = sprintf('<a href="" onclick="return false;">%s%s</a>', Agdp::icon('update'), 'Rafraîchir');
 		$fields = [
 			[	'name' => '',
-				'label' => $label,
+				'label' => sprintf('<a href="" onclick="return false;">%s%s</a>', Agdp::icon('update'), 'Rafraîchir'),
 				'input' => 'link',
 				'class' => 'report_refresh', //cf admin-report.js
+			],
+			[	'name' => 'report_show_sql',
+				'label' => 'Afficher le SQL',
+				'type' => 'checkbox',
+				'container_class' => 'report_show_sql', //cf admin-report.js
 			],
 		];
 		return $fields;

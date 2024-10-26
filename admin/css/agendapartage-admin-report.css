@@ -54,13 +54,18 @@
 	font-size: smaller;
 }
 
-#agdp_report-render .report_refresh {
+/** render **/
+#agdp_report-render .report_refresh, #agdp_report-render .report_show_sql {
 	float: right;
-	width: 5em;
 	top: -3em;
 	position: relative;
 	height: 0px;
 }
+#agdp_report-render .report_show_sql label {
+	min-width: inherit;
+	margin-right: 1em;
+}
+
 #agdp_report-render .sql_prepared {
 	white-space: pre;
 	font-family: "Courier New", monospace;

@@ -478,6 +478,7 @@ jQuery( function( $ ) {
 				var post_id = $form.find('#post_ID').val();
 				var sql = $form.find('#sql').val();
 				var sql_variables = $form.find('#sql_variables').val();
+				var report_show_sql = $form.find('#report_show_sql').prop('checked');
 				var data = {
 					action : "agendapartage_report_action",
 					method : "report_html",
@@ -487,6 +488,7 @@ jQuery( function( $ ) {
 						sql : sql,
 						sql_variables : sql_variables ? JSON.parse(sql_variables) : 0,
 						report_id : post_id,
+						report_show_sql : report_show_sql
 					})
 				};
 				var report_id = $actionElnt

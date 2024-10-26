@@ -58,17 +58,7 @@ class Agdp_Report {
 	 * SQL
 	 */
  	public static function get_sql( $report = false, $sql = false, $sql_variables = false ) {
-		if( ! $report ){
-			global $post;
-			if( ! $post || $post->post_type !== self::post_type)
-				return false;
-			$report = $post;
-		}
-		elseif( is_numeric($report) ){
-			$report = get_post($report);
-			if( ! $report || $report->post_type !== self::post_type)
-				return false;
-		}
+		
 		$report_id = $report->ID;
 		
 		global $wpdb;
@@ -169,8 +159,14 @@ class Agdp_Report {
 						case 'range': 
 						case 'numeric':
 						case 'number':
+						case 'integer':
 							if( ! $format )
 								$format = '%d';
+							break;
+						case 'decimal':
+						case 'float':
+							if( ! $format )
+								$format = '%f';
 							break;
 						default:
 					}
@@ -227,12 +223,35 @@ class Agdp_Report {
 	/**
 	 * SQL results as html table
 	 */
- 	public static function get_report_html( $report = false, $sql = false, $sql_variables = false ) {
+ 	public static function get_report_html( $report = false, $sql = false, $sql_variables = false, $options = false ) {
+		if( ! $report ){
+			global $post;
+			if( ! $post || $post->post_type !== self::post_type)
+				return false;
+			$report = $post;
+		}
+		elseif( is_numeric($report) ){
+			$report = get_post($report);
+			if( ! $report || $report->post_type !== self::post_type)
+				return false;
+		}
+		if( ! is_array($options) )
+			$options = [];
 		
-		$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', self::get_sql( $report, $sql, $sql_variables ));
+		$report_id = $report->ID;
+		
+		$sql_prepared ='';
+		if( is_admin() && current_user_can('manage_options')){
+			$meta_key = 'report_show_sql';
+			if( isset($options[$meta_key]) )
+				$report_show_sql = $options[$meta_key];
+			else
+				$report_show_sql = get_post_meta( $report_id, $meta_key, true );
+			if( $report_show_sql )
+				$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', self::get_sql( $report, $sql, $sql_variables ));
+		}	
+		
 		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
-		
-		$report_id = is_a($report, 'WP_Post') ? $report->ID : $report;
 		
 		if( ! $dbresults )
 			return sprintf('<div class="agdpreport" agdp_report="%d">?%s</div>', $report_id, $sql_prepared);
@@ -387,7 +406,7 @@ class Agdp_Report {
 		else
 			$sql = false;
 		
-		return self::get_report_html($report_id, $sql, $sql_variables);
+		return self::get_report_html($report_id, $sql, $sql_variables, $data);
 	}
 	
 	/**
