@@ -39,6 +39,7 @@ body.colors-dark .color-red {
 }
 .agdp-metabox-row > textarea#sql {
 	width: 100%;
+	font-family: "Lucida Console", "Courier New", monospace;
 }
 .agdp-metabox-row.side-box > input, 
 .agdp-metabox-row.side-box > textarea {

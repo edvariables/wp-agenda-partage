@@ -122,37 +122,10 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				break;
 		}
 	}
-	
-	/**
-	 * Retourne la liste de toutes les tables
-	 */
-	public static function get_sql_helper(){
 		
-		global $wpdb;
-		$blog_prefix = $wpdb->get_blog_prefix();
-		$tables = [];
-		$sql = 'SHOW TABLES';
-		foreach($wpdb->get_results($sql) as $row){
-			foreach($row as $table){
-				if($blog_prefix)
-					$table = substr($table, strlen($blog_prefix));
-				if( is_numeric($table[0]) )
-					continue;
-				$tables[] = $table;
-				break;
-			}
-		}
-		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
-			. '<div class="toggle-container sql-helper-tables"><code>';
-		foreach($tables as $index => $table){
-			if( $index )
-				$html .= ' - ';
-			$html .= sprintf('<a href="#">%s</a>', $table);
-		}
-		$html .= '</code></div>';
-		return $html;
-	}
-	
+	/**
+	 * get_metabox_all_fields
+	 */
 	public static function get_metabox_all_fields(){
 		return array_merge(
 			self::get_metabox_inputs_fields(),
@@ -160,6 +133,9 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		);
 	}
 	
+	/**
+	 * get_metabox_inputs_fields
+	 */
 	public static function get_metabox_inputs_fields(){
 		
 		$report = get_post();
@@ -175,6 +151,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input_attributes' => 'rows="10" spellcheck="false"',
 				'learn-more' => 
 						sprintf("Utilisez le préfixe \"%s\" avant chaque nom de table.", AGDP_BLOG_PREFIX)
+						.'<br>'.static::get_variables_helper()
 						.'<br>'.static::get_sql_helper()
 					,
 			],
@@ -220,6 +197,59 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			return;
 		}
 		self::save_metaboxes($report_id, $report);
+	}
+	
+	/**
+	 * Retourne la liste de toutes les tables
+	 */
+	public static function get_sql_helper(){
+		
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$tables = [];
+		$sql = 'SHOW TABLES';
+		foreach($wpdb->get_results($sql) as $row){
+			foreach($row as $table){
+				if($blog_prefix)
+					$table = substr($table, strlen($blog_prefix));
+				if( is_numeric($table[0]) )
+					continue;
+				$tables[] = $table;
+				break;
+			}
+		}
+		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
+			. '<div class="toggle-container sql-helper-tables"><code>';
+		foreach($tables as $index => $table){
+			if( $index )
+				$html .= ' - ';
+			$html .= sprintf('<a href="#">%s</a>', $table);
+		}
+		$html .= '</code></div>';
+		return $html;
+	}
+	
+	/**
+	 * Retourne le commentaire sur le formatage de variables
+	 */
+	public static function get_variables_helper(){
+		
+		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
+			. '<div class="toggle-container sql-helper-variables"><ul>';
+		
+		$html .= '<li>De la forme : <code>:var_name[%format]</code>';
+		$html .= '<li><code>%s</code> : type texte (par défaut)';
+		$html .= '<li><code>%d</code> : type nombre entier';
+		$html .= '<li><code>%+d</code> : -> avec signe';
+		$html .= '<li><code>%04d</code> : -> en 4 chiffres, complété par des zéros si besoin est';
+		$html .= '<li><code>%f</code> : type nombre réel';
+		$html .= '<li><code>%.2f</code> : -> 2 décimales';
+		$html .= '<li><code>%i</code> : type identifiant (nom de table, de champ)';
+		$html .= '<li><code>%N</code> : type tableau dans une clause IN. ex. : <code>post.post_status IN (:post_status%N)</code>';
+		$html .= '<li><i>cf <a href="https://www.php.net/manual/fr/function.vsprintf.php">https://www.php.net/manual/fr/function.vsprintf.php</a></i>';
+		
+		$html .= '</ul></div>';
+		return $html;
 	}
 }
 ?>

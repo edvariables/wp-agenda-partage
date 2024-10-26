@@ -12,12 +12,15 @@ jQuery( function( $ ) {
 		var input_types = {
 			'text' : 'Texte',
 			'bool' : 'Case à cocher',
-			'number' : 'Nombre',
+			'integer' : 'Nombre entier',
+			'float' : 'Nombre réel',
+			'range' : 'Entier dans interval',
 			'date' : 'Date',
 			'time' : 'Heure',
+			'datetime' : 'Date et heure',
 			'select' : 'Sélection',
-			'radio' : 'Cases d\'options (à faire)',
-			'checkbox' : 'Options multiples (à faire)',
+			'radio' : 'Cases d\'options',
+			'checkboxes' : 'Options multiples', 
 			'password' : 'Mot de passe',
 			'email' : 'E-mail',
 			'color' : 'Couleur',
@@ -25,7 +28,7 @@ jQuery( function( $ ) {
 			'newsletter' : 'Lettre-info',
 			'report' : 'Rapport',
 		};
-		var input_options_types = ['select', 'radio', 'checkbox'];
+		var input_options_types = ['select', 'radio', 'checkboxes', 'range'];
 		
 		//Init
 		$('#agdp_report-inputs').each(function(e){
@@ -63,7 +66,7 @@ jQuery( function( $ ) {
 				//Variables présentes dans la requête
 				var matches;
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFi])?";
+				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiN])?";
 				if( matches = sql.matchAll( new RegExp(pattern, "g") ) ){
 					matches = matches.toArray();
 					var variables = {};
@@ -73,6 +76,8 @@ jQuery( function( $ ) {
 						if( ! variables[variable] ){
 							var value = var_values[variable];//get_post_meta( $report_id, $meta_key, true );
 							variables[variable] = value;
+							if( matches[i][2] )
+								variables[variable]['format'] = matches[i][2];
 						}
 					}
 					
@@ -92,32 +97,12 @@ jQuery( function( $ ) {
 						}
 						if( options === undefined )
 							options = [];
-						
+						//create input
 						var $input;
 						switch(type){
 							case 'select' :
 								$input = $('<select></select>');
-								var value_found = false;
-								for(var i in options){
-									var opt = options[i];
-									var opt, label;
-									var separator = opt.indexOf(':');
-									if( separator >= 0 ){
-										label = opt.substr(separator+1).trim();
-										opt = separator ? opt.substr(0, separator).trim() : '';
-									}
-									else
-										label = opt;
-									if( opt == value )
-										value_found = true;
-									$input.append('<option value="' + opt + '"'
-										+ ( opt == value ? ' selected' : '')
-										+ '>' + label + '</option>');
-								}
-								if( value && ! value_found )
-									$input.append('<option value="' + value + '"'
-										+ ' selected'
-										+ '>' + value + '</option>');
+								$input = add_input_options($input, options, variable, value);
 								break;
 							case 'bool' :
 							case 'boolean' :
@@ -126,20 +111,48 @@ jQuery( function( $ ) {
 									.prop( "checked", value );
 								break;
 							case 'radio' :
-								$input = $('<input type="radio">')
-									.prop( "checked", value );
+								$input = $('<input type="radio">');
+								$input = add_input_options($input, options, variable, value);
 								break;
-							case 'checkbox' :
-								$input = $('<input type="checkbox">')
-									.prop( "checked", value );
+							case 'checkboxes' :
+								if( value && typeof value === "string" )
+									value = value.split('\n');
+								$input = $('<input type="checkbox">');
+								$input = add_input_options($input, options, variable, value);
 								break;
+							case 'integer' :
 							case 'number' :
-							case 'numeric' :
 								$input = $('<input type="number">')
+									.val( value );
+								break;
+							case 'decimal' :
+							case 'float' :
+								$input = $('<input type="float">')
+									.val( value );
+								break;
+							case 'range' :
+								var min = 0;
+								var max = 100;
+								if( typeof options === 'object' ){
+									if( options.length > 1 ){
+										min = options[0];
+										max = options[1];
+									}
+									else {
+										max = options[0];
+									}
+								}
+								else if(Number.isInteger( options ) )
+									max = options;
+								$input = $('<input type="range" min="' + min + '" max="' + max + '">')
 									.val( value );
 								break;
 							case 'date' :
 								$input = $('<input type="date">')
+									.val( value );
+								break;
+							case 'datetime' :
+								$input = $('<input type="datetime-local">')
 									.val( value );
 								break;
 							case 'time' :
@@ -228,22 +241,36 @@ jQuery( function( $ ) {
 				var var_values = {};
 				$variables.nextAll('.sql_variables_wrap:first')
 					.find('.sql_variable').each(function(e){
+						var data = {};
 						var $this = $(this);
 						var $value = $this.find('.var_value');
-						var data = {};
-						var v;
-						if( $value.is('input[type="checkbox"]') )
-							v = $value.prop('checked');
-						else
-							v = $value.val();
-						if( v )
-							data['value'] = v;
+						var var_name = $value.attr('var_name');
 						if( v = $value.attr('var_type') )
 							data['type'] = v;
 						if( v = $value.attr('var_options') )
 							data['options'] = v;
 						
-						var_values[ $value.attr('var_name') ] = data;
+						if( $value.is('label') )
+							$value = $this.find('.var_value input');
+						var v;
+						if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
+							v = '';
+							$value.filter(':checked').each(function(){
+								if( v )
+									v += '\n';
+								v += this.value;
+							});
+						}
+						else if( $value.is('input[type="checkbox"]') )
+							v = $value.prop('checked');
+						else if( $value.is('input[type="radio"]') )
+							v = $value.filter(':checked').val();
+						else
+							v = $value.val();
+						if( v )
+							data['value'] = v;
+						
+						var_values[ var_name ] = data;
 					})
 				;
 				$variables.text( JSON.stringify( var_values ) );
@@ -291,20 +318,33 @@ jQuery( function( $ ) {
 					;
 				}
 				
-				var $options = $('<textarea></textarea>')
+				var helper, rows;
+				switch( var_type ){
+				case 'range' :
+					rows = 2;
+					helper = '1ère ligne : mini'
+							+ '<br>2nde ligne : maxi'
+							+ '<br>ou une seule ligne : le maxi';
+					break;
+				default :
+					rows = 3;
+					helper = 'Un élément par ligne.'
+							+ '<br>Séparez les valeurs des labels par <code>:</code>';
+				}
+				var $options = $('<textarea rows="' + rows + '"></textarea>')
 					.appendTo(
 						$('<div class="var_options"><label>Options</label></div>')
 							.appendTo($editor)
 							.toggle( input_options_types.includes(var_type) )
 					)
 					.text(var_options)
+					.after('<div class="learn-more">' + helper + '</div>')
 					.on('change', function(e){
 						$input
 							.attr('var_options', this.value)
 							.trigger('change')
 						;
 					})
-					
 				;
 				
 				return false;
@@ -355,6 +395,78 @@ jQuery( function( $ ) {
 				});
 				return false;
 			}
+			
+			// add_input_options
+			function add_input_options($input, options, variable, value){
+				var value_found = false;
+				var $last_input = $input;
+					
+				for(var i in options){
+					var opt = options[i];
+					var label;
+					var separator = opt.indexOf(':');
+					if( separator >= 0 ){
+						label = opt.substr(separator+1).trim();
+						opt = separator ? opt.substr(0, separator).trim() : '';
+					}
+					else
+						label = opt;
+					var select_option = false;
+					if( typeof value === 'object' ){
+						if( value.indexOf( opt ) >= 0 ){
+							select_option = true;
+							value_found = true;
+						}
+					}
+					else if( opt == value ){
+						select_option = true;
+						value_found = true;
+					}
+					if( $input.is('select') ){
+						$input.append('<option value="' + opt + '"'
+							+ ( select_option ? ' selected' : '')
+							+ '>' + label + '</option>');
+					}
+					else if( $input.is('input[type="radio"]') ){
+						$input = $input.add('<label><input type="radio" value="' + opt + '"'
+							+ ' name="__' + variable + '"'
+							+ ( select_option ? ' checked' : '')
+							+ '>' + label + '</label>');
+					}
+					else if( $input.is('input[type="checkbox"]') ){ //TODO non fonctionnel coté serveur
+						$input = $input.add('<label><input type="checkbox" value="' + opt + '"'
+							+ ' name="__' + variable + '[]"'
+							+ ( select_option ? ' checked' : '')
+							+ '>' + label + '</label>');
+					}
+				}
+				if( value && ! value_found ){
+					if( $input.is('select') ){
+						$input.append('<option value="' + value + '"'
+							+ ' selected'
+							+ '>' + value + '</option>');
+					}
+					else if( $input.is('input[type="radio"]') ){
+						$input = $input.add('<label><input type="radio" value="' + value + '"'
+							+ ' name="__' + variable + '"'
+							+ ' checked'
+							+ '>' + value + '</label>');
+					}
+					else if( $input.is('input[type="checkbox"]') ){
+						$input = $input.add('<label><input type="checkbox" value="' + value + '"'
+							+ ' name="__' + variable + '"'
+							+ ' checked'
+							+ '>' + value + '</label>');
+					}
+				}
+				if( $input.is('input[type="radio"],input[type="checkbox"]') && $input.length > 1 )
+					$input = $input.filter(function( index ) { return index > 0; } );
+				
+				return $input;
+			}
+			//add_input_options
+			///////////////////
+			
 		});
 		
 		//Rendu

@@ -98,7 +98,7 @@ class Agdp_Report {
 		}
 			
 		//comments
-		$pattern = "/(\/\*[\s\S]+\*\/)/"; 
+		$pattern = "/\\/\\*(.*?)\\*\\//us"; 
 		$sql = preg_replace( $pattern, '', $sql );
 		
 		//strings
@@ -115,8 +115,8 @@ class Agdp_Report {
 		
 		//Variables
 		$matches = [];
-		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFi])?/";
+		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
+		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiN])?/";
 		if( preg_match_all( $pattern, $sql, $matches ) ){
 			$variables = [];
 			$prepare = [];
@@ -140,19 +140,65 @@ class Agdp_Report {
 				//format
 				$src = $matches[0][$index];
 				$format = $matches[2][$index];
-				if( ! $format ){
-					$format = '%s';
-					if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
-						switch($sql_variables[$variable]['type']){
-							case 'numeric':
-							case 'number':
+				$format_IN = false;
+				if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
+					switch($sql_variables[$variable]['type']){
+						case 'checkboxes': 
+							if( $format === '%N' ){
+								$format_IN = true;
+								if( $variables[$variable] ){
+									if( is_string( $variables[$variable] ) ){
+										if( $variables[$variable][0] === '|' )
+											$variables[$variable] = explode( '|', substr($variables[$variable], 1, strlen($variables[$variable]) - 2 ));
+										else
+											$variables[$variable] = explode( "\n", $variables[$variable] );
+									}
+									$format = implode(', ', array_fill(0, count($variables[$variable]), '%s'));
+								}
+								else {
+									$format = '%s';
+								}
+							}
+							else {
+								// ( :post_status = '' || :post_status = post.post_status || :post_status LIKE CONCAT('%|', post.post_status, '|%' )
+								if( $variables[$variable] && is_string($variables[$variable]) && $variables[$variable][0] !== '|' ){
+									$variables[$variable] = "|" . str_replace("\n", "|", $variables[$variable]) . "|";
+								}
+							}
+							break;
+						case 'range': 
+						case 'numeric':
+						case 'number':
+							if( ! $format )
 								$format = '%d';
-								break;
-						}
+							break;
+						default:
 					}
 				}
-				$sql = str_replace( $src, $format, $sql );
-				$prepare[] = $variables[$variable];
+				if( ! $format )
+					$format = '%s';
+				$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $format, $sql );
+									
+				if( is_array($variables[$variable]) ){
+					if( $format_IN ) {
+						foreach($variables[$variable] as $opt){
+							$prepare[] = $opt;
+						}
+					}
+					else {
+						$value = '';
+						foreach($variables[$variable] as $opt){
+							$value .= '|' . $opt;
+						}
+						if( $value )
+							$value = $value . '|';
+						$prepare[] = $value;
+					}
+				}
+				elseif( $variables[$variable] === null )
+					$prepare[] = '';
+				else
+					$prepare[] = $variables[$variable];
 			}
 			//prepare
 			$sql = $wpdb->prepare($sql, $prepare);
@@ -183,19 +229,21 @@ class Agdp_Report {
 	 */
  	public static function get_report_html( $report = false, $sql = false, $sql_variables = false ) {
 		
+		$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', self::get_sql( $report, $sql, $sql_variables ));
 		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
 		
 		$report_id = is_a($report, 'WP_Post') ? $report->ID : $report;
 		
 		if( ! $dbresults )
-			return sprintf('<div class="agdpreport" agdp_report="%d">?</div>', $report_id);
+			return sprintf('<div class="agdpreport" agdp_report="%d">?%s</div>', $report_id, $sql_prepared);
 		
 		if( is_a($dbresults, 'Exception') )
-			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre></div>'
-				, $report_id, $dbresults->getMessage());
+			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre>%s</div>'
+				, $report_id, $dbresults->getMessage()
+				, $sql_prepared);
 		if( ! is_array($dbresults) )
-			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre></div>'
-				, $report_id, $dbresults);
+			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre>%s</div>'
+				, $report_id, $dbresults, $sql_prepared);
 		
 		$content = sprintf('<div class="agdpreport" agdp_report="%d"><table>',
 				$report_id
@@ -220,7 +268,11 @@ class Agdp_Report {
 			
 		}
 	    $content .= '</tbody>';
-	    $content .= '</table></div>';
+	    $content .= '</table>';
+		
+		if( $sql_prepared ) 
+			$content .= $sql_prepared;
+	    $content .= '</div>';
 		
 		return $content;
 	}
@@ -231,7 +283,7 @@ class Agdp_Report {
  	public static function the_content( $content ) {
  		global $post;
 		$content = $post->post_content;
-		debug_log(__FUNCTION__, $content);
+		
 		if( ! $post	){
  			return $content;
 		}

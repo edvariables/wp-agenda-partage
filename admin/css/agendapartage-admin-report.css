@@ -2,12 +2,19 @@
  * Feuille de styles pour Agdp mode Admin, edit Report
  */
  
- 
-#agdp_report-inputs .sql_variable > label {
+#agdp_report-inputs label[for="sql_variables"] {
+	font-weight: bold;
+	text-decoration: underline;
+}
+#agdp_report-inputs .sql_variable > label:first-child {
 	min-width: 12em;
 	display: inline-block;
 	vertical-align: top;
 	margin-top: 8px;
+	font-family: "Courier New", monospace;
+}
+#agdp_report-inputs .sql_variable > label:not(:first-child) {
+	margin-right: 9px;
 }
 #agdp_report-inputs .sql_variable {
 	margin-bottom: 0.6em;
@@ -41,6 +48,11 @@
 	vertical-align: top;
 	margin-top: 8px;
 }
+#agdp_report-inputs .var_editor .learn-more {
+	font-family: "Courier New", monospace;
+	padding-left: 5em;
+	font-size: smaller;
+}
 
 #agdp_report-render .report_refresh {
 	float: right;
@@ -48,4 +60,10 @@
 	top: -3em;
 	position: relative;
 	height: 0px;
+}
+#agdp_report-render .sql_prepared {
+	white-space: pre;
+	font-family: "Courier New", monospace;
+	background-color: lightgray;
+	padding: 1em;
 }
