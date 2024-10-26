@@ -78,3 +78,7 @@
 	background-color: lightgray;
 	padding: 1em;
 }
+
+#agdp_report-render .agdpreport td {
+	max-height: 8em;
+}

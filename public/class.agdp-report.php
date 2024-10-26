@@ -96,7 +96,7 @@ class Agdp_Report {
 		
 		//strings
 		$matches = [];
-		$pattern = "/\"([^\"]+)\"/"; //TODO simple quote
+		$pattern = "/\"([^\"]{2,})\"/"; //TODO simple quote
 		$strings_prefix = uniqid('__sqlstr_');
 		$sql_strings = [];
 		while( preg_match( $pattern, $sql, $matches ) ){
@@ -109,7 +109,7 @@ class Agdp_Report {
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
-		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiI][N]?)?/";
+		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiIL][NK]?)?/";
 		if( preg_match_all( $pattern, $sql, $matches ) ){
 			$errors = [];
 			$variables = [];
@@ -134,7 +134,8 @@ class Agdp_Report {
 				//format
 				$src = $matches[0][$index];
 				$format = $matches[2][$index];
-				$format_IN = false;
+				$format_IN = $format === '%IN';
+				$format_LIKE = substr( $format, -2 ) === 'LK';
 				if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 					switch($sql_variables[$variable]['type']){
 						case 'range': 
@@ -154,8 +155,7 @@ class Agdp_Report {
 								$format = '%i';
 							break;
 						case 'checkboxes': 
-							if( $format === '%IN' ){
-								$format_IN = true;
+							if( $format_IN ){
 								if( $variables[$variable] ){
 									if( is_string( $variables[$variable] ) ){
 										if( $variables[$variable][0] === '|' )
@@ -213,8 +213,25 @@ class Agdp_Report {
 						default:
 					}
 				}
+				
 				if( ! $format )
 					$format = '%s';
+				elseif( $format_LIKE ){
+					$f_matches = [];
+					$pattern = "/%([01])?(\.[01])?LK$/"; //TODO simple quote
+					if( preg_match( $pattern, $format, $f_matches )
+					 && count($f_matches) > 1 ){
+						if( $f_matches[1] === '1' ){
+							if( $f_matches[2] === '.1' )
+								$format_LIKE = true;
+							else
+								$format_LIKE = 'starts_with';
+						}
+						elseif( $f_matches[2] === '.1' )
+							$format_LIKE = 'ends_with';
+					}
+					$format = '%s';
+				}
 				$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $format, $sql );
 									
 				if( is_array($variables[$variable]) ){
@@ -235,16 +252,46 @@ class Agdp_Report {
 				}
 				elseif( $variables[$variable] === null )
 					$prepare[] = '';
+				elseif( $format_LIKE ){
+					if( $format_LIKE === true )
+						$format_LIKE = 'contains';
+					switch($format_LIKE){ //sic : switch fails when $format_LIKE===true
+						case 'starts_with' :
+							$prepare[] = $variables[$variable].'%';
+							break;
+						case 'ends_with' :
+							$prepare[] = '%'.$variables[$variable];
+							break;
+						case 'contains':
+						default :
+							$prepare[] = '%'.$variables[$variable].'%';
+							break;
+					}
+				}
 				else
 					$prepare[] = $variables[$variable];
 			}
+			
+			//escape '%' (wpdb could manage but we lost SQL readability)
+			$escape_flag = uniqid('__esc__');
+			//- sql
+			$sql = str_replace( '\%', $escape_flag, $sql );
+			//- values
+			foreach( $prepare as $i => $value )
+				if( is_string($value)
+				 && strpos($value, '%') !== false )
+					$prepare[$i] = str_replace( '%', $escape_flag, $value );
+					
 			//wpdb prepare
-			try{
+			try {
 				$sql = $wpdb->prepare($sql, $prepare);
 			}
 			catch( Exception $exception ){
 				$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $exception->getMessage());
 			}
+			
+			//unescape
+			$sql = str_replace( $escape_flag, '%', $sql );
 			
 			if( count($errors) ){
 				$sql .= sprintf("\n/** %s\n**/", implode("\n", $errors));
@@ -252,6 +299,8 @@ class Agdp_Report {
 				
 			}
 		}
+		
+		// debug_log(__FUNCTION__ .  ' au final', $sql);
 		
 		return $sql;
 	}
