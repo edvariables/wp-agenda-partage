@@ -57,9 +57,12 @@ class Agdp_Report {
 	/**
 	 * SQL
 	 */
- 	public static function get_sql( $report = false, $sql = false, $sql_variables = false ) {
+ 	public static function get_sql( $report = false, $sql = false, $sql_variables = false, $options = false ) {
 		
 		$report_id = $report->ID;
+		
+		if( ! is_array($options) )
+			$options = [];
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
@@ -106,8 +109,9 @@ class Agdp_Report {
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
-		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiN])?/";
+		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiI][N]?)?/";
 		if( preg_match_all( $pattern, $sql, $matches ) ){
+			$errors = [];
 			$variables = [];
 			$prepare = [];
 			foreach($matches[1] as $index => $variable){
@@ -133,8 +137,24 @@ class Agdp_Report {
 				$format_IN = false;
 				if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 					switch($sql_variables[$variable]['type']){
+						case 'range': 
+						case 'numeric':
+						case 'number':
+						case 'integer':
+							if( ! $format )
+								$format = '%d';
+							break;
+						case 'decimal':
+						case 'float':
+							if( ! $format )
+								$format = '%f';
+							break;
+						case 'field':
+							if( ! $format )
+								$format = '%i';
+							break;
 						case 'checkboxes': 
-							if( $format === '%N' ){
+							if( $format === '%IN' ){
 								$format_IN = true;
 								if( $variables[$variable] ){
 									if( is_string( $variables[$variable] ) ){
@@ -156,18 +176,40 @@ class Agdp_Report {
 								}
 							}
 							break;
-						case 'range': 
-						case 'numeric':
-						case 'number':
-						case 'integer':
-							if( ! $format )
-								$format = '%d';
+						case 'report': 
+							$error = '';
+							if( is_numeric($variables[$variable])
+							 && ( $sub_report = get_post($variables[$variable]) )){
+								if( ! isset($options[__FUNCTION__.':stack']) )
+									$options[__FUNCTION__.':stack'] = [];
+								elseif( $sub_report->ID == $report_id
+								|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
+									$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
+									$variables[$variable] = $error;
+								}
+								if( ! $error ){
+									array_push( $options[__FUNCTION__.':stack'], $report_id );
+									$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
+									array_pop( $options[__FUNCTION__.':stack'] );
+									
+									$sub_sql = self::sanitize_sub_report_sql( $sub_sql );
+									
+									$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
+									//skip prepare
+									continue 2;
+								}
+							}				 
+							else {
+								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variables[$variable]);
+								$variables[$variable] = $error;
+							}
 							break;
-						case 'decimal':
-						case 'float':
-							if( ! $format )
-								$format = '%f';
-							break;
+						case 'asc_desc': 
+							if( ! $variables[$variable] )
+								$variables[$variable] = 'ASC';
+							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
+							//skip prepare
+							continue 2;
 						default:
 					}
 				}
@@ -196,11 +238,35 @@ class Agdp_Report {
 				else
 					$prepare[] = $variables[$variable];
 			}
-			//prepare
-			$sql = $wpdb->prepare($sql, $prepare);
+			//wpdb prepare
+			try{
+				$sql = $wpdb->prepare($sql, $prepare);
+			}
+			catch( Exception $exception ){
+				$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $exception->getMessage());
+			}
+			
+			if( count($errors) ){
+				$sql .= sprintf("\n/** %s\n**/", implode("\n", $errors));
+				debug_log(__FUNCTION__, 'errors', $sql );
+				
+			}
 		}
 		
 		return $sql;
+	}
+
+	/**
+	 * sanitize_sub_report_sql
+	 */
+ 	public static function sanitize_sub_report_sql( $sql = false ) {
+		//Sub query does not support LIMIT clause
+		$sql = preg_replace('/\sLIMIT\s.*(\n|$)/i', '', $sql);
+		//TODO 
+		$sql = preg_replace('/\sORDER BY\s.*(\n|$)/i', '', $sql);
+		
+		$sql = str_replace( "\n", "\n\t", $sql );
+		return "( $sql )";
 	}
 
 	/**

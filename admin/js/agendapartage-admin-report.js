@@ -27,8 +27,10 @@ jQuery( function( $ ) {
 			'forum' : 'Forum',
 			'newsletter' : 'Lettre-info',
 			'report' : 'Rapport',
+			'field' : 'Champ de requête',
+			'asc_desc' : 'Ordre de tri',
 		};
-		var input_options_types = ['select', 'radio', 'checkboxes', 'range'];
+		var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field'];
 		
 		//Init
 		$('#agdp_report-inputs').each(function(e){
@@ -66,7 +68,7 @@ jQuery( function( $ ) {
 				//Variables présentes dans la requête
 				var matches;
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiN])?";
+				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiI][N]?)?";
 				if( matches = sql.matchAll( new RegExp(pattern, "g") ) ){
 					matches = matches.toArray();
 					var variables = {};
@@ -74,6 +76,8 @@ jQuery( function( $ ) {
 					for(var i in matches){
 						var variable = matches[i][1];
 						if( ! variables[variable] ){
+							if( variables[variable] === undefined )
+								variables[variable] = {};
 							var value = var_values[variable];//get_post_meta( $report_id, $meta_key, true );
 							variables[variable] = value;
 							if( matches[i][2] )
@@ -95,12 +99,16 @@ jQuery( function( $ ) {
 							if( options = variables[variable]['options'] )
 								options = options.split('\n');
 						}
+						else {
+							value = type = options = undefined;
+						}
 						if( options === undefined )
 							options = [];
 						//create input
 						var $input;
 						switch(type){
 							case 'select' :
+							case 'field' :
 								$input = $('<select></select>');
 								$input = add_input_options($input, options, variable, value);
 								break;
@@ -142,7 +150,7 @@ jQuery( function( $ ) {
 										max = options[0];
 									}
 								}
-								else if(Number.isInteger( options ) )
+								else if( jQuery.isNumeric( options ) )
 									max = options;
 								$input = $('<input type="range" min="' + min + '" max="' + max + '">')
 									.val( value );
@@ -210,6 +218,11 @@ jQuery( function( $ ) {
 											+ '>' + value + ' (inconnu !)</option>');
 								}, { '$input': $input, 'value': value } );
 								options = false;
+								break;
+							case 'asc_desc' :
+								$input = $('<select></select>');
+								$input = add_input_options($input, {ASC: 'Croissant', DESC: 'Décroissant'}, variable, value);
+							
 								break;
 							default:
 								$input = $('<input/>')
@@ -289,12 +302,17 @@ jQuery( function( $ ) {
 						.appendTo( $wrap )
 					;
 				}
+				else if( $editor.is(':visible[var_name="' + variable + '"]')){
+					$editor.hide();
+					return false;
+				}
 				$editor
+					.attr('var_name', variable)
 					.html($('<div class="var_editor_header">' + variable + '</div>')
 						.append($('<a class="close-box" href=""><span class="dashicons-before dashicons-no"></span></a>')
 							.on('click', function(){ $editor.remove(); return false; })
 						)
-					);
+					).show();
 				
 				var $type = $('<select/>')
 					.appendTo(
@@ -344,6 +362,7 @@ jQuery( function( $ ) {
 							.attr('var_options', this.value)
 							.trigger('change')
 						;
+						$sql.trigger('change');
 					})
 				;
 				
@@ -402,15 +421,21 @@ jQuery( function( $ ) {
 				var $last_input = $input;
 					
 				for(var i in options){
-					var opt = options[i];
-					var label;
-					var separator = opt.indexOf(':');
-					if( separator >= 0 ){
-						label = opt.substr(separator+1).trim();
-						opt = separator ? opt.substr(0, separator).trim() : '';
+					var opt, label;
+					if( ! jQuery.isNumeric( i ) ){
+						opt = i;
+						label = options[i];
 					}
-					else
-						label = opt;
+					else {
+						opt = options[i];
+						var separator = opt.indexOf(':');
+						if( separator >= 0 ){
+							label = opt.substr(separator+1).trim();
+							opt = separator ? opt.substr(0, separator).trim() : '';
+						}
+						else
+							label = opt;
+					}
 					var select_option = false;
 					if( typeof value === 'object' ){
 						if( value.indexOf( opt ) >= 0 ){
@@ -479,6 +504,14 @@ jQuery( function( $ ) {
 				var sql = $form.find('#sql').val();
 				var sql_variables = $form.find('#sql_variables').val();
 				var report_show_sql = $form.find('#report_show_sql').prop('checked');
+				var $destination = $form.find('.agdpreport');
+				if( $destination.length === 0 ){
+					var $dest_container = $form.find('#agdp_report-render .inside:first');
+					$destination = $('wpbody-content .agdpreport');
+					if( $destination.length === 0 )
+						$destination = $('<div class="agdpreport"></div>');
+					$dest_container.append( $destination );
+				}
 				var data = {
 					action : "agendapartage_report_action",
 					method : "report_html",
