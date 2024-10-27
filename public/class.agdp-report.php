@@ -109,7 +109,7 @@ class Agdp_Report {
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
-		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiIL][NK]?)?/";
+		$pattern = "/\:([a-zA-Z0-9_]+)(%(?:$allowed_format)?[sdfFiIK][NLR]?)?/";
 		if( preg_match_all( $pattern, $sql, $matches ) ){
 			$errors = [];
 			$variables = [];
@@ -135,7 +135,7 @@ class Agdp_Report {
 				$src = $matches[0][$index];
 				$format = $matches[2][$index];
 				$format_IN = $format === '%IN';
-				$format_LIKE = substr( $format, -2 ) === 'LK';
+				$format_LIKE = substr( $format, 1, 1 ) === 'K';
 				if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 					switch($sql_variables[$variable]['type']){
 						case 'range': 
@@ -217,19 +217,7 @@ class Agdp_Report {
 				if( ! $format )
 					$format = '%s';
 				elseif( $format_LIKE ){
-					$f_matches = [];
-					$pattern = "/%([01])?(\.[01])?LK$/"; //TODO simple quote
-					if( preg_match( $pattern, $format, $f_matches )
-					 && count($f_matches) > 1 ){
-						if( $f_matches[1] === '1' ){
-							if( $f_matches[2] === '.1' )
-								$format_LIKE = true;
-							else
-								$format_LIKE = 'starts_with';
-						}
-						elseif( $f_matches[2] === '.1' )
-							$format_LIKE = 'ends_with';
-					}
+					$format_LIKE = $format;
 					$format = '%s';
 				}
 				$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $format, $sql );
@@ -253,16 +241,14 @@ class Agdp_Report {
 				elseif( $variables[$variable] === null )
 					$prepare[] = '';
 				elseif( $format_LIKE ){
-					if( $format_LIKE === true )
-						$format_LIKE = 'contains';
+					debug_log('$format_LIKE', $format_LIKE);
 					switch($format_LIKE){ //sic : switch fails when $format_LIKE===true
-						case 'starts_with' :
+						case '%KL' :
 							$prepare[] = $variables[$variable].'%';
 							break;
-						case 'ends_with' :
+						case '%KR' :
 							$prepare[] = '%'.$variables[$variable];
 							break;
-						case 'contains':
 						default :
 							$prepare[] = '%'.$variables[$variable].'%';
 							break;
@@ -369,7 +355,7 @@ class Agdp_Report {
 		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
 		
 		if( ! $dbresults )
-			return sprintf('<div class="agdpreport" agdp_report="%d">?%s</div>', $report_id, $sql_prepared);
+			return sprintf('<div class="agdpreport" agdp_report="%d">(aucun résultat)%s</div>', $report_id, $sql_prepared);
 		
 		if( is_a($dbresults, 'Exception') )
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre>%s</div>'

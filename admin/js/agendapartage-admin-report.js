@@ -72,7 +72,7 @@ jQuery( function( $ ) {
 				//Variables présentes dans la requête
 				var matches;
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiI][N]?)?";
+				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiIK][NLR]?)?";
 				if( matches = sql.matchAll( new RegExp(pattern, "g") ) ){
 					matches = matches.toArray();
 					var variables = {};
@@ -452,6 +452,7 @@ jQuery( function( $ ) {
 							options = callback.apply( $input, callback_options );
 							if( options && options.jquery )
 								return;
+							add_input_options($input, options, variable, value);
 						});
 					}
 					else
