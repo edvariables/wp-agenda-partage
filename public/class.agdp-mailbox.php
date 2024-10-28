@@ -713,7 +713,7 @@ class Agdp_Mailbox {
 		$mailbox = self::get_mailbox($mailbox);
 		
 		$time = get_post_meta($mailbox->ID, self::sync_time_meta_key, true);
-		if( $time && $time >= strtotime('- 5 second'))
+		if( $time && $time >= strtotime('- ' . AGDP_MAILBOX_SYNC_DELAY . ' second'))
 			return true;
 		
 		if( self::is_suspended( $mailbox ) ){

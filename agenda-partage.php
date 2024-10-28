@@ -67,6 +67,8 @@ define( 'AGDP_JS_SKIP_FIELD', '_js_skip_field');
 define( 'AGDP_IMG_MAX_WIDTH', 400);
 define( 'AGDP_IMG_MAX_HEIGHT', 400);
 
+define( 'AGDP_MAILBOX_SYNC_DELAY', 30);//secondes
+
 define( 'AGDP_SUBJECT_CANCELED', '[ANNULATION]');
 define( 'AGDP_SUBJECT_UPDATED', '[MISE A JOUR]');
 
