@@ -117,7 +117,7 @@ class Agdp_Report {
 		
 		//strings
 		$matches = [];
-		$pattern = "/\"([^\"]{2,})\"/"; //TODO simple quote
+		$pattern = "/\"((?!\\\"){2,})\"/"; //TODO simple quote
 		$strings_prefix = uniqid('__sqlstr_');
 		$sql_strings = [];
 		while( preg_match( $pattern, $sql, $matches ) ){
