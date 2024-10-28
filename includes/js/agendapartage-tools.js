@@ -32,7 +32,7 @@ jQuery( function( $ ) {
 			jQuery.ajax({
 				url : agdp_ajax.ajax_url,
 				type : 'post', 
-				contentType: "application/json; charset=utf-8",
+				// contentType: "application/json; charset=utf-8", //should need data['data'] = JSON.stringify(data['data']) //needs stripslashes() at server side
 				data : Object.assign(data, {
 					_nonce : agdp_ajax.check_nonce
 				}),

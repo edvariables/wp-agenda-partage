@@ -241,7 +241,9 @@ class Agdp_Report {
 				elseif( $variables[$variable] === null )
 					$prepare[] = '';
 				elseif( $format_LIKE ){
-					debug_log('$format_LIKE', $format_LIKE);
+					// debug_log('$format_LIKE', $format_LIKE);
+					if( strpos( $variables[$variable], '_' ) !== false )
+						$variables[$variable] = str_replace('_', '\_', $variables[$variable]);
 					switch($format_LIKE){ //sic : switch fails when $format_LIKE===true
 						case '%KL' :
 							$prepare[] = $variables[$variable].'%';
@@ -368,6 +370,12 @@ class Agdp_Report {
 		$content = sprintf('<div class="agdpreport" agdp_report="%d"><table>',
 				$report_id
 		);
+		
+		$table_caption = $report->post_title;
+		if( $table_caption ){
+			$content .= sprintf('<caption>%s</caption>', $table_caption );
+		}
+		
 		$content .= '<thead><tr class="report_fields">';
 		foreach($dbresults as $row){
 			$content .= sprintf('<th>#</th>');
@@ -389,7 +397,20 @@ class Agdp_Report {
 			
 		}
 	    $content .= '</tbody>';
-	    $content .= '</table>';
+		
+		//TODO tfoot
+	    // $content .= '<tfoot><tr>';
+		// foreach($dbresults as $row){
+			// $content .= sprintf('<td>%s ligne%s</td>', count($dbresults), count($dbresults)>1 ? 's' : '');
+			// foreach($row as $field_name => $field_value){
+				// $field_label = $field_name;//TODO
+				// $content .= sprintf('<td field="%s"></td>', $field_name/* , $field_label */);
+			// }
+			// break;
+		// }
+	    // $content .= '</tr></tfoot>';
+	    
+		$content .= '</table>';
 		
 		if( $sql_prepared ) 
 			$content .= $sql_prepared;

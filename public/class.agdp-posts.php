@@ -288,7 +288,7 @@ abstract class Agdp_Posts {
 	public static function on_wp_ajax_posts() {
 		if( ! Agdp::check_nonce()
 		|| empty($_POST['method']))
-			wp_die('no-nonce');
+			wp_die('nonce error');
 		
 		$ajax_response = '';
 		

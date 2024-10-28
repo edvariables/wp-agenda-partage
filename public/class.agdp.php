@@ -809,7 +809,8 @@ class Agdp {
 	public static function check_nonce(){
 		if( ! isset($_POST['_nonce']))
 			return false;
-		$nonce_key = is_admin() ? 'agdp-admin-nonce' : 'agdp-nonce';
+		$is_admin = strpos( $_SERVER['HTTP_REFERER'], admin_url() ) !== false;
+		$nonce_key = $is_admin ? 'agdp-admin-nonce' : 'agdp-nonce';
 		return wp_verify_nonce( $_POST['_nonce'], $nonce_key );
 	}
 
