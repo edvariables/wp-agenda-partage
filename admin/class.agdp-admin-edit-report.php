@@ -241,6 +241,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
 			. '<div class="toggle-container sql-helper-variables"><ul>';
 		
+		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère :, ou alors seul.';
 		$html .= '<li>De la forme : <code>:var_name[%format]</code>';
 		$html .= '<li><code>%s</code> : type texte (par défaut)';
 		$html .= '<li><code>%d</code> : type nombre entier';

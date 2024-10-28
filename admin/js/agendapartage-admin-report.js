@@ -51,8 +51,8 @@ jQuery( function( $ ) {
 				sql = sql.replaceAll( new RegExp(pattern, "g"), ' ' );
 				
 				//strings
-				pattern = "\"([^\"]+)\""; //TODO simple quote
-				sql = sql.replaceAll( new RegExp(pattern, "g"), '""' );
+				pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/';//"\"([^\"]+)\""; //TODO simple quote
+				sql = sql.replaceAll( new RegExp(pattern, "sg"), '""' );
 				
 				
 				//Valeurs actuelles des variables
