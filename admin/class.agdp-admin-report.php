@@ -111,7 +111,8 @@ class Agdp_Admin_Report {
 			if($key === 'title')
 				break;
 		}
-		$new_columns['associated-page'] = __( 'Page associée', AGDP_TAG );
+		// $new_columns['associated-page'] = __( 'Page associée', AGDP_TAG );
+		$new_columns['sql'] = __( 'Requête', AGDP_TAG );
 		return array_merge($new_columns, $columns);
 	}
 	/**
@@ -134,6 +135,13 @@ class Agdp_Admin_Report {
 				// }
 				// if( $emails )
 					// echo sprintf('<code>%s</code>', $emails);
+				break;
+			case 'sql' :
+				$meta_key = 'sql';
+				$value = get_post_meta( $post_id, $meta_key, true );
+				if( strlen($value) > 200 )
+					$value = substr( $value, 0, 200) . '...';
+				echo sprintf('<code>%s</code>', $value);
 				break;
 			default:
 				break;

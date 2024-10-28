@@ -32,9 +32,11 @@ jQuery( function( $ ) {
 			'newsletter' : 'Lettre-info',
 			'report' : 'Sous-requête',
 			'field' : 'Champ de requête',
+			'table' : 'Table de requête',
+			'column' : 'Colonne de table de requête',
 			'asc_desc' : 'Ordre de tri',
 		};
-		var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field'];
+		var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field', 'table'];
 		
 		//Init
 		$('#agdp_report-inputs').each(function(e){
@@ -83,7 +85,8 @@ jQuery( function( $ ) {
 							if( variables[variable] === undefined )
 								variables[variable] = {};
 							var value = var_values[variable];//get_post_meta( $report_id, $meta_key, true );
-							variables[variable] = value;
+							if( typeof value === 'object' )
+								variables[variable] = value;
 							if( matches[i][2] )
 								variables[variable]['format'] = matches[i][2];
 						}
@@ -111,6 +114,9 @@ jQuery( function( $ ) {
 						//create input
 						var $input;
 						switch(type){
+							case 'table' :
+								if( ! options || options.length === 0 )
+									options = ['posts', 'postmeta', 'comments', 'commentmeta', 'terms', 'termmeta', 'users', 'usermeta', ''];
 							case 'select' :
 								$input = $('<select></select>');
 								$input = add_input_options($input, options, variable, value);

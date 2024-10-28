@@ -122,11 +122,12 @@ class Agdp_Report {
 		$sql_strings = [];
 		while( preg_match( $pattern, $sql, $matches ) ){
 			$string = $matches[1];
+			$string = str_replace('\"', '"', $string);
 			$variable = sprintf('%s_%d', $strings_prefix, count($sql_strings));
 			$sql_strings[$variable] = $string;
 			$sql = str_replace( $matches[0], ':' . $variable, $sql );
 		}
-		
+							
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
@@ -156,6 +157,7 @@ class Agdp_Report {
 				$src = $matches[0][$index];
 				$format = $matches[2][$index];
 				$format_IN = $format === '%IN';
+				$format_Inject = $format === '%I';
 				$format_LIKE = substr( $format, 1, 1 ) === 'K';
 				if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 					switch($sql_variables[$variable]['type']){
@@ -174,6 +176,18 @@ class Agdp_Report {
 						case 'field':
 							if( ! $format )
 								$format = '%i';
+							break;
+						case 'table':
+							if( ! $format )
+								$format_Inject = $format = '%I';
+							if( ! $variables[$variable] )
+								$variables[$variable] = '';
+							elseif( $blog_prefix && substr( $variables[$variable], 0, strlen($blog_prefix ) ) !== $blog_prefix )
+								$variables[$variable] = $blog_prefix . $variables[$variable];
+							break;
+						case 'column':
+							if( ! $format )
+								$format_Inject = $format = '%I';
 							break;
 						case 'checkboxes': 
 							if( $format_IN ){
@@ -241,6 +255,12 @@ class Agdp_Report {
 					$format_LIKE = $format;
 					$format = '%s';
 				}
+				if( $format_Inject ){
+					if( ! ($value = $variables[$variable]) )
+						$value = '';
+					$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
+					continue;
+				}
 				$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $format, $sql );
 									
 				if( is_array($variables[$variable]) ){
@@ -292,12 +312,13 @@ class Agdp_Report {
 					$prepare[$i] = str_replace( '%', $escape_flag, $value );
 					
 			//wpdb prepare
-			try {
-				$sql = $wpdb->prepare($sql, $prepare);
-			}
-			catch( Exception $exception ){
-				$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $exception->getMessage());
-			}
+			if( count($prepare) )
+				try {
+					$sql = $wpdb->prepare($sql, $prepare);
+				}
+				catch( Exception $exception ){
+					$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $exception->getMessage());
+				}
 			
 			//unescape
 			$sql = str_replace( $escape_flag, '%', $sql );

@@ -276,6 +276,15 @@ div.edit-post-layout__metaboxes {
 .agdp-metabox-row code {
 	padding-left:0px;
 }
+
+
+#the-list .column-sql {
+  overflow: hidden;
+}
+#the-list .column-sql code {
+	white-space: pre;
+	padding: 0px;
+}
 /*
  *******/
  
