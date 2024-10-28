@@ -74,6 +74,27 @@ class Agdp_Report {
 		if( ! $sql )
 			$sql = get_post_meta( $report_id, 'sql', true );
 		
+		//sql multiples
+		$sqls = preg_split( '/[;]\s*\n/', $sql);
+		if( count($sqls) > 1 ){
+			$sqls_ne = [];
+			foreach($sqls as $sql_u ){
+				if( trim($sql_u) !== '' ){
+					$sql_u = self::get_sql( $report, $sql_u, $sql_variables, $options );
+					if( $sql_u )
+						$sqls_ne[] = $sql_u;
+				}
+			}
+			switch( count($sqls_ne) ){
+			case 0:
+				return '';
+			case 1:
+				return $sqls_ne[0];
+			default:
+				return $sqls_ne;
+			}
+		}
+		
 		//blog_prefix
 		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
 		
@@ -313,10 +334,20 @@ class Agdp_Report {
 		$sql = self::get_sql( $report, $sql, $sql_variables );
 		if( ! $sql )
 			return;
-		
+			
 		global $wpdb;
 		$wpdb->suppress_errors(true);
-		$result = $wpdb->get_results($sql);
+		
+		if( is_array($sql) ){
+			foreach( $sql as $index => $sql_u ){
+				$result_u = $wpdb->get_results($sql_u);
+				// debug_log(__FUNCTION__, $index, $sql_u, $result_u);
+				if( $result_u )
+					$result = $result_u;
+			}
+		}
+		else
+			$result = $wpdb->get_results($sql);
 		$wpdb->suppress_errors(false);
 		if($wpdb->last_error)
 			$result = new Exception($wpdb->last_error);
@@ -350,8 +381,12 @@ class Agdp_Report {
 				$report_show_sql = $options[$meta_key];
 			else
 				$report_show_sql = get_post_meta( $report_id, $meta_key, true );
-			if( $report_show_sql )
-				$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', self::get_sql( $report, $sql, $sql_variables ));
+			if( $report_show_sql ){
+				$sql_prepared = self::get_sql( $report, $sql, $sql_variables );
+				if( is_array($sql_prepared) )
+					$sql_prepared = implode( ";\n", $sql_prepared );
+				$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', $sql_prepared);
+			}
 		}	
 		
 		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
