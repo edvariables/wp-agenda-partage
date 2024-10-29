@@ -84,6 +84,9 @@ class Agdp_Admin_Covoiturage {
 				
 				break;
 			case 'dates' :
+				$periodique = get_post_meta( $post_id, 'cov-periodique', true );
+				if( $periodique )
+					echo 'Jusqu\'au ';
 				echo Agdp_Covoiturage::get_covoiturage_dates_text( $post_id );
 				break;
 			case 'diffusion' :
