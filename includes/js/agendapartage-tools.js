@@ -172,7 +172,7 @@ jQuery( function( $ ) {
 							if(typeof response === 'string' || response instanceof String){
 								var $container = $toggler.nextAll('.toggle-container:first');
 								if($container.length == 0)
-									$container = $('<div class="toggle-container"/>').appendTo($toggler);
+									$toggler.after($container = $('<div class="toggle-container"/>'));
 								$container
 									.html( response )
 										.trigger('toggle-init')
@@ -199,8 +199,9 @@ jQuery( function( $ ) {
 				$toggler.addClass('loading');//Todo Hourglass
 				var $spinner = $toggler.children('.wpcf7-spinner');
 				if($spinner.length == 0)
-						$spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>')
-								.appendTo($toggler.children(':first'));
+					$toggler.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
+					// $spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>')
+							// .appendTo($toggler.children(':first'));
 			}
 			else if(isActive) {
 				$toggler.removeClass( "active" ).nextAll(".toggle-container:first").slideUp( "normal" );

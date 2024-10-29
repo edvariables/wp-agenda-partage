@@ -382,7 +382,15 @@ jQuery( function( $ ) {
 			});
 		
 			//Liste de tables
-			$this.on('click', '.sql-helper-tables a', function(e){
+			$this.find('.sql-helper-tables a')
+				.on('click', function(e){
+					var $sql = $this.find('textarea#sql');
+					$sql.get(0).insertAtCaret( $(this).text() );
+				})
+				// .after($('<span class="dashicons-before dashicons-edit"></span>')
+			;
+			//Liste de colonne
+			$this.on('click', '.table_columns li', function(e){
 				var $sql = $this.find('textarea#sql');
 				$sql.get(0).insertAtCaret( $(this).text() );
 			});

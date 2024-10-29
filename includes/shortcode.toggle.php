@@ -48,7 +48,7 @@ function toggle_shortcode_cb( $atts, $content = null ) {
 		$title = '';
 	return sprintf('<h3 class="toggle-trigger %s%s" %s><a href="#">%s</a></h3><div class="toggle-container">%s</div>'
 			, $class
-			, $ajax
+			, $ajax //TODO check %s%s
 			, $id
 			, esc_html( $title  )
 			, $content

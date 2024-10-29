@@ -59,6 +59,31 @@
 	padding-left: 5em;
 	font-size: smaller;
 }
+#agdp_report-inputs .sql-helper-tables {
+	margin-top: 0px;
+	padding-top: 0px;
+	font-family: "Courier New", monospace;
+}
+#agdp_report-inputs .sql-helper-tables li {
+	display: inline-block;
+	padding-right: 1em;
+	vertical-align: top;
+}
+#agdp_report-inputs .sql-helper-tables a {
+	text-decoration: none;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger > span {
+	display: inline-block;
+	min-width: 2em;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger {
+	display: inline-block;
+	min-width: 2em;
+	opacity: 50%;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger:hover {
+	opacity: inherit;
+}
 
 /** render **/
 #agdp_report-render .report_refresh, #agdp_report-render .report_show_sql {

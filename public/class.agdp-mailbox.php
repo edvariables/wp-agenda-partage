@@ -358,7 +358,8 @@ class Agdp_Mailbox {
 	 * Log l'état du cron
 	 */
 	public static function log_cron_state(){
-		debug_log('[agdpmailbox-cron state]' . self::$cron_state);
+		if( self::$cron_state && strpos( self::$cron_state , '0 e-mail(s)' ) === false )
+			debug_log('[agdpmailbox-cron state]' . self::$cron_state);
 	}
 	
 	/**

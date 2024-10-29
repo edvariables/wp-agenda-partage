@@ -30,6 +30,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_styles'), 10, 1);
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_scripts'), 10, 1);
 		}
+		add_action( 'wp_ajax_'.AGDP_TAG.'_admin_edit_report_action', array(__CLASS__, 'on_ajax_action') );
 	}
 	/****************/
 	
@@ -210,7 +211,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		$tables = [];
+		$tables = ['posts', 'postmeta', 'comments', 'commentmeta'];
 		$sql = 'SHOW TABLES';
 		foreach($wpdb->get_results($sql) as $row){
 			foreach($row as $table){
@@ -218,19 +219,101 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 					$table = substr($table, strlen($blog_prefix));
 				if( is_numeric($table[0]) )
 					continue;
-				$tables[] = $table;
+				if( ! in_array($table, $tables) )
+					$tables[] = $table;
 				break;
 			}
 		}
 		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
-			. '<div class="toggle-container sql-helper-tables"><code>';
+			. '<ul class="toggle-container sql-helper-tables">';
 		foreach($tables as $index => $table){
-			if( $index )
-				$html .= ' - ';
-			$html .= sprintf('<a href="#">%s</a>', $table);
+			
+			// $html .= sprintf('<a href="#">%s</a>', $table);
+			// $html .= Agdp::get_ajax_action_link(false, [ 'admin_edit_report','get_table_columns'], false, $table, false
+												// , false, ['table'=>$table]);
+			
+			$ajax = esc_attr( json_encode ( array(
+					'action' => AGDP_TAG.'_admin_edit_report_action',
+					'method' => 'get_table_columns',
+					'data' => ['table' => $table]
+				)));
+			$ajax = sprintf(' ajax=1 data="%s"', $ajax);
+			$html .= sprintf('<li><a href="#">%s</a><span class="toggle-trigger" %s><span></span></span></li>'
+					, esc_html( $table )
+					, $ajax
+			);
+			// $html .= toggle_shortcode_cbb(false, [ 'admin_edit_report','get_table_columns'], false, $table, false
+												// , false, ['table'=>$table]);
 		}
-		$html .= '</code></div>';
+		$html .= '</ul>';
 		return $html;
+	}
+	
+	/**
+	 * Requête Ajax 
+	 TODO généraliser une fonction on_ajax_action( $called_class )
+	 */
+	public static function on_ajax_action() {
+		if( ! Agdp::check_nonce() )
+			wp_die('nonce error');
+		if( empty($_POST['method']))
+			wp_die('method missing');
+		
+		$ajax_response = '';
+		
+		$method = $_POST['method'];
+		$data = isset($_POST['data']) ? $_POST['data'] : [];
+		
+		if( $data && is_string($data) && ! empty($_POST['contentType']) && strpos( $_POST['contentType'], 'json' ) )
+			$data = json_decode(stripslashes( $data), true);
+		
+		try {
+			//cherche une fonction du nom "on_ajax_action_{method}"
+			$function = array(get_called_class(), sprintf('on_ajax_action_%s', $method));
+			$ajax_response = call_user_func( $function, $data);
+		}
+		catch( Exception $e ){
+			$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
+		}
+		
+		// Make your array as json
+		wp_send_json($ajax_response);
+	 
+		// Don't forget to stop execution afterward.
+		wp_die();
+	}
+	
+	/**
+	 * Retourne la liste de toutes les tables
+	 */
+	public static function on_ajax_action_get_table_columns( ){
+		$data = isset($_POST['data']) ? $_POST['data'] : [];
+		if( ! empty($data['table']) ){
+			$table = $data['table'];
+			global $wpdb;
+			$blog_prefix = $wpdb->get_blog_prefix();
+			$columns = [];
+			$sql = 'SHOW COLUMNS FROM ' . $blog_prefix . $table;
+			foreach($wpdb->get_results($sql) as $row){
+				foreach($row as $column){
+					$columns[] = print_r( $column, true);
+					break;
+				}
+			}
+			$html = '<ul class="table_columns">';
+			foreach($columns as $column)
+				$html .= sprintf('<li><a href="#">%s</a></li>', $column);
+			$html .= '</ul>';
+			$ajax_response = $html;
+		}
+		else
+			$ajax_response = '(nom de table inconnu)';
+		
+		// Make your array as json
+		wp_send_json($ajax_response);
+	 
+		// Don't forget to stop execution afterward.
+		wp_die();
 	}
 	
 	/**
@@ -256,8 +339,9 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%KL</code> : Ajoute <code>%</code> à droite de la valeur de la variable pour un LIKE ("commence par").';
 		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").';
 		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.';
-		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.';
 		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code>';
+		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.';
+		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.';
 		
 		$html .= '</ul></div>';
 		return $html;
