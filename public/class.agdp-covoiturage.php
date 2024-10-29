@@ -62,7 +62,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		// $post_title = isset( $covoiturage->post_title ) ? $covoiturage->post_title : '';
 		$intentionid = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-intention', true);
 		$intention = Agdp_Covoiturage_Post_type::get_intention_label($intentionid);
-		$is_periodique = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-periodique', true);
+		$is_periodique = $data ? $data['cov-periodique'] : get_post_meta($covoiturage_id, 'cov-periodique', true);
 		if( $is_periodique ){
 			$le = $no_html ? "tous les" : "Tous les";
 			$dates = $data ? $data['cov-periodique-label'] : get_post_meta($covoiturage_id, 'cov-periodique-label', true);
