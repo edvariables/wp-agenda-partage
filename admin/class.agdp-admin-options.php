@@ -1115,9 +1115,8 @@ class Agdp_Admin_Options {
 			$data_str = htmlspecialchars_decode($data_str, ENT_QUOTES);
 			$data = json_decode($data_str, true);
 			if( $data ){
-				// $confirm_action = empty($_REQUEST['confirm_action']) ? false : $_REQUEST['confirm_action'];
-				$posts = self::agdp_import_posts( $data );
-				if( ! $posts ) {
+				$posts = self::agdp_import_posts( $data, $_REQUEST );
+				if( $posts === false ) {
 					echo sprintf('<div class="error"><label>%s</label><pre>%s</pre></div>'
 						, 'Impossible de reconnaitre les données à importer'
 						, json_encode( $data )
@@ -1142,6 +1141,9 @@ class Agdp_Admin_Options {
 			$post = $post_id ? get_post( $post_id ) : false;
 			$post_type = $post ? $post->post_type : false;
 		}
+		$confirm_action = ! isset($_REQUEST['confirm_action']) ? true : $_REQUEST['confirm_action'];
+		$add_title_suffix = empty($_REQUEST['add_title_suffix']) ? true : $_REQUEST['add_title_suffix'];
+		$title_suffix = empty($_REQUEST['title_suffix']) ? ' (importé)' : $_REQUEST['title_suffix'];
 		
 		$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post ? $post->ID : 0) );
 		//FORM
@@ -1149,8 +1151,11 @@ class Agdp_Admin_Options {
 			<div><h3>Coller ici les données à importer</h3>
 				<textarea name="action-data" rows="20" cols="100"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
 			</div>
-			<!--<label><input type="checkbox" name="confirm_action"> Confirmer chaque importation </label>
-			<br>-->
+			<label><input type="checkbox" name="confirm_action"<?php if( $confirm_action ) echo ' checked';?>> Confirmer chaque importation (TODO) </label>
+			<br><label><input type="checkbox" name="add_title_suffix"<?php if( $add_title_suffix ) echo ' checked';?>> Ajouter un suffixe aux titre </label>
+				<input type="text" name="title_suffix" value="<?php echo esc_attr($title_suffix);?>">
+			<br>
+			<br>
 			<input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Importer">
 			<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
 		</form>
@@ -1162,14 +1167,19 @@ class Agdp_Admin_Options {
 	 * Import post
 	 * $data['post'], $data['metas']
 	 */
-	private  static function agdp_import_posts( $data ) {
+	private  static function agdp_import_posts( $data, $options = false ) {
 		if( empty($data['post']) ){
 			$new_posts = [];
 			foreach(  $data as $post_data )
 				if( ! empty($post_data['post']) )
-					$new_posts[] = static::agdp_import_posts( $post_data );
+					$new_posts[] = static::agdp_import_posts( $post_data, $options );
 			return $new_posts;
 		}
+		if( ! is_array($options) )
+			$options = [];
+		$confirm_action = ! isset($options['confirm_action']) ? true : $options['confirm_action'];
+		$add_title_suffix = ! isset($options['add_title_suffix']) ? true : $options['add_title_suffix'];
+		$title_suffix = empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
 		
 		if( empty($data['post'])
 		 || empty($data['post']['post_type']) ){
@@ -1205,7 +1215,8 @@ class Agdp_Admin_Options {
 		}
 		$data['post']['meta_input'] = $data['metas'];
 		
-		$data['post']['post_title'] .= ' (importé-e)';
+		if( $add_title_suffix )
+			$data['post']['post_title'] .= $title_suffix ;
 		// var_dump($data);
 		// debug_log(__FUNCTION__, $data['metas']['sql_variables'], get_debug_type($data['metas']['sql_variables']));
 		$new_post_id = wp_insert_post( $data['post'], true );
