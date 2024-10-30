@@ -75,6 +75,9 @@ class Agdp_Report {
 			$sql = get_post_meta( $report_id, 'sql', true );
 		
 		//sql multiples
+		if( is_array($sql) ){
+			$sql = implode(';\n', $sql);
+		}
 		$sqls = preg_split( '/[;]\s*\n/', $sql);
 		if( count($sqls) > 1 ){
 			$sqls_ne = [];

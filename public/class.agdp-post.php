@@ -485,20 +485,20 @@ abstract class Agdp_Post {
 	 * https://adambalee.com
 	 */
 	private static function init_hooks_for_search(){
-		add_filter('posts_join', array(__CLASS__, 'cf_search_join' ));
-		add_filter( 'posts_where', array(__CLASS__, 'cf_search_where' ));
-		add_filter( 'posts_distinct', array(__CLASS__, 'cf_search_distinct' ));
+		//pour que ces filtres ne soient pas appliqués, $query_vars['suppress_filters'] = true;
+		add_filter('posts_join', array(__CLASS__, 'cf_search_join' ), 10, 2);
+		add_filter( 'posts_where', array(__CLASS__, 'cf_search_where' ), 10, 2);
+		add_filter( 'posts_distinct', array(__CLASS__, 'cf_search_distinct' ), 10, 2);
 	}
 	/**
 	 * Join posts and postmeta tables
 	 *
 	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_join
 	 */
-	public static function cf_search_join( $join ) {
-	    global $wpdb;
-
-	    if ( is_search() ) {
-	        $join .=' LEFT JOIN '.$wpdb->postmeta. ' ON '. $wpdb->posts . '.ID = ' . $wpdb->postmeta . '.post_id ';
+	public static function cf_search_join( $join, $wp_query ) {
+		global $wpdb;
+	    if ( $wp_query->is_search() ) {
+	        $join .=' LEFT JOIN '.$wpdb->postmeta. ' search_meta ON '. $wpdb->posts . '.ID = search_meta.post_id ';
 	    }
 
 	    return $join;
@@ -509,13 +509,13 @@ abstract class Agdp_Post {
 	 *
 	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
 	 */
-	public static function cf_search_where( $where ) {
-	    global $pagenow, $wpdb;
+	public static function cf_search_where( $where, $wp_query ) {
+		global $wpdb, $pagenow;
 
-	    if ( is_search() ) {
+	    if ( $wp_query->is_search() ) {
 	        $where = preg_replace(
 	            "/\(\s*".$wpdb->posts.".post_title\s+LIKE\s*(\'[^\']+\')\s*\)/",
-	            "(".$wpdb->posts.".post_title LIKE $1) OR (".$wpdb->postmeta.".meta_value LIKE $1)", $where );
+	            "(".$wpdb->posts.".post_title LIKE $1) OR (search_meta.meta_value LIKE $1)", $where );
 	    }
 
 	    return $where;
@@ -526,10 +526,10 @@ abstract class Agdp_Post {
 	 *
 	 * http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_distinct
 	 */
-	public static function cf_search_distinct( $where ) {
-	    global $wpdb;
-
-	    if ( is_search() ) {
+	public static function cf_search_distinct( $where, $wp_query ) {
+		global $wpdb;
+		
+	    if ( $wp_query->is_search() ) {
 	        return "DISTINCT";
 	    }
 

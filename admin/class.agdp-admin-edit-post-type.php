@@ -14,14 +14,29 @@ abstract class Agdp_Admin_Edit_Post_Type {
 
 	static $the_post_is_new = false;
 
-	static $can_duplicate = false; //can inherit
-	private static $can_duplicate_post_types = [];
+	public static $can_duplicate = false; //can inherit
+	static $can_import = true; //can inherit
+	static $can_export = true; //can inherit
+	private static $post_types_capabilities = [];
+	private static $capabilities = [
+		'duplicate', 
+		'import', 
+		'export'
+	];
+	private static $actions = [
+		'duplicate' => 'Dupliquer',
+		'export' => 'Exporter'
+	];
 
 	public static function init() {
 		static::$the_post_is_new = basename($_SERVER['PHP_SELF']) == 'post-new.php';
 		
-		if( static::$can_duplicate )
-			self::$can_duplicate_post_types[] = static::post_type;
+		self::$post_types_capabilities[static::post_type] = [];
+		
+		foreach( self::$capabilities as $cap ){
+			$var = 'can_' . $cap;
+			self::$post_types_capabilities[static::post_type][$cap] = static::$$var;
+		}
 		
 		if( ! self::$initiated ){
 			add_action( 'current_screen', array( __CLASS__, 'init_hooks' ));
@@ -39,10 +54,13 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				add_filter( 'page_row_actions', array( __CLASS__, 'duplicateButtonLink' ), 10, 2 );
 				break;
 			case 'post.php' :
-				add_action( 'post_submitbox_start', array( __CLASS__, 'addPostDuplicateButton') );
+				add_action( 'post_submitbox_start', array( __CLASS__, 'addPostActionsButtons') );
 				break;
 			case 'admin.php' :
-				add_action( 'admin_action_njt_duplicate_page_save_as_new_post', array( __CLASS__, 'duplicateNewPageAction' ) );
+				foreach( self::$actions as $action => $action_label ){
+					add_action( sprintf('admin_action_%s', static::get_action_name( $action ))
+						, array( __CLASS__, 'on_action_post_' . $action ) );
+				}
 				break;
 			}
 		}
@@ -66,7 +84,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		if($parent_field !== null)
 			$name = sprintf($name, $parent_field['name']);
 		if($name === 'post_content')
-			$meta_value = $post->post_content;
+			$meta_value = $post ? $post->post_content : '';
 		elseif( ! $post )
 			$meta_value = '';
 		elseif( $name ){
@@ -142,7 +160,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				break;
 
 			default:
-				if(!$input_type)
+				if( ! $input_type)
 					$input_type = 'text';
 				break;
 		}
@@ -179,13 +197,16 @@ abstract class Agdp_Admin_Edit_Post_Type {
 
 			////////////////
 			case 'textarea':
-				if( $is_array_field && is_array($val) )
+				if( /* $is_array_field && */ is_array($val) ){
+					debug_log(__FUNCTION__ . ' is_array($val)', $val);
 					$val = implode("\n", $val);
+				}
 				echo '<textarea id="'.$id.'" name="'.$name.'"'
 					. ($readonly ? ' readonly ' : '')
 					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
 					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
 					. ($input_attributes ? ' '.$input_attributes : '')
+					. ($input_type === 'json' ? ' data-type="json"' : '')
 					.'>'
 					. htmlentities($val).'</textarea>'
 					. ($unit ? ' ' . $unit : '');;
@@ -359,7 +380,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$fields = $parent_field['fields'];
 		// debug_log(__FUNCTION__, $_POST, '', $fields );
 		foreach ($fields as $field) {
-			if(!isset($field['type']) || $field['type'] !== 'label'){
+			if( ! isset($field['type'] ) || $field['type'] !== 'label'){
 				$name = $field['name'];
 				if($parent_field !== null && isset($parent_field['name']))
 					$name = sprintf($name, $parent_field['name']);//TODO check
@@ -388,6 +409,14 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					else
 						$val = null;
 				}
+				
+				// if( isset($field['type'] )
+				// && $field['type'] === 'json'
+				// && $val
+				// && is_string($val)
+				// ){
+					// $val = addcslashes($val, true);
+				// }
 						
 				if( $is_array_field ){
 					delete_post_meta($post_ID, $name);
@@ -417,6 +446,9 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		return false;
 	}
 	
+	/*************************
+	** Actions
+	**********/
 	/**
 	 * Duplicate
 	 * Sources : https://plugins.trac.wordpress.org/browser/wp-duplicate-page, https://plugins.trac.wordpress.org/browser/duplicate-pp/
@@ -425,11 +457,13 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	 * duplicateButtonLink in posts list
 	 */
 	public static function duplicateButtonLink( $actions, $post ) {
-		if( in_array( $post->post_type, self::$can_duplicate_post_types ) ){
-			$duplicateTextLink             = 'Dupliquer';
-			$actions['njt_duplicate_page'] = sprintf(
+		$action = 'duplicate';
+		if( static::has_cap( $action, $post->post_type ) ){
+			$duplicateTextLink = 'Dupliquer';
+			$action_name = static::get_action_name( $action, $post->ID );
+			$actions[$action_name] = sprintf(
 				'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
-				self::getDuplicateLink( $post->ID ),
+				self::get_action_link( $action, $post->ID ),
 				esc_attr( __( 'Dupliquer' ) ),
 				/* translators: %s: Button Duplicate text. */
 				esc_html( sprintf( __( ' %s ' ), $duplicateTextLink ) )
@@ -465,14 +499,106 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		return wp_nonce_url( admin_url( 'admin.php' . $action ), 'njt-duplicate-page_' . $post->ID );
 	}
 	/**
+	 * get_action_link
+	 */
+	public static function get_action_link( $action, $postId = 0 ) {
+
+		// if ( ! Utils::isCurrentUserAllowedToCopy() ) {
+			// return;
+		// }
+
+		if ( ! $post = get_post( $postId ) ) {
+			return;
+		}
+
+		// if ( ! Utils::checkPostTypeDuplicate( $post->post_type ) ) {
+			// return;
+		// }
+		$postType    = get_post_type_object( $post->post_type );
+
+		if ( ! $postType ) {
+			return;
+		}
+
+		$action_name = static::get_action_name( $action );
+		$action_args      = '?action=' . $action_name . '&amp;post=' . $post->ID;
+
+		// debug_log( __FUNCTION__, static::get_nonce_name( $action_name, $post->ID )  );
+		return wp_nonce_url( admin_url( 'admin.php' . $action_args ), static::get_nonce_name( $action, $post->ID ) );
+	}
+	
+	/**
+	 * get_nonce_name
+	 */
+	public static function get_nonce_name( $action_name, $post_id ){
+		return sprintf('%s_%d', $action_name, $post_id );
+	}
+		
+	/**
+	 * get_action_name
+	 */
+	public static function get_action_name( $action ){
+		return sprintf('%s_post_%s', AGDP_TAG, $action );
+	}
+		
+	/**
+	 * check_rights
+	 */
+	public static function check_rights( $action, $post ){
+		
+		check_admin_referer( static::get_nonce_name( $action, $post ? $post->ID : 0 ) );
+		
+		if( ! static::has_cap( $action )
+		|| ! current_user_can('manage_options') )
+			check_admin_referer('dirty');
+		
+		return true;
+	}
+	
+	/**
+	 * Export Action
+	 */
+	public static function on_action_post_export() {
+		$action = 'export';
+		$post_id = empty($_REQUEST['post']) ? false : $_REQUEST['post'];
+		
+		$post = get_post( $post_id );
+
+		static::check_rights( $action, $post );
+		
+		$meta_input = get_post_meta($post->ID, '', true);//TODO ! true
+		$metas = [];
+		if( ! isset($meta_input['error'])){
+			foreach($meta_input as $meta_name => $meta_value){
+				if( $meta_name[0] === '_' )
+					continue;
+				
+				// $meta_value = implode("\r\n", $meta_value);
+				// if(is_serialized($meta_value))
+					// $meta_value = var_export(unserialize($meta_value), true);
+				$metas[ $meta_name ] = $meta_value;
+			}
+		}
+		$data = [
+			'post' => $post,
+			'metas' => $metas,
+		];
+		$post->post_password = null;
+		// echo json_encode( $data );
+		echo htmlspecialchars(json_encode($data), ENT_QUOTES, 'UTF-8');
+		
+	}
+	
+	/**
 	 * Duplicate Post
 	 */
-	public static function duplicateNewPageAction() {
+	public static function on_action_post_duplicate() {
 		global $pagenow;
 		if ( ! current_user_can('edit_posts') ) 
 			wp_die('No allowed to duplicate');
 		
-		if ( ! ( isset( $_GET['post'] ) || isset( $_POST['post'] ) || ( isset( $_REQUEST['action'] ) && 'njt_duplicate_page_save_as_new_post' === $_REQUEST['action'] ) ) ) {
+		if ( ! ( isset( $_GET['post'] ) || isset( $_POST['post'] ) 
+			|| ( isset( $_REQUEST['action'] ) /* && 'njt_duplicate_page_save_as_new_post' === $_REQUEST['action'] */ ) ) ) {
 			wp_die( esc_html__( 'No post to duplicate!', 'wp-duplicate-page' ) );
 		}
 
@@ -482,93 +608,89 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		/*
 		 * get the original post id
 		 */
-		$dpp_post_id = (isset($_GET['post']) ? absint(sanitize_text_field($_GET['post'])) : absint(sanitize_text_field($_POST['post'])));
+		$post_id = (isset($_GET['post']) ? absint(sanitize_text_field($_GET['post'])) : absint(sanitize_text_field($_POST['post'])));
 
-		check_admin_referer( 'njt-duplicate-page_' . $dpp_post_id );
+		// debug_log( __FUNCTION__, static::get_nonce_name( 'duplicate', $post_id )  );
+		check_admin_referer( static::get_nonce_name( 'duplicate', $post_id ) );
 		
 		global $wpdb;
 
 		/*
 		 * and all the original post data then
 		 */
-		$dpp_post = get_post($dpp_post_id);
+		$post = get_post($post_id);
 
 		/*
 		 * if you don't want the current user to be the new post author,
 		 * then change the next couple of lines to this: $new_post_author = $post->post_author;
 		 */
-		$dpp_current_user = wp_get_current_user();
-		$dpp_new_post_author = $dpp_current_user->ID;
+		$current_user = wp_get_current_user();
+		$new_post_author = $current_user->ID;
 
 		/*
 		 * if post data exists, create the post duplicate
 		 */
-		if (isset($dpp_post) && $dpp_post != null) {
+		if (isset($post) && $post != null) {
 
 			/*
 			 * new post data array
 			 */
-			$dpp_args = array(
-				'comment_status' => $dpp_post->comment_status,
-				'ping_status'    => $dpp_post->ping_status,
-				'post_author'    => $dpp_new_post_author,
-				'post_content'   => $dpp_post->post_content,
-				'post_excerpt'   => $dpp_post->post_excerpt,
-				'post_name'      => sprintf('%s_copie', $dpp_post->post_name),
-				'post_parent'    => $dpp_post->post_parent,
-				'post_password'  => $dpp_post->post_password,
+			$args = array(
+				'comment_status' => $post->comment_status,
+				'ping_status'    => $post->ping_status,
+				'post_author'    => $new_post_author,
+				'post_content'   => $post->post_content,
+				'post_excerpt'   => $post->post_excerpt,
+				'post_name'      => sprintf('%s_copie', $post->post_name),
+				'post_parent'    => $post->post_parent,
+				'post_password'  => $post->post_password,
 				'post_status'    => 'draft',
-				'post_title'     => sprintf('%s (copie)', $dpp_post->post_title),
-				'post_type'      => $dpp_post->post_type,
-				'to_ping'        => $dpp_post->to_ping,
-				'menu_order'     => $dpp_post->menu_order
+				'post_title'     => sprintf('%s (copie)', $post->post_title),
+				'post_type'      => $post->post_type,
+				'to_ping'        => $post->to_ping,
+				'menu_order'     => $post->menu_order
 			);
 
 			/*
 			 * insert the post by wp_insert_post() function
 			 */
-			$dpp_new_post_id = wp_insert_post($dpp_args);
+			$new_post_id = wp_insert_post($args);
 
 			/*
 			 * get all current post terms and set them to the new post draft
 			 */
-			$dpp_taxonomies = get_object_taxonomies($dpp_post->post_type); // returns an array of taxonomy names for the post type, e.g., array("category", "post_tag");
-			foreach ($dpp_taxonomies as $ddp_taxonomy) {
-				$dpp_post_terms = wp_get_object_terms($dpp_post_id, $ddp_taxonomy, array('fields' => 'slugs'));
-				wp_set_object_terms($dpp_new_post_id, $dpp_post_terms, $ddp_taxonomy, false);
+			$taxonomies = get_object_taxonomies($post->post_type); // returns an array of taxonomy names for the post type, e.g., array("category", "post_tag");
+			foreach ($taxonomies as $ddp_taxonomy) {
+				$post_terms = wp_get_object_terms($post_id, $ddp_taxonomy, array('fields' => 'slugs'));
+				wp_set_object_terms($new_post_id, $post_terms, $ddp_taxonomy, false);
 			}
 
 			// Duplicate all post meta
-			$dpp_post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$dpp_post_id");
-			if (count($dpp_post_meta_infos) != 0) {
-				foreach ($dpp_post_meta_infos as $dpp_meta_info) {
-					$dpp_meta_key = $dpp_meta_info->meta_key;
-					if ($dpp_meta_key == '_wp_old_slug') continue;
-					$dpp_meta_value = $dpp_meta_info->meta_value;
-					update_post_meta($dpp_new_post_id, $dpp_meta_key, $dpp_meta_value); // Copy the post meta to the new post
+			$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$post_id");
+			if (count($post_meta_infos) != 0) {
+				foreach ($post_meta_infos as $meta_info) {
+					$meta_key = $meta_info->meta_key;
+					if ( substr($meta_key, 0, strlen('_wp_old') ) === '_wp_old' )
+						continue;
+					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
+					$meta_value = addslashes($meta_info->meta_value);
+					// debug_log(__FUNCTION__, $meta_key, $meta_value, get_debug_type( $meta_value ));
+					
+					update_post_meta($new_post_id, $meta_key, $meta_value); // Copy the post meta to the new post
 				}
 			}
 
-			/*
-			 * finally, redirect to the edit post screen for the new draft
-			 */
-			$dpp_all_post_types = get_post_types([], 'names');
-
-			foreach ($dpp_all_post_types as $dpp_key => $dpp_value) {
-				$dpp_names[] = $dpp_key;
-			}
-
-			$dpp_current_post_type =  get_post_type($dpp_post_id);
+			$current_post_type =  get_post_type($post_id);
 			
-			$postType        = $dpp_post->post_type;
-			$newPostId       = $dpp_new_post_id;
-			$redirect        = sprintf('/wp-admin/post.php?post=%d&action=edit">',$dpp_new_post_id);
+			$postType        = $post->post_type;
+			$newPostId       = $new_post_id;
+			$redirect        = sprintf('/wp-admin/post.php?post=%d&action=edit">',$new_post_id);
 			
 			wp_safe_redirect( $redirect );
 
 			exit;
 		} else {
-			wp_die('Failed. Not Found Post: ' . $dpp_post_id);
+			wp_die('Failed. Not Found Post: ' . $post_id);
 		}
 	}
 	
@@ -579,7 +701,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		global $post;
 		if( ! $post || ! $post->ID )
 			return;
-		if( in_array( $post->post_type, self::$can_duplicate_post_types ) ){
+		if( static::has_cap( 'duplicate', $post->post_type ) ){
 			$duplicateTextLink = 'Dupliquer';
 			
 			$html  = '<div>';
@@ -593,6 +715,54 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$html .= '</div>';
 		}
         echo $html;
+	}
+	
+	/**
+	 * addPostActionsButtons in post.php
+	 */
+	public static function addPostActionsButtons(){
+		foreach( self::$actions as $action => $action_label )
+			static::addPostActionButton( $action, $action_label, $action );
+	}
+	
+	/**
+	 * addPostActionButton in post.php
+	 */
+	public static function addPostActionButton( $action, $action_label, $cap, $wrapper_tag = 'div' ){
+		global $post;
+		if( ! $post || ! $post->ID )
+			return;
+		if( ! static::has_cap( $cap, $post->post_type ) )
+			return;
+		
+		$actionTextLink = $action_label;
+		
+		$html  = $wrapper_tag ? '<'.$wrapper_tag.'>' : '';
+		$html .= sprintf(
+			'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
+			self::get_action_link( $action, $post->ID ),
+			esc_attr( __( $action_label ) ),
+			esc_html( sprintf( ' %s ', $actionTextLink ) )
+		);
+		if( $wrapper_tag )
+			$html .= '</' . $wrapper_tag . '>';
+        echo $html;
+	}
+	
+	/**
+	 * Has capability
+	 */
+	public static function has_cap( $capability, $post_type = null ) {
+		if( $post_type === null )
+			$post_type = static::post_type;
+		
+		if( isset( self::$post_types_capabilities[$post_type][$capability] ) )
+			return self::$post_types_capabilities[$post_type][$capability];
+		
+		if( $post_type )
+			return self::has_cap( $capability, false );
+		
+		return false;
 	}
 }
 ?>

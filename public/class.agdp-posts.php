@@ -83,6 +83,8 @@ abstract class Agdp_Posts {
 	public static function get_posts_query(...$queries){
 		$all = static::$default_posts_query;
 		// echo "<div style='margin-left: 15em;'>";
+		// var_dump($all);
+		// var_dump($queries);
 		foreach ($queries as $query) {
 			if( ! is_array($query)){
 				if(is_numeric($query))
@@ -115,6 +117,7 @@ abstract class Agdp_Posts {
 	 * Recherche de évènements
 	 */
 	public static function get_posts(...$queries){
+		
 		foreach($queries as $query)
 			if(is_array($query) && array_key_exists('posts_where_filters', $query)){
 				if( ! $query['posts_where_filters']){
@@ -130,7 +133,7 @@ abstract class Agdp_Posts {
 
 		add_filter( 'posts_clauses', array(__CLASS__, 'on_posts_clauses_meta_query'), 10, 2 );
 		
-		// debug_log(__FUNCTION__, 'get_posts $queries ', $queries);
+		// debug_log(__FUNCTION__, 'get_posts $queries ', $query, $queries);
 		$the_query = new WP_Query( $query );
 		// debug_log(__FUNCTION__, 'get_posts ' . '<pre>'.$the_query->request.'</pre>', $query, count($the_query->posts));
         
@@ -193,7 +196,6 @@ abstract class Agdp_Posts {
 				}
 			}
 		}
-		
 		return $clauses;
 	}
 
@@ -250,12 +252,15 @@ abstract class Agdp_Posts {
 			else
 				$post_type = static::post_type;
 		}
-		return static::get_posts([
+		$posts = static::get_posts([
 			'fields' => 'ids',
 			'post_type' => $post_type,
 			'numberposts' => -1,
 			'post_status' => 'pending',
+			'suppress_filters' => true,
 		]);
+		
+		return $posts;
 	}
 
 	/**

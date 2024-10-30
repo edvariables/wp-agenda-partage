@@ -158,7 +158,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			],
 			[	'name' => 'sql_variables',
 				'label' => 'Variables',
-				'type' => 'text',
+				'type' => 'json',
 				'input' => 'textarea',
 				'input_attributes' => 'spellcheck="false"',
 				'class' => 'agdpreport-variables',

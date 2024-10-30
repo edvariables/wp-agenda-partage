@@ -118,6 +118,13 @@ class Agdp_Admin_Menu {
 			$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Report::post_type);
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
 			
+			//Import
+			$parent_slug = AGDP_TAG;			
+			$page_title = 'Importer';
+			$menu_slug = $parent_slug . '-import';
+			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+				array('Agdp_Admin_Options', 'agdp_import_page_html'), null);
+			
 			if( class_exists('Agdp_Maillog') ){
 				$parent_slug = AGDP_TAG;
 				$page_title = get_post_type_object(Agdp_Maillog::post_type)->labels->menu_name;

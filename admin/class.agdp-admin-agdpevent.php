@@ -137,7 +137,7 @@ class Agdp_Admin_Evenement {
 			$query->set('meta_compare', '<');  
 			$query->set('meta_value', $_REQUEST['date_max']);  
 		}
-			
+		
 		if( ! empty($query->query_vars['orderby']) ){
 			switch( $query->query_vars['orderby']) {
 				case 'dates':

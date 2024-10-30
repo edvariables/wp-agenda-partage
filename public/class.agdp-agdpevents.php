@@ -51,33 +51,33 @@ class Agdp_Evenements extends Agdp_Posts {
 			'post_status' => $post_status,
 			
 			// BUGG du OR qui fait qu'il manque un meta_key = 'ev-date-debut'
-'meta_query' => [
-	'relation' => 'OR',
-	'ev-date-debut' => [ 
-		'key' => 'ev-date-debut',
-		'value' => wp_date('Y-m-d'),
-		'compare' => '>=',
-		'type' => 'DATE'
-	],
-	'ev-date-fin' => [
-		'relation' => 'AND',
-		[
-			'key' => 'ev-date-fin',
-			'value' => '',
-			'compare' => '!='
-		],
-		[
-			'key' => 'ev-date-fin',
-			'value' => wp_date('Y-m-d'),
-			'compare' => '>=',
-			'type' => 'DATE'
-		]
-	]
-],
-'orderby' => [
-	'ev-date-debut' => 'ASC',
-	'ev-heure-debut' => 'ASC',
-],
+			'meta_query' => [
+				'relation' => 'OR',
+				'ev-date-debut' => [ 
+					'key' => 'ev-date-debut',
+					'value' => wp_date('Y-m-d'),
+					'compare' => '>=',
+					'type' => 'DATE'
+				],
+				'ev-date-fin' => [
+					'relation' => 'AND',
+					[
+						'key' => 'ev-date-fin',
+						'value' => '',
+						'compare' => '!='
+					],
+					[
+						'key' => 'ev-date-fin',
+						'value' => wp_date('Y-m-d'),
+						'compare' => '>=',
+						'type' => 'DATE'
+					]
+				]
+			],
+			'orderby' => [
+				'ev-date-debut' => 'ASC',
+				'ev-heure-debut' => 'ASC',
+			],
 			
 			'posts_per_page' => self::$default_posts_per_page
 		);

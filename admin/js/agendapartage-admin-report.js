@@ -341,7 +341,8 @@ jQuery( function( $ ) {
 					;
 				}
 				
-				var helper, rows;
+				var helper;
+				var rows = 3;
 				switch( var_type ){
 				case 'range' :
 					rows = 2;
@@ -353,9 +354,11 @@ jQuery( function( $ ) {
 					helper = 'Pour une inclusion dans un IN,'
 						+ '<br>ajoutez le format %IN à la variable.';
 					break;
+				case 'asc_desc':
+					var_options = '';
+					break;
 				default :
 					if( input_options_types.includes(var_type) ){
-						rows = 3;
 						helper = 'Un élément par ligne.'
 								+ '<br>Séparez les valeurs des labels par <code>:</code>';
 					}

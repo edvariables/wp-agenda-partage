@@ -1098,6 +1098,109 @@ class Agdp_Admin_Options {
 			. '</form>';
 	}
 	
+	/**
+	 * Import Action
+	 */
+	public static function agdp_import_page_html() {
+		$action = 'import';
+
+		if( ! empty($_POST['action-data']) ){
+			
+			$post_id = empty($_REQUEST['post']) ? false : $_REQUEST['post'];
+			$post_referer = $post_id ? get_post( $post_id ) : 0;
+
+			Agdp_Admin_Edit_Post_Type::check_rights( $action, $post_referer );
+			
+			$data_str = stripslashes($_POST['action-data']);
+			$data_str = htmlspecialchars_decode($data_str, ENT_QUOTES);
+			$data = json_decode($data_str, true);
+			if( $data ){
+				if( ! empty($data['posts']) ){
+					foreach( $data['posts']  as $post_data )
+						self::agdp_import_post( $post_data );
+				}
+				elseif( ! empty($data['post']) ){
+					self::agdp_import_post( $data );
+				}
+				else {
+					echo sprintf('<div class="error"><label>%s</label><pre>%s</pre></div>'
+						, 'Impossible de reconnaitre les données à importer'
+						, json_encode( $data )
+					);
+				}
+					
+			}
+			else {
+				echo "Aucune donnée importable.";
+				var_dump(($_POST['action-data']));
+			}
+		}
+		
+		$post_type = empty($_REQUEST['post_type']) ? false : $_REQUEST['post_type'];
+		if( ! $post_type ){
+			$post_id = empty($_REQUEST['post']) ? false : $_REQUEST['post'];
+			$post = $post_id ? get_post( $post_id ) : false;
+			$post_type = $post ? $post->post_type : false;
+		}
+		
+		$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post ? $post->ID : 0) );
+		//FORM
+		?><form action="<?php echo $url;?>" method="post">
+			<div><h3>Coller ici les données à importer</h3>
+				<textarea name="action-data" rows="20" cols="100"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
+			</div>
+			<input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Importer">
+			<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
+		</form>
+		<?php
+		return;
+		
+	}
+	/**
+	 * Import post
+	 * $data['post'], $data['metas']
+	 */
+	private  static function agdp_import_post( $data ) {
+			
+		if( empty($data['post'])
+		 || empty($data['post']['post_type']) ){
+				echo sprintf( '<div class="error">Données incomplètes.<pre>%s</pre></div>'
+					, htmlspecialchars( json_encode($data) )
+				);
+			return false;
+		}
+		if( ! Agdp_Admin_Edit_Post_Type::has_cap( 'import', $data['post']['post_type'] ) ){
+				echo sprintf( '<div class="error">Le type %s ne peut pas être importé.<pre>%s</pre></div>'
+					, $data['post']['post_type']
+					, htmlspecialchars( json_encode($data['post']) )
+				);
+			return false;
+		}
+		
+		unset($data['post']['ID']);
+		unset($data['post']['post_password']);
+		unset($data['post']['post_parent']);
+		unset($data['post']['guid']);
+		unset($data['post']['post_modified']);
+		unset($data['post']['post_modified_gmt']);
+		unset($data['post']['post_name']);
+		
+		$data['post']['meta_input'] = $data['metas'];
+		
+		$data['post']['post_title'] .= ' (importé-e)';
+		// var_dump($data);
+		// debug_log(__FUNCTION__, $data['post']);
+		$new_post_id = wp_insert_post( $data['post'], true );
+		
+		if( $new_post_id ){
+			echo sprintf( '<div><a href="%s">%s %s</a></div>'
+				, get_edit_post_link( $new_post_id )
+				, Agdp::icon('plus')
+				, htmlspecialchars( $data['post']['post_title'] )
+			);
+		}
+		return $new_post_id;
+	}
 }
 
 ?>

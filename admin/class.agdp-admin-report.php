@@ -139,6 +139,10 @@ class Agdp_Admin_Report {
 			case 'sql' :
 				$meta_key = 'sql';
 				$value = get_post_meta( $post_id, $meta_key, true );
+				if( is_array($value) ){
+					debug_log(__FUNCTION__, $value);
+					$value = implode( "\n", $value );
+				}
 				if( strlen($value) > 200 )
 					$value = substr( $value, 0, 200) . '...';
 				echo sprintf('<code>%s</code>', $value);
