@@ -1177,19 +1177,28 @@ class Agdp_Admin_Options {
 			return false;
 		}
 		
-		unset($data['post']['ID']);
-		unset($data['post']['post_password']);
-		unset($data['post']['post_parent']);
-		unset($data['post']['guid']);
-		unset($data['post']['post_modified']);
-		unset($data['post']['post_modified_gmt']);
-		unset($data['post']['post_name']);
+		foreach(['ID', 
+			'post_password', 
+			'post_parent', 
+			'guid', 
+			'post_modified', 
+			'post_modified_gmt', 
+			'post_name'
+		 ] as $key)
+			unset($data['post'][$key]);
 		
+		// metas
+		foreach($data['metas'] as $meta_key => $meta_value){
+			if( $meta_value ){
+				//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
+				$data['metas'][$meta_key] = addslashes( $meta_value );
+			}
+		}
 		$data['post']['meta_input'] = $data['metas'];
 		
 		$data['post']['post_title'] .= ' (importé-e)';
 		// var_dump($data);
-		// debug_log(__FUNCTION__, $data['post']);
+		// debug_log(__FUNCTION__, $data['metas']['sql_variables'], get_debug_type($data['metas']['sql_variables']));
 		$new_post_id = wp_insert_post( $data['post'], true );
 		
 		if( $new_post_id ){

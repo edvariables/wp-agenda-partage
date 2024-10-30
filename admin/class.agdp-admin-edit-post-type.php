@@ -459,44 +459,20 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	public static function duplicateButtonLink( $actions, $post ) {
 		$action = 'duplicate';
 		if( static::has_cap( $action, $post->post_type ) ){
-			$duplicateTextLink = 'Dupliquer';
+			$action_label = 'Dupliquer';
 			$action_name = static::get_action_name( $action, $post->ID );
-			$actions[$action_name] = sprintf(
-				'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
-				self::get_action_link( $action, $post->ID ),
-				esc_attr( __( 'Dupliquer' ) ),
-				/* translators: %s: Button Duplicate text. */
-				esc_html( sprintf( __( ' %s ' ), $duplicateTextLink ) )
-			);
+			$actions[$action_name] = static::get_post_action_button($action, $action_label, $action);
+			if( ! $actions[$action_name] )
+				unset($actions[$action_name]);
+			// $actions[$action_name] = sprintf(
+				// '<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
+				// self::get_action_link( $action, $post->ID ),
+				// esc_attr( __( 'Dupliquer' ) ),
+				// /* translators: %s: Button Duplicate text. */
+				// esc_html( sprintf( __( ' %s ' ), $action_label ) )
+			// );
 		}
 		return $actions;
-	}
-	/**
-	 * getDuplicateLink
-	 */
-	public static function getDuplicateLink( $postId = 0 ) {
-
-		// if ( ! Utils::isCurrentUserAllowedToCopy() ) {
-			// return;
-		// }
-
-		if ( ! $post = get_post( $postId ) ) {
-			return;
-		}
-
-		// if ( ! Utils::checkPostTypeDuplicate( $post->post_type ) ) {
-			// return;
-		// }
-
-		$action_name = 'njt_duplicate_page_save_as_new_post';
-		$action      = '?action=' . $action_name . '&amp;post=' . $post->ID;
-		$postType    = get_post_type_object( $post->post_type );
-
-		if ( ! $postType ) {
-			return;
-		}
-
-		return wp_nonce_url( admin_url( 'admin.php' . $action ), 'njt-duplicate-page_' . $post->ID );
 	}
 	/**
 	 * get_action_link
@@ -576,6 +552,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				// $meta_value = implode("\r\n", $meta_value);
 				// if(is_serialized($meta_value))
 					// $meta_value = var_export(unserialize($meta_value), true);
+				if( is_array($meta_value) && count($meta_value) === 1 )
+					$meta_value = $meta_value[0];
 				$metas[ $meta_name ] = $meta_value;
 			}
 		}
@@ -695,40 +673,20 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	}
 	
 	/**
-	 * addPostDuplicateButton in post.php
-	 */
-	public static function addPostDuplicateButton(){
-		global $post;
-		if( ! $post || ! $post->ID )
-			return;
-		if( static::has_cap( 'duplicate', $post->post_type ) ){
-			$duplicateTextLink = 'Dupliquer';
-			
-			$html  = '<div>';
-			$html .= sprintf(
-				'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
-				self::getDuplicateLink( $post->ID ),
-				esc_attr( __( 'Dupliquer' ) ),
-				/* translators: %s: Button Duplicate text. */
-				esc_html( sprintf( __( ' %s ' ), $duplicateTextLink ) )
-			);
-			$html .= '</div>';
-		}
-        echo $html;
-	}
-	
-	/**
 	 * addPostActionsButtons in post.php
 	 */
 	public static function addPostActionsButtons(){
-		foreach( self::$actions as $action => $action_label )
-			static::addPostActionButton( $action, $action_label, $action );
+		foreach( self::$actions as $action => $action_label ){
+			$html = static::get_post_action_button( $action, $action_label, $action );
+			if( $html )
+				echo sprintf('<div>%s</div>', $html);
+		}
 	}
 	
 	/**
-	 * addPostActionButton in post.php
+	 * get_post_action_button
 	 */
-	public static function addPostActionButton( $action, $action_label, $cap, $wrapper_tag = 'div' ){
+	public static function get_post_action_button( $action, $action_label, $cap){
 		global $post;
 		if( ! $post || ! $post->ID )
 			return;
@@ -737,16 +695,13 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		
 		$actionTextLink = $action_label;
 		
-		$html  = $wrapper_tag ? '<'.$wrapper_tag.'>' : '';
-		$html .= sprintf(
+		$html = sprintf(
 			'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
 			self::get_action_link( $action, $post->ID ),
 			esc_attr( __( $action_label ) ),
 			esc_html( sprintf( ' %s ', $actionTextLink ) )
 		);
-		if( $wrapper_tag )
-			$html .= '</' . $wrapper_tag . '>';
-        echo $html;
+        return $html;
 	}
 	
 	/**
