@@ -1177,8 +1177,8 @@ class Agdp_Admin_Options {
 		}
 		if( ! is_array($options) )
 			$options = [];
-		$confirm_action = ! isset($options['confirm_action']) ? true : $options['confirm_action'];
-		$add_title_suffix = ! isset($options['add_title_suffix']) ? true : $options['add_title_suffix'];
+		$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
+		$add_title_suffix =isset($options['add_title_suffix']) && $options['add_title_suffix'];
 		$title_suffix = empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
 		
 		if( empty($data['post'])
