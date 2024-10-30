@@ -1115,19 +1115,19 @@ class Agdp_Admin_Options {
 			$data_str = htmlspecialchars_decode($data_str, ENT_QUOTES);
 			$data = json_decode($data_str, true);
 			if( $data ){
-				if( ! empty($data['posts']) ){
-					foreach( $data['posts']  as $post_data )
-						self::agdp_import_post( $post_data );
-				}
-				elseif( ! empty($data['post']) ){
-					self::agdp_import_post( $data );
-				}
-				else {
+				// $confirm_action = empty($_REQUEST['confirm_action']) ? false : $_REQUEST['confirm_action'];
+				$posts = self::agdp_import_posts( $data );
+				if( ! $posts ) {
 					echo sprintf('<div class="error"><label>%s</label><pre>%s</pre></div>'
 						, 'Impossible de reconnaitre les données à importer'
 						, json_encode( $data )
 					);
 				}
+				else
+					echo sprintf('<div class="info"><label>%d importation%s</label>'
+						, count($posts)
+						, count($posts) > 1 ? 's' : ''
+					);
 					
 			}
 			else {
@@ -1149,6 +1149,8 @@ class Agdp_Admin_Options {
 			<div><h3>Coller ici les données à importer</h3>
 				<textarea name="action-data" rows="20" cols="100"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
 			</div>
+			<!--<label><input type="checkbox" name="confirm_action"> Confirmer chaque importation </label>
+			<br>-->
 			<input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Importer">
 			<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
 		</form>
@@ -1160,8 +1162,15 @@ class Agdp_Admin_Options {
 	 * Import post
 	 * $data['post'], $data['metas']
 	 */
-	private  static function agdp_import_post( $data ) {
-			
+	private  static function agdp_import_posts( $data ) {
+		if( empty($data['post']) ){
+			$new_posts = [];
+			foreach(  $data as $post_data )
+				if( ! empty($post_data['post']) )
+					$new_posts[] = static::agdp_import_posts( $post_data );
+			return $new_posts;
+		}
+		
 		if( empty($data['post'])
 		 || empty($data['post']['post_type']) ){
 				echo sprintf( '<div class="error">Données incomplètes.<pre>%s</pre></div>'

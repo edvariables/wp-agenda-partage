@@ -143,6 +143,10 @@ img.coo-favicon {
 	font-size: smaller;
 }
 
+#post #major-publishing-actions #duplicate-action,
+#post #major-publishing-actions #export-action {
+	text-align: right;
+}
 
 /*toggle shortcode*/
 .toggle-trigger {

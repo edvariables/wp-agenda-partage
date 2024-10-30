@@ -52,9 +52,15 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			case 'edit.php' :
 				add_filter( 'post_row_actions', array( __CLASS__, 'duplicateButtonLink' ), 10, 2 );
 				add_filter( 'page_row_actions', array( __CLASS__, 'duplicateButtonLink' ), 10, 2 );
+				$action = 'export';
+				foreach(self::$post_types_capabilities as $post_type => $capabilities){
+					if( $capabilities[$action] )
+						add_filter( 'bulk_actions-edit-'.$post_type, array( __CLASS__, 'on_bulk_actions_edit' ), 10, 1 );
+						add_filter( 'handle_bulk_actions-edit-'.$post_type, array( __CLASS__, 'on_handle_bulk_actions_edit'), 10, 3 );
+				}
 				break;
 			case 'post.php' :
-				add_action( 'post_submitbox_start', array( __CLASS__, 'addPostActionsButtons') );
+				add_action( 'post_submitbox_start', array( __CLASS__, 'add_post_actions_buttons') );
 				break;
 			case 'admin.php' :
 				foreach( self::$actions as $action => $action_label ){
@@ -450,10 +456,35 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	** Actions
 	**********/
 	/**
-	 * Duplicate
-	 * Sources : https://plugins.trac.wordpress.org/browser/wp-duplicate-page, https://plugins.trac.wordpress.org/browser/duplicate-pp/
+	 * on_bulk_actions_edit in posts list
 	 */
+	public static function on_bulk_actions_edit( $actions ) {
+		$post_type = empty($_REQUEST['post_type']) ? false : $_REQUEST['post_type'];
+		$action = 'export';
+		$action_label = 'Exporter';
+		if( static::has_cap( $action, $post_type ) ){
+			$actions[$action] = $action_label;
+		}
+		return $actions;
+	}
 	/**
+	 * on_handle_bulk_actions_edit
+	 */
+	public static function on_handle_bulk_actions_edit( $redirect, $doaction, $object_ids ) {
+		// debug_log(__FUNCTION__, $redirect, $doaction, $object_ids );
+		
+		switch( $doaction ){
+			case 'export' :
+
+				echo static::get_posts_export($object_ids );
+				exit;
+				break;
+
+		}
+
+		return $redirect;
+	}
+/**
 	 * duplicateButtonLink in posts list
 	 */
 	public static function duplicateButtonLink( $actions, $post ) {
@@ -534,35 +565,58 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	/**
 	 * Export Action
 	 */
-	public static function on_action_post_export() {
+	public static function on_action_post_export( ) {
 		$action = 'export';
+		
 		$post_id = empty($_REQUEST['post']) ? false : $_REQUEST['post'];
 		
 		$post = get_post( $post_id );
 
 		static::check_rights( $action, $post );
 		
-		$meta_input = get_post_meta($post->ID, '', true);//TODO ! true
-		$metas = [];
-		if( ! isset($meta_input['error'])){
-			foreach($meta_input as $meta_name => $meta_value){
-				if( $meta_name[0] === '_' )
-					continue;
-				
-				// $meta_value = implode("\r\n", $meta_value);
-				// if(is_serialized($meta_value))
-					// $meta_value = var_export(unserialize($meta_value), true);
-				if( is_array($meta_value) && count($meta_value) === 1 )
-					$meta_value = $meta_value[0];
-				$metas[ $meta_name ] = $meta_value;
+		echo static::get_posts_export( [ $post ] );
+		
+	}
+	
+	/**
+	 * Export posts
+	 */
+	public static function get_posts_export( $posts ) {
+		$action = 'export';
+		
+		$data = [];
+		foreach( $posts as $post_id ){
+			if( is_a($post_id, 'WP_Post') ){
+				$post = $post_id;
+				$post_id = $post->ID;
 			}
+			else
+				$post = get_post( $post_id );
+			
+			$meta_input = get_post_meta($post->ID, '', true);//TODO ! true
+			$metas = [];
+			if( ! isset($meta_input['error'])){
+				foreach($meta_input as $meta_name => $meta_value){
+					if( $meta_name[0] === '_' )
+						continue;
+					
+					// $meta_value = implode("\r\n", $meta_value);
+					// if(is_serialized($meta_value))
+						// $meta_value = var_export(unserialize($meta_value), true);
+					if( is_array($meta_value) && count($meta_value) === 1 )
+						$meta_value = $meta_value[0];
+					$metas[ $meta_name ] = $meta_value;
+				}
+			}
+			$post->post_password = null;
+			$data[] = [
+				'post' => $post,
+				'metas' => $metas,
+			];
 		}
-		$data = [
-			'post' => $post,
-			'metas' => $metas,
-		];
-		$post->post_password = null;
 		// echo json_encode( $data );
+		if( count($data) === 1 )
+			$data = $data[0];
 		echo htmlspecialchars(json_encode($data), ENT_QUOTES, 'UTF-8');
 		
 	}
@@ -673,13 +727,13 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	}
 	
 	/**
-	 * addPostActionsButtons in post.php
+	 * add_post_actions_buttons in post.php
 	 */
-	public static function addPostActionsButtons(){
+	public static function add_post_actions_buttons(){
 		foreach( self::$actions as $action => $action_label ){
 			$html = static::get_post_action_button( $action, $action_label, $action );
 			if( $html )
-				echo sprintf('<div>%s</div>', $html);
+				echo sprintf('<div id="%s-action">%s</div>', $action, $html);
 		}
 	}
 	
