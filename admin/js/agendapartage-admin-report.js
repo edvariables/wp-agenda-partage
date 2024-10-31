@@ -392,7 +392,7 @@ jQuery( function( $ ) {
 				})
 				// .after($('<span class="dashicons-before dashicons-edit"></span>')
 			;
-			//Liste de colonne
+			//Liste de colonnes
 			$this.on('click', '.table_columns li', function(e){
 				var $sql = $this.find('textarea#sql');
 				$sql.get(0).insertAtCaret( $(this).text() );
@@ -592,7 +592,8 @@ jQuery( function( $ ) {
 						sql : sql,
 						sql_variables : sql_variables ? JSON.parse(sql_variables) : 0,
 						report_id : post_id,
-						report_show_sql : report_show_sql
+						report_show_sql : report_show_sql,
+						skip_styles : true,
 					})
 				};
 				var report_id = $actionElnt
@@ -607,7 +608,16 @@ jQuery( function( $ ) {
 							if(typeof response === 'string' || response instanceof String){
 								if(response.endsWith('null'))
 									response = substr(response, 0, response.length-4);
-								$form.find('.agdpreport').replaceWith(response);
+								var $response = $(response);
+								var id;
+								if( ! (id = $response.attr('id') ) ){
+									id = 'report_' + uniqid(6);
+									$response.attr('id', id);
+								}
+								var css = get_report_css( $form, id );
+								if( css )
+									$response.append( '<style>' + css + '</style>' );
+								$form.find('.agdpreport').replaceWith($response);
 							}
 						}
 						else
@@ -628,8 +638,36 @@ jQuery( function( $ ) {
 				event.preventDefault();  
 				return false;
 			});
+			$(this).on('change', 'textarea#report_css, .report_css :input', refresh_report);
 		});
+
+		/**
+		 * get_report_css : compile les styles (textarea + terms)
+		 */
+		function get_report_css( $form, id ){
+			var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
+			$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
+				if( css )
+					css += '\n';
+				css += '/* report_style_term ' + $(this).text() + ' */\n'
+						+  this.getAttribute('data-report-style');
+			});
+			const regexp = /(\s|,\s?)(table(\s|.))/g;
+			css = css.replaceAll( regexp, '$1#' + id + ' > $2' );
+			
+			return css;
+		}
 	});
+
+	/**
+	 * get_report_css : compile les styles (textarea + terms)
+	 */
+	function refresh_report(){
+		$(this)
+			.parents('form:first')
+				.find('#agdp_report-render .report_refresh a')
+					.trigger('click'); 
+	}
 });
 
 

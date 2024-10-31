@@ -180,6 +180,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		if($label && ! in_array( $input, ['label', 'link', 'checkbox'])) {
 			echo '<label for="'.$name.'">' . $icon . htmlentities($label) . ' : </label>';
 		}
+		if( is_array($unit) )
+			$unit = implode("\n", $unit );
 
 		switch ($input) {
 			////////////////
@@ -574,7 +576,11 @@ abstract class Agdp_Admin_Edit_Post_Type {
 
 		static::check_rights( $action, $post );
 		
-		echo static::get_posts_export( [ $post ] );
+		$data = static::get_posts_export( [ $post ] );
+		
+		header('Content-Type: application/json');
+		//echo htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8');
+		echo json_encode($data);
 		
 	}
 	
@@ -585,6 +591,9 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		$action = 'export';
 		
 		$data = [];
+		$post_type_taxonomies = [];
+		$taxonomies = [];
+		$used_terms = [];
 		foreach( $posts as $post_id ){
 			if( is_a($post_id, 'WP_Post') ){
 				$post = $post_id;
@@ -613,12 +622,80 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				'post' => $post,
 				'metas' => $metas,
 			];
+			
+			$post_type = $post->post_type;
+			if( isset( $post_type_taxonomies[$post_type] ) )
+				$post_taxonomies = $post_type_taxonomies[$post_type];
+			else {
+				$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'objects');
+				$post_type_taxonomies[$post_type] = $post_taxonomies;
+				$taxonomies = array_merge( $taxonomies, $post_taxonomies );
+			}
+			$post_terms = [];
+			foreach( $post_taxonomies as $tax_name => $taxonomy ){
+				$tax_terms = wp_get_post_terms($post_id, $tax_name);;
+				foreach( $tax_terms as $term ){
+					if( ! isset( $used_terms[ $term->term_id.'' ] ) )
+						$used_terms[ $term->term_id.'' ] = $term;
+					
+					if( ! isset( $post_terms[$tax_name] ) )
+						$post_terms[$tax_name] = [];
+					if( ! isset( $post_terms[$tax_name][$term->term_id.''] ) )
+						$post_terms[$tax_name][ $term->term_id.'' ] = $term->name;
+				}
+			}
+			if( $post_terms )
+				$data['terms'] = $post_terms;
 		}
 		// echo json_encode( $data );
-		if( count($data) === 1 )
-			$data = $data[0];
-		echo htmlspecialchars(json_encode($data), ENT_QUOTES, 'UTF-8');
 		
+		if( $used_terms ){
+			$data['terms'] = static::get_taxonomies_export ( $used_terms );
+			$data['taxonomies'] = [];
+			foreach($used_terms as $term)
+				if( isset($data['taxonomies'][$term->taxonomy]) )
+					continue;
+				else
+					$data['taxonomies'][$term->taxonomy] = $taxonomies[$term->taxonomy];
+		}
+		
+		return $data;
+		
+	}
+	
+	/**
+	 * Export taxonomies
+	 */
+	public static function get_taxonomies_export( $terms ) {
+		$action = 'export';
+		
+		$data = [];
+		foreach( $terms as $term_id ){
+			if( is_a($term_id, 'WP_Term') ){
+				$term = $term_id;
+				$term_id = $term->term_id;
+			}
+			else
+				$term = get_term( $term_id );
+			
+			$meta_input = get_term_meta($term->term_id, '', true);//TODO ! true
+			$metas = [];
+			if( ! isset($meta_input['error'])){
+				foreach($meta_input as $meta_name => $meta_value){
+					if( $meta_name[0] === '_' )
+						continue;
+					if( is_array($meta_value) && count($meta_value) === 1 )
+						$meta_value = $meta_value[0];
+					$metas[ $meta_name ] = $meta_value;
+				}
+			}
+			$data[] = [
+				'term' => $term,
+				'metas' => $metas,
+			];
+		}
+		
+		return $data;
 	}
 	
 	/**

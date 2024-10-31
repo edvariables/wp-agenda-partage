@@ -172,6 +172,21 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function get_metabox_render_fields(){
 		
 		$report = get_post();
+		$tax_report_styles = '<div class="report_style_terms">';
+		$taxonomy = Agdp_Report::taxonomy_report_style;
+		foreach( Agdp_Report::get_report_styles( $report, 'all' ) as $style ){
+			$tax_report_styles .= sprintf('<div>%s<a href="/wp-admin/term.php?taxonomy=%s&tag_ID=%d&post_type=%s" target="_blank">%s</a></div>'
+				, sprintf('<label><input type="checkbox" checked data-report-style="%s">%s</label>'
+					, esc_attr( $style->description )
+					, $style->name
+				)
+				, $taxonomy
+				, $style->term_id
+				, $report->post_type
+				, Agdp::icon('edit')
+			);
+		}
+		$tax_report_styles .= '</div>';
 		
 		$data = [];
 		// $label = Agdp::get_ajax_action_link( $report, ['report', 'report_html'], 'update'
@@ -187,6 +202,12 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'label' => 'Afficher le SQL',
 				'type' => 'checkbox',
 				'container_class' => 'report_show_sql', //cf admin-report.js
+			],
+			[	'name' => 'report_css',
+				'label' => 'Style css',
+				'input' => 'textarea',
+				'container_class' => 'report_css', //cf admin-report.js
+				'unit' => $tax_report_styles,
 			],
 		];
 		return $fields;
@@ -211,7 +232,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		$tables = ['posts', 'postmeta', 'comments', 'commentmeta'];
+		$tables = ['posts', 'postmeta', 'comments', 'commentmeta', 'term_relationships', 'term_taxonomy', 'termmeta', 'terms', 'user', 'metausers'];
 		$sql = 'SHOW TABLES';
 		foreach($wpdb->get_results($sql) as $row){
 			foreach($row as $table){
@@ -219,8 +240,12 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 					$table = substr($table, strlen($blog_prefix));
 				if( is_numeric($table[0]) )
 					continue;
-				if( ! in_array($table, $tables) )
-					$tables[] = $table;
+				if( in_array($table, $tables) )
+					continue;
+				foreach( [ 'wpsbc_', 'actionscheduler_', 'easywpsmtp_' ] as $prefix )
+					if( strcmp( $prefix, substr( $table, 0, strlen( $prefix ) ) ) === 0 )
+						continue 2;
+				$tables[] = $table;
 				break;
 			}
 		}

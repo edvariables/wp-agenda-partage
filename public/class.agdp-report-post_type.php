@@ -48,7 +48,7 @@ class Agdp_Report_Post_type {
 			'hierarchical'          => true,
 			'public'                => false,
 			'show_ui'               => true,
-			'show_in_menu'          => false,
+			'show_in_menu'          => true,
 			'menu_icon'				=> 'dashicons-media-spreadsheet',
 			'menu_position'         => 26,
 			'show_in_admin_bar'     => true,
@@ -63,6 +63,66 @@ class Agdp_Report_Post_type {
 		);
 		register_post_type( Agdp_Report::post_type, $args );
 		
+	}
+	/**
+	 * Register Custom Taxonomy
+	 */
+	public static function register_taxonomy_report_style() {
+
+		$labels = array(
+			'name'                       => _x( 'Style de rapport', 'Taxonomy General Name', AGDP_TAG ),
+			'singular_name'              => _x( 'Style de rapport', 'Taxonomy Singular Name', AGDP_TAG ),
+			'menu_name'                  => __( 'Styles de rapport', AGDP_TAG ),
+			'all_items'                  => __( 'Tous les styles', AGDP_TAG ),
+			'parent_item'                => __( 'Style parent', AGDP_TAG ),
+			'parent_item_colon'          => __( 'Style parent:', AGDP_TAG ),
+			'new_item_name'              => __( 'Nouveau style', AGDP_TAG ),
+			'add_new_item'               => __( 'Ajouter une nouveau style', AGDP_TAG ),
+			'edit_item'                  => __( 'Modifier', AGDP_TAG ),
+			'update_item'                => __( 'Mettre à jour', AGDP_TAG ),
+			'view_item'                  => __( 'Afficher', AGDP_TAG ),
+			'separate_items_with_commas' => __( 'Séparer les éléments par une virgule', AGDP_TAG ),
+			'add_or_remove_items'        => __( 'Ajouter ou supprimer des éléments', AGDP_TAG ),
+			'choose_from_most_used'      => __( 'Choisir le plus utilisé', AGDP_TAG ),
+			'popular_items'              => __( 'Styles populaires', AGDP_TAG ),
+			'search_items'               => __( 'Rechercher', AGDP_TAG ),
+			'not_found'                  => __( 'Introuvable', AGDP_TAG ),
+			'no_terms'                   => __( 'Aucune style', AGDP_TAG ),
+			'items_list'                 => __( 'Liste des styles', AGDP_TAG ),
+			'items_list_navigation'      => __( 'Navigation parmi les styles', AGDP_TAG ),
+		);
+		$args = array(
+			'labels'                     => $labels,
+			'hierarchical'               => true,
+			'public'                     => true,
+			'show_ui'                    => true,
+			'show_admin_column'          => true,
+			'show_in_nav_menus'          => true,
+			'show_tagcloud'              => true,
+		);
+		register_taxonomy( Agdp_Report::taxonomy_report_style, array( Agdp_Report::post_type ), $args );
+
+	}
+	
+	/**
+	 * Taxonomies
+	 */
+	public static function get_taxonomies ( $except = false ){
+		$taxonomies = [];
+		
+		$tax_name = Agdp_Report::taxonomy_report_style;
+		if( ! $except || strpos($except, $tax_name ) === false)
+			$taxonomies[$tax_name] = array(
+				'name' => $tax_name,
+				'input' => $tax_name,
+				'filter' => 'styles',
+				'label' => 'Style',
+				'plural' => 'Styles',
+				'all_label' => '(tous)',
+				'none_label' => '(sans style)'
+			);
+				
+		return $taxonomies;
 	}
 	
 	private static function post_type_capabilities(){

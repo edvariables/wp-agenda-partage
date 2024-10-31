@@ -11,9 +11,10 @@
  * Une report dispatche les mails vers des posts ou comments.
  * Agdp_Forum traite les commentaires.
  */
-class Agdp_Report {
+class Agdp_Report extends Agdp_Post {
 
 	const post_type = 'agdpreport';
+	const taxonomy_report_style = 'report_style';
 		
 	// const user_role = 'author';
 
@@ -52,6 +53,13 @@ class Agdp_Report {
 		add_filter( 'the_content', array(__CLASS__, 'the_content'), 10, 1 );
 		
 		return $classes;
+	}
+	
+	/**
+	 * Retourne les styles possibles d'un rapport
+	 */
+	public static function get_report_styles( $post_id, $args = 'names' ) {
+		return self::get_post_terms( self::taxonomy_report_style, $post_id, $args);
 	}
 
 	/**
@@ -426,7 +434,10 @@ class Agdp_Report {
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre>%s</div>'
 				, $report_id, $dbresults, $sql_prepared);
 		
-		$content = sprintf('<div class="agdpreport" agdp_report="%d"><table>',
+		$tag_id =sprintf( 'report_%s', Agdp::get_secret_code( 6 ) );
+		
+		$content = sprintf('<div id="%s" class="agdpreport" agdp_report="%d"><table>',
+				$tag_id,
 				$report_id
 		);
 		
@@ -473,11 +484,29 @@ class Agdp_Report {
 		
 		if( $sql_prepared ) 
 			$content .= $sql_prepared;
+		
+		$content .= sprintf( '<style>%s</style>', self::get_report_css( $report_id, $tag_id ) );
+		
 	    $content .= '</div>';
 		
 		return $content;
 	}
 
+	/**
+	 * Retourne les styles possibles d'un rapport
+	 */
+	public static function get_report_css( $report_id, $tag_id ) {
+		$css = get_post_meta( $report_id, 'report_css', true );
+		foreach( self::get_report_styles( $report_id, 'all' ) as $term ){
+			if( $term->description )
+				$css .= "\n" . $term->description;
+		}
+		if( $css && $tag_id ){
+			$css = preg_replace( '/(\s|,\s?)(table(\s|.))/', '$1#' . $tag_id . ' > $2', $css );
+		}
+		return $css;
+	}
+	
 	/**
 	 * Hook the_content
 	 */

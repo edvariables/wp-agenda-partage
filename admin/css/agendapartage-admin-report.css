@@ -84,6 +84,9 @@
 #agdp_report-inputs .sql-helper-tables li .toggle-trigger:hover {
 	opacity: inherit;
 }
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger.active + .toggle-container {
+	background-color: lightgray;
+}
 
 /** render **/
 #agdp_report-render .report_refresh, #agdp_report-render .report_show_sql {
@@ -106,4 +109,16 @@
 
 #agdp_report-render .agdpreport td {
 	max-height: 8em;
+}
+#agdp_report-render .agdp-metabox-row.report_css .report_style_terms {
+	float: right;
+}
+#agdp_report-render .agdp-metabox-row.report_css .report_style_terms > div a {
+	opacity: 50%;
+}
+#agdp_report-render .agdp-metabox-row.report_css .report_style_terms > div:hover a {
+	opacity: inherit;
+}
+#agdp_report-render .agdp-metabox-row.report_css .report_style_terms label {
+	cursor: pointer;
 }
