@@ -1168,15 +1168,25 @@ class Agdp_Admin_Options {
 	 * $data['post'], $data['metas']
 	 */
 	private  static function agdp_import_posts( $data, $options = false ) {
-		if( empty($data['post']) ){
-			$new_posts = [];
-			foreach(  $data as $post_data )
-				if( ! empty($post_data['post']) )
-					$new_posts[] = static::agdp_import_posts( $post_data, $options );
-			return $new_posts;
-		}
 		if( ! is_array($options) )
 			$options = [];
+		if( empty($data['post']) ){
+			$new_posts = [];
+			$options['original_ids'] = [];
+			foreach( $data as $post_data )
+				if( ! empty($post_data['post']) )
+					$options['original_ids'][$post_data['post']['ID'].''] = $post_data['post']['ID'];
+			foreach( $data as $post_data )
+				if( ! empty($post_data['post']) ){
+					$original_id = $post_data['post']['ID'];
+					$new_id = static::agdp_import_posts( $post_data, $options );
+					if( $new_id ){
+						$options['original_ids'][$original_id.''] = $new_id;
+						$new_posts[] = $new_id;
+					}
+				}
+			return $new_posts;
+		}
 		$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
 		$add_title_suffix =isset($options['add_title_suffix']) && $options['add_title_suffix'];
 		$title_suffix = empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
@@ -1198,7 +1208,6 @@ class Agdp_Admin_Options {
 		
 		foreach(['ID', 
 			'post_password', 
-			'post_parent', 
 			'guid', 
 			'post_modified', 
 			'post_modified_gmt', 
@@ -1206,16 +1215,25 @@ class Agdp_Admin_Options {
 		 ] as $key)
 			unset($data['post'][$key]);
 		
-		// metas
-		foreach($data['metas'] as $meta_key => $meta_value){
-			if( $meta_value ){
-				//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
-				$data['metas'][$meta_key] = addslashes( $meta_value );
-			}
+		//post_parent 
+		if( ! empty($data['post']['post_parent']) ){
+			if( isset($options['original_ids'])
+			 && isset($options['original_ids'][$data['post']['post_parent'].'']) )
+				$data['post']['post_parent'] = $options['original_ids'][$data['post']['post_parent'].''];
+			else
+				unset($data['post']['post_parent']);
 		}
-		$data['post']['meta_input'] = $data['metas'];
-		
-		if( $add_title_suffix )
+		// metas
+		if( ! empty($data['metas']) ){
+			foreach($data['metas'] as $meta_key => $meta_value){
+				if( $meta_value ){
+					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
+					$data['metas'][$meta_key] = addslashes( $meta_value );
+				}
+			}
+			$data['post']['meta_input'] = $data['metas'];
+		}
+		if( $add_title_suffix && $title_suffix )
 			$data['post']['post_title'] .= $title_suffix ;
 		// var_dump($data);
 		// debug_log(__FUNCTION__, $data['metas']['sql_variables'], get_debug_type($data['metas']['sql_variables']));
