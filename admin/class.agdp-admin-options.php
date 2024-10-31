@@ -1318,8 +1318,8 @@ class Agdp_Admin_Options {
 			return $new_terms;
 		}
 		$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
-		$add_title_suffix =isset($options['add_title_suffix']) && $options['add_title_suffix'];
-		$title_suffix = empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
+		$add_title_suffix = false;//isset($options['add_title_suffix']) && $options['add_title_suffix'];
+		$title_suffix = '';//empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
 		
 		if( empty($data['term'])
 		 || empty($data['term']['slug'])
@@ -1337,6 +1337,7 @@ class Agdp_Admin_Options {
 				// , $taxonomy
 				// , htmlspecialchars( $data['term']['name'] )
 			// );
+			// TODO update ?
 			return $existing_term->term_id;
 		}
 		
