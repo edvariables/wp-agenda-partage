@@ -373,7 +373,6 @@ class Agdp_Report extends Agdp_Post {
 		if( is_array($sql) ){
 			foreach( $sql as $index => $sql_u ){
 				$result_u = $wpdb->get_results($sql_u);
-				// debug_log(__FUNCTION__, $index, $sql_u, $result_u);
 				if( $result_u )
 					$result = $result_u;
 			}
@@ -485,10 +484,10 @@ class Agdp_Report extends Agdp_Post {
 		if( $sql_prepared ) 
 			$content .= $sql_prepared;
 		
-		$content .= sprintf( '<style>%s</style>', self::get_report_css( $report_id, $tag_id ) );
+		$content .= sprintf( "\n<style>%s</style>\n", self::get_report_css( $report_id, $tag_id ) );
 		
-	    $content .= '</div>';
-		
+		$content .= '</div>';
+	    
 		return $content;
 	}
 
@@ -504,6 +503,9 @@ class Agdp_Report extends Agdp_Post {
 		if( $css && $tag_id ){
 			$css = preg_replace( '/(\s|,\s?)(table(\s|.))/', '$1#' . $tag_id . ' > $2', $css );
 		}
+		
+		$css = str_replace( '&gt;', '>', $css);
+	    
 		return $css;
 	}
 	

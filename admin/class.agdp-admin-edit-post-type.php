@@ -618,7 +618,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				}
 			}
 			$post->post_password = null;
-			$data[] = [
+			$post_data = [
 				'post' => $post,
 				'metas' => $metas,
 			];
@@ -641,22 +641,24 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					if( ! isset( $post_terms[$tax_name] ) )
 						$post_terms[$tax_name] = [];
 					if( ! isset( $post_terms[$tax_name][$term->term_id.''] ) )
-						$post_terms[$tax_name][ $term->term_id.'' ] = $term->name;
+						$post_terms[$tax_name][ $term->term_id.'' ] = $term->slug;
 				}
 			}
 			if( $post_terms )
-				$data['terms'] = $post_terms;
+				$post_data['terms'] = $post_terms;
+			
+			$data[] = $post_data;
 		}
 		// echo json_encode( $data );
 		
 		if( $used_terms ){
-			$data['terms'] = static::get_taxonomies_export ( $used_terms );
-			$data['taxonomies'] = [];
-			foreach($used_terms as $term)
-				if( isset($data['taxonomies'][$term->taxonomy]) )
-					continue;
-				else
-					$data['taxonomies'][$term->taxonomy] = $taxonomies[$term->taxonomy];
+			$data['terms'] = static::get_terms_export( $used_terms );
+			if( $data['terms'] ){
+				$data['taxonomies'] = [];
+				foreach($used_terms as $term)
+					if( ! isset($data['taxonomies'][$term->taxonomy]) )
+						$data['taxonomies'][$term->taxonomy] = $taxonomies[$term->taxonomy];
+			}
 		}
 		
 		return $data;
@@ -666,7 +668,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	/**
 	 * Export taxonomies
 	 */
-	public static function get_taxonomies_export( $terms ) {
+	public static function get_terms_export( $terms ) {
 		$action = 'export';
 		
 		$data = [];

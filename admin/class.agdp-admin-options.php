@@ -1167,7 +1167,7 @@ class Agdp_Admin_Options {
 	 * Import post
 	 * $data['post'], $data['metas']
 	 */
-	private  static function agdp_import_posts( $data, $options = false ) {
+	private  static function agdp_import_posts( $data, &$options = false ) {
 		if( ! is_array($options) )
 			$options = [];
 		if( empty($data['post']) ){
@@ -1176,8 +1176,19 @@ class Agdp_Admin_Options {
 			foreach( $data as $post_data )
 				if( ! empty($post_data['post']) )
 					$options['original_ids'][$post_data['post']['ID'].''] = $post_data['post']['ID'];
-			foreach( $data as $post_data )
-				if( ! empty($post_data['post']) ){
+			
+			if( ! empty($data['taxonomies']) ){
+				$options['taxonomies'] = $data['taxonomies'];
+			}
+			
+			if( ! empty($data['terms']) ){
+				$new_ids = static::agdp_import_terms( $data, $options );
+			}
+			
+			// agdp_import_posts callback
+			foreach( $data as $index => $post_data )
+				if( is_numeric($index)
+				&& ! empty($post_data['post']) ){
 					$original_id = $post_data['post']['ID'];
 					$new_id = static::agdp_import_posts( $post_data, $options );
 					if( $new_id ){
@@ -1193,9 +1204,9 @@ class Agdp_Admin_Options {
 		
 		if( empty($data['post'])
 		 || empty($data['post']['post_type']) ){
-				echo sprintf( '<div class="error">Données incomplètes.<pre>%s</pre></div>'
-					, htmlspecialchars( json_encode($data) )
-				);
+				// echo sprintf( '<div class="error">Données incomplètes.<pre>%s</pre></div>'
+					// , htmlspecialchars( json_encode($data) )
+				// );
 			return false;
 		}
 		if( ! Agdp_Admin_Edit_Post_Type::has_cap( 'import', $data['post']['post_type'] ) ){
@@ -1223,7 +1234,7 @@ class Agdp_Admin_Options {
 			else
 				unset($data['post']['post_parent']);
 		}
-		// metas
+		// metas in meta_input
 		if( ! empty($data['metas']) ){
 			foreach($data['metas'] as $meta_key => $meta_value){
 				if( $meta_value ){
@@ -1233,13 +1244,46 @@ class Agdp_Admin_Options {
 			}
 			$data['post']['meta_input'] = $data['metas'];
 		}
+		// terms in tax_input
+		if( ! empty($data['terms']) ){
+			$post_terms = [];
+			foreach($data['terms'] as $tax_name => $term){
+				foreach($term as $term_id => $term_slug){
+					if( isset($options['original_term_ids'])
+					 && isset($options['original_term_ids'][$term_id.'']) ){
+						if( ! isset($post_terms[$tax_name]) )
+							$post_terms[$tax_name] = [];
+						$post_terms[$tax_name][] = $options['original_term_ids'][$term_id.''];
+					}
+				}
+			}
+			// $data['post']['tax_input'] = $post_terms; // cf plus loin
+		}
+		
+		//suffix
 		if( $add_title_suffix && $title_suffix )
 			$data['post']['post_title'] .= $title_suffix ;
 		// var_dump($data);
-		// debug_log(__FUNCTION__, $data['metas']['sql_variables'], get_debug_type($data['metas']['sql_variables']));
+		// debug_log(__FUNCTION__, $options, $data, $post_terms );
 		$new_post_id = wp_insert_post( $data['post'], true );
 		
 		if( $new_post_id ){
+			//Taxonomies
+			if( ! empty($post_terms) ) {
+				foreach($post_terms as $tax_name => $tax_inputs){
+					$result = wp_set_post_terms($new_post_id, $tax_inputs, $tax_name, false);
+					if(is_a($result, 'WP_Error') || is_string($result)){
+						if( is_a( $new_term_id, 'WP_Error' ) ){
+							echo sprintf( '<div>%sEchec d\'affectation des termes %s -> %s : %s</a></div>'
+								, Agdp::icon('error')
+								, $taxonomy
+								, implode('+', $tax_inputs)
+								, is_a($result, 'WP_Error') ? $result->get_error_message() : $result
+							);
+						}
+					}
+				}
+			}
 			echo sprintf( '<div><a href="%s">%s %s</a></div>'
 				, get_edit_post_link( $new_post_id )
 				, Agdp::icon('plus')
@@ -1247,6 +1291,110 @@ class Agdp_Admin_Options {
 			);
 		}
 		return $new_post_id;
+	}
+	
+	/**
+	 * Import terms
+	 * $data['term'], $data['metas']
+	 */
+	private  static function agdp_import_terms( $data, &$options = false ) {
+		if( ! is_array($options) )
+			$options = [];
+		if( empty($data['term']) ){
+			$new_terms = [];
+			
+			$options['original_term_ids'] = [];
+			if( ! empty($data['terms']) ){
+				foreach( $data['terms'] as $term_data )
+					if( ! empty($term_data['term']) ){
+						$original_id = $term_data['term']['term_id'];
+						$new_id = static::agdp_import_terms( $term_data, $options );
+						if( $new_id ){
+							$options['original_term_ids'][$original_id.''] = $new_id;
+							$new_terms[] = $new_id;
+						}
+					}
+			}
+			return $new_terms;
+		}
+		$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
+		$add_title_suffix =isset($options['add_title_suffix']) && $options['add_title_suffix'];
+		$title_suffix = empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
+		
+		if( empty($data['term'])
+		 || empty($data['term']['slug'])
+		 || empty($data['term']['taxonomy']) ){
+				// echo sprintf( '<div class="error">Données incomplètes.<pre>%s</pre></div>'
+					// , htmlspecialchars( json_encode($data) )
+				// );
+			return false;
+		}
+		$taxonomy = $data['term']['taxonomy'];
+		
+		if( $existing_term = get_term_by( 'slug', $data['term']['slug'], $taxonomy, OBJECT ) ){
+			// echo sprintf( '<div><a href="%s">Le terme %s -> %s existe déjà</a></div>'
+				// , get_edit_term_link( $existing_term->term_id )
+				// , $taxonomy
+				// , htmlspecialchars( $data['term']['name'] )
+			// );
+			return $existing_term->term_id;
+		}
+		
+		//term_parent 
+		if( ! empty($data['term']['parent']) ){
+			if( isset($options['original_term_ids'])
+			 && isset($options['original_term_ids'][$data['term']['parent'].'']) )
+				$data['term']['parent'] = $options['original_term_ids'][$data['term']['parent'].''];
+			else
+				unset($data['term']['parent']);
+		}
+		// metas
+		if( ! empty($data['metas']) ){
+			foreach($data['metas'] as $meta_key => $meta_value){
+				if( $meta_value ){
+					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
+					$data['metas'][$meta_key] = addslashes( $meta_value );
+				}
+			}
+			// $data['term']['meta_input'] = $data['metas']; cf plus loin
+		}
+		if( $add_title_suffix && $title_suffix )
+			$data['term']['name'] .= $title_suffix ;
+		
+		foreach( ['term_taxonomy_id', 'term_id'] as $prop )
+			unset( $data['term'][$prop] );
+		// var_dump($data);
+		// debug_log(__FUNCTION__, $data);
+		
+		// wp_insert_term
+		$new_term_id = wp_insert_term( $data['term']['name'], $taxonomy, $data['term'] );
+		
+		if( is_a( $new_term_id, 'WP_Error' ) ){
+			echo sprintf( '<div>%sEchec de création du terme %s -> %s : %s</a></div>'
+				, Agdp::icon('error')
+				, $taxonomy
+				, htmlspecialchars( $data['term']['name'] )
+				, $new_term_id->get_error_message()
+			);
+			return false;
+		}
+		if( $new_term_id ){
+			if( is_array($new_term_id) )
+				$new_term_id = $new_term_id['term_id'];
+			
+			if( isset($data['metas']) ){
+				foreach($data['metas'] as $meta_key => $meta_value){
+					update_term_meta( $new_term_id, $meta_key, $meta_value );
+				}
+			}
+			echo sprintf( '<div><a href="%s">%s Création du terme %s -> %s</a></div>'
+				, get_edit_term_link( $new_term_id )
+				, Agdp::icon('plus')
+				, $taxonomy
+				, htmlspecialchars( $data['term']['name'] )
+			);
+		}
+		return $new_term_id;
 	}
 }
 
