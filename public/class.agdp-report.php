@@ -484,7 +484,9 @@ class Agdp_Report extends Agdp_Post {
 		if( $sql_prepared ) 
 			$content .= $sql_prepared;
 		
-		$content .= sprintf( "\n<style>%s</style>\n", self::get_report_css( $report_id, $tag_id ) );
+		if( empty($options['skip_styles']) ) {
+			$content .= sprintf( "\n<style>%s</style>\n", self::get_report_css( $report_id, $tag_id ) );
+		}
 		
 		$content .= '</div>';
 	    
