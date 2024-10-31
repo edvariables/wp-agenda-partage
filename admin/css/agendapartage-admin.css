@@ -147,6 +147,9 @@ img.coo-favicon {
 #post #major-publishing-actions #export-action {
 	text-align: right;
 }
+#post #major-publishing-actions #publishing-action {
+	margin-top: 1em;
+}
 
 /*toggle shortcode*/
 .toggle-trigger {

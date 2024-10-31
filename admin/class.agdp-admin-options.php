@@ -1122,7 +1122,7 @@ class Agdp_Admin_Options {
 						, json_encode( $data )
 					);
 				}
-				else
+				elseif( is_array($posts) )
 					echo sprintf('<div class="info"><label>%d importation%s</label>'
 						, count($posts)
 						, count($posts) > 1 ? 's' : ''
