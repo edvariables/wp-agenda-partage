@@ -351,7 +351,7 @@ abstract class Agdp_Posts {
 		$query = [
 			'post_type' => 'post'
 			, 'fields' => 'post_title'
-			, 'numberposts' => 5
+			, 'numberposts' => 99
 		];
 		if( is_array($data) )
 			$query = array_merge($query, $data);

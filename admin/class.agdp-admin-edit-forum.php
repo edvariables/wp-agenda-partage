@@ -441,6 +441,30 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'style' => 'margin-top: 1.2em;',
 		];
 		
+		//Rapport associé
+		$reports = get_posts(
+			array(
+				'nopaging' => true,
+				'post_type'=> Agdp_Report::post_type
+				//'author__in' => self::get_admin_ids(),
+			)
+		);
+		$reports = array_merge([ '' => '(aucun)' ], $reports);
+		$fields[] = [
+			'name' => 'forum_report',
+			'label' => __('Rapport associé', AGDP_TAG),
+			'input' => 'select',
+			'values' => $reports,
+			'unit' => sprintf('<a href="#" %s="%s" onclick="%s">Editer</a>.'
+				, 'href_mod'
+				, '/wp-admin/post.php?post=[post_id]&action=edit'
+				, esc_attr('javascript:var $this=jQuery(this);'
+					. ' var post_id=$this.parents("div:first").find("select").val(); if( ! post_id ) return false;'
+					. ' var href=$this.attr("href_mod").replace("[post_id]", post_id);'
+					. ' $this.attr("href", href);')
+			),
+		];
+		
 		return $fields;
 	}
 	

@@ -111,6 +111,9 @@ class Agdp {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-forum-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Forum_Shortcodes', 'init' ) );
 		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Report_Shortcodes', 'init' ) );
+		
 	}
 	
 	/**
