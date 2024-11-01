@@ -349,7 +349,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * Retourne le commentaire sur le formatage de variables
 	 */
 	public static function get_variables_helper(){
-		$html = sprintf("<span>Utilisez le préfixe \"%s\" avant chaque nom de table.</span><br>", AGDP_BLOG_PREFIX);
+		$html = sprintf("<span>Utilisez le préfixe <b><code>%s</code></b> avant chaque nom de table.</span><br>", AGDP_BLOG_PREFIX);
 		
 		//TODO ajax
 		$html .= '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
@@ -359,14 +359,14 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%s</code> : type texte (par défaut)</li>';
 		$html .= '<li><code>%d</code> : type nombre entier</li>';
 		$html .= '<li><code>%+d</code> : -> avec signe</li>';
-		$html .= '<li><code>%04d</code> : -> en 4 chiffres, complété par des zéros si besoin est</li>';
+		$html .= '<li><code>%04d</code> : -> en 4 chiffres, complété par des zéros si besoin est.</li>';
 		$html .= '<li><code>%f</code> : type nombre réel</li>';
 		$html .= '<li><code>%.2f</code> : -> 2 décimales</li>';
-		$html .= '<li><code>%i</code> : type identifiant (nom de table, de champ)</li>';
+		$html .= '<li><code>%i</code> : type identifiant (nom de table, de champ) encadré par des <code><b>`</b></code></li>';
 		$html .= '<li><i>cf <a href="https://www.php.net/manual/fr/function.vsprintf.php">https://www.php.net/manual/fr/function.vsprintf.php</a></i></li>';
-		$html .= '<li><code>%IN</code> : type tableau dans une clause IN. ex. : <code>post.post_status IN (:post_status%IN)</code></li>';
-		$html .= '<li><code>%IN</code> : inclut le sql d\'une sous-requête pour une clause IN. ex., pour unne variable <code>:posts</code> de type Sous-requête : <code>INNNER JOIN :posts%IN posts WHERE posts.ID = ...</code></li>';
-		$html .= '<li><code>%K</code> : Ajoute <code>%</code> autour de la valeur de la variable pour un LIKE. ex. : <code>post.post_status LIKE :post_status%IN)</code></li>';
+		$html .= '<li><code>%IN</code> : type tableau dans une clause IN. ex. : <code>post.post_status IN (:post_status%IN)</code> devient <code>... IN ("pending", "publish")</code></li>';
+		$html .= '<li><code>%IN</code> : inclut le sql d\'une sous-requête pour une clause IN. ex., pour une variable <code>:posts</code> de type Sous-requête : <code>INNER JOIN :posts%IN posts ON posts.ID = ...</code></li>';
+		$html .= '<li><code>%K</code> : Ajoute <code>%</code> autour de la valeur de la variable pour un LIKE. ex. : <code>post.post_title LIKE :search%K)</code></li>';
 		$html .= '<li><code>%KL</code> : Ajoute <code>%</code> à droite de la valeur de la variable pour un LIKE ("commence par").</li>';
 		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").</li>';
 		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.</li>';

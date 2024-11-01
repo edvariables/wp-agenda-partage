@@ -59,6 +59,12 @@
 	padding-left: 5em;
 	font-size: smaller;
 }
+#agdp_report-inputs .sql-helper-variables {
+	padding-top: 0px;
+}
+#agdp_report-inputs .sql-helper-variables > ul {
+	margin-top: 0px;
+}
 #agdp_report-inputs .sql-helper-tables {
 	margin-top: 0px;
 	padding-top: 0px;
@@ -121,4 +127,12 @@
 }
 #agdp_report-render .agdp-metabox-row.report_css .report_style_terms label {
 	cursor: pointer;
+}
+#agdp_report-render .report_refresh > a {
+  padding-top: 7px;
+  padding-right: 3px;
+  display: inline-block;
+  height: 26px;
+  position: relative;
+  top: -10px;
 }

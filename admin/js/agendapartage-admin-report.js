@@ -71,12 +71,20 @@ jQuery( function( $ ) {
 				else
 					var_values = {};
 				
+				//container
+				$container = $variables.nextAll('.sql_variables_wrap:first');
+					if( $container.length === 0 )
+						$container = $('<div class="sql_variables_wrap"></div>').appendTo( $variables.parent() );
+					else
+						$container.html('');
+					
 				//Variables présentes dans la requête
-				var matches;
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
 				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiIK][NLR]?)?";
-				if( matches = sql.matchAll( new RegExp(pattern, "g") ) ){
+				var matches = sql.matchAll( new RegExp(pattern, "g") );
+				if( matches )
 					matches = matches.toArray();
+				if( matches && matches.length > 0 ){
 					var variables = {};
 					var index = 0;
 					for(var i in matches){
@@ -93,11 +101,6 @@ jQuery( function( $ ) {
 					}
 					
 					//Affichage des variables
-					$container = $variables.nextAll('.sql_variables_wrap:first');
-					if( $container.length === 0 )
-						$container = $('<div class="sql_variables_wrap"></div>').appendTo( $variables.parent() );
-					else
-						$container.html('');
 					for(var variable in variables){
 						var value, type, options;
 						if( variables[variable] ){
@@ -251,6 +254,9 @@ jQuery( function( $ ) {
 							.appendTo( $container )
 						;
 					}
+				}
+				else {
+					$container.html('<small>(aucune variable)</small>');
 				}
 			}).trigger('change');
 			
