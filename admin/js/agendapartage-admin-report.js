@@ -574,7 +574,7 @@ jQuery( function( $ ) {
 				var post_id = $form.find('#post_ID').val();
 				var sql = $form.find('#sql').val();
 				var sql_variables = $form.find('#sql_variables').val();
-				var report_show_sql = $form.find('#report_show_sql').prop('checked');
+				var report_show_sql = $form.find('#report_show_sql').val();
 				var $destination = $form.find('.agdpreport');
 				if( $destination.length === 0 ){
 					var $dest_container = $form.find('#agdp_report-render .inside:first');

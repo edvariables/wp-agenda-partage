@@ -17,7 +17,14 @@ class Agdp_Report extends Agdp_Post {
 	const taxonomy_report_style = 'report_style';
 		
 	// const user_role = 'author';
-
+	
+	public static $sql_global_vars = [
+		AGDP_VAR_BLOG_ID /* @BLOGID */ => null,
+		AGDP_VAR_BLOG_NAME /* @BLOGNAME */ => null,
+		AGDP_VAR_BLOG_URL /* @BLOGURL */ => null,
+	];
+	private static $sql_global_vars_init = false;
+	
 	private static $initiated = false;
 
 	public static function init() {
@@ -106,8 +113,8 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
-		//global vars : blog_prefix, blog_id
-		$sql = static::replace_sql_global_vars( $sql );
+		//blog_prefix : @.
+		$sql = static::replace_sql_tables_prefix( $sql );
 		
 		//valeurs des variables
 		if( ! $sql_variables )
@@ -343,15 +350,18 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
+		//Suppression de ; finaux
+		$sql = preg_replace('/([;]\s*)+$/', '', $sql);
+		
 		// debug_log(__FUNCTION__ .  ' au final', $sql);
 		
 		return $sql;
 	}
 
 	/**
-	 * replace_sql_blog_prefix
+	 * replace_sql_tables_prefix
 	 */
- 	public static function replace_sql_global_vars( $sql ) {
+ 	public static function replace_sql_tables_prefix( $sql ) {
 		//@.
 		//TODO preg_replace
 		global $wpdb;
@@ -365,10 +375,64 @@ class Agdp_Report extends Agdp_Post {
 		//$wpdb::$tables
 		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
 		
-		//@BLOGID
-		$sql = str_replace( AGDP_VAR_BLOG_ID, $wpdb->blogid, $sql);
+		return $sql;
+	}
+
+
+	/**
+	 * returns sql_global_vars initiated
+	 */
+ 	public static function sql_global_vars( $options = false ) {
+		if( self::$sql_global_vars_init )
+			return static::$sql_global_vars;
+		
+		self::$sql_global_vars_init = true;
+		static::$sql_global_vars = array_merge( static::$sql_global_vars, [
+			AGDP_VAR_BLOG_ID /* @BLOGID */ => get_current_blog_id(),
+			AGDP_VAR_BLOG_NAME /* @BLOGNAME */ => get_bloginfo('name'),
+			AGDP_VAR_BLOG_URL /* @BLOGURL */ => get_bloginfo('url'),
+		]);
+				
+		return static::$sql_global_vars;
+	}
+
+
+	/**
+	 * add_sql_global_vars
+	 */
+ 	public static function add_sql_global_vars( $sql, $sql_variables = false, $options = false ) {
+		if( ! $sql )
+			return $sql;
+		
+		$vars = static::sql_global_vars( $options );
+		
+		//get_sql_global_vars
+		$set_vars =  static::get_sql_global_vars( $vars, $sql_variables, $options );
+		
+		// array_shift
+		if( ! is_array($sql) )
+			$sql = [ $set_vars, $sql ];
+		else
+			$sql = array_merge( [ $set_vars ], $sql );
 		
 		return $sql;
+	}
+	/**
+	 * get_sql_global_vars
+	 */
+ 	public static function get_sql_global_vars( $vars, $sql_variables = false, $options = false ) {
+		
+		$set_vars = '';
+		foreach( $vars as $var => $value ){
+			if( $set_vars )
+				$set_vars .= ', ';
+			$set_vars .= sprintf(' %s = "%s"', $var, esc_attr( $value ));
+		}
+		if( $set_vars ){
+			$set_vars = sprintf('SET %s', $set_vars);
+		}
+
+		return $set_vars;
 	}
 
 	/**
@@ -387,13 +451,17 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * SQL results
 	 */
- 	public static function get_sql_dbresults( $report = false, $sql = false, $sql_variables = false ) {
-		$sql = self::get_sql( $report, $sql, $sql_variables );
+ 	public static function get_sql_dbresults( $report = false, $sql = false, $sql_variables = false, $options = false ) {
+		$sql = self::get_sql( $report, $sql, $sql_variables, $options );
 		if( ! $sql )
 			return;
 			
 		global $wpdb;
 		$wpdb->suppress_errors(true);
+		
+		
+		//global vars : @BLOGID
+		$sql = static::add_sql_global_vars( $sql, $sql_variables, $options );
 		
 		if( is_array($sql) ){
 			foreach( $sql as $index => $sql_u ){
@@ -431,6 +499,7 @@ class Agdp_Report extends Agdp_Post {
 		$report_id = $report->ID;
 		
 		$sql_prepared ='';
+		//report_show_sql
 		if( is_admin() && current_user_can('manage_options')){
 			$meta_key = 'report_show_sql';
 			if( isset($options[$meta_key]) )
@@ -438,14 +507,17 @@ class Agdp_Report extends Agdp_Post {
 			else
 				$report_show_sql = get_post_meta( $report_id, $meta_key, true );
 			if( $report_show_sql ){
-				$sql_prepared = self::get_sql( $report, $sql, $sql_variables );
+				$sql_prepared = static::get_sql( $report, $sql, $sql_variables, $options );
+				if( $report_show_sql === 'vars' ){
+					$sql_prepared = static::add_sql_global_vars( $sql_prepared, $sql_variables, $options );
+				}
 				if( is_array($sql_prepared) )
 					$sql_prepared = implode( ";\n", $sql_prepared );
 				$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', $sql_prepared);
 			}
 		}	
 		
-		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables );
+		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables );
 		
 		if( ! $dbresults )
 			return sprintf('<div class="agdpreport" agdp_report="%d">(aucun résultat)%s</div>', $report_id, $sql_prepared);

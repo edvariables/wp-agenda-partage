@@ -283,6 +283,10 @@ div.edit-post-layout__metaboxes {
 .agdp-metabox-row code {
 	padding-left:0px;
 }
+.agdp-metabox-row .sql-helper-variables label {
+	min-width: 8em;
+	display: inline-block;
+}
 
 
 #the-list .column-sql {

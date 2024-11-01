@@ -187,8 +187,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			////////////////
 			case 'label':
 				echo '<label id="'.$id.'" for="'.$name.'"'
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '') 
 					. ($input_attributes ? ' '.$input_attributes : '')
 					. '>' . $icon . htmlentities($label).'</label>'
 				;
@@ -197,8 +197,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			////////////////
 			case 'link':
 				echo '<label id="'.$id.'" for="'.$name.'"'
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '') 
 					. ($input_attributes ? ' '.$input_attributes : '')
 					. '>' . $icon . $label.'</label>';
 				break;
@@ -211,8 +211,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				}
 				echo '<textarea id="'.$id.'" name="'.$name.'"'
 					. ($readonly ? ' readonly ' : '')
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '') 
 					. ($input_attributes ? ' '.$input_attributes : '')
 					. ($input_type === 'json' ? ' data-type="json"' : '')
 					.'>'
@@ -234,8 +234,9 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			////////////////
 			case 'select':
 				echo '<select id="'.$id.'"'
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr($class).'"' : '') 
+					. ($style ? ' style="'.esc_attr($style).'"' : '') 
+					// . ($val ? ' value="'.esc_attr($val).'"' : '') 
 					.' name="' . $name . '"'
 					. ($readonly ? ' readonly ' : '')
 					. ($input_attributes ? ' '.$input_attributes : '')
@@ -263,8 +264,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				echo '<label for="'.$name.'">';
 				echo '<input id="'.$id.'" type="checkbox" name="'.$name.'" '
 					. (($val && $val !== 'unchecked') || ( $val === '' && $default_val) ? ' checked="checked"' : '')
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '') 
 					. ($readonly ? '  onclick="return false" ' : '')
 					. ($input_attributes ? ' '.$input_attributes : '')
 					. ' value="1" />';
@@ -278,8 +279,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				$class = " wpcf7-date" . ($class ? " $class" : "");
 				echo '<input id="'.$id.'" type="date" name="'.$name.'" '
 					. ($val ? ' value="'.htmlentities($val) .'"' : '')
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '') 
 					. ($readonly ? ' readonly ' : '')
 					. ($input_attributes ? ' '.$input_attributes : '')
 					. ' />'
@@ -298,8 +299,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					}
 				echo '<select id="'.$id.'" name="'.$name.'" '
 					. ($val ? ' value="'.htmlentities($val) .'"' : '')
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '') 
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '') 
 					. '>' . $options
 					. ' </select>';
 				break;*/
@@ -308,8 +309,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					. ' type="' . $input_type .'"'
 					. ' name="'.$name.'"'
 					. ' value="'.htmlentities($val) .'"'
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '')
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '')
 					. ' placeholder="hh:mm"'
 					. ' maxlength="5" size="5"'
 					. ($readonly ? ' readonly ' : '')
@@ -327,8 +328,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					. ' type="' . $input_type .'"'
 					. ' name="'.$name.'"'
 					. ' value="'.htmlentities($val) .'"'
-					. ($class ? ' class="'.str_replace('"', "'", $class).'"' : '') 
-					. ($style ? ' style="'.str_replace('"', "'", $style).'"' : '')
+					. ($class ? ' class="'.esc_attr( $class).'"' : '') 
+					. ($style ? ' style="'.esc_attr( $style).'"' : '')
 					. ($readonly ? ' readonly ' : '')
 					. ($input_attributes ? ' '.$input_attributes : '')
 					. '/>'

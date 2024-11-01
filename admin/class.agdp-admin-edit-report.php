@@ -198,8 +198,8 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'class' => 'report_refresh', //cf admin-report.js
 			],
 			[	'name' => 'report_show_sql',
-				'label' => 'Afficher le SQL',
-				'type' => 'checkbox',
+				'input' => 'select',
+				'values' => [ '' => 'Masquer le SQL', '1' => 'Afficher le SQL', 'vars' => 'Variables + SQL'],
 				'container_class' => 'report_show_sql', //cf admin-report.js
 			],
 			[	'name' => 'report_css',
@@ -231,7 +231,11 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		$tables = ['posts', 'postmeta', 'comments', 'commentmeta', 'term_relationships', 'term_taxonomy', 'termmeta', 'terms', 'user', 'metausers'];
+		$tables = ['posts', 'postmeta'
+				, 'comments', 'commentmeta'
+				, 'term_relationships', 'term_taxonomy', 'termmeta', 'terms'
+				, 'user', 'metausers'
+				, 'site', 'sitemeta'];
 		$sql = 'SHOW TABLES';
 		foreach($wpdb->get_results($sql) as $row){
 			foreach($row as $table){
@@ -248,6 +252,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				break;
 			}
 		}
+		//TODO trigger ajax
 		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
 			. '<ul class="toggle-container sql-helper-tables">';
 		foreach($tables as $index => $table){
@@ -346,29 +351,31 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function get_variables_helper(){
 		$html = sprintf("<span>Utilisez le préfixe \"%s\" avant chaque nom de table.</span><br>", AGDP_BLOG_PREFIX);
 		
+		//TODO ajax
 		$html .= '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
 			. '<div class="toggle-container sql-helper-variables"><ul>';
 		
-		$html .= '<li>De la forme : <code>:var_name[%format]</code>';
-		$html .= '<li><code>%s</code> : type texte (par défaut)';
-		$html .= '<li><code>%d</code> : type nombre entier';
-		$html .= '<li><code>%+d</code> : -> avec signe';
-		$html .= '<li><code>%04d</code> : -> en 4 chiffres, complété par des zéros si besoin est';
-		$html .= '<li><code>%f</code> : type nombre réel';
-		$html .= '<li><code>%.2f</code> : -> 2 décimales';
-		$html .= '<li><code>%i</code> : type identifiant (nom de table, de champ)';
-		$html .= '<li><i>cf <a href="https://www.php.net/manual/fr/function.vsprintf.php">https://www.php.net/manual/fr/function.vsprintf.php</a></i>';
-		$html .= '<li><code>%IN</code> : type tableau dans une clause IN. ex. : <code>post.post_status IN (:post_status%IN)</code>';
-		$html .= '<li><code>%IN</code> : inclut le sql d\'une sous-requête pour une clause IN. ex., pour unne variable <code>:posts</code> de type Sous-requête : <code>INNNER JOIN :posts%IN posts WHERE posts.ID = ...</code>';
-		$html .= '<li><code>%K</code> : Ajoute <code>%</code> autour de la valeur de la variable pour un LIKE. ex. : <code>post.post_status LIKE :post_status%IN)</code>';
-		$html .= '<li><code>%KL</code> : Ajoute <code>%</code> à droite de la valeur de la variable pour un LIKE ("commence par").';
-		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").';
-		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.';
-		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code>';
-		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.';
-		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.';
+		$html .= '<li>De la forme : <code>:var_name[%format]</code></li>';
+		$html .= '<li><code>%s</code> : type texte (par défaut)</li>';
+		$html .= '<li><code>%d</code> : type nombre entier</li>';
+		$html .= '<li><code>%+d</code> : -> avec signe</li>';
+		$html .= '<li><code>%04d</code> : -> en 4 chiffres, complété par des zéros si besoin est</li>';
+		$html .= '<li><code>%f</code> : type nombre réel</li>';
+		$html .= '<li><code>%.2f</code> : -> 2 décimales</li>';
+		$html .= '<li><code>%i</code> : type identifiant (nom de table, de champ)</li>';
+		$html .= '<li><i>cf <a href="https://www.php.net/manual/fr/function.vsprintf.php">https://www.php.net/manual/fr/function.vsprintf.php</a></i></li>';
+		$html .= '<li><code>%IN</code> : type tableau dans une clause IN. ex. : <code>post.post_status IN (:post_status%IN)</code></li>';
+		$html .= '<li><code>%IN</code> : inclut le sql d\'une sous-requête pour une clause IN. ex., pour unne variable <code>:posts</code> de type Sous-requête : <code>INNNER JOIN :posts%IN posts WHERE posts.ID = ...</code></li>';
+		$html .= '<li><code>%K</code> : Ajoute <code>%</code> autour de la valeur de la variable pour un LIKE. ex. : <code>post.post_status LIKE :post_status%IN)</code></li>';
+		$html .= '<li><code>%KL</code> : Ajoute <code>%</code> à droite de la valeur de la variable pour un LIKE ("commence par").</li>';
+		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").</li>';
+		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.</li>';
+		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code></li>';
+		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.</li>';
+		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.</li>';
 		
-		$html .= sprintf('<li>Variable <var>%s</var> : id du blog', AGDP_VAR_BLOG_ID);
+		foreach( Agdp_Report::sql_global_vars() as $var => $value )
+			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
 		
 		$html .= '</ul></div>';
 		return $html;

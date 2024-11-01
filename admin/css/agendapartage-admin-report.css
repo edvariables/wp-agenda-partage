@@ -95,7 +95,7 @@
 	position: relative;
 	height: 0px;
 }
-#agdp_report-render .report_show_sql label {
+#agdp_report-render .report_show_sql select {
 	min-width: inherit;
 	margin-right: 1em;
 }
