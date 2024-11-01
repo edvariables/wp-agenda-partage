@@ -59,6 +59,7 @@ define( 'AGDP_IMPORT_UID', 'post-import-uid' );
 define( 'AGDP_IMPORT_REFUSED', 'post-import-refused' ); 
 define( 'AGDP_FORUM_GENERIC', 'agdpforum-generic' ); 
 define( 'AGDP_BLOG_PREFIX', '@.'); 
+define( 'AGDP_VAR_BLOG_ID', '@BLOGID'); 
 define( 'AGDP_REPORT_VAR_PREFIX', 'rv_'); 
 
 define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');

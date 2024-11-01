@@ -151,8 +151,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'textarea',
 				'input_attributes' => 'rows="10" spellcheck="false"',
 				'learn-more' => 
-						sprintf("Utilisez le préfixe \"%s\" avant chaque nom de table.", AGDP_BLOG_PREFIX)
-						.'<br>'.static::get_variables_helper()
+						static::get_variables_helper()
 						.'<br>'.static::get_sql_helper()
 					,
 			],
@@ -345,8 +344,9 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * Retourne le commentaire sur le formatage de variables
 	 */
 	public static function get_variables_helper(){
+		$html = sprintf("<span>Utilisez le préfixe \"%s\" avant chaque nom de table.</span><br>", AGDP_BLOG_PREFIX);
 		
-		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
+		$html .= '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
 			. '<div class="toggle-container sql-helper-variables"><ul>';
 		
 		$html .= '<li>De la forme : <code>:var_name[%format]</code>';
@@ -367,6 +367,8 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code>';
 		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.';
 		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.';
+		
+		$html .= sprintf('<li>Variable <var>%s</var> : id du blog', AGDP_VAR_BLOG_ID);
 		
 		$html .= '</ul></div>';
 		return $html;

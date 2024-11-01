@@ -106,8 +106,8 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
-		//blog_prefix
-		$sql = static::replace_sql_blog_prefix( $sql );
+		//global vars : blog_prefix, blog_id
+		$sql = static::replace_sql_global_vars( $sql );
 		
 		//valeurs des variables
 		if( ! $sql_variables )
@@ -351,8 +351,9 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * replace_sql_blog_prefix
 	 */
- 	public static function replace_sql_blog_prefix( $sql ) {
-		
+ 	public static function replace_sql_global_vars( $sql ) {
+		//@.
+		//TODO preg_replace
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		if( $wpdb->blogid	> 1 ){
@@ -363,6 +364,9 @@ class Agdp_Report extends Agdp_Post {
 		}
 		//$wpdb::$tables
 		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
+		
+		//@BLOGID
+		$sql = str_replace( AGDP_VAR_BLOG_ID, $wpdb->blogid, $sql);
 		
 		return $sql;
 	}
