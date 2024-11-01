@@ -107,7 +107,7 @@ class Agdp_Report extends Agdp_Post {
 		}
 		
 		//blog_prefix
-		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
+		$sql = static::replace_sql_blog_prefix( $sql );
 		
 		//valeurs des variables
 		if( ! $sql_variables )
@@ -193,8 +193,10 @@ class Agdp_Report extends Agdp_Post {
 								$format_Inject = $format = '%I';
 							if( ! $variables[$variable] )
 								$variables[$variable] = '';
-							elseif( $blog_prefix && substr( $variables[$variable], 0, strlen($blog_prefix ) ) !== $blog_prefix )
+							elseif( $blog_prefix && substr( $variables[$variable], 0, strlen($blog_prefix ) ) !== $blog_prefix ){
+								//TODO tables user et usermeta doivent être préfixé de @site_prefix (::get_blog_prefix( 1 ))
 								$variables[$variable] = $blog_prefix . $variables[$variable];
+							}
 							break;
 						case 'column':
 							if( ! $format )
@@ -342,6 +344,26 @@ class Agdp_Report extends Agdp_Post {
 		}
 		
 		// debug_log(__FUNCTION__ .  ' au final', $sql);
+		
+		return $sql;
+	}
+
+	/**
+	 * replace_sql_blog_prefix
+	 */
+ 	public static function replace_sql_blog_prefix( $sql ) {
+		
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		if( $wpdb->blogid	> 1 ){
+			//$wpdb::$global_tables, $wpdb::$ms_global_tables
+			$site_prefix = $wpdb->get_blog_prefix( 1 );
+			
+			foreach( array_merge( $wpdb::$global_tables, $wpdb::$ms_global_tables ) as $table )
+				$sql = str_replace( AGDP_BLOG_PREFIX . $table, $site_prefix . $table, $sql);
+		}
+		//$wpdb::$tables
+		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
 		
 		return $sql;
 	}
