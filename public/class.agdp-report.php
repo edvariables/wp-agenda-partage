@@ -356,10 +356,9 @@ class Agdp_Report extends Agdp_Post {
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		if( $wpdb->blogid	> 1 ){
-			//$wpdb::$global_tables, $wpdb::$ms_global_tables
 			$site_prefix = $wpdb->get_blog_prefix( 1 );
-			
-			foreach( array_merge( $wpdb::$global_tables, $wpdb::$ms_global_tables ) as $table )
+			$tables =  array_merge( $wpdb->global_tables, $wpdb->ms_global_tables );
+			foreach( $tables as $table )
 				$sql = str_replace( AGDP_BLOG_PREFIX . $table, $site_prefix . $table, $sql);
 		}
 		//$wpdb::$tables
