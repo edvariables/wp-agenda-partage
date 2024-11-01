@@ -1390,10 +1390,10 @@ class Agdp_Admin_Options {
 			
 			if( $is_confirmed_action
 			&& empty( $options[ $confirm_key ] ) ){
-				echo sprintf( '<div>%s Ignore %s</div>'
-					, Agdp::icon('no-alt')
-					, htmlspecialchars( $data['post']['post_title'] )
-				);
+				// echo sprintf( '<div>%s Ignore %s</div>'
+					// , Agdp::icon('no-alt')
+					// , htmlspecialchars( $data['post']['post_title'] )
+				// );
 				return $update_existing->ID; // pour original_ids
 			}
 			
@@ -1423,14 +1423,12 @@ class Agdp_Admin_Options {
 				return $original_id;
 			}
 			
-			debug_log( __FUNCTION__, $data['post']['post_title'], $is_confirmed_action, $confirm_key, empty( $options[ $confirm_key ] ) );
-			
 			if( $is_confirmed_action
 			&& empty( $options[ $confirm_key ] ) ){
-				echo sprintf( '<div>%s Ignore %s</div>'
-					, Agdp::icon('no-alt')
-					, htmlspecialchars( $data['post']['post_title'] )
-				);
+				// echo sprintf( '<div>%s Ignore %s</div>'
+					// , Agdp::icon('no-alt')
+					// , htmlspecialchars( $data['post']['post_title'] )
+				// );
 				return false;
 			}
 			
