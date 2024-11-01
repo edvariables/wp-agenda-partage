@@ -99,7 +99,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function register_report_metaboxes($post){
 		add_meta_box('agdp_report-inputs', __('Requête', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-variables', __('Variables', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'default');
-		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'default');
+		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'low');
 	}
 
 	/**
