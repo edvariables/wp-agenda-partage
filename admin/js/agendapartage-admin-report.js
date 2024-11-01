@@ -38,10 +38,32 @@ jQuery( function( $ ) {
 		};
 		var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field', 'table'];
 		
-		//Init
+		//Init inputs
 		$('#agdp_report-inputs').each(function(e){
 			var $this = $(this);
 			var $sql = $this.find('textarea#sql');
+			var $variables = $('#agdp_report-variables').find('textarea#sql_variables');
+			
+			//Liste de tables
+			$this.find('.sql-helper-tables a')
+				.on('click', function(e){
+					var $sql = $this.find('textarea#sql');
+					$sql.get(0).insertAtCaret( $(this).text() );
+				})
+				// .after($('<span class="dashicons-before dashicons-edit"></span>')
+			;
+			//Liste de colonnes
+			$this.on('click', '.table_columns li', function(e){
+				var $sql = $this.find('textarea#sql');
+				$sql.get(0).insertAtCaret( $(this).text() );
+			});
+			
+		});
+		
+		//Init variables
+		$('#agdp_report-variables').each(function(e){
+			var $this = $(this);
+			var $sql = $('#agdp_report-inputs').find('textarea#sql');
 			var $variables = $this.find('textarea#sql_variables');
 			
 			//Affiche les variables
@@ -390,20 +412,6 @@ jQuery( function( $ ) {
 				return false;
 			});
 		
-			//Liste de tables
-			$this.find('.sql-helper-tables a')
-				.on('click', function(e){
-					var $sql = $this.find('textarea#sql');
-					$sql.get(0).insertAtCaret( $(this).text() );
-				})
-				// .after($('<span class="dashicons-before dashicons-edit"></span>')
-			;
-			//Liste de colonnes
-			$this.on('click', '.table_columns li', function(e){
-				var $sql = $this.find('textarea#sql');
-				$sql.get(0).insertAtCaret( $(this).text() );
-			});
-			
 			//get_posts
 			function admin_report_get_posts( post_type, options, callback, callback_options ){
 				if( options && options['clear_cache']

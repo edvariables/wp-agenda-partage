@@ -98,6 +98,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function register_report_metaboxes($post){
 		add_meta_box('agdp_report-inputs', __('Requête', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
+		add_meta_box('agdp_report-variables', __('Variables', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 	}
 
@@ -111,6 +112,10 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			
 			case 'agdp_report-inputs':
 				parent::metabox_html( self::get_metabox_inputs_fields(), $post, $metabox );
+				break;
+			
+			case 'agdp_report-variables':
+				parent::metabox_html( self::get_metabox_variables_fields(), $post, $metabox );
 				break;
 			
 			case 'agdp_report-render':
@@ -130,6 +135,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function get_metabox_all_fields(){
 		return array_merge(
 			self::get_metabox_inputs_fields(),
+			self::get_metabox_variables_fields(),
 			self::get_metabox_render_fields(),
 		);
 	}
@@ -155,8 +161,24 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 						.'<br>'.static::get_sql_helper()
 					,
 			],
+		];
+		return $fields;
+				
+	}
+	
+	/**
+	 * get_metabox_variables_fields
+	 */
+	public static function get_metabox_variables_fields(){
+		
+		$report = get_post();
+		
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		
+		$fields = [
 			[	'name' => 'sql_variables',
-				'label' => 'Variables',
+				'label' => '',
 				'type' => 'json',
 				'input' => 'textarea',
 				'input_attributes' => 'spellcheck="false"',
@@ -204,6 +226,8 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			],
 			[	'name' => 'report_css',
 				'label' => 'Style css',
+				'label_toggler' => true,
+				'class' => 'toggle-container',
 				'input' => 'textarea',
 				'container_class' => 'report_css', //cf admin-report.js
 				'unit' => $tax_report_styles,

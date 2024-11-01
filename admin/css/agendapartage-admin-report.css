@@ -2,59 +2,59 @@
  * Feuille de styles pour Agdp mode Admin, edit Report
  */
  
-#agdp_report-inputs .cursor_pointer {
+#agdp_report-variables .cursor_pointer {
 	cursor: wait;
 }
-#agdp_report-inputs label[for="sql_variables"] {
+#agdp_report-variables label[for="sql_variables"] {
 	font-weight: bold;
 	text-decoration: underline;
 }
-#agdp_report-inputs .sql_variable > label:first-child {
+#agdp_report-variables .sql_variable > label:first-child {
 	min-width: 12em;
 	display: inline-block;
 	vertical-align: top;
 	margin-top: 8px;
 	font-family: "Courier New", monospace;
 }
-#agdp_report-inputs .sql_variable > label:not(:first-child) {
+#agdp_report-variables .sql_variable > label:not(:first-child) {
 	margin-right: 9px;
 }
-#agdp_report-inputs .sql_variable {
+#agdp_report-variables .sql_variable {
 	margin-bottom: 0.6em;
 }
-#agdp_report-inputs .sql_variable .var_edit {
+#agdp_report-variables .sql_variable .var_edit {
 	margin-right: 0.6em;
 	opacity: 50%;
 }
-#agdp_report-inputs .sql_variable .var_edit:hover {
+#agdp_report-variables .sql_variable .var_edit:hover {
 	opacity: inherit;
 }
-#agdp_report-inputs .sql_variable input[type="number"] {
+#agdp_report-variables .sql_variable input[type="number"] {
 	width: 5em;
 }
 
-#agdp_report-inputs .var_editor {
+#agdp_report-variables .var_editor {
 	border: gray 1px solid;
 	margin: 0.5em;
 	padding: 0.5em;
 	display: inline-block;
 }
-#agdp_report-inputs .var_editor_header {
+#agdp_report-variables .var_editor_header {
 	font-weight: bold;
 	background-color: gray;
 	padding-left: 1em;
 	margin-bottom: 0.5em;
 }
-#agdp_report-inputs .var_editor_header .close-box {
+#agdp_report-variables .var_editor_header .close-box {
 	float: right;
 }
-#agdp_report-inputs .var_editor label {
+#agdp_report-variables .var_editor label {
 	min-width: 4em;
 	display: inline-block;
 	vertical-align: top;
 	margin-top: 8px;
 }
-#agdp_report-inputs .var_editor .learn-more {
+#agdp_report-variables .var_editor .learn-more {
 	font-family: "Courier New", monospace;
 	padding-left: 5em;
 	font-size: smaller;
@@ -115,6 +115,9 @@
 
 #agdp_report-render .agdpreport td {
 	max-height: 8em;
+}
+#agdp_report-render .agdp-metabox-row.report_css textarea#report_css.toggle-container {
+  display: inline-block;
 }
 #agdp_report-render .agdp-metabox-row.report_css .report_style_terms {
 	float: right;

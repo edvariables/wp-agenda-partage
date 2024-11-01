@@ -114,6 +114,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		$val = ! array_key_exists ( 'value', $field ) || ! $field['value'] ? $meta_value : $field['value'];
 		$default_val = ! array_key_exists ( 'default', $field ) || ! $field['default'] ? null : $field['default'];
 		$label = ! array_key_exists ( 'label', $field ) || ! $field['label'] ? false : $field['label'];
+		$label_class = ! array_key_exists ( 'label_class', $field ) || ! $field['label_class'] ? false : $field['label_class'];
+		$label_toggler = ! array_key_exists ( 'label_toggler', $field ) || ! $field['label_toggler'] ? false : $field['label_toggler'];
 		$icon = ! array_key_exists ( 'icon', $field ) || ! $field['icon'] ? false : $field['icon'];
 		$input = ! array_key_exists ( 'input', $field ) || ! $field['input'] ? '' : $field['input'];
 		$input_type = ! array_key_exists ( 'type', $field ) || ! $field['type'] ? 'text' : $field['type'];
@@ -176,9 +178,21 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		else
 			$icon = '';
 
-		// Label , sous pour checkbox
+		// Label, sous pour checkbox
 		if($label && ! in_array( $input, ['label', 'link', 'checkbox'])) {
-			echo '<label for="'.$name.'">' . $icon . htmlentities($label) . ' : </label>';
+			$label = htmlentities($label);
+			if( $label_toggler ){
+				$label_class .= 'toggle-trigger' . ( $val ? ' active' : '' );
+				$label = sprintf('<a href="#">%s : </a>', $label);
+			}
+			else
+				$label .= ': ';
+			echo sprintf('<label for="%s" %s>%s%s</label>'
+				, $name
+				, $label_class ? sprintf(' class="%s"', $label_class) : ''
+				, $label
+				, $icon
+			);
 		}
 		if( is_array($unit) )
 			$unit = implode("\n", $unit );
@@ -479,10 +493,13 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		switch( $doaction ){
 			case 'export' :
 
-				echo static::get_posts_export($object_ids );
-				exit;
-				break;
+				$data = static::get_posts_export($object_ids );
+				
+				header('Content-Type: application/json');
+				//echo htmlspecialchars(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8');
+				echo json_encode($data);
 
+				exit;
 		}
 
 		return $redirect;
@@ -657,8 +674,17 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			if( $data['terms'] ){
 				$data['taxonomies'] = [];
 				foreach($used_terms as $term)
-					if( ! isset($data['taxonomies'][$term->taxonomy]) )
+					if( ! isset($data['taxonomies'][$term->taxonomy]) ){
+						$taxonomies[$term->taxonomy] = json_decode(json_encode($taxonomies[$term->taxonomy]), true);
+						foreach( ['name_field_description', 
+							'slug_field_description', 
+							'parent_field_description', 
+							'desc_field_description',
+						 ] as $field )
+							unset($taxonomies[$term->taxonomy]['labels'][$field]);
+							
 						$data['taxonomies'][$term->taxonomy] = $taxonomies[$term->taxonomy];
+					}
 			}
 		}
 		
