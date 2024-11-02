@@ -67,8 +67,148 @@ jQuery( function( $ ) {
 			var $variables = $this.find('textarea#sql_variables');
 			
 			//Affiche les variables
-			$sql.on('change', function(e){
-				var sql = this.value;
+			$sql.on('change', refresh_variables)
+				.trigger('change');
+			
+			//Sauvegarde des variables vers le textarea
+			$this.on('change', '.var_value', function(e){
+				var var_values = {};
+				$variables.nextAll('.sql_variables_wrap:first')
+					.find('.sql_variable').each(function(e){
+						var data = {};
+						var $this = $(this);
+						var $value = $this.find('.var_value');
+						var var_name = $value.attr('var_name');
+						if( v = $value.attr('var_type') )
+							data['type'] = v;
+						if( v = $value.attr('var_options') )
+							data['options'] = v;
+						
+						if( $value.is('label') )
+							$value = $this.find('.var_value input');
+						var v;
+						if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
+							v = '';
+							$value.filter(':checked').each(function(){
+								if( v )
+									v += '\n';
+								v += this.value;
+							});
+						}
+						else if( $value.is('input[type="checkbox"]') )
+							v = $value.prop('checked');
+						else if( $value.is('input[type="radio"]') )
+							v = $value.filter(':checked').val();
+						else
+							v = $value.val();
+						if( v )
+							data['value'] = v;
+						
+						var_values[ var_name ] = data;
+					})
+				;
+				$variables.text( JSON.stringify( var_values ) );
+			});
+			
+			//Editeur d'une variable
+			$this.on('click', '.var_edit', function(e){
+				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
+				var variable = $input.attr('var_name');
+				var var_type = $input.attr('var_type');
+				var var_options = $input.attr('var_options');
+				var $wrap = $(this).parents('.sql_variables_wrap:first');
+				var $editor = $wrap.find('.var_editor:first');
+				if( $editor.length === 0 ){
+					$editor = $('<div class="var_editor"></div>')
+						.appendTo( $wrap )
+					;
+				}
+				else if( $editor.is(':visible[var_name="' + variable + '"]')){
+					$editor.hide();
+					return false;
+				}
+				$editor
+					.attr('var_name', variable)
+					.html($('<div class="var_editor_header">' + variable + '</div>')
+						.append($('<a class="close-box" href=""><span class="dashicons-before dashicons-no"></span></a>')
+							.on('click', function(){ $editor.remove(); return false; })
+						)
+					).show();
+				
+				var $type = $('<select/>')
+					.appendTo(
+						$('<div class="var_type"><label>Type</label></div>')
+							.appendTo($editor)
+					)
+					.on('change', function(e){
+						$input
+							.attr('var_type', var_type = this.value)
+							.trigger('change')
+						;
+						$options.parent().toggle( input_options_types.includes(this.value) );
+						refresh_variables.call( this );
+					})
+				;
+				for( var type in input_types){
+					$type.append('<option value="' + type + '"'
+							+ (var_type == type ? ' selected' : '') + '>'
+							+ input_types[type]
+						+ '</option>')
+					;
+				}
+				
+				var helper;
+				var rows = 3;
+				switch( var_type ){
+				case 'range' :
+					rows = 2;
+					helper = '1ère ligne : mini'
+							+ '<br>2nde ligne : maxi'
+							+ '<br>ou une seule ligne : le maxi';
+					break;
+				case 'report' :
+					helper = 'Pour une inclusion dans un IN,'
+						+ '<br>ajoutez le format %IN à la variable.';
+					break;
+				case 'asc_desc':
+					var_options = '';
+					break;
+				default :
+					if( input_options_types.includes(var_type) ){
+						helper = 'Un élément par ligne.'
+								+ '<br>Séparez les valeurs des labels par <code>:</code>';
+					}
+				}
+				var $options = $('<textarea rows="' + rows + '"></textarea>')
+					.appendTo(
+						$('<div class="var_options"><label>Options</label></div>')
+							.appendTo($editor)
+							.toggle( input_options_types.includes(var_type) )
+					)
+					.text(var_options)
+					.on('change', function(e){
+						$input
+							.attr('var_options', this.value)
+							.trigger('change')
+						;
+						refresh_variables.call( this );
+					})
+				;
+				if( helper )
+					$editor.append('<div class="learn-more">' + helper + '</div>')
+				
+				return false;
+			});
+		
+			//refresh_variables
+			function refresh_variables(){
+				var $this = $(this);
+				if( $this.is('.var_editor :input') ){
+					var $editor = $this.parents('.var_editor:first');
+					var current_variable = $editor.attr('var_name');
+				}
+				
+				var sql = $sql.val();
 				
 				//comments
 				var pattern = "(\\/\\*[\s\S]+\\*\\/)"; 
@@ -276,141 +416,19 @@ jQuery( function( $ ) {
 							.appendTo( $container )
 						;
 					}
+					
+					if( current_variable ){
+						//click sur l'édition de la variable
+						$('.var_value[var_name="' + current_variable + '"]')
+							.parents('.sql_variable:first')
+								.find('.var_edit')
+									.trigger('click');
+					}
 				}
 				else {
 					$container.html('<small>(aucune variable)</small>');
 				}
-			}).trigger('change');
-			
-			//Sauvegarde des variables vers le textarea
-			$this.on('change', '.var_value', function(e){
-				var var_values = {};
-				$variables.nextAll('.sql_variables_wrap:first')
-					.find('.sql_variable').each(function(e){
-						var data = {};
-						var $this = $(this);
-						var $value = $this.find('.var_value');
-						var var_name = $value.attr('var_name');
-						if( v = $value.attr('var_type') )
-							data['type'] = v;
-						if( v = $value.attr('var_options') )
-							data['options'] = v;
-						
-						if( $value.is('label') )
-							$value = $this.find('.var_value input');
-						var v;
-						if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
-							v = '';
-							$value.filter(':checked').each(function(){
-								if( v )
-									v += '\n';
-								v += this.value;
-							});
-						}
-						else if( $value.is('input[type="checkbox"]') )
-							v = $value.prop('checked');
-						else if( $value.is('input[type="radio"]') )
-							v = $value.filter(':checked').val();
-						else
-							v = $value.val();
-						if( v )
-							data['value'] = v;
-						
-						var_values[ var_name ] = data;
-					})
-				;
-				$variables.text( JSON.stringify( var_values ) );
-			});
-			
-			//Editeur d'une variable
-			$this.on('click', '.var_edit', function(e){
-				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
-				var variable = $input.attr('var_name');
-				var var_type = $input.attr('var_type');
-				var var_options = $input.attr('var_options');
-				var $wrap = $(this).parents('.sql_variables_wrap:first');
-				var $editor = $wrap.find('.var_editor:first');
-				if( $editor.length === 0 ){
-					$editor = $('<div class="var_editor"></div>')
-						.appendTo( $wrap )
-					;
-				}
-				else if( $editor.is(':visible[var_name="' + variable + '"]')){
-					$editor.hide();
-					return false;
-				}
-				$editor
-					.attr('var_name', variable)
-					.html($('<div class="var_editor_header">' + variable + '</div>')
-						.append($('<a class="close-box" href=""><span class="dashicons-before dashicons-no"></span></a>')
-							.on('click', function(){ $editor.remove(); return false; })
-						)
-					).show();
-				
-				var $type = $('<select/>')
-					.appendTo(
-						$('<div class="var_type"><label>Type</label></div>')
-							.appendTo($editor)
-					)
-					.on('change', function(e){
-						$input
-							.attr('var_type', var_type = this.value)
-							.trigger('change')
-						;
-						$options.parent().toggle( input_options_types.includes(this.value) );
-						$sql.trigger('change');
-					})
-				;
-				for( var type in input_types){
-					$type.append('<option value="' + type + '"'
-							+ (var_type == type ? ' selected' : '') + '>'
-							+ input_types[type]
-						+ '</option>')
-					;
-				}
-				
-				var helper;
-				var rows = 3;
-				switch( var_type ){
-				case 'range' :
-					rows = 2;
-					helper = '1ère ligne : mini'
-							+ '<br>2nde ligne : maxi'
-							+ '<br>ou une seule ligne : le maxi';
-					break;
-				case 'report' :
-					helper = 'Pour une inclusion dans un IN,'
-						+ '<br>ajoutez le format %IN à la variable.';
-					break;
-				case 'asc_desc':
-					var_options = '';
-					break;
-				default :
-					if( input_options_types.includes(var_type) ){
-						helper = 'Un élément par ligne.'
-								+ '<br>Séparez les valeurs des labels par <code>:</code>';
-					}
-				}
-				var $options = $('<textarea rows="' + rows + '"></textarea>')
-					.appendTo(
-						$('<div class="var_options"><label>Options</label></div>')
-							.appendTo($editor)
-							.toggle( input_options_types.includes(var_type) )
-					)
-					.text(var_options)
-					.on('change', function(e){
-						$input
-							.attr('var_options', this.value)
-							.trigger('change')
-						;
-						$sql.trigger('change');
-					})
-				;
-				if( helper )
-					$editor.append('<div class="learn-more">' + helper + '</div>')
-				
-				return false;
-			});
+			};
 		
 			//get_posts
 			function admin_report_get_posts( post_type, options, callback, callback_options ){

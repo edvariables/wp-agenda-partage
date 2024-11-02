@@ -98,8 +98,8 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function register_report_metaboxes($post){
 		add_meta_box('agdp_report-inputs', __('Requête', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
-		add_meta_box('agdp_report-variables', __('Variables', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'core');
-		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'low');
+		add_meta_box('agdp_report-variables', __('Variables', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
+		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -400,6 +400,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		
 		foreach( Agdp_Report::sql_global_vars() as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
+		$html .= '<li><code>@:var_name</code> vous permet d\'accèder à des variables globales via un nom variable. Attention, <code>@BLOG:info_name%I</code> dans le cas d\'une partie du nom.</li>';
 		
 		$html .= '</ul></div>';
 		return $html;

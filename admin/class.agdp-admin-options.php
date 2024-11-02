@@ -1302,6 +1302,7 @@ class Agdp_Admin_Options {
 		
 		//post_parent 
 		if( ! empty($data['post']['post_parent']) ){
+			//TODO il y a un bug avec des mises à jour avec parent foireux
 			if( isset($options['original_ids'])
 			 && isset($options['original_ids'][$data['post']['post_parent'].'']) )
 				$data['post']['post_parent'] = $options['original_ids'][$data['post']['post_parent'].''];
@@ -1316,6 +1317,9 @@ class Agdp_Admin_Options {
 					$data['metas'][$meta_key] = addslashes( $meta_value );
 				}
 			}
+			
+			//TODO pour agdpreport, tenter de conserver les sql_variables->value d'origine
+			
 			$data['post']['meta_input'] = $data['metas'];
 		}
 		// terms in tax_input
