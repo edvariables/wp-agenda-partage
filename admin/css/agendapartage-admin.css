@@ -161,13 +161,15 @@ img.coo-favicon {
 	background-image: url('../../public/images/toggle-plus.png');
 	background-position: 10px center;
 	background-repeat: no-repeat;
+	display: inline-block;
+	padding-left: 2em;
 }
 body.colors-dark .toggle-trigger {
 	background-color: #252525;
 }
-label.toggle-trigger:not(.dashicons-before) {
+/* label.toggle-trigger:not(.dashicons-before) {
 	padding-left: 2em;
-}
+} */
 
 .toggle-trigger a {
 	color: #333;
@@ -205,6 +207,18 @@ body.colors-dark .toggle-trigger a:hover {
 }
 .toggle-trigger.active + .toggle-container {
 	display: block;
+}
+
+.ajax_action-response .close-box {
+	float: right;
+}
+.ajax_action_info {
+	text-align: center;
+}
+div.ajax_action-response {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
 }
 
 /**

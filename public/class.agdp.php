@@ -745,7 +745,7 @@ class Agdp {
 	 * Retourne un lien html pour une action générique
 	 */
 	public static function get_ajax_action_link($post, $method, $icon = false, $caption = null, $title = false
-												, $confirmation = null, $data = null, $href = '#'){
+												, $confirmation = null, $data = null, $href = '#', $container_class = ''){
 		
 		if(is_array($method)){
 			$class = $method[0];
@@ -793,7 +793,8 @@ class Agdp {
 				, http_build_query(['data' => $query['data']]) );
 		if($icon)
 			$icon = self::icon($icon);
-		$html .= sprintf('<span><a href="%s" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
+		$html .= sprintf('<span%s><a href="%s" title="%s" class="agdp-ajax-action agdp-ajax-%s" data="%s">%s%s</a></span>'
+			, $container_class ? ' class="'.$container_class.'"' : ''
 			, $href
 			, $title ? $title : ''
 			, $method
@@ -807,13 +808,23 @@ class Agdp {
 	
 	
 	/**
+	 * is_admin_referer
+	 */
+	public static function is_admin_referer(){
+		if( ! is_admin() || empty($_SERVER['HTTP_REFERER']) )
+			return false;
+		return strpos( $_SERVER['HTTP_REFERER'], admin_url() ) !== false;
+	}
+	/**
 	 * check_nonce
 	 */
 	public static function check_nonce(){
 		if( ! isset($_POST['_nonce']))
 			return false;
-		$is_admin = strpos( $_SERVER['HTTP_REFERER'], admin_url() ) !== false;
-		$nonce_key = $is_admin ? 'agdp-admin-nonce' : 'agdp-nonce';
+		if( self::is_admin_referer() )
+			$nonce_key = 'agdp-admin-nonce';
+		else
+			$nonce_key = 'agdp-nonce';
 		return wp_verify_nonce( $_POST['_nonce'], $nonce_key );
 	}
 

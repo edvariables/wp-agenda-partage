@@ -14,10 +14,23 @@ function toggle_shortcode_cb( $atts, $content = null ) {
 			return '';
 	}
 	if(isset($atts['ajax']) && $atts['ajax']){
-		$content = wp_kses_post( $content );
+		$data = wp_kses_post( $content );
+		$action = AGDP_TAG.'_shortcode';
+		if(isset($atts['ajax'])
+		&& is_array($atts['ajax'])){
+			if( ! empty($atts['ajax']['action']))
+				$action = $atts['ajax']['action'];
+			if( ! empty($atts['ajax']['data']))
+				$data = $atts['ajax']['data'];
+		}
+		if( ! empty($atts['ajax-action']))
+			$action = $atts['ajax-action'];
+		if( ! empty($atts['ajax-data']))
+			$data = $atts['ajax-data'];
+		
 		$ajax = esc_attr( json_encode ( array(
-				'action' => AGDP_TAG.'_shortcode',
-				'data' => $content
+				'action' => $action,
+				'data' => $data
 			)));
 		$ajax = sprintf(' ajax=1 data="%s"', $ajax);
 		$content = '';

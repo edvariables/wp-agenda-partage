@@ -85,11 +85,23 @@ jQuery( function( $ ) {
 									break;
 							}
 							if(response) {
-								var $msg = $('<div class="ajax_action-response">'+response+'</div>')
-									.prepend($('<span class="dashicons dashicons-no-alt close-box"></span>')
-										.click(function(){$msg.remove()})
-									);
-								$actionElnt.after($msg);
+								var $parent = $actionElnt.parent();
+								if( $parent.is('.toggle-trigger')
+								&& ($msg = $parent.nextAll('.toggle-container:first')).length ){
+									$parent.addClass('active');
+									$msg
+										.addClass('ajax_action-response')
+										.html( response )
+										.show()
+									;
+								}
+								else {
+									var $msg = $('<div class="ajax_action-response">'+response+'</div>')
+										.prepend($('<span class="dashicons dashicons-no-alt close-box"></span>')
+											.click(function(){$msg.remove()})
+										);
+									$actionElnt.after($msg);
+								}
 								// $msg.get(0).scrollIntoView();
 							}
 						}

@@ -26,6 +26,7 @@ jQuery( function( $ ) {
 			// 'month' : 'Mois',
 			// 'week' : 'Semaine',
 			// 'search' : 'Recherche',
+			'longtext' : 'Texte long',
 			'color' : 'Couleur',
 			'tel' : 'Téléphone',
 			'forum' : 'Forum',
@@ -242,7 +243,7 @@ jQuery( function( $ ) {
 					
 				//Variables présentes dans la requête
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-				pattern = "\:([a-zA-Z0-9_]+)(%(?:"+allowed_format+")?[sdfFiIK][NLR]?)?";
+				pattern = "\:([a-zA-Z_][a-zA-Z0-9_]*)(%("+allowed_format+")?[sdfFiIKJ][NLRT]?)?";
 				var matches = sql.matchAll( new RegExp(pattern, "g") );
 				if( matches )
 					matches = matches.toArray();
@@ -387,6 +388,10 @@ jQuery( function( $ ) {
 							case 'asc_desc' :
 								$input = $('<select></select>');
 								$input = add_input_options($input, {ASC: 'Croissant', DESC: 'Décroissant'}, variable, value);
+							
+							case 'longtext' :
+								$input = $('<textarea></textarea>')
+									.val( value );
 							
 								break;
 							default:

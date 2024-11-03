@@ -383,15 +383,27 @@ class Agdp_Admin {
 				$ajax_response = sprintf('Erreur dans l\'exécution de la fonction :%s', var_export($e, true));
 			}
 		}
-		elseif(array_key_exists("post_type", $data)){
+		else{
+			if( is_array($data) && array_key_exists("post_type", $data))
+				$post_type = $data['post_type'];
+			else
+				$post_type = false;
 			try{
-				switch($data['post_type']){
+				switch($post_type){
 					case Agdp_Evenement::post_type :
 						$class = 'Agdp_Admin_Evenement';
 						break;
 					default:
-						$method = $data['post_type'] . '_' . $method;
-						$class = __CLASS__;
+						if( $post_type ){
+							$method = $data['post_type'] . '_' . $method;
+							$class = __CLASS__;
+						}
+						elseif( strpos( $method, '::' ) !== false ){
+							$class = substr( $method, 0, strpos( $method, '::' ) );
+							$method = substr( $method, strlen($class) + 2 );
+						}
+						else
+							throw new Exception('Impossible de reconnaître la classe appelée.');
 						break;
 				}
 				// cherche une fonction du nom "{$post_type}_action_{method}"

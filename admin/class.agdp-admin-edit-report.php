@@ -252,13 +252,35 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * Retourne la liste de toutes les tables
 	 */
 	public static function get_sql_helper(){
+		// $html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
+			// . '<ul class="toggle-container sql-helper-tables">';
+		global $post;
+		$ajax  = Agdp::get_ajax_action_link(
+			$post, 
+			__CLASS__ .'::get_sql_helper',
+			/* $icon =  */false,
+			/* $caption =  */'Liste des tables',
+			/* $title =  */false,
+			/* $confirmation =  */false,
+			/* $data =  */ 'get_content',
+			/* $href = */ '#',
+			/* $container_class = */ 'toggle-trigger'
+		);
+		$html = $ajax 
+			. '<div class="toggle-container sql-helper-tables"></div>';
+		return $html;
+	}
+	/**
+	 * Retourne la liste de toutes les tables
+	 */
+	public static function on_wp_ajax_action_get_sql_helper(){
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$tables = ['posts', 'postmeta'
 				, 'comments', 'commentmeta'
 				, 'term_relationships', 'term_taxonomy', 'termmeta', 'terms'
-				, 'user', 'metausers'
+				, 'users', 'usermeta'
 				, 'site', 'sitemeta'];
 		$sql = 'SHOW TABLES';
 		foreach($wpdb->get_results($sql) as $row){
@@ -276,9 +298,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				break;
 			}
 		}
-		//TODO trigger ajax
-		$html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
-			. '<ul class="toggle-container sql-helper-tables">';
+		$html = '<ul>';
 		foreach($tables as $index => $table){
 			
 			// $html .= sprintf('<a href="#">%s</a>', $table);
@@ -304,7 +324,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	
 	/**
 	 * Requête Ajax 
-	 TODO généraliser une fonction on_ajax_action( $called_class )
+	 TODO généraliser une fonction on_ajax_action( $called_class ) SEE get_variables_helper
 	 */
 	public static function on_ajax_action() {
 		if( ! Agdp::check_nonce() )
@@ -372,12 +392,29 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	/**
 	 * Retourne le commentaire sur le formatage de variables
 	 */
-	public static function get_variables_helper(){
+	public static function get_variables_helper( ){
+		global $post;
+		$ajax  = Agdp::get_ajax_action_link(
+			$post, 
+			__CLASS__ .'::get_variables_helper',
+			/* $icon =  */false,
+			/* $caption =  */'Formatage des variables',
+			/* $title =  */false,
+			/* $confirmation =  */false,
+			/* $data =  */ 'get_content',
+			/* $href = */ '#',
+			/* $container_class = */ 'toggle-trigger'
+		);
 		$html = sprintf("<span>Utilisez le préfixe <b><code>%s</code></b> avant chaque nom de table.</span><br>", AGDP_BLOG_PREFIX);
-		
-		//TODO ajax
-		$html .= '<span class="toggle-trigger dashicons-before dashicons-plus">Formatage des variables</span>'
-			. '<div class="toggle-container sql-helper-variables"><ul>';
+		$html .= $ajax 
+			. '<div class="toggle-container sql-helper-variables"></div>';
+		return $html;
+	}
+	/**
+	 * Retourne le commentaire sur le formatage de variables
+	 */
+	public static function on_wp_ajax_action_get_variables_helper( $data ){
+		$html = '<ul>';
 		
 		$html .= '<li>De la forme : <code>:var_name[%format]</code></li>';
 		$html .= '<li><code>%s</code> : type texte (par défaut)</li>';
@@ -395,9 +432,14 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").</li>';
 		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.</li>';
 		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code></li>';
+		$html .= '<li><code>%J</code> : transforme en objet JSON pour MySQL. ex. : <code>SET @JSON = :json%J</code> qui est remplacé par <code>CAST( [variable] AS JSON )</li>';
+		$html .= '<li><code>%JT</code> : transforme du json en table. ex. : <code>SELECT * FROM :table%JT</code> Ex. de valeur : <code>[{"x":2,"y":"8"},{"x":"3","y":"7"},{"x":"4","y":6}]</code> cf <a href="#">Rapports > Tutoriels > JSON > JSON_TABLE</a></li>';
 		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.</li>';
 		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.</li>';
 		
+		$html .= '<li><b>Variables globales</b> affectées par l\'instruction <code>SET <var>@var_name<var> = <var>value<var>;</code></li>';
+		$html .= '<li><label><var>@PREVIOUS</var></label> vous donne accès aux résultats de la requête précédente sous forme JSON. ex. <code>@PREVIOUS.post_id</code>.</li>';
+		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT(@PREVIOUS[2].post_id, "-", @PREVIOUS.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite.</li>';
 		foreach( Agdp_Report::sql_global_vars() as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
 		$html .= '<li><code>@:var_name</code> vous permet d\'accèder à des variables globales via un nom variable. Attention, <code>@BLOG:info_name%I</code> dans le cas d\'une partie du nom.</li>';
