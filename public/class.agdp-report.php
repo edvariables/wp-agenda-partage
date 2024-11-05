@@ -671,33 +671,21 @@ class Agdp_Report extends Agdp_Post {
 		if( strpos($sql, 'SET ') !== false && strpos($sql, ' SELECT ') ){
 			$matches = [];
 			$pattern = '/(?:^SET\s+)(\@+[a-zA-Z_][a-zA-Z0-9_]*)\s?\=\s?SELECT\s+(`?[a-zA-Z_][a-zA-Z0-9_]*`?)(?:\s*,\s*)(`?[a-zA-Z_][a-zA-Z0-9_]*`?)/i';
-			if( preg_match_all( $pattern, $sql, $matches ) ){
-				foreach($matches[1] as $index => $variable){
-					$src = $matches[0][$index];
-					$key_field = $matches[2][$index];
-					$value_field = $matches[3][$index];
-					$sub_sql = trim(substr( $sql, strpos($sql, '=') + 1 ), ' ;');
-					$table_name = sprintf('_t%s', Agdp::get_secret_code(6));
-					$sqls = [];
-					$sqls[] = sprintf('SET %s = CAST( "{}" AS JSON );', $variable);
-					// $sqls[] = sprintf('SELECT %s := JSON_SET( %s , CONCAT(\'$.\', %s) , %s) FROM (%s) %s;'
-							// , $variable
-							// , $variable
-							// , $key_field
-							// , $value_field
-							// , $sub_sql
-							// , $table_name
-					// );
-					$sqls[] = sprintf('SELECT JSON_OBJECTAGG(%s, %s) INTO %s FROM (%s) %s;'
-							// , $variable
-							, $key_field
-							, $value_field
-							, $variable
-							, $sub_sql
-							, $table_name
-					);
-				}
-				$sql = implode(";\n", $sqls);
+			if( preg_match( $pattern, $sql, $matches ) ){
+				$variable = $matches[1];
+				$src = $matches[0];
+				$key_field = $matches[2];
+				$value_field = $matches[3];
+				$sub_sql = trim(substr( $sql, strpos($sql, '=') + 1 ), ' ;');
+				$table_name = sprintf('_t%s', Agdp::get_secret_code(6));
+				$sql = sprintf('SELECT JSON_OBJECTAGG(%s, %s) INTO %s FROM (%s) %s;'
+						// , $variable
+						, $key_field
+						, $value_field
+						, $variable
+						, $sub_sql
+						, $table_name
+				);
 			}
 			else {
 				$sql = new Exception( sprintf('Erreur dans le format <code>SET @var = SELECT `key`, `value` FROM table t;</code><br> %s',
@@ -834,8 +822,8 @@ class Agdp_Report extends Agdp_Post {
 		}
 		//Sub query does not support LIMIT clause
 		$sql = preg_replace('/\sLIMIT\s.*(\n|$)/i', '', $sql);
-		//TODO 
-		$sql = preg_replace('/\sORDER BY\s.*(\n|$)/i', '', $sql);
+		//TODO or not TODO
+		//$sql = preg_replace('/\sORDER BY\s.*(\n|$)/i', '', $sql);
 		
 		$sql = str_replace( "\n", "\n\t", $sql );
 		return "( $sql )";

@@ -72,10 +72,11 @@ jQuery( function( $ ) {
 				.trigger('change');
 			
 			//Sauvegarde des variables vers le textarea
-			$this.on('change', '.var_value', function(e){
+			$this.on('change', '.var_value', save_vars_values);
+			function save_vars_values(){
 				var var_values = {};
 				$variables.nextAll('.sql_variables_wrap:first')
-					.find('.sql_variable').each(function(e){
+					.find('.sql_variable:not(.unused)').each(function(e){
 						var data = {};
 						var $this = $(this);
 						var $value = $this.find('.var_value');
@@ -109,8 +110,8 @@ jQuery( function( $ ) {
 					})
 				;
 				$variables.text( JSON.stringify( var_values ) );
-			});
-			
+			}
+		
 			//Editeur d'une variable
 			$this.on('click', '.var_edit', function(e){
 				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
@@ -201,6 +202,7 @@ jQuery( function( $ ) {
 				return false;
 			});
 		
+			
 			//refresh_variables
 			function refresh_variables(){
 				var $this = $(this);
@@ -233,6 +235,7 @@ jQuery( function( $ ) {
 				}
 				else
 					var_values = {};
+				var var_values_saved = var_values;
 				
 				//container
 				$container = $variables.nextAll('.sql_variables_wrap:first');
@@ -260,6 +263,7 @@ jQuery( function( $ ) {
 								variables[variable] = value;
 							if( matches[i][2] )
 								variables[variable]['format'] = matches[i][2];
+							delete var_values_saved[variable] ;
 						}
 					}
 					
@@ -432,6 +436,29 @@ jQuery( function( $ ) {
 				}
 				else {
 					$container.html('<small>(aucune variable)</small>');
+				}
+				
+				//Variables restantes
+				var $notice = $('<ul class="unused_variables"><label>Variables non utilisées</label></ul>');
+				var counter = 0;
+				for(var variable in var_values_saved){
+					if( variable === undefined ) continue;
+					if( options = var_values_saved[variable]['options'] )
+						if( ( options = options.substr(0, 50) ) === undefined )
+							options = '';
+					$notice
+						.append('<li class="sql_variable unused"><label><var>' + variable + '</var></label><code>'+options+'</code></li>');
+					counter++;
+				}
+				if( counter ){
+					$notice.prepend( $('<a href="#" class="delete"><span class="dashicons-before dashicons-trash"></span></a>')
+						.on('click', function(){
+							save_vars_values.apply(this);
+							$notice.remove();
+							return false;
+						})
+					);
+					$container.append($notice);
 				}
 			};
 		
