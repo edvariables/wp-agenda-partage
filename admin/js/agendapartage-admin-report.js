@@ -243,7 +243,7 @@ jQuery( function( $ ) {
 					
 				//Variables présentes dans la requête
 				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
-				pattern = "\:([a-zA-Z_][a-zA-Z0-9_]*)(%("+allowed_format+")?[sdfFiIKJ][NLRT]?)?";
+				pattern = "\(?<!\\\\):([a-zA-Z_][a-zA-Z0-9_]*)(%("+allowed_format+")?[sdfFiIKJ][NLRT]?)?";
 				var matches = sql.matchAll( new RegExp(pattern, "g") );
 				if( matches )
 					matches = matches.toArray();
@@ -655,6 +655,7 @@ jQuery( function( $ ) {
 								if( css )
 									$response.append( '<style>' + css + '</style>' );
 								$form.find('.agdpreport').replaceWith($response);
+								$('#wpbody-content > .wrap > .agdpreport.error').remove();
 							}
 						}
 						else
