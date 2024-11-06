@@ -134,7 +134,7 @@ class Agdp_Admin_Posts_Import {
 			<div><h3>Coller ici les données à importer</h3>
 				<textarea name="action-data" rows="5" cols="100"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
 			</div>
-			<label><input type="checkbox" name="confirm_action"<?php if( $confirm_action ) echo ' checked';?>> Confirmer chaque importation (TODO) </label>
+			<label><input type="checkbox" name="confirm_action"<?php if( $confirm_action ) echo ' checked';?>> Confirmer chaque importation</label>
 			<div>
 				<br><label><input type="checkbox" name="update_existing"<?php if( $update_existing ) echo ' checked';?>> Mettre à jour les enregistrements pré-existants (sur la base du titre) </label>
 				<br><label><input type="checkbox" name="create_news"<?php if( $create_news ) echo ' checked';?>> Créer de nouveaux enregistrements</label>

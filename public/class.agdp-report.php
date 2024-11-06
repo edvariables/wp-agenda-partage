@@ -47,7 +47,8 @@ class Agdp_Report extends Agdp_Post {
 		define( 'AGDP_VAR_POST_ID', '@POSTID'); 
 		define( 'AGDP_VAR_POST_TYPE', '@POSTTYPE'); 
 		define( 'AGDP_VAR_REPORT_ID', '@REPORTID'); 
-		define( 'AGDP_REPORT_VAR_PREFIX', 'rv_'); 
+		define( 'AGDP_REPORT_VAR_PREFIX', 'rv_');  
+		define( 'AGDP_VAR_TAX_TERMS', '@TAX_TERMS'); 
 		
 		self::$sql_global_vars = [
 			AGDP_VAR_BLOG_ID => null,
@@ -113,7 +114,7 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * SQL
 	 */
- 	public static function get_sql( $report = false, $sql = false, $sql_variables = false, $options = false ) {
+ 	public static function get_sql( $report = false, $sql = false, $sql_variables = false, &$options = false ) {
 		
 		$report_id = $report->ID;
 		
@@ -534,7 +535,7 @@ class Agdp_Report extends Agdp_Post {
 			$sql = str_replace( $escape_flag, '%', $sql );
 			
 			//JSON notations (@json[0].label devient @json->>"$[0].label" )
-			$sql = self::replace_sql_json_syntax( $sql );
+			$sql = self::replace_sql_json_syntax( $sql, $options );
 			if( is_a($sql, 'Exception') ){
 				// $errors[] = $sql->getMessage();
 				return $sql;
@@ -584,16 +585,29 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * Clear JSON[] notations in SQL, for @variables
 	 */
- 	private static function replace_sql_json_syntax( $sql ) {
+ 	private static function replace_sql_json_syntax( $sql, &$options = false ) {
+		$used_variables = [];
 		
+		//@TERMS[`slug`]
+		//@TERMS[@term_id]
+		//@TERMS.`slug`
+		//@TERMS.:column
+		//@TERMS[1]['name']
+		//@TERMS[1].name
 		$matches = [];
-		$pattern = '/(\@+[a-zA-Z_][a-zA-Z0-9_]*)(\[[^\]]+\])?((?:(?:\.|\[)(?:\'|`)?([a-zA-Z0-9_:@%][a-zA-Z0-9_]*)(?:\'|`)?[\]]?)+)/';
+		$pattern = '/(\@+[a-zA-Z_][a-zA-Z0-9_]*)(?:(\[[^\]]+\])?((?:(?:\.|\[)(?:\'|`)?([a-zA-Z0-9_:@%][a-zA-Z0-9_]*)(?:\'|`)?[\]]?)+))?/';
 		if( preg_match_all( $pattern, $sql, $matches ) ){
 			$previous_row = [];
 			foreach($matches[1] as $index => $variable){
+				
 				$src = $matches[0][$index];
 				$row = $matches[2][$index];
 				$col = $matches[3][$index];
+				
+				$used_variables[ $variable ] = $src;
+				
+				if( $row === '' && $col === '' )
+					continue;
 				
 				if( $col[0] === '.' ){
 					$col = substr($col, 1);
@@ -704,11 +718,19 @@ class Agdp_Report extends Agdp_Post {
 						, $sub_sql
 						, $table_name
 				);
+				
+				$used_variables[ $variable ] = $matches;
 			}
 			else {
 				$sql = new Exception( sprintf('Erreur dans le format <code>SET @var = SELECT `key`, `value` FROM table t;</code><br> %s',
 					$sql));
 			}
+		}
+		
+		// Dynamic global vars
+		// debug_log( __FUNCTION__ .' used_variables', $sql, $used_variables );
+		if( $used_variables ){
+			$sql = self::check_dynamic_vars_needed( $sql, $used_variables, $options );
 		}
 		return $sql;
 	}
@@ -716,12 +738,13 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * replace_sql_tables_prefix
 	 */
- 	public static function replace_sql_tables_prefix( $sql ) {
+ 	public static function replace_sql_tables_prefix( $sql, $check_global_tables = true ) {
 		//@.
 		//TODO preg_replace
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
-		if( $wpdb->blogid	> 1 ){
+		if( $check_global_tables
+		 && $wpdb->blogid > 1 ){
 			$site_prefix = $wpdb->get_blog_prefix( 1 );
 			$tables =  array_merge( $wpdb->global_tables, $wpdb->ms_global_tables );
 			foreach( $tables as $table )
@@ -789,9 +812,12 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * add_sql_global_vars
 	 */
- 	public static function add_sql_global_vars( $sql, $sql_variables = false, $options = false ) {
-		if( ! $sql )
+ 	public static function add_sql_global_vars( $sql, $sql_variables = false, &$options = false ) {
+		if( ! $sql
+		|| ! empty($options['_add_sql_global_vars']) )
 			return $sql;
+		
+		$options['_add_sql_global_vars'] = true;
 		
 		$vars = static::sql_global_vars( $options );
 		
@@ -806,6 +832,101 @@ class Agdp_Report extends Agdp_Post {
 		
 		//Purge des éléments vides
 		$sql = array_filter( $sql, function( $value ){ return trim($value, " ;\n\r") !== ''; } );
+				
+		return $sql;
+	}
+
+
+
+	/**
+	 * check_dynamic_vars_needed
+	 */
+ 	public static function check_dynamic_vars_needed( $sql, $variables = false, &$options = false ) {
+		if( ! $sql || ! $variables )
+			return $sql;
+		
+		// debug_log( __FUNCTION__, $sql, $variables );
+		$var_sqls = [];
+		foreach( $variables as $variable => $matches ){
+			if( ! empty( $options['_dynamic_vars'] )
+			 && ! empty( $options['_dynamic_vars'][$variable] ) )
+				continue;
+				
+			//$prefixable
+			$var_ext = '';
+			foreach( [ 
+				AGDP_VAR_TAX_TERMS,
+			] as $prefixable ){
+				if( $prefixable === substr( $variable, 0, strlen($prefixable) ) ){
+					if( strlen($variable) > strlen($prefixable)
+					&& $variable[strlen($prefixable)] === '_' ){
+						$var_ext = substr( $variable, strlen($prefixable) + 1 );
+						$variable = $prefixable;
+						break;
+					}
+				}
+			}
+			switch( $variable ){
+				case AGDP_VAR_TAX_TERMS :
+					if( $var_ext ){
+						if( isset($options['_dynamic_vars'][ $variable ]) ){
+							// debug_log( __FUNCTION__.' _dynamic_vars', $options['_dynamic_vars'], $variable );
+							$var_sqls[] = self::replace_sql_tables_prefix( 
+								sprintf('SET %s_%s = JSON_UNQUOTE(JSON_EXTRACT(%s, \'$.%s\'))'
+									, $variable
+									, $var_ext
+									, $variable
+									, $var_ext
+								),
+								false
+							);
+						}
+						else
+							$var_sqls[] = self::replace_sql_tables_prefix( 
+								sprintf('SELECT JSON_OBJECTAGG(slug, name) INTO %s_%s'
+									. ' FROM @.term_taxonomy term_tax'
+									. ' INNER JOIN @.terms term'
+									. ' ON term.term_id = term_tax.term_id'
+									. ' WHERE term_tax.taxonomy = \'%s\''
+									, $variable
+									, $var_ext
+									, $var_ext
+								),
+								false
+							);
+					}
+					else {
+						$var_sqls[] = self::replace_sql_tables_prefix( 
+							sprintf('SELECT JSON_OBJECTAGG(taxonomy, terms) INTO %s'
+								. ' FROM ('
+									. ' SELECT term_tax.taxonomy, JSON_OBJECTAGG(slug, name) AS terms'
+									. ' FROM @.term_taxonomy term_tax'
+									. ' INNER JOIN @.terms term'
+									. ' ON term.term_id = term_tax.term_id'
+									. ' GROUP BY term_tax.taxonomy'
+								. ' ) tt'
+								, $variable
+							),
+							false
+						);
+					}
+					break;
+					
+				default:
+					/* TODO add global vars on need only 
+					if( isset( self::$sql_global_vars[ $variable ] ){
+					}
+					else */
+						continue 2;
+			}
+			if( empty( $options['_dynamic_vars'] ) )
+				$options['_dynamic_vars'] = [];
+			$options['_dynamic_vars'][ $variable . ( $var_ext ? '_' . $var_ext : '' ) ] = true;
+		}
+		
+		if( $var_sqls )
+			$sql = sprintf("%s;\n%s", implode(";\n", $var_sqls), $sql );
+		
 				
 		return $sql;
 	}
@@ -866,10 +987,7 @@ class Agdp_Report extends Agdp_Post {
 		$wpdb = self::wpdb();
 		
 		//global vars : @BLOGID, ...
-		if( empty($options['_add_sql_global_vars']) ){
-			$sql = static::add_sql_global_vars( $sql, $sql_variables, $options );
-			$options['_add_sql_global_vars'] = true;
-		}
+		$sql = static::add_sql_global_vars( $sql, $sql_variables, $options );
 		
 		if( empty($options['_sqls'] ) )
 			$options['_sqls'] = [];

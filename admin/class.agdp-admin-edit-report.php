@@ -444,6 +444,8 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT(@PREVIOUS[2].post_id, "-", @PREVIOUS.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite.</li>';
 		foreach( Agdp_Report::sql_global_vars() as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
+		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`taxonomy`</var> : { <var>`slug`|`term_id`</var> : <var>`name`</var>, ... }, ... } </li>', AGDP_VAR_TAX_TERMS );
+		$html .= sprintf('<li><label><var>%s_{taxonomy}</var></label> = { <var>`slug`|`term_id`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_TAX_TERMS );
 		$html .= '<li><code>@:var_name</code> vous permet d\'accèder à des variables globales via un nom variable. Attention, <code>@BLOG:info_name%I</code> dans le cas d\'une partie du nom.</li>';
 		
 		$html .= '</ul></div>';
