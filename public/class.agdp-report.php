@@ -22,6 +22,8 @@ class Agdp_Report extends Agdp_Post {
 	private static $sql_global_vars_init;
 	
 	private static $initiated = false;
+	
+	public static $wpdb = false;
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -91,6 +93,21 @@ class Agdp_Report extends Agdp_Post {
 	public static function get_report_styles( $post_id, $args = 'names' ) {
 		return self::get_post_terms( self::taxonomy_report_style, $post_id, $args);
 	}
+	
+	/**
+	 * Retourne un objet $wpdb propre, sans risque de variables résiduelles.
+	 */
+	public static function wpdb( $reset = false) {
+		if( ! $reset && self::$wpdb )
+			return self::$wpdb;
+		self::$wpdb = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		global $wpdb;
+		$global_wpdb = $wpdb;
+		$wpdb = self::$wpdb;
+		wp_set_wpdb_vars();
+		$wpdb = $global_wpdb;
+		return self::$wpdb;
+	}
 
 	/**
 	 * SQL
@@ -136,7 +153,7 @@ class Agdp_Report extends Agdp_Post {
 			// . ( empty($options[__FUNCTION__.':stack']) ? '' : '  >> ' . count($options[__FUNCTION__.':stack']) )
 			// , $sql/* , $sql_variables */);
 		
-		global $wpdb;
+		$wpdb = self::wpdb();
 		//blog_prefix : @.
 		$blog_prefix = $wpdb->get_blog_prefix();
 	    $sql = static::replace_sql_tables_prefix( $sql );
@@ -701,7 +718,7 @@ class Agdp_Report extends Agdp_Post {
  	public static function replace_sql_tables_prefix( $sql ) {
 		//@.
 		//TODO preg_replace
-		global $wpdb;
+		$wpdb = self::wpdb();
 		$blog_prefix = $wpdb->get_blog_prefix();
 		if( $wpdb->blogid	> 1 ){
 			$site_prefix = $wpdb->get_blog_prefix( 1 );
@@ -719,7 +736,7 @@ class Agdp_Report extends Agdp_Post {
 	 * add_table_blog_prefix
 	 */
  	private static function add_table_blog_prefix( $table ){
-		global $wpdb;
+		$wpdb = self::wpdb();
 		if( $wpdb->blogid	> 1 ){
 			if( in_array( $table, $wpdb->global_tables ) 
 			 || in_array( $table, $wpdb->ms_global_tables )
@@ -845,7 +862,7 @@ class Agdp_Report extends Agdp_Post {
 		if( ! $sql )
 			return;
 			
-		global $wpdb;
+		$wpdb = self::wpdb();
 		
 		//global vars : @BLOGID, ...
 		if( empty($options['_add_sql_global_vars']) ){
@@ -907,7 +924,7 @@ class Agdp_Report extends Agdp_Post {
 	 * SET @PREVIOUS = CAST( $results AS JSON )
 	 */
  	private static function set_previous_results_variable( $results ) {
-		global $wpdb;
+		$wpdb = self::wpdb();
 		$max_results_in_previous = 99;
 		if( count( $results ) > $max_results_in_previous )
 			$json = json_encode( array_slice( $results, 0, $max_results_in_previous ), JSON_UNESCAPED_UNICODE );
@@ -915,7 +932,6 @@ class Agdp_Report extends Agdp_Post {
 			$json = json_encode( $results, JSON_UNESCAPED_UNICODE );
 		$sql_json = sprintf('SET @PREVIOUS = CAST( "%s" AS JSON )', addslashes($json) );
 		$result_json = $wpdb->get_results($sql_json);
-		// array_push( $options['_sqls'], $sql_json );
 		if( $wpdb->last_error ){
 			$json = json_encode( $result_u, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			if( strlen($json) > 255 )
@@ -946,7 +962,7 @@ class Agdp_Report extends Agdp_Post {
 		
 		$report_id = $report->ID;
 		
-		global $wpdb;
+		$wpdb = self::wpdb( TRUE ); //reset des variables
 		$wpdb->suppress_errors(true);
 		$wpdb->last_error = false;
 		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options );
@@ -1082,7 +1098,7 @@ class Agdp_Report extends Agdp_Post {
  			return $content;
 		}
 		
-		global $wpdb;
+		$wpdb = self::wpdb();
 		
 		$html = self::get_report_html( $post );
 		if( ! $html )

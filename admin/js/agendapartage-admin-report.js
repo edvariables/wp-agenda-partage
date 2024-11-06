@@ -443,11 +443,16 @@ jQuery( function( $ ) {
 				var counter = 0;
 				for(var variable in var_values_saved){
 					if( variable === undefined ) continue;
-					if( options = var_values_saved[variable]['options'] )
-						if( ( options = options.substr(0, 50) ) === undefined )
-							options = '';
+					if( value = var_values_saved[variable]['value'] )
+						value = '= ' + value;
+					if( value === undefined ) value = '';
+					if( ( options = var_values_saved[variable]['options'] ) && options.length > 50 )
+						options = options.substr(0, 50) + '...';
+					else if( options === undefined ) options = '';
+					if( options ) options = '(' + options + ')';
+					if( value && options ) value += ', ';
 					$notice
-						.append('<li class="sql_variable unused"><label><var>' + variable + '</var></label><code>'+options+'</code></li>');
+						.append('<li class="sql_variable unused"><label><var>' + variable + '</var></label><code>'+ value + options+'</code></li>');
 					counter++;
 				}
 				if( counter ){

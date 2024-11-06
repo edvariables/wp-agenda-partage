@@ -435,6 +435,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%J</code> : transforme en objet JSON pour MySQL. ex. : <code>SET @JSON = :json%J</code> qui est remplacé par <code>CAST( [variable] AS JSON )</code></li>';
 			$html .= '<li><label><var>Sous-Rapports</var></label> : transforme le résultat de la sous-requête en objet JSON. <code>JSON_SEARCH( :termes%J, \'all\', \'search\' );</code>. Peut être ignoré dans le cas d\'un <code>SET</code> : <code>SET @TERMS = :termes;</code></li>';
 		$html .= '<li><code>%JT</code> : transforme du json en table. ex. : <code>SELECT * FROM :table%JT</code> Ex. de valeur : <code>[{"x":2,"y":"8"},{"x":"3","y":"7"},{"x":"4","y":6}]</code> cf <a href="#TODO">Rapports > Tutoriels > JSON > JSON_TABLE</a></li>';
+		$html .= '<li><code>SET @DICO = SELECT key, name FROM ...</code> : transforme en dictionnaire JSON utilisable <code>@DICO.`key_field`</code> ou <code>@DICO[`key_field`]</code> ou <code>@DICO[\'key_value\']</code> ou <code>@DICO[@key_value]</code></li>';
 		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.</li>';
 		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.</li>';
 		
