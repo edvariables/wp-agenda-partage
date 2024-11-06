@@ -102,9 +102,10 @@ class Agdp_Report extends Agdp_Post {
 			return self::$wpdb;
 		self::$wpdb = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 		global $wpdb;
+		self::$wpdb->set_blog_id( $wpdb->blogid, $wpdb->siteid );
 		$global_wpdb = $wpdb;
-		$wpdb = self::$wpdb;
-		wp_set_wpdb_vars();
+			$wpdb = self::$wpdb;
+			wp_set_wpdb_vars();
 		$wpdb = $global_wpdb;
 		return self::$wpdb;
 	}
@@ -718,7 +719,7 @@ class Agdp_Report extends Agdp_Post {
  	public static function replace_sql_tables_prefix( $sql ) {
 		//@.
 		//TODO preg_replace
-		$wpdb = self::wpdb();
+		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		if( $wpdb->blogid	> 1 ){
 			$site_prefix = $wpdb->get_blog_prefix( 1 );
