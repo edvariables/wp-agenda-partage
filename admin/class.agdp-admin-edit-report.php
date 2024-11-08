@@ -181,7 +181,6 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'label' => '',
 				'type' => 'json',
 				'input' => 'textarea',
-				'input_attributes' => 'spellcheck="false"',
 				'class' => 'agdpreport-variables',
 				'style' => 'display:none',
 			],
@@ -218,11 +217,27 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'label' => sprintf('<a href="" onclick="return false;">%s%s</a>', Agdp::icon('update'), 'Rafraîchir'),
 				'input' => 'link',
 				'class' => 'report_refresh', //cf admin-report.js
+				'container_class' => 'report_toolbar_item', //cf admin-report.js
 			],
 			[	'name' => 'report_show_sql',
 				'input' => 'select',
 				'values' => [ '' => 'Masquer le SQL', '1' => 'Afficher le SQL', 'vars' => 'Variables + SQL'],
-				'container_class' => 'report_show_sql', //cf admin-report.js
+				'container_class' => 'report_menu_item', //cf admin-report.js
+			],
+			[	'name' => 'report_show_caption',
+				'label' => 'Afficher le titre',
+				'input' => 'checkbox',
+				'container_class' => 'report_menu_item', //cf admin-report.js
+			],
+			[	'name' => 'report_show_indexes',
+				'label' => 'Afficher la colonne d\'index',
+				'input' => 'checkbox',
+				'container_class' => 'report_menu_item', //cf admin-report.js
+			],
+			[	'name' => 'report_show_table_designer',
+				'label' => 'Afficher le designer de table',
+				'input' => 'checkbox',
+				'container_class' => 'report_menu_item', //cf admin-report.js
 			],
 			[	'name' => 'report_css',
 				'label' => 'Style css',
@@ -231,6 +246,13 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'textarea',
 				'container_class' => 'report_css', //cf admin-report.js
 				'unit' => $tax_report_styles,
+			],
+			[	'name' => 'table_columns',
+				'label' => '',
+				'type' => 'json',
+				'input' => 'textarea',
+				'class' => 'agdpreport-columns',
+				'style' => 'display:none',
 			],
 		];
 		return $fields;

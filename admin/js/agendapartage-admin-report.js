@@ -43,19 +43,16 @@ jQuery( function( $ ) {
 		$('#agdp_report-inputs').each(function(e){
 			var $this = $(this);
 			var $sql = $this.find('textarea#sql');
-			var $variables = $('#agdp_report-variables').find('textarea#sql_variables');
+			var $variables = $('#agdp_report-variables textarea#sql_variables');
 			
 			//Liste de tables
-			$this.find('.sql-helper-tables a')
-				.on('click', function(e){
-					var $sql = $this.find('textarea#sql');
+			$this.on('click', '.sql-helper-tables a', function(e){
 					$sql.get(0).insertAtCaret( $(this).text() );
 				})
 				// .after($('<span class="dashicons-before dashicons-edit"></span>')
 			;
 			//Liste de colonnes
 			$this.on('click', '.table_columns li', function(e){
-				var $sql = $this.find('textarea#sql');
 				$sql.get(0).insertAtCaret( $(this).text() );
 			});
 			
@@ -223,18 +220,7 @@ jQuery( function( $ ) {
 				
 				
 				//Valeurs actuelles des variables
-				var var_values = $variables.val();
-				if( var_values ){
-					try{
-						var_values = JSON.parse(var_values);
-					}
-					catch(ex){
-						alert("Erreur de format des variables.\n" + ex);
-						var_values = {};
-					}
-				}
-				else
-					var_values = {};
+				var var_values = get_input_jso.call( $variables );
 				var var_values_saved = var_values;
 				
 				//container
@@ -636,107 +622,400 @@ jQuery( function( $ ) {
 		
 		//Rendu
 		$('#agdp_report-render').each(function(e){
-			$(this).on('click', '.report_refresh a', function(e){
-				
-				var $actionElnt = $(this);
-				var $form = $actionElnt.parents('form:first');
-				var post_id = $form.find('#post_ID').val();
-				var sql = $form.find('#sql').val();
-				var sql_variables = $form.find('#sql_variables').val();
-				var report_show_sql = $form.find('#report_show_sql').val();
-				var $destination = $form.find('.agdpreport');
-				if( $destination.length === 0 ){
-					var $dest_container = $form.find('#agdp_report-render .inside:first');
-					$destination = $('wpbody-content .agdpreport');
-					if( $destination.length === 0 )
-						$destination = $('<div class="agdpreport"></div>');
-					$dest_container.append( $destination );
-				}
-				var data = {
-					action : "agendapartage_report_action",
-					method : "report_html",
-					post_id : post_id,
-					contentType: "application/json; charset=utf-8",
-					data: JSON.stringify({ //needs stripslashes() at server side
-						sql : sql,
-						sql_variables : sql_variables ? JSON.parse(sql_variables) : 0,
-						report_id : post_id,
-						report_show_sql : report_show_sql,
-						skip_styles : true,
-					})
-				};
-				var report_id = $actionElnt
-				jQuery.ajax({
-					url : agdp_ajax.ajax_url,
-					method : 'POST',
-					data : Object.assign(data, {
-						_nonce : agdp_ajax.check_nonce
-					}),
-					success : function( response ) {
-						if(response){
-							if(typeof response === 'string' || response instanceof String){
-								if(response.endsWith('null'))
-									response = substr(response, 0, response.length-4);
-								var $response = $(response);
-								var id;
-								if( ! (id = $response.attr('id') ) ){
-									id = 'report_' + uniqid(6);
-									$response.attr('id', id);
-								}
-								var css = get_report_css( $form, id );
-								if( css )
-									$response.append( '<style>' + css + '</style>' );
-								$form.find('.agdpreport').replaceWith($response);
-								$('#wpbody-content > .wrap > .agdpreport.error').remove();
-							}
-						}
-						else
-							$form.find('.agdpreport').html('!');
-						$spinner.remove();
-					},
-					fail : function( response ){
-						$spinner.remove();
-						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
-							.click(function(){$msg.remove()});
-						$actionElnt.after($msg);
-						// $msg.get(0).scrollIntoView();
-					}
-				});
-				var $spinner = $actionElnt.next('.wpcf7-spinner');
-				if($spinner.length == 0)
-						$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
-				event.preventDefault();  
-				return false;
-			});
-			$(this).on('change', 'textarea#report_css, .report_css :input', refresh_report);
+			$(this)
+				.on('click', '.report_refresh a', refresh_report )
+				.on('change', 'textarea#report_css, .report_css :input', refresh_report)
+				.each(refresh_report_menu)
+				.each(refresh_report_table_designer)
+			;
 		});
-
-		/**
-		 * get_report_css : compile les styles (textarea + terms)
-		 */
-		function get_report_css( $form, id ){
-			var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
-			$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
-				if( css )
-					css += '\n';
-				css += '/* report_style_term ' + $(this).text() + ' */\n'
-						+  this.getAttribute('data-report-style');
-			});
-			const regexp = /(\s|,\s?)(table(\s|.))/g;
-			css = css.replaceAll( regexp, '$1#' + id + ' > $2' );
-			
-			return css;
-		}
 	});
 
 	/**
 	 * get_report_css : compile les styles (textarea + terms)
 	 */
+	function get_report_css( $form, id ){
+		var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
+		$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
+			if( css )
+				css += '\n';
+			css += '/* report_style_term ' + $(this).text() + ' */\n'
+					+  this.getAttribute('data-report-style');
+		});
+		const regexp = /(\s|,\s?)(table(\s|.))/g;
+		css = css.replaceAll( regexp, '$1#' + id + ' > $2' );
+		
+		return css;
+	}
+
+	/**
+	 * refresh_report : get data + designer
+	 */
 	function refresh_report(){
-		$(this)
-			.parents('form:first')
-				.find('#agdp_report-render .report_refresh a')
-					.trigger('click'); 
+		var $actionElnt = $(this);
+		var $form = $actionElnt.parents('form:first');
+		var post_id = $form.find('#post_ID').val();
+		var sql = $form.find('#sql').val();
+		var sql_variables = get_input_jso.call( $form, '#sql_variables' );
+		var table_columns = get_input_jso.call( $form, '#table_columns');
+		var report_options = {};
+		$form.find('#agdp_report-render :input[name]').each(function(){
+			var val;
+			if( this.getAttribute('type') === 'checkbox' )
+				val = $(this).prop('checked');
+			else
+				val = this.value;
+			report_options[ this.getAttribute('name') ] = val;
+		});
+		var $destination = $form.find('.agdpreport');
+		if( $destination.length === 0 ){
+			var $dest_container = $form.find('#agdp_report-render .inside:first');
+			$destination = $('wpbody-content .agdpreport');
+			if( $destination.length === 0 )
+				$destination = $('<div class="agdpreport"></div>');
+			$dest_container.append( $destination );
+		}
+		report_options = Object.assign({}, report_options, {
+			sql : sql,
+			sql_variables : sql_variables,
+			table_columns : table_columns,
+			report_id : post_id,
+			skip_styles : true, /* later use of get_report_css() */
+		});
+		var data = {
+			action : "agendapartage_report_action",
+			method : "report_html",
+			post_id : post_id,
+			contentType: "application/json; charset=utf-8",
+			data: JSON.stringify(report_options /* //needs stripslashes() at server side */)
+		};
+		var report_id = $actionElnt
+		jQuery.ajax({
+			url : agdp_ajax.ajax_url,
+			method : 'POST',
+			data : Object.assign(data, {
+				_nonce : agdp_ajax.check_nonce
+			}),
+			success : function( response ) {
+				if(response){
+					if(typeof response === 'string' || response instanceof String){
+						if(response.endsWith('null'))
+							response = substr(response, 0, response.length-4);
+						var $response = $(response);
+						var id;
+						if( ! (id = $response.attr('id') ) ){
+							id = 'report_' + uniqid(6);
+							$response.attr('id', id);
+						}
+						var css = get_report_css( $form, id );
+						if( css )
+							$response.append( '<style>' + css + '</style>' );
+						$form.find('.agdpreport').replaceWith($response);
+						$('#wpbody-content > .wrap > .agdpreport.error').remove();
+						$response.each(refresh_report_table_designer);
+					}
+				}
+				else
+					$form.find('.agdpreport').html('!');
+				$spinner.remove();
+			},
+			fail : function( response ){
+				$spinner.remove();
+				var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+					.click(function(){$msg.remove()});
+				$actionElnt.after($msg);
+				// $msg.get(0).scrollIntoView();
+			}
+		});
+		var $spinner = $actionElnt.next('.wpcf7-spinner');
+		if($spinner.length == 0)
+				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
+		event.preventDefault();  
+		return false;
+	}
+
+	/**
+	 * refresh_report_menu 
+	 */
+	function refresh_report_menu(){
+		var $this = $(this);
+		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+		var $menu_items = $render.find('.report_menu_item');
+		var $menu = $menu_items.parent('#agdp_report-render-menu');
+		if( $menu.length === 0 ){
+			$menu = $('<div id="agdp_report-render-menu"></div>')
+				.html( $('<a href="#" class="toggler dashicons-before dashicons-menu"></a>')
+					.on('click', function(){
+						$(this).parent().toggleClass('active');
+					})	
+				)
+				.insertBefore( $menu_items.first() )
+				.append( $menu_items )
+				
+				.append( $('<a href="#" class="report_menu_item reset-designer dashicons-before dashicons-trash">Réinitialiser</a>')
+					.on('click', function(){
+						$render.find('textarea[name="table_columns"]').text('');
+						refresh_report.call($render);
+					})
+				)
+			;
+		}
+		//hidden_columns
+		table_columns = get_input_jso.call($render, 'textarea[name="table_columns"]');
+		$hidden_columns = $menu.find('.hidden_columns:first');
+		$hidden_columns.find('option:gt(0)').remove();
+		for( table_column in table_columns ){
+			if( table_columns[table_column]['visible'] === undefined
+			|| table_columns[table_column]['visible'] )
+				continue;
+			if( $hidden_columns.length === 0 ){
+				$hidden_columns
+					= $('<select class="hidden_columns"><option value=""></option></select>')
+						.on('change', function(){
+							var column = $hidden_columns.val();
+							if( ! column ) return;
+							set_table_designer_option.call( this, column, 'visible', true);
+							$hidden_columns.children('option[value="' + column + '"]').remove();
+							
+							var $options = $hidden_columns.children('option');
+							if( $options.length <= 1 )
+								$hidden_columns.hide();
+							else if( $options.length === 2 )
+								$options.filter(':first').text('1 colonne cachée');
+							else
+								$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
+							
+							var $table = $render.find('.agdpreport > table');
+							var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
+							var index = $th.prevAll('th').length;
+							$table.find('tr').each(function(){
+								$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+									.show();
+							});
+						})
+						.appendTo(
+							$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+								.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+						)
+				;
+			}
+			var label = typeof table_columns[table_column] === 'object' ? table_columns[table_column]['label'] : table_columns[table_column]
+			$hidden_columns.append('<option value="' + table_column + '">' + label + '</option>');
+		}
+		var $options = $hidden_columns.children('option');
+		if( $options.length <= 1 )
+			$hidden_columns.hide();
+		else {
+			if( $options.length === 2 )
+				$options.filter(':first').text('1 colonne cachée');
+			else
+				$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
+			$hidden_columns.show();
+		}
+		return true;
+	}
+
+	/**
+	 * refresh_report_designer 
+	 */
+	function refresh_report_table_designer(){
+		var $this = $(this);
+		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+		var $table = $render.find('.agdpreport > table');
+		if( $table.length === 0 )
+			return false;
+		var show_table_designer = $render.find('input[name="report_show_table_designer"]:checked').length;
+		if( ! show_table_designer ){
+			if( $table.is('.report_table_designer') )
+				$table
+					.removeClass('report_table_designer')
+					.find('.report_table_designer')
+						.remove();
+			return false;
+		}
+		var $table = $render.find('.agdpreport > table');
+		if( $table.length === 0
+		|| $table.is('.report_table_designer') )
+			return false;
+		
+		var columns = get_input_jso.call( $render, 'textarea[name="table_columns"]' );
+		$table
+			.addClass('report_table_designer')
+			//Columns
+			.find('thead > tr').each(function(){
+				var column_index = 0;
+				$(this)
+					.children('th')
+						.each(function(){
+							this.innerHTML += '<a href="#" class="hide_column column-action dashicons-before dashicons-no-alt"></a>';
+							var column = this.getAttribute('column');
+							this.setAttribute( 'title', column );
+							
+							$table.find('tbody > tr:first > td:eq(' + column_index + ')')
+									.attr('column', column);
+							column_index++;
+						})
+						.on('click', '.hide_column', function(){
+							var $th = $(this).parents('th:first');
+							var column = $th.attr('column');
+							set_table_designer_option.call( this, column, 'visible', false );
+							var index = $th.prevAll('th').length;
+							$th.parents('table:first')
+								.find('tr').each(function(){
+									$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+										.hide();
+								})
+							;
+							refresh_report_menu.call( this );
+						})
+						.end()
+					.clone()
+						.addClass('report_table_designer')
+						.insertAfter(this)
+						.children('th')
+							.each(function(){
+								var column = this.getAttribute('column');
+								var label = this.innerText;
+								if( columns[ column ] === undefined )
+									columns[ column ] = {};
+								columns[ column ][ 'label' ] = label;
+								this.innerHTML = '<input class="column_label" value="' + label + '">';
+							})
+							.on('change', ':input', save_table_designer)
+				;
+			}).end()
+			//Rows
+			.find('tbody > tr:first').each(function(){
+				$(this)
+					.children('td')
+						.each(function(){
+							var column = this.getAttribute('column');
+							script = columns[ column ]['script'];
+							if( ! script ){
+								script = '';
+								this.innerHTML += '<a href="#" class="is_new_column column-action dashicons-before dashicons-info-outline"></a>';
+							}
+							this.setAttribute( 'title', script );
+						})
+						.on('click', '.is_new_column', function(){
+							// var $th = $(this).parents('th:first');
+							// var column = $th.attr('column');
+							// set_table_designer_option.call( this, column, 'visible', false );
+							// var index = $th.prevAll('th').length;
+							// $th.parents('table:first')
+								// .find('tr').each(function(){
+									// $(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+										// .hide();
+								// })
+							// ;
+							// refresh_report_menu.call( this );
+						})
+						.end()
+					.clone()
+						.addClass('report_table_designer')
+						.insertAfter(this)
+						.children('td')
+							.each(function(){
+								var column = this.getAttribute('column');
+								script = columns[ column ]['script'];
+								if( script === undefined )
+									script = '`' + column + '`';
+								// script = script.replace('"', '&quot;').replace('\n', '\\n');
+								
+								$(this).html($('<textarea class="column_script"></textarea>').val( script ));
+							})
+							.on('change', ':input', save_table_designer)
+				;
+			}).end()
+		;
+			
+	}
+	
+	/**
+	 * set_table_designer_option (from textarea[name="table_columns"] to textarea[name="table_columns"])
+	 **/
+	function set_table_designer_option( column, option, value){
+		var $this = $(this);
+		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+		var $table = $render.find('.agdpreport > table');
+		var $textarea = $render.find('textarea[name="table_columns"]');
+		var table_columns = $textarea.val();
+		if( ! table_columns )
+			table_columns = save_table_designer.call( this );
+		else
+			table_columns = get_input_jso.call( $textarea );
+		
+		if( ! table_columns[column] )
+			table_columns[column] = {};
+		if( ! option )
+			table_columns[column] = value;
+		else
+			table_columns[column][option] = value;
+		$textarea.text( JSON.stringify( table_columns ) );
+	}
+	
+	/**
+	 * save_table_designer
+	 **/
+	function save_table_designer(){
+		var $this = $(this);
+		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+		var $table = $render.find('.agdpreport > table');
+		var $textarea = get_input.call( this, 'textarea[name="table_columns"]');
+		var columns = {};
+		var column_index = 0;
+		$table
+			.find('thead > tr.report_table_designer > th input.column_label')
+				.each(function(){
+					var column = this.parentNode.getAttribute('column');
+					var label = this.value;
+					columns[ column ] = {
+						index: column_index++,
+						name: column,
+						label: label,
+					};
+				})
+				.end()
+			.find('tbody > tr.report_table_designer:first > td :input.column_script')
+				.each(function(){
+					var column = this.parentNode.getAttribute('column');
+					var script = this.value;
+					columns[ column ]['script'] = script;
+				})
+		;
+		$textarea.text( JSON.stringify( columns ) );
+		return columns;
+	}
+	
+	/**
+	 * get_input
+	 **/
+	function get_input( path = '' ){
+		var $this = $(this);
+		if( ( path === '' && $this.is(':input') )
+		|| $this.is( path ) )
+			return $this;
+		var $form = $this.is('form') ? $this : $this.parents('form:first');
+		if( $form.length === 0 )
+			$form = $('form');
+		return $form.find( path );
+	}
+	
+	/**
+	 * get_input_jso
+	 **/
+	function get_input_jso( path = '' ){
+		var $input = get_input.call( this, path );
+		var value = $input.val();
+		if( ! value )
+			return {};
+		try{
+			return JSON.parse(value);
+		}
+		catch(ex){
+			alert("Erreur de format dans '" + path + "'.val() : " + value + "\n" + ex);
+		}
+		return {};
 	}
 });
 
@@ -745,23 +1024,23 @@ jQuery( function( $ ) {
  * insertAtCaret in textarea
  */
 if( ! HTMLTextAreaElement.prototype.insertAtCaret )
-HTMLTextAreaElement.prototype.insertAtCaret = function (text) {
-  text = text || '';
-  if (document.selection) {
-    // IE
-    this.focus();
-    var sel = document.selection.createRange();
-    sel.text = text;
-  } else if (this.selectionStart || this.selectionStart === 0) {
-    // Others
-    var startPos = this.selectionStart;
-    var endPos = this.selectionEnd;
-    this.value = this.value.substring(0, startPos) +
-      text +
-      this.value.substring(endPos, this.value.length);
-    this.selectionStart = startPos + text.length;
-    this.selectionEnd = startPos + text.length;
-  } else {
-    this.value += text;
-  }
+	HTMLTextAreaElement.prototype.insertAtCaret = function (text) {
+		text = text || '';
+		if (document.selection) {
+			// IE
+			this.focus();
+			var sel = document.selection.createRange();
+			sel.text = text;
+		} else if (this.selectionStart || this.selectionStart === 0) {
+			// Others
+			var startPos = this.selectionStart;
+			var endPos = this.selectionEnd;
+			this.value = this.value.substring(0, startPos) +
+				text +
+				this.value.substring(endPos, this.value.length);
+				this.selectionStart = startPos + text.length;
+				this.selectionEnd = startPos + text.length;
+		} else {
+			this.value += text;
+	}
 };

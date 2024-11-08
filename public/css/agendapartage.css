@@ -43,7 +43,12 @@ code span.dashicons {
   padding-top: 4px;
   margin-right: 3px;
 }
-
+a.dashicons-before:focus {
+	outline: none;
+}
+a.dashicons-before {
+	text-decoration: none;
+}
 .agdp-error-light {
   font-size: smaller;
   color: gray;
@@ -195,6 +200,9 @@ body.colors-dark .toggle-trigger a:hover {
 }
 .toggle-trigger.active + .toggle-container {
 	display: block;
+}
+textarea.toggle-container {
+	overflow: inherit;
 }
 
 label.textarea-rows-2 textarea {

@@ -98,15 +98,11 @@
 }
 
 /** render **/
-#agdp_report-render .report_refresh, #agdp_report-render .report_show_sql {
+#agdp_report-render .report_toolbar_item {
 	float: right;
 	top: -3em;
 	position: relative;
 	height: 0px;
-}
-#agdp_report-render .report_show_sql select {
-	min-width: inherit;
-	margin-right: 1em;
 }
 
 #agdp_report-render .sql_prepared, .agdpreport.error .sql_prepared {
@@ -141,4 +137,67 @@
   height: 26px;
   position: relative;
   top: -10px;
+}
+
+
+#agdp_report-render > .postbox-header {
+	padding-left: 2em;
+}
+
+#agdp_report-render-menu {
+	text-align: left;
+	padding: 0px 0px 5px 0px;
+	margin: unset;
+	float: left;
+	top: -34px;
+	position: relative;
+}
+#agdp_report-render-menu.active {
+	text-align: left;
+	position: absolute;
+	background-color: white;
+	border: solid gray 1px;
+	border-radius: 3px;
+	z-index: 1;
+}
+#agdp_report-render-menu > a.toggler {
+	text-decoration: none; 
+	width: 2em;
+	display: inline-block;
+}
+#agdp_report-render-menu.active > a.toggler {
+	margin-bottom: 3px;
+	width: 100%;
+}
+#agdp_report-render-menu .report_menu_item  {
+	display: none;
+}
+#agdp_report-render-menu.active .report_menu_item  {
+	display: block;
+	margin-left: 4px;
+	margin-left: 4px;
+}
+#agdp_report-render-menu.active a.report_menu_item  {
+	padding-top: 6px;
+}
+#agdp_report-render-menu.active .report_menu_item select  {
+	margin-top: 4px;
+}
+
+#agdp_report-render thead > tr.report_table_designer > th input {
+	width: 100%;
+	min-width: 4em;
+}
+#agdp_report-render tr:not(.report_table_designer) > * {
+	padding-right: 1em;
+}
+#agdp_report-render tr a.column-action {
+	opacity: 50%;
+	float: right;
+	top: -5px;
+	position: relative;
+	right: -14px;
+}
+#agdp_report-render tr a.column-action:hover {
+	opacity: 100%;
 }

@@ -151,6 +151,15 @@ img.coo-favicon {
 	margin-top: 1em;
 }
 
+a.dashicons-before {
+	text-decoration: none;
+}
+a.dashicons-before:focus {
+	outline: none;
+	box-shadow: none;
+	color: #2271b1;
+}
+
 /*toggle shortcode*/
 .toggle-trigger {
 	cursor: pointer;
@@ -204,6 +213,9 @@ body.colors-dark .toggle-trigger a:hover {
 	display: none;
 	overflow: hidden;
 	padding: 10px 10px;
+}
+textarea.toggle-container {
+	overflow: inherit;
 }
 .toggle-trigger.active + .toggle-container {
 	display: block;
