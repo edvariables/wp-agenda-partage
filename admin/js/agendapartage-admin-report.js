@@ -849,7 +849,7 @@ jQuery( function( $ ) {
 			.find('thead > tr').each(function(){
 				var column_index = 0;
 				$(this)
-					.children('th')
+					.children('th[column]')
 						.each(function(){
 							this.innerHTML += '<a href="#" class="hide_column column-action dashicons-before dashicons-no-alt"></a>';
 							var column = this.getAttribute('column');
@@ -876,7 +876,7 @@ jQuery( function( $ ) {
 					.clone()
 						.addClass('report_table_designer')
 						.insertAfter(this)
-						.children('th')
+						.children('th[column]')
 							.each(function(){
 								var column = this.getAttribute('column');
 								var label = this.innerText;
@@ -891,7 +891,7 @@ jQuery( function( $ ) {
 			//Rows
 			.find('tbody > tr:first').each(function(){
 				$(this)
-					.children('td')
+					.children('td[column]')
 						.each(function(){
 							var column = this.getAttribute('column');
 							script = columns[ column ]['script'];
@@ -918,11 +918,13 @@ jQuery( function( $ ) {
 					.clone()
 						.addClass('report_table_designer')
 						.insertBefore(this)
-						.children('td')
+						.children('td[column]')
 							.each(function(){
 								var column = this.getAttribute('column');
+								if( ! column )
+									return;
 								script = columns[ column ]['script'];
-								if( script === undefined )
+								if( ! script )
 									script = '`' + column + '`';
 								// script = script.replace('"', '&quot;').replace('\n', '\\n');
 								

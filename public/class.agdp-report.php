@@ -986,8 +986,7 @@ class Agdp_Report extends Agdp_Post {
 		$table_caption = $report ? $report->post_title : '';
 		$html = sprintf('<table class="error"><caption>Erreur dans <var>%s</var></caption><thead><tr>', $table_caption);
 		if( ! is_array($table_columns) )
-			return sprintf('%s<th></th></tr></thead><tbody><tr><td></td></tr></tbody></table>'
-				, $html, $table_caption);
+			return $html . '<th></th></tr></thead></table>';
 		//thead
 		foreach( $table_columns as $column_name => $column_data ){
 			$column_label = $column_name;
