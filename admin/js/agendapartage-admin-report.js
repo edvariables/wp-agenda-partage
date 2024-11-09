@@ -710,7 +710,11 @@ jQuery( function( $ ) {
 						var css = get_report_css( $form, id );
 						if( css )
 							$response.append( '<style>' + css + '</style>' );
-						$form.find('.agdpreport').replaceWith($response);
+						$form.find('.agdpreport:eq(0)')
+							.nextAll('.agdpreport')
+								.remove()
+								.end()
+							.replaceWith($response);
 						$('#wpbody-content > .wrap > .agdpreport.error').remove();
 						$response.each(refresh_report_table_designer);
 					}
@@ -913,7 +917,7 @@ jQuery( function( $ ) {
 						.end()
 					.clone()
 						.addClass('report_table_designer')
-						.insertAfter(this)
+						.insertBefore(this)
 						.children('td')
 							.each(function(){
 								var column = this.getAttribute('column');
@@ -922,7 +926,7 @@ jQuery( function( $ ) {
 									script = '`' + column + '`';
 								// script = script.replace('"', '&quot;').replace('\n', '\\n');
 								
-								$(this).html($('<textarea class="column_script"></textarea>').val( script ));
+								$(this).html($('<textarea class="column_script" spellcheck="false"></textarea>').val( script ));
 							})
 							.on('change', ':input', save_table_designer)
 				;
@@ -967,12 +971,13 @@ jQuery( function( $ ) {
 		$table
 			.find('thead > tr.report_table_designer > th input.column_label')
 				.each(function(){
-					var column = this.parentNode.getAttribute('column');
+					var $th = $(this.parentNode);
+					var column = $th.attr('column');
 					var label = this.value;
+					var visible = $th.is(':visible') && ! $th.is('.hidden');
 					columns[ column ] = {
-						index: column_index++,
-						name: column,
 						label: label,
+						visible: visible,
 					};
 				})
 				.end()

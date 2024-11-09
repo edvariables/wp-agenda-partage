@@ -970,11 +970,64 @@ class Agdp_Report extends Agdp_Post {
 			$select = sprintf('SELECT %s', $select);
 			$select = static::get_sql($report, $select, $sql_variables, $options);
 			$select .= sprintf(' FROM (%s) _render', $sql);
-			debug_log( __FUNCTION__, $select);
+			// debug_log( __FUNCTION__, $select);
 		}
 		else
 			$select = $sql;
 		return $select;
+	}
+	
+	/**
+	 * get_default_table
+	 * Returns a html table based on $table_columns in case of sql error
+	 */
+ 	public static function get_default_table( $report, $table_columns, $sql_variables, &$options ) {
+
+		$table_caption = $report ? $report->post_title : '';
+		$html = sprintf('<table class="error"><caption>Erreur dans <var>%s</var></caption><thead><tr>', $table_caption);
+		if( ! is_array($table_columns) )
+			return sprintf('%s<th></th></tr></thead><tbody><tr><td></td></tr></tbody></table>'
+				, $html, $table_caption);
+		//thead
+		foreach( $table_columns as $column_name => $column_data ){
+			$column_label = $column_name;
+			$column_visible = true;
+			$class = '';
+			if( is_array($column_data) ){
+				$column_label = $column_data[ 'label' ];
+				$column_visible = ! isset($column_data[ 'visible' ]) || $column_data[ 'visible' ];
+			}
+			else {
+				$column_label = $column_data;
+			}
+			
+			if( ! $column_visible )
+				$class .= ' hidden';
+			$html .= sprintf('<th %s column="%s">%s</th>'
+				, $class ? 'class="' . trim($class) . '"' : ''
+				, $column_name
+				, $column_label
+			);
+		}
+		$html .= '</tr></thead>';
+		//tbody
+		$html .= '<tbody><tr>';
+		foreach( $table_columns as $column => $column_data ){
+			$column_visible = true;
+			$class = '';
+			if( is_array($column_data) ){
+				$column_visible = ! isset($column_data[ 'visible' ]) || $column_data[ 'visible' ];
+			}
+			if( ! $column_visible )
+				$class .= ' hidden';
+			$html .= sprintf('<td %s>%s</td>'
+				, $class ? 'class="' . trim($class) . '"' : ''
+				, '#erreur'
+			);
+		}
+		
+		$html .= '</tr></tbody></table>';
+		return $html;
 	}
 
 	/**
@@ -1167,8 +1220,12 @@ class Agdp_Report extends Agdp_Post {
 		
 		if( is_a($dbresults, 'Exception') ){
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre><pre>%s</pre></div>'
-				, $report_id, $dbresults->getMessage()
+				, $report_id
+				, $dbresults->getMessage()
 				, $sql_prepared
+			) . sprintf('<div class="agdpreport" agdp_report="%d">%s</div>'
+				, $report_id
+				, static::get_default_table( $report, $table_columns, $sql_variables, $options )
 			);
 		}
 		if( ! is_array($dbresults) )

@@ -184,20 +184,31 @@
 	margin-top: 4px;
 }
 
-#agdp_report-render thead > tr.report_table_designer > th input {
+/* table.agdpreport */
+#agdp_report-render .agdpreport thead > tr.report_table_designer > th input {
 	width: 100%;
 	min-width: 4em;
 }
-#agdp_report-render tr:not(.report_table_designer) > * {
+#agdp_report-render .agdpreport tr:not(.report_table_designer) > * {
 	padding-right: 1em;
 }
-#agdp_report-render tr a.column-action {
+#agdp_report-render .agdpreport tr a.column-action {
 	opacity: 50%;
 	float: right;
 	top: -5px;
 	position: relative;
 	right: -14px;
 }
-#agdp_report-render tr a.column-action:hover {
+#agdp_report-render .agdpreport tr a.column-action:hover {
 	opacity: 100%;
+}
+#agdp_report-render .agdpreport > table.error th.hidden,
+#agdp_report-render .agdpreport > table.error td.hidden {
+	display: table-cell;
+}
+#agdp_report-render .agdpreport > table.error th.hidden a.column-action {
+	color: orange;
+}
+#agdp_report-render .agdpreport > table.error > tbody > tr.report_table_designer > td {
+	background-color: red;
 }
