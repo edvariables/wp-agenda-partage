@@ -150,6 +150,14 @@ class Agdp_Admin_Menu {
 			$page_title = 'Ajouter un forum';
 			$menu_slug = sprintf('post-new.php?post_type=%s&%s=1', Agdp_Forum::post_type, Agdp_Forum::tag);
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+			
+			//Menu Rapports
+			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Report::post_type) ;
+			foreach ( get_posts( [ 'post_type' => Agdp_Report::post_type, 'post_parent' => '0' ] ) as $root_report ){
+				$page_title =  $root_report->post_title;
+				$menu_slug = sprintf('edit.php?post_type=%s&post_parent=%d', $root_report->post_type, $root_report->ID);
+				add_submenu_page( $parent_slug, $page_title, 'Rapports ' . $page_title, $capability, $menu_slug);
+			}
 		}
 		
 		//Replace wpcf7 menu title

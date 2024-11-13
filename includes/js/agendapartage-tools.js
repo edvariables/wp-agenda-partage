@@ -234,9 +234,9 @@ jQuery( function( $ ) {
 		} );
 		$( 'body' ).on('toggle-active', '.toggle-trigger', function(activate = true) {
 			if(activate)
-				$(this).addClass( "active" ).nextAll(".toggle-container:first").slideDown( "normal" );
+				$(this).addClass( "active" ).nextAll(".toggle-container:first").slideDown( "fast" );
 			else
-				$(this).removeClass( "active" ).nextAll(".toggle-container:first").slideUp( "normal" );
+				$(this).removeClass( "active" ).nextAll(".toggle-container:first").slideUp( "fast" );
 		} );
 	} );
 	

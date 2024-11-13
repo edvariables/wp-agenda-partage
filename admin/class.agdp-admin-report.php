@@ -26,7 +26,21 @@ class Agdp_Admin_Report {
 		add_filter( 'manage_' . Agdp_Report::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
 		add_action( 'manage_' . Agdp_Report::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		
+		global $pagenow;
+		if ( $pagenow === 'edit.php'
+		&& ! empty( $_GET['post_type'] )
+		&& $_GET['post_type'] = Agdp_Report::post_type
+		){
+			add_action( 'restrict_manage_posts', array( __CLASS__, 'on_restrict_manage_posts'), 10, 1 );
+			
+			if( ! empty( $_GET['post_parent'] ) ){
+				// edit_{$post_type}_per_page", $posts_per_page
+				// $GLOBALS['wp']->add_query_var( 'post_parent' );
+				add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1 );
+			}
+		}
 	}
+	
 	/**
 	 * N'affiche le bloc Auteur qu'en Archive (liste) / modification rapide
 	 * N'affiche l'éditeur que pour l'évènement modèle ou si l'option Agdp::agdpreport_show_content_editor
@@ -143,8 +157,8 @@ class Agdp_Admin_Report {
 					debug_log(__FUNCTION__, $value);
 					$value = implode( "\n", $value );
 				}
-				if( strlen($value) > 200 )
-					$value = substr( $value, 0, 200) . '...';
+				if( strlen($value) > 100 )
+					$value = substr( $value, 0, 100) . '...';
 				echo sprintf('<code>%s</code>', $value);
 				break;
 			default:
@@ -152,7 +166,7 @@ class Agdp_Admin_Report {
 		}
 	}
 
-	/**
+	/*******
 	 * dashboard_widgets
 	 */
 
@@ -163,5 +177,75 @@ class Agdp_Admin_Report {
 	    // global $wp_meta_boxes;
 		// $current_user = wp_get_current_user();
 	}
+
+	/*******
+	 * liste
+	 */
+	 /**
+	 * on_pre_get_posts
+	 * Set post_parent filter
+	 */
+	public static function on_pre_get_posts( &$query ) {
+		if( ! $query->is_main_query()
+		 || empty($_GET['post_parent']) )
+			return;
+		
+		$post_type = $_GET['post_type'];
+		$post__in = $post_parents = [ $_GET['post_parent'] ];
+		global $wpdb;
+		while( count($post_parents) ){
+			$sql = sprintf("SELECT DISTINCT child.ID
+				FROM ".$wpdb->posts." parent
+				INNER JOIN ".$wpdb->posts." child
+					ON parent.ID = child.post_parent
+				WHERE parent.post_type = '%s'
+				AND child.post_type = '%s'
+				AND parent.ID IN (%s)
+				AND child.post_status != 'trash'", 
+				$post_type,
+				$post_type,
+				implode(',', $post_parents)
+			);
+			$sub_pages = $wpdb->get_results($sql, ARRAY_N);
+			$post_parents = [];
+			foreach( $sub_pages as $page ){
+				$post_parents[] = $page[0];
+				$post__in[] = $page[0];
+			}
+		} 
+		$query->set( 'post__in', $post__in );
+	}
+	
+	/**
+	 * Ajout des filtres
+	 * - post_parent
+	 */ 
+	public static function on_restrict_manage_posts( $post_type ){
+		if (isset($_GET['post_type'])
+		&& $_GET['post_type'] === Agdp_Report::post_type) {
+			global $wpdb;
+			$sql = sprintf("SELECT ID, post_title
+				FROM ".$wpdb->posts."
+				WHERE post_type = '%s'
+				AND post_parent = 0
+				AND post_status != 'trash'
+				ORDER BY post_title", 
+				$_GET['post_type']
+			);
+			$parent_pages = $wpdb->get_results($sql, OBJECT_K);
+			$select = '
+				<select name="post_parent">
+					<option value="">Toutes les pages</option>';
+					$current = isset($_GET['post_parent']) ? $_GET['post_parent'] : '';
+					foreach ($parent_pages as $page) {
+						$select .= sprintf('<option value="%s"%s>%s</option>', $page->ID, $page->ID == $current ? ' selected="selected"' : '', $page->post_title);
+					}
+			$select .= '
+				</select>';
+			echo $select;
+		}
+	}
+	
+	
 }
 ?>

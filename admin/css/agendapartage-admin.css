@@ -65,6 +65,10 @@ body.colors-dark .color-red {
 	display: inline;
 	margin-left: 1em;
 }
+.toggle-trigger:not(.active) + .agdp-metabox-row.agdp-metabox-subfields,
+.toggle-trigger:not(.active) + .report_style_terms + .agdp-metabox-row.agdp-metabox-subfields {
+	display: none;
+}
 .agdp-metabox-row.agdp-metabox-subfields.hidden {
 	display: none;
 }
@@ -334,6 +338,8 @@ div.edit-post-layout__metaboxes {
 #the-list .column-sql code {
 	white-space: pre;
 	padding: 0px;
+	font-size: smaller;
+	line-height: 15px;
 }
 /*
  *******/

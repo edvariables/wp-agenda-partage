@@ -158,6 +158,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input_attributes' => 'rows="10" spellcheck="false"',
 				'learn-more' => 
 						static::get_variables_helper()
+						.'<br>'.static::get_dbtables_helper()
 						.'<br>'.static::get_sql_helper()
 					,
 			],
@@ -192,7 +193,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function get_metabox_render_fields(){
 		
 		$report = get_post();
-		$tax_report_styles = '<div class="report_style_terms">';
+		$tax_report_styles = '';//<div class="report_style_terms">';
 		$taxonomy = Agdp_Report::taxonomy_report_style;
 		foreach( Agdp_Report::get_report_styles( $report, 'all' ) as $style ){
 			$tax_report_styles .= sprintf('<div>%s<a href="/wp-admin/term.php?taxonomy=%s&tag_ID=%d&post_type=%s" target="_blank">%s</a></div>'
@@ -206,7 +207,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				, Agdp::icon('edit')
 			);
 		}
-		$tax_report_styles .= '</div>';
+		// $tax_report_styles .= '</div>';
 		
 		$data = [];
 		// $label = Agdp::get_ajax_action_link( $report, ['report', 'report_html'], 'update'
@@ -218,6 +219,11 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'link',
 				'class' => 'report_refresh', //cf admin-report.js
 				'container_class' => 'report_toolbar_item', //cf admin-report.js
+			],
+			[	'name' => 'report_admin_no_escape',
+				'label' => 'Rendu réel',
+				'input' => 'checkbox',
+				'container_class' => 'report_menu_item', //cf admin-report.js
 			],
 			[	'name' => 'report_show_sql',
 				'input' => 'select',
@@ -239,18 +245,28 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'checkbox',
 				'container_class' => 'report_menu_item', //cf admin-report.js
 			],
-			[	'name' => 'report_css',
-				'label' => 'Style css',
-				'label_toggler' => true,
-				'class' => 'toggle-container',
-				'input' => 'textarea',
-				'container_class' => 'report_css', //cf admin-report.js
+			[	'name' => '',
+				'label' => '',
+				'input' => 'none',
+				'container_class' => 'report_style_terms',
 				'unit' => $tax_report_styles,
+			],
+			[	'name' => '',
+				'label' => 'Style css',
+				'type' => 'toggle',
+				'fields' => [ 
+				[	'name' => 'report_css',
+					'class' => '',
+					'input' => 'textarea',
+					'container_class' => 'toggle-container report_css', //cf admin-report.js
+					'learn-more' => 'Commencez chaque sélecteur par <code>table</code> pour que le css soit uniquement appliqué au tableau.'
+				] ]
 			],
 			[	'name' => 'table_columns',
 				'label' => '',
 				'type' => 'json',
 				'input' => 'textarea',
+				'input_attributes' => 'spellcheck="false"',
 				'class' => 'agdpreport-columns',
 				'style' => 'display:none',
 			],
@@ -273,13 +289,13 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	/**
 	 * Retourne la liste de toutes les tables
 	 */
-	public static function get_sql_helper(){
+	public static function get_dbtables_helper(){
 		// $html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
 			// . '<ul class="toggle-container sql-helper-tables">';
 		global $post;
 		$ajax  = Agdp::get_ajax_action_link(
 			$post, 
-			__CLASS__ .'::get_sql_helper',
+			__CLASS__ .'::get_dbtables_helper',
 			/* $icon =  */false,
 			/* $caption =  */'Liste des tables',
 			/* $title =  */false,
@@ -292,10 +308,33 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			. '<div class="toggle-container sql-helper-tables"></div>';
 		return $html;
 	}
+	
 	/**
 	 * Retourne la liste de toutes les tables
 	 */
-	public static function on_wp_ajax_action_get_sql_helper(){
+	public static function get_sql_helper(){
+		// $html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
+			// . '<ul class="toggle-container sql-helper-tables">';
+		global $post;
+		$ajax  = Agdp::get_ajax_action_link(
+			$post, 
+			__CLASS__ .'::get_sql_helper',
+			/* $icon =  */false,
+			/* $caption =  */'Instructions SQL',
+			/* $title =  */false,
+			/* $confirmation =  */false,
+			/* $data =  */ 'get_content',
+			/* $href = */ '#',
+			/* $container_class = */ 'toggle-trigger'
+		);
+		$html = $ajax 
+			. '<div class="toggle-container sql-helper-sql"></div>';
+		return $html;
+	}
+	/**
+	 * Retourne la liste de toutes les tables
+	 */
+	public static function on_wp_ajax_action_get_dbtables_helper(){
 		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
@@ -439,6 +478,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html = '<ul>';
 		
 		$html .= '<li>De la forme : <code>:var_name[%format]</code></li>';
+		$html .= '<li><i>cf <a href="https://www.php.net/manual/fr/function.vsprintf.php">https://www.php.net/manual/fr/function.vsprintf.php</a></i></li>';
 		$html .= '<li><code>%s</code> : type texte (par défaut)</li>';
 		$html .= '<li><code>%d</code> : type nombre entier</li>';
 		$html .= '<li><code>%+d</code> : -> avec signe</li>';
@@ -446,7 +486,6 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%f</code> : type nombre réel</li>';
 		$html .= '<li><code>%.2f</code> : -> 2 décimales</li>';
 		$html .= '<li><code>%i</code> : type identifiant (nom de table, de champ) encadré par des <code><b>`</b></code></li>';
-		$html .= '<li><i>cf <a href="https://www.php.net/manual/fr/function.vsprintf.php">https://www.php.net/manual/fr/function.vsprintf.php</a></i></li>';
 		$html .= '<li><code>%IN</code> : type tableau dans une clause IN. ex. : <code>post.post_status IN (:post_status%IN)</code> devient <code>... IN ("pending", "publish")</code></li>';
 		$html .= '<li><code>%IN</code> : inclut le sql d\'une sous-requête pour une clause IN. ex., pour une variable <code>:posts</code> de type Sous-requête : <code>INNER JOIN :posts%IN posts ON posts.ID = ...</code></li>';
 		$html .= '<li><code>%K</code> : Ajoute <code>%</code> autour de la valeur de la variable pour un LIKE. ex. : <code>post.post_title LIKE :search%K)</code></li>';
@@ -454,21 +493,37 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").</li>';
 		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.</li>';
 		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code></li>';
+		
+		$html .= '<li><i>cf <a href="https://dev.mysql.com/doc/refman/8.0/en/json-functions.html">https://dev.mysql.com/doc/refman/8.0/en/json-functions.html</a></i></li>';
 		$html .= '<li><code>%J</code> : transforme en objet JSON pour MySQL. ex. : <code>SET @JSON = :json%J</code> qui est remplacé par <code>CAST( [variable] AS JSON )</code></li>';
-			$html .= '<li><label><var>Sous-Rapports</var></label> : transforme le résultat de la sous-requête en objet JSON. <code>JSON_SEARCH( :termes%J, \'all\', \'search\' );</code>. Peut être ignoré dans le cas d\'un <code>SET</code> : <code>SET @TERMS = :termes;</code></li>';
+			$html .= '<li><label><var>Sous-Rapports</var></label> : transforme le résultat de la sous-requête en objet JSON. <code>JSON_SEARCH( :termes%J, \'all\', \'search\' );</code>. <code>%J</code> peut être ignoré dans le cas d\'un <code>SET</code> : <code>SET @TERMS = :termes;</code></li>';
 		$html .= '<li><code>%JT</code> : transforme du json en table. ex. : <code>SELECT * FROM :table%JT</code> Ex. de valeur : <code>[{"x":2,"y":"8"},{"x":"3","y":"7"},{"x":"4","y":6}]</code> cf <a href="#TODO">Rapports > Tutoriels > JSON > JSON_TABLE</a></li>';
 		$html .= '<li><code>SET @DICO = SELECT key, name FROM ...</code> : transforme en dictionnaire JSON utilisable <code>@DICO.`key_field`</code> ou <code>@DICO[`key_field`]</code> ou <code>@DICO[\'key_value\']</code> ou <code>@DICO[@key_value]</code></li>';
-		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.</li>';
-		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>"</code>. Utilisez <code>"\""</code>.</li>';
 		
 		$html .= '<li><b>Variables globales</b> affectées par l\'instruction <code>SET <var>@var_name<var> = <var>value<var>;</code></li>';
-		$html .= '<li><label><var>@PREVIOUS</var></label> vous donne accès aux résultats de la requête précédente sous forme JSON. ex. <code>@PREVIOUS.post_id</code>.</li>';
-		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT(@PREVIOUS[2].post_id, "-", @PREVIOUS.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite.</li>';
+		$html .= '<li><label><var>'.AGDP_VAR_DBRESULTS.'</var></label> vous donne accès aux résultats de la requête précédente sous forme JSON. ex. <code>'.AGDP_VAR_DBRESULTS.'.post_id</code>.</li>';
+		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT('.AGDP_VAR_DBRESULTS.'[2].post_id, "-", '.AGDP_VAR_DBRESULTS.'.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite si il n\'est pas précisé.</li>';
 		foreach( Agdp_Report::sql_global_vars() as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
-		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`taxonomy`</var> : { <var>`slug`|`term_id`</var> : <var>`name`</var>, ... }, ... } </li>', AGDP_VAR_TAX_TERMS );
-		$html .= sprintf('<li><label><var>%s_{taxonomy}</var></label> = { <var>`slug`|`term_id`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_TAX_TERMS );
+		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`taxonomy`</var> : { <var>`slug`</var> : <var>`name`</var>, ... }, ... } </li>', AGDP_VAR_TAX_TERMS );
+		$html .= sprintf('<li><label><var>%s_{taxonomy}</var></label> = { <var>`slug`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_TAX_TERMS );
 		$html .= '<li><code>@:var_name</code> vous permet d\'accèder à des variables globales via un nom variable. Attention, <code>@BLOG:info_name%I</code> dans le cas d\'une partie du nom.</li>';
+		
+		$html .= '</ul></div>';
+		return $html;
+	}
+	/**
+	 * Retourne le commentaire sur les instructions sql
+	 */
+	public static function on_wp_ajax_action_get_sql_helper( $data ){
+		$html = '<ul>';
+		
+		$html .= '<li><code>STOP;</code> : arrête l\'exécution des requêtes, évite l\'exécution des scripts du rendu.</li>';
+		
+		$html .= '<li>Les chaînes entre guillemets sont exclues de l\'analyse du code alors que les chaînes entre apostrophes sont analysées pour la recherche de variables.</li>';
+		
+		$html .= '<li>Les chaînes entre apostrophes ne doivent pas contenir le caractère <code>:</code> ou alors seul.</li>';
+		$html .= '<li>Les chaînes entre apostrophes doivent "échapper" le caractère <code>"</code>. Utilisez <code>\'\"\'</code>.</li>';
 		
 		$html .= '</ul></div>';
 		return $html;

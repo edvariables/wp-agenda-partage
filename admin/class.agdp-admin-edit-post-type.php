@@ -167,6 +167,10 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				$input = 'checkbox';
 				break;
 
+			case 'toggle' :
+				$input = 'none';
+				break;
+
 			default:
 				if( ! $input_type)
 					$input_type = 'text';
@@ -181,23 +185,28 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		// Label, sous pour checkbox
 		if($label && ! in_array( $input, ['label', 'link', 'checkbox'])) {
 			$label = htmlentities($label);
-			if( $label_toggler ){
+			if( $label_toggler || $input_type === 'toggle' ){
 				$label_class .= 'toggle-trigger' . ( $val ? ' active' : '' );
 				$label = sprintf('<a href="#">%s : </a>', $label);
 			}
 			else
 				$label .= ': ';
-			echo sprintf('<label for="%s" %s>%s%s</label>'
+			echo sprintf('<label for="%s" %s>%s%s</label>%s'
 				, $name
 				, $label_class ? sprintf(' class="%s"', $label_class) : ''
 				, $label
 				, $icon
+				, $unit
 			);
 		}
 		if( is_array($unit) )
 			$unit = implode("\n", $unit );
 
 		switch ($input) {
+			case 'none':
+				if( $unit )
+					echo $unit;
+				break;
 			////////////////
 			case 'label':
 				echo '<label id="'.$id.'" for="'.$name.'"'

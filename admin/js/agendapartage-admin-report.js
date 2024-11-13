@@ -178,7 +178,7 @@ jQuery( function( $ ) {
 								+ '<br>Séparez les valeurs des labels par <code>:</code>';
 					}
 				}
-				var $options = $('<textarea rows="' + rows + '"></textarea>')
+				var $options = $('<textarea rows="' + rows + '" spellcheck="false"></textarea>')
 					.appendTo(
 						$('<div class="var_options"><label>Options</label></div>')
 							.appendTo($editor)
@@ -380,7 +380,7 @@ jQuery( function( $ ) {
 								$input = add_input_options($input, {ASC: 'Croissant', DESC: 'Décroissant'}, variable, value);
 							
 							case 'longtext' :
-								$input = $('<textarea></textarea>')
+								$input = $('<textarea spellcheck="false"></textarea>')
 									.val( value );
 							
 								break;
@@ -627,6 +627,12 @@ jQuery( function( $ ) {
 				.on('change', 'textarea#report_css, .report_css :input', refresh_report)
 				.each(refresh_report_menu)
 				.each(refresh_report_table_designer)
+				.find('.toggle-container.report_css textarea#report_css:not(:empty)').each(function(){
+					$(this)
+						.parents('.toggle-container:first')
+							.prevAll('.toggle-trigger:not(.active)')
+								.trigger('toggle-active');
+				}).end()
 			;
 		});
 	});
@@ -894,7 +900,7 @@ jQuery( function( $ ) {
 					.children('td[column]')
 						.each(function(){
 							var column = this.getAttribute('column');
-							script = columns[ column ]['script'];
+							var script = columns[ column ]['script'];
 							if( ! script ){
 								script = '';
 								this.innerHTML += '<a href="#" class="is_new_column column-action dashicons-before dashicons-info-outline"></a>';
@@ -902,17 +908,6 @@ jQuery( function( $ ) {
 							this.setAttribute( 'title', script );
 						})
 						.on('click', '.is_new_column', function(){
-							// var $th = $(this).parents('th:first');
-							// var column = $th.attr('column');
-							// set_table_designer_option.call( this, column, 'visible', false );
-							// var index = $th.prevAll('th').length;
-							// $th.parents('table:first')
-								// .find('tr').each(function(){
-									// $(this).find('th:eq(' + index + '), td:eq(' + index + ')')
-										// .hide();
-								// })
-							// ;
-							// refresh_report_menu.call( this );
 						})
 						.end()
 					.clone()
@@ -923,12 +918,22 @@ jQuery( function( $ ) {
 								var column = this.getAttribute('column');
 								if( ! column )
 									return;
-								script = columns[ column ]['script'];
+								var script = columns[ column ]['script'];
 								if( ! script )
 									script = '`' + column + '`';
-								// script = script.replace('"', '&quot;').replace('\n', '\\n');
-								
-								$(this).html($('<textarea class="column_script" spellcheck="false"></textarea>').val( script ));
+								var attr_class = columns[ column ]['class'];
+								if( ! attr_class )
+									attr_class = '';
+								var $script = $('<textarea class="column_script" spellcheck="false"></textarea>').val( script );
+								var $class = $('<div>Classe: </div>').append(
+									$('<input class="column_class" spellcheck="false" title="Classe des cellules de la colonne.\nCommencez par @ pour exécuter du script SQL.\nPar exemple, @CONCAT(\'color-\', `meta_value`)">')
+										.val( attr_class )
+									)
+								;
+								$(this)
+									.html($script)
+									.append($class)
+								;
 							})
 							.on('change', ':input', save_table_designer)
 				;
@@ -988,6 +993,8 @@ jQuery( function( $ ) {
 					var column = this.parentNode.getAttribute('column');
 					var script = this.value;
 					columns[ column ]['script'] = script;
+					var column_class = $(this.parentNode).find('input.column_class').val();
+					columns[ column ]['class'] = column_class;
 				})
 		;
 		$textarea.text( JSON.stringify( columns ) );
