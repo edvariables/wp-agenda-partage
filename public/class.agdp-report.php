@@ -47,9 +47,12 @@ class Agdp_Report extends Agdp_Post {
 		define( 'AGDP_VAR_POST_ID', '@POSTID'); 
 		define( 'AGDP_VAR_POST_TYPE', '@POSTTYPE'); 
 		define( 'AGDP_VAR_REPORT_ID', '@REPORTID'); 
+		define( 'AGDP_VAR_REPORT_TITLE', '@REPORTTITLE'); 
 		define( 'AGDP_REPORT_VAR_PREFIX', 'rv_');  
-		define( 'AGDP_VAR_TAX_TERMS', '@TAX_TERMS'); 
 		define( 'AGDP_VAR_DBRESULTS', '@DBRESULTS'); 
+		//dynamics
+		define( 'AGDP_VAR_TAX_TERMS', '@TAX_TERMS'); 
+		define( 'AGDP_VAR_POST_STATUSES', '@POST_STATUSES'); 
 		
 		self::$sql_global_vars = [
 			AGDP_VAR_BLOG_ID => null,
@@ -58,6 +61,7 @@ class Agdp_Report extends Agdp_Post {
 			AGDP_VAR_POST_ID => null,
 			AGDP_VAR_POST_TYPE => null,
 			AGDP_VAR_REPORT_ID => null,
+			AGDP_VAR_REPORT_TITLE => null,
 		];
 		self::$sql_global_vars_init = false;
 	}
@@ -186,17 +190,17 @@ class Agdp_Report extends Agdp_Post {
 		
 		//strings ""
 		$matches = [];
-		$pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/s';////"/\"(.{2,})(?<!\\\\)\"/"; //TODO simple quote
+		$pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/s';
 		$strings_prefix = uniqid('__sqlstr_');
 		$sql_strings = [];
 		while( preg_match( $pattern, $sql, $matches ) ){
 			$string = $matches[1];
 			$string = str_replace('\"', '"', $string);
-			$variable = sprintf('%s_%d', $strings_prefix, count($sql_strings));
+			$variable = sprintf('%s_%d_', $strings_prefix, count($sql_strings));//suffixe important
 			$sql_strings[$variable] = $string;
 			$sql = str_replace( $matches[0], ':' . $variable, $sql );
 		}
-							
+		
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
@@ -730,8 +734,6 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
-		// Dynamic global vars
-		// debug_log( __FUNCTION__ .' used_variables', $sql, $used_variables );
 		if( $used_variables ){
 			$sql = self::check_dynamic_vars_needed( $sql, $used_variables, $options );
 		}
@@ -790,13 +792,17 @@ class Agdp_Report extends Agdp_Post {
 			return static::$sql_global_vars;
 		
 		global $post;
-		if( $post && $post->post_type === self::post_type )
+		if( $post && $post->post_type === self::post_type ){
+			$report = $post;
 			$report_id = $post->ID;
+		}
 		elseif( ! empty( $_REQUEST['post_id'] ) ){
 			$post_id = $_REQUEST['post_id'];
 			$post = get_post( $post_id );
-			if( $post && $post->post_type === self::post_type )
+			if( $post && $post->post_type === self::post_type ){
+				$report = $post;
 				$report_id = $post->ID;
+			}
 		}
 		self::$sql_global_vars_init = true;
 		static::$sql_global_vars = array_merge( static::$sql_global_vars, [
@@ -806,6 +812,7 @@ class Agdp_Report extends Agdp_Post {
 			AGDP_VAR_POST_ID => $post ? $post->ID : false,
 			AGDP_VAR_POST_TYPE => $post ? $post->post_type : false,
 			AGDP_VAR_REPORT_ID => isset($report_id) ? $report_id : false,
+			AGDP_VAR_REPORT_TITLE => isset($report) ? $report->post_title : false,
 		]);
 				
 		return static::$sql_global_vars;
@@ -914,6 +921,19 @@ class Agdp_Report extends Agdp_Post {
 						);
 					}
 					break;
+				
+				case AGDP_VAR_POST_STATUSES :
+					$post_statuses = get_post_statuses();
+					$post_statuses['trash'] = 'Corbeille';
+					$post_statuses['inherit'] = 'Hérité';
+					$post_statuses['auto-draft'] = 'Enregistrement auto';
+					// foreach( get_post_stati() as $status )
+						// $post_statuses[ $status ] = __($status);
+					$var_sqls[] = sprintf('SET %s = CAST( "%s" AS JSON )'
+						, $variable
+						, addslashes( json_encode( $post_statuses, JSON_UNESCAPED_UNICODE ) )
+					);
+					break;
 					
 				default:
 					/* TODO add global vars on need only 
@@ -960,6 +980,10 @@ class Agdp_Report extends Agdp_Post {
 		if( ! $table_columns )
 			return $sql;
 		$select = '';
+		
+		//sort by column index
+		array_multisort(array_column($table_columns, 'index'), $table_columns);
+		
 		foreach( $table_columns as $column => $column_data ){
 			if( isset($table_columns[ $column ][ 'class' ]) ){
 				$class = $table_columns[ $column ][ 'class' ];
@@ -978,11 +1002,20 @@ class Agdp_Report extends Agdp_Post {
 				$select .= ', ';
 			$select .= sprintf('%s AS `%s`', $column_sql, $column);
 		}
+		//wrap
 		if( $select ){
 			$select = sprintf('SELECT %s', $select);
 			$select = static::get_sql($report, $select, $sql_variables, $options);
+			$selects = explode(";\n", $select);
+			if( count($selects) > 1 ){
+				$select = '';//$selects[ count($select) - 1 ];
+				for( $i = 0; $i < count($selects); $i++){
+					if( $select )
+						$select .= ";\n";
+					$select .= $selects[$i];
+				}
+			}
 			$select .= sprintf(' FROM (%s) _render', $sql);
-			// debug_log( __FUNCTION__, $select);
 		}
 		else
 			$select = $sql;
@@ -1001,6 +1034,8 @@ class Agdp_Report extends Agdp_Post {
 			return $html . '<th></th></tr></thead></table>';
 		//thead
 		foreach( $table_columns as $column_name => $column_data ){
+			if( substr($column_name, 0, 2) === '__' )
+				continue;
 			$column_label = $column_name;
 			$column_visible = true;
 			$class = '';
@@ -1024,6 +1059,8 @@ class Agdp_Report extends Agdp_Post {
 		//tbody
 		$html .= '<tbody><tr>';
 		foreach( $table_columns as $column => $column_data ){
+			if( substr($column_name, 0, 2) === '__' )
+				continue;
 			$column_visible = true;
 			$class = '';
 			if( is_array($column_data) ){
@@ -1097,38 +1134,50 @@ class Agdp_Report extends Agdp_Post {
 				$sqls_u = self::get_sql( $report, $sql_u, $sql_variables, $options );
 				$sqls_u = self::get_sql_as_array( $sqls_u );
 				foreach( $sqls_u as $sql_uu_index => $sql_uu ){
-					if( strcasecmp( $sql_uu, 'STOP' ) === 0 ){
+					if( $stop_requiered = ( strcasecmp( $sql_uu, 'STOP' ) === 0 ) ){
 						break;
 					}
+					
 					//get_render_sql for ultimate
 					if( $is_last_sql
 					&& $table_columns 
 					&& empty($options['_no_table_columns'])
-					&& ( count($sqls_u) === $sql_uu_index + 1 ))
+					&& ( count($sqls_u) === $sql_uu_index + 1 )){
 						$sql_uu = self::get_render_sql( $report, $sql_uu, $sql_variables, $options, $table_columns );
+						if( strpos($sql_uu, ";\n") )
+							$sql_uu = explode(";\n", $sql_uu);
+					}
+					if( ! is_array( $sql_uu ) )
+						$sql_uu = [$sql_uu];
 						
-					//$wpdb->get_results
-					$result_u = $wpdb->get_results($sql_uu);
-					// debug_log( __FUNCTION__, $sql_uu);
-					array_push( $options['_sqls'], $sql_uu );
-					if( $wpdb->last_error ){
-						// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
-						$wpdb->last_error .= sprintf(' (%d)<br>%s', $index, $wpdb->last_query);
-						$result = $result_u;
-						break 2;
+					foreach( $sql_uu as $sql_uuu ){
+						//$wpdb->get_results
+						$result_u = $wpdb->get_results($sql_uuu);
+						// debug_log( __FUNCTION__, $sql_uuu);
+						array_push( $options['_sqls'], $sql_uuu );
+						if( $wpdb->last_error ){
+							// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
+							$wpdb->last_error .= sprintf(' (%d)<br>%s', $index, $wpdb->last_query);
+							$result = $result_u;
+							break 3;
+						}
 					}
 				}
-				//Si c'est la dernière requête, SET @DBRESULTS = CAST( "%s" AS JSON )
-				if( ! $wpdb->last_error
-					&& ! $is_last_sql
-				)
-					self::set_previous_results_variable( $result_u );
-								
-				if( $result_u )
+
+				if( $result_u ){
 					$result = $result_u;
+					//Si c'est la dernière requête, SET @DBRESULTS = CAST( "%s" AS JSON )
+					if( ! $wpdb->last_error
+						&& ! $is_last_sql
+					)
+						self::set_previous_results_variable( $result_u );
+				}
+				
+				if( ! empty($stop_requiered) )
+					 break;
 			}
 		}
-		else{
+		else {
 			if( $table_columns
 			&& empty($options['_no_table_columns']) )
 				$sql = self::get_render_sql( $report, $sql, $sql_variables, $options, $table_columns );
@@ -1189,14 +1238,20 @@ class Agdp_Report extends Agdp_Post {
 		if( ! is_array($options) )
 			$options = [];
 		
-		$meta_key = 'table_columns';
-		if( isset($options[$meta_key]) )
-			$table_columns = $options[$meta_key];
-		else
-			$table_columns = get_post_meta( $report_id, $meta_key, true );
+		$meta_key = 'table_render';
+		$table_render = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
+		if( $table_render && is_string($table_render) ){
+			$table_render = json_decode($table_render, true);
+		}
 		
-		if( $table_columns && is_string($table_columns) ){
-			$table_columns = json_decode($table_columns, true);
+		//table_columns
+		$table_columns = isset($table_render['columns']) ? $table_render['columns'] : [];
+		
+		if( Agdp::is_admin_referer() ){
+			$meta_key = 'report_admin_no_render';
+			$report_admin_no_render = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
+			if( $report_admin_no_render )
+				$options['_no_table_columns'] = true;			
 		}
 		
 		$wpdb = self::wpdb( TRUE ); //reset des variables
@@ -1215,7 +1270,9 @@ class Agdp_Report extends Agdp_Post {
 				$report_show_sql = get_post_meta( $report_id, $meta_key, true );
 			if( $report_show_sql ){
 				$sql_prepared = $options['_sqls'];
-				if( $report_show_sql === 'vars' ){
+				$meta_key = 'report_show_vars';
+				$report_show_vars = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
+				if( $report_show_vars ){
 					// $sql_prepared = static::add_sql_global_vars( $sql_prepared, $sql_variables, $options );
 				}
 				else {
@@ -1228,7 +1285,8 @@ class Agdp_Report extends Agdp_Post {
 				if( is_array($sql_prepared) )
 					$sql_prepared = implode( ";\n", $sql_prepared );
 				$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', htmlspecialchars($sql_prepared));
-			}
+			}	
+			
 		}
 		
 		if( ! $dbresults )
@@ -1289,7 +1347,11 @@ class Agdp_Report extends Agdp_Post {
 			foreach($row as $column_name => $column_value){
 				if( substr($column_name, 0, 2) === '__' ){
 					if( substr($column_name, 0, 9) === '__class__' ){
-						$column_class = $column_value;
+						if( ! empty($table_columns[ $column_name ])
+						 && ! empty($table_columns[ $column_name ][ 'class' ])
+						 && $table_columns[ $column_name ][ 'class' ][0] !== '@'
+						)
+							$column_class .= ' ' . $table_columns[ $column_name ][ 'class' ];
 					}
 					continue;
 				}
@@ -1299,7 +1361,7 @@ class Agdp_Report extends Agdp_Post {
 				$column_class = '';
 				if( $table_columns && isset($table_columns[ $column_name ] ) ){
 					if( is_array($table_columns[ $column_name ]) ){
-						$column_label = $table_columns[ $column_name ][ 'label' ];
+						$column_label = empty($table_columns[ $column_name ][ 'label' ]) ? $column_name : $table_columns[ $column_name ][ 'label' ];
 						$column_visible = ! isset($table_columns[ $column_name ][ 'visible' ]) || $table_columns[ $column_name ][ 'visible' ];
 						if( ! empty($table_columns[ $column_name ][ 'class' ])
 						 && $table_columns[ $column_name ][ 'class' ][0] !== '@')
@@ -1332,7 +1394,7 @@ class Agdp_Report extends Agdp_Post {
 			if( $report_show_indexes )
 				$content .= sprintf('<th>%d</th>', $row_index+1);
 			$column_class = '';
-			foreach($row as $column_name => $field_value){
+			foreach($row as $column_name => $column_value){
 				if( substr($column_name, 0, 2) === '__' ){
 					if( substr($column_name, 0, 9) === '__class__' ){
 						$column_class = $column_value;
@@ -1354,7 +1416,7 @@ class Agdp_Report extends Agdp_Post {
 					$class .= ' hidden';
 				$content .= sprintf('<td %s>%s</td>'
 					, $class ? 'class="' . trim($class) . '"' : ''
-					, $escape_function ? $escape_function( $field_value ) : $field_value
+					, $escape_function ? $escape_function( $column_value ) : $column_value
 				);
 			}
 			$content .= '</tr>';

@@ -221,14 +221,26 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'container_class' => 'report_toolbar_item', //cf admin-report.js
 			],
 			[	'name' => 'report_admin_no_escape',
-				'label' => 'Rendu réel',
+				'label' => 'Autoriser le html',
+				'input' => 'checkbox',
+				'container_class' => 'report_menu_item', //cf admin-report.js
+			],
+			[	'name' => 'report_admin_no_render',
+				'label' => 'Rendu sans mise en forme',
 				'input' => 'checkbox',
 				'container_class' => 'report_menu_item', //cf admin-report.js
 			],
 			[	'name' => 'report_show_sql',
-				'input' => 'select',
-				'values' => [ '' => 'Masquer le SQL', '1' => 'Afficher le SQL', 'vars' => 'Variables + SQL'],
+				'label' => 'Afficher le SQL',
+				'input' => 'checkbox',
 				'container_class' => 'report_menu_item', //cf admin-report.js
+				'fields' => [
+					[	'name' => 'report_show_vars',
+						'label' => 'Afficher les variables',
+						'input' => 'checkbox',
+						'container_class' => 'report_menu_item', //cf admin-report.js
+					],
+				],
 			],
 			[	'name' => 'report_show_caption',
 				'label' => 'Afficher le titre',
@@ -262,12 +274,12 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 					'learn-more' => 'Commencez chaque sélecteur par <code>table</code> pour que le css soit uniquement appliqué au tableau.'
 				] ]
 			],
-			[	'name' => 'table_columns',
+			[	'name' => 'table_render',
 				'label' => '',
 				'type' => 'json',
 				'input' => 'textarea',
 				'input_attributes' => 'spellcheck="false"',
-				'class' => 'agdpreport-columns',
+				'class' => 'agdpreport-table_render',
 				'style' => 'display:none',
 			],
 		];
@@ -362,7 +374,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html = '<ul>';
 		foreach($tables as $index => $table){
 			
-			// $html .= sprintf('<a href="#">%s</a>', $table);
+			// $html .= sprintf('<a>%s</a>', $table);
 			// $html .= Agdp::get_ajax_action_link(false, [ 'admin_edit_report','get_table_columns'], false, $table, false
 												// , false, ['table'=>$table]);
 			
@@ -372,7 +384,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 					'data' => ['table' => $table]
 				)));
 			$ajax = sprintf(' ajax=1 data="%s"', $ajax);
-			$html .= sprintf('<li><a href="#">%s</a><span class="toggle-trigger" %s><span></span></span></li>'
+			$html .= sprintf('<li><a>%s</a><span class="toggle-trigger" %s><span></span></span></li>'
 					, esc_html( $table )
 					, $ajax
 			);
@@ -436,7 +448,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			}
 			$html = '<ul class="table_columns">';
 			foreach($columns as $column)
-				$html .= sprintf('<li><a href="#">%s</a></li>', $column);
+				$html .= sprintf('<li><a>%s</a></li>', $column);
 			$html .= '</ul>';
 			$ajax_response = $html;
 		}
@@ -505,6 +517,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT('.AGDP_VAR_DBRESULTS.'[2].post_id, "-", '.AGDP_VAR_DBRESULTS.'.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite si il n\'est pas précisé.</li>';
 		foreach( Agdp_Report::sql_global_vars() as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
+		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`post_status`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_POST_STATUSES );
 		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`taxonomy`</var> : { <var>`slug`</var> : <var>`name`</var>, ... }, ... } </li>', AGDP_VAR_TAX_TERMS );
 		$html .= sprintf('<li><label><var>%s_{taxonomy}</var></label> = { <var>`slug`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_TAX_TERMS );
 		$html .= '<li><code>@:var_name</code> vous permet d\'accèder à des variables globales via un nom variable. Attention, <code>@BLOG:info_name%I</code> dans le cas d\'une partie du nom.</li>';

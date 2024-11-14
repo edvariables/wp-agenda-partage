@@ -158,3 +158,8 @@ body.colors-dark .agdpreport th {
 	border-width: 2px;
 	border-bottom-color: inherit;
 }
+.agdpreport table > caption {
+	border: black solid 1px;
+	background-color: darkgray;
+	font-size: larger;
+}

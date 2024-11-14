@@ -6,6 +6,46 @@ class Agdp_DB_Update {
 	
 	/**
 	*/
+	public static function update_db_1_2_29(){
+		
+		//Agdp_Report
+		// Combine les meta_value table_columns et table_around en table_render
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		
+		$posts = $wpdb->get_results(sprintf('SELECT post.ID, columns.meta_value AS columns_value, around.meta_value AS around_value'
+			. ' FROM %s post'
+			. ' INNER JOIN %s columns ON columns.post_id = post.ID AND columns.meta_key = "table_columns"'
+			. ' LEFT JOIN %s around ON around.post_id = post.ID AND around.meta_key = "table_around"'
+			. ' WHERE post.post_type = "%s"'
+			, $wpdb->posts
+			, $wpdb->postmeta
+			, $wpdb->postmeta
+			, 'agdpreport'
+		));
+		foreach($posts  as $post){
+			$table_columns = $post->columns_value ? json_decode( $post->columns_value, true ) : [];
+			$table_around = $post->around_value ? json_decode( $post->around_value, true ) : [];
+			$table_render = $table_around;
+			if( $table_columns )
+				$table_render[ 'columns' ] = $table_columns;
+			if( $table_render ){
+				if( ! update_post_meta( $post->ID, 'table_render', json_encode( $table_render, JSON_UNESCAPED_UNICODE ) ) ){
+					debug_log( __FUNCTION__ . ' ! update_post_meta', $post->ID, $table_render);
+					return false;
+				}
+				if( $table_columns )
+					delete_post_meta( $post->ID, 'table_columns' );
+				if( $table_around )
+					delete_post_meta( $post->ID, 'table_around' );
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	*/
 	public static function update_db_1_2_25(){
 		if(Agdp::get_option('agdpforum_subscribe_form_id'))
 			return true;
@@ -53,6 +93,7 @@ class Agdp_DB_Update {
 		
 		Agdp::update_option('agdpforum_subscribe_form_id', $form_id);
 	}
+	
 	
 	
 	/**

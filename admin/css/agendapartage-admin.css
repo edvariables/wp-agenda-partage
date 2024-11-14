@@ -22,6 +22,9 @@ h3.info {
 body.colors-dark .color-red {
 	color: lightsalmon !important;
 }
+.color-green {
+	color: green !important;
+}
 
 .agdp-metabox-row > label {
 	min-width: 12em;
