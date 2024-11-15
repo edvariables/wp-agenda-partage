@@ -827,7 +827,7 @@ class Agdp_Report extends Agdp_Post {
  	public static function add_sql_global_vars( $sql, $sql_variables = false, &$options = false ) {
 		if( ! $sql
 		|| ! empty($options['_add_sql_global_vars']) )
-			return $sql;
+			return self::get_sql_as_array( $sql );
 		
 		$options['_add_sql_global_vars'] = true;
 		
