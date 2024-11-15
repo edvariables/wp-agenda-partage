@@ -27,6 +27,7 @@ class Agdp_Report extends Agdp_Post {
 
 	public static function init() {
 		if ( ! self::$initiated ) {
+			parent::init();
 			self::$initiated = true;
 
 			self::init_constants();
@@ -70,6 +71,7 @@ class Agdp_Report extends Agdp_Post {
 	 * Hook
 	 */
 	public static function init_hooks() {
+		parent::init_hooks();
 		
 		global $pagenow;
 		if ( $pagenow !== 'edit.php' && $pagenow !== 'post.php') {
@@ -1106,7 +1108,7 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	public static function get_sql_dbresults( $report = false, $sql = false, $sql_variables = false, &$options = false, &$table_render = false ) {
 		
-		$table_columns = $table_render['columns'];
+		$table_columns = $table_render ? $table_render['columns'] : false;
 		
 		if( ! is_array($options) )
 			$options = [];
@@ -1461,7 +1463,6 @@ class Agdp_Report extends Agdp_Post {
 		}
 		
 		$content .= '</div>';
-	    
 		return $content;
 	}
 
@@ -1487,15 +1488,13 @@ class Agdp_Report extends Agdp_Post {
 	 * Hook the_content
 	 */
  	public static function the_content( $content ) {
+		
  		global $post;
 		$content = $post->post_content;
 		
 		if( ! $post	){
  			return $content;
 		}
-		
-		$wpdb = self::wpdb();
-		
 		$html = self::get_report_html( $post );
 		if( ! $html )
 			return $content;

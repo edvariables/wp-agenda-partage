@@ -30,7 +30,6 @@ abstract class Agdp_Post {
 
 			self::init_hooks_for_self();
 		}
-			
 		self::$post_types[] = static::post_type;
 		if( static::taxonomy_diffusion ){
 			self::$taxonomies_diffusion[static::post_type] = static::taxonomy_diffusion;
@@ -72,6 +71,8 @@ abstract class Agdp_Post {
 				return 'Agdp_Evenement';
 			case Agdp_Covoiturage::post_type :
 				return 'Agdp_Covoiturage';
+			case Agdp_Report::post_type :
+				return 'Agdp_Report';
 			default:
 				throw new ArgumentException('post_type argument is unknown : ' . var_export($post_type, true));
 		}
@@ -175,13 +176,27 @@ abstract class Agdp_Post {
 		}
 	    return (self::abstracted_class($post->post_type))::get_post_title( $post );
 	}
+ 
+ 	/**
+ 	 * Retourne le titre de la page
+ 	 */
+	public static function get_post_title( $the_post = null, $no_html = false) {
+ 		if( is_numeric($the_post))
+			$the_post = get_post($the_post);
+		if( ! isset($the_post) || ! is_object($the_post)){
+			global $post;
+			$the_post = $post;
+		}
+		
+		return $the_post->post_title;
+	}
 
 	/**
 	 * Hook
 	 */
  	public static function the_content( $content ) {
  		global $post;
-		// debug_log('the_content', $post->post_type, self::$post_types );
+		// debug_log('post::the_content', $post->post_type, self::$post_types );
 		if( ! $post
  		// || $post->post_type != static::post_type
 		|| ! in_array( $post->post_type, self::$post_types )
@@ -194,6 +209,17 @@ abstract class Agdp_Post {
 		}
 		
 	    return (self::abstracted_class($post->post_type))::get_post_content( $post );
+	}
+	
+ 	/**
+ 	 * Retourne le Content de la page de l'évènement
+ 	 */
+	public static function get_post_content( $the_post = null ) {
+		global $post;
+ 		if( ! isset($the_post) || ! is_a($the_post, 'WP_Post')){
+			$the_post = $post;
+		}
+		return $the_post->post_content;
 	}
 	
 	/**
