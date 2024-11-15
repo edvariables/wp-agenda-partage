@@ -875,7 +875,7 @@ jQuery( function( $ ) {
 						.attr( 'column', column )
 						.append( 'Classe: ' )
 						.append( $('<textarea rows="1" cols="15" class="caption_class" title="Classe"></textarea>')
-							.attr('title', "Classe de la cellule Caption.\nCommencez par @ pour exécuter du script SQL.\nPar exemple, @CONCAT(\'percent-\', ROUND(COUNT(`ID`)/100))")
+							.attr('title', "Classe de la cellule Caption.\nPar exemple, CONCAT(\'percent-\', ROUND(COUNT(`ID`)/100))")
 							.val(caption_class)
 							.on('change', save_table_designer)
 						)
@@ -1003,7 +1003,7 @@ jQuery( function( $ ) {
 									$(this).addClass('hidden');
 								var $class = $('<div><div>Classe: <div></div>').append(
 									$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
-										.attr('title', "Classe des cellules de la colonne.\nCommencez par @ pour exécuter du script SQL.\nPar exemple, @CONCAT(\'color-\', `meta_value`)")
+										.attr('title', "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)")
 										.val( attr_class )
 									)
 								;
@@ -1026,21 +1026,11 @@ jQuery( function( $ ) {
 								var script = columns[ column ]['script'];
 								if( ! script )
 									script = '`' + column + '`';
-								// var attr_class = columns[ column ]['class'];
-								// if( ! attr_class )
-									// attr_class = '';
 								var $script = $('<textarea class="column_script" spellcheck="false"></textarea>').val( script );
-								// var $class = $('<div>Classe: </div>').append(
-									// $('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
-										// .attr('title', "Classe des cellules de la colonne.\nCommencez par @ pour exécuter du script SQL.\nPar exemple, @CONCAT(\'color-\', `meta_value`)")
-										// .val( attr_class )
-									// )
-								// ;
 								if( columns[ column ][ 'visible' ] === false )
 									$(this).addClass('hidden');
 								$(this)
 									.html($script)
-									// .append($class)
 								;
 							})
 							.on('change', ':input', save_table_designer)
