@@ -29,7 +29,7 @@ class Agdp_Admin_Report {
 		global $pagenow;
 		if ( $pagenow === 'edit.php'
 		&& ! empty( $_GET['post_type'] )
-		&& $_GET['post_type'] = Agdp_Report::post_type
+		&& $_GET['post_type'] === Agdp_Report::post_type
 		){
 			add_action( 'restrict_manage_posts', array( __CLASS__, 'on_restrict_manage_posts'), 10, 1 );
 			

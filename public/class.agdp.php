@@ -938,14 +938,16 @@ class Agdp {
 				continue;
 			$post_class = Agdp_Post::abstracted_class($post_type);
 			$page = get_post( self::get_option($post_class::posts_page_option) );
-			$post_types[ $post_type ] = $page;
-			$posts_pages[$page->ID.''] = [
-				'posts_type' => $post_type,
-				'class' => $post_class,
-				'page' => $page,
-				'id' => $page->ID,
-				'url' => get_permalink($page),
-			];
+			if( $page ){
+				$post_types[ $post_type ] = $page;
+				$posts_pages[$page->ID.''] = [
+					'posts_type' => $post_type,
+					'class' => $post_class,
+					'page' => $page,
+					'id' => $page->ID,
+					'url' => get_permalink($page),
+				];
+			}
 		}
 		
 		$post_types_url = [];
