@@ -181,6 +181,9 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$icon = Agdp::icon($icon) . ' ';
 		else
 			$icon = '';
+		
+		if( is_array($unit) )
+			$unit = implode("\n", $unit );
 
 		// Label, sous pour checkbox
 		if($label && ! in_array( $input, ['label', 'link', 'checkbox'])) {
@@ -191,16 +194,13 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			}
 			else
 				$label .= ': ';
-			echo sprintf('<label for="%s" %s>%s%s</label>%s'
+			echo sprintf('<label for="%s" %s>%s%s</label>'
 				, $name
 				, $label_class ? sprintf(' class="%s"', $label_class) : ''
 				, $label
 				, $icon
-				, $unit
 			);
 		}
-		if( is_array($unit) )
-			$unit = implode("\n", $unit );
 
 		switch ($input) {
 			case 'none':
