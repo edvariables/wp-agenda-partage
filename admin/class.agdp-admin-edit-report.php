@@ -247,6 +247,11 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'checkbox',
 				'container_class' => 'report_menu_item', //cf admin-report.js
 			],
+			[	'name' => 'report_show_footer',
+				'label' => 'Afficher le pied de tableau',
+				'input' => 'checkbox',
+				'container_class' => 'report_menu_item', //cf admin-report.js
+			],
 			[	'name' => 'report_show_indexes',
 				'label' => 'Afficher la colonne d\'index',
 				'input' => 'checkbox',

@@ -55,6 +55,8 @@ class Agdp_Report extends Agdp_Post {
 		define( 'AGDP_VAR_TAX_TERMS', '@TAX_TERMS'); 
 		define( 'AGDP_VAR_POST_STATUSES', '@POST_STATUSES'); 
 		
+		define( 'MAX_VAR_DBRESULTS_ROWS', 99); 
+		
 		self::$sql_global_vars = [
 			AGDP_VAR_BLOG_ID => null,
 			AGDP_VAR_BLOG_NAME => null,
@@ -1021,7 +1023,79 @@ class Agdp_Report extends Agdp_Post {
 					$select .= $selects[$i];
 				}
 			}
-			$select .= sprintf(' FROM (%s) _render', $sql);
+			$select .= sprintf("\nFROM (%s) _render", str_replace("\n", "\n  ", $sql));
+		}
+		else
+			$select = $sql;
+		return $select;
+	}
+	
+	/**
+	 * get_render_caption_dbresults
+	 * [`__class__`, `caption`]
+	 */
+ 	public static function get_render_caption_dbresults( $report, $sql_variables, &$options, $table_render ) {
+		$sql = $options['_sqls'][ count($options['_sqls']) - 1 ];
+		$sql = static::get_render_caption_sql( $report, $sql, $sql_variables, $options, $table_render );
+		if( $sql ){
+			$options['_no_table_columns'] = true;
+			$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
+			array_push( $options['_sqls'], $sql );
+			debug_log( __FUNCTION__ . ' get_sql_dbresults ', $dbresults, $sql);
+			if( is_a($dbresults, 'Exception') ){
+				$dbresults = sprintf('%s (%d)<br>%s', $dbresults->getMessage(), 'caption', $sql);
+				return $dbresults;
+			}
+			if( is_array( $dbresults ) && count( $dbresults ) ){
+				return [ 'content' => $dbresults[0]->content,  'class' => $dbresults[0]->class ];
+			}
+		}
+		return [ 'content' => $report->post_title, 'class' => '' ];
+	}
+	
+	/**
+	 * get_render_caption_sql
+	 * SELECT {caption_class} AS `class`, {caption_script} AS `content` FROM {sql} LIMIT 1
+	 */
+ 	public static function get_render_caption_sql( $report, $sql, $sql_variables, &$options, $table_render ) {
+		if( ! $table_render
+		|| empty( $table_render['caption'] ))
+			return '';
+		
+		$table_caption = $table_render['caption'];
+		
+		$select = '';
+		
+		if( ! empty($table_caption[ 'class' ]) ){
+			$class = $table_caption[ 'class' ];
+			$class_sql = trim($class, " ,;\n\r");
+			if( self::is_a_class_script( $class ) ){
+				$select .= sprintf('%s AS `class`', $class_sql);
+			}
+			else {
+				$select .= sprintf('"%s" AS `class`', str_replace('"', '\\"', $class_sql));
+			}
+		}
+		if( ! empty($table_caption['script']) ){
+			$script = $table_caption['script'];
+			if( $select )
+				$select .= ', ';
+			$select .= sprintf('%s AS `content`', $script);
+		}
+		//wrap
+		if( $select ){
+			$select = sprintf('SELECT %s', $select);
+			$select = static::get_sql($report, $select, $sql_variables, $options);
+			$selects = explode(";\n", $select);
+			if( count($selects) > 1 ){
+				$select = '';//$selects[ count($select) - 1 ];
+				for( $i = 0; $i < count($selects); $i++){
+					if( $select )
+						$select .= ";\n";
+					$select .= $selects[$i];
+				}
+			}
+			$select .= sprintf(' FROM (%s) _render LIMIT 1', $sql);
 		}
 		else
 			$select = $sql;
@@ -1211,7 +1285,7 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	private static function set_previous_results_variable( $results ) {
 		$wpdb = self::wpdb();
-		$max_results_in_previous = 99;
+		$max_results_in_previous = MAX_VAR_DBRESULTS_ROWS;
 		if( count( $results ) > $max_results_in_previous )
 			$json = json_encode( array_slice( $results, 0, $max_results_in_previous ), JSON_UNESCAPED_UNICODE );
 		else
@@ -1338,15 +1412,24 @@ class Agdp_Report extends Agdp_Post {
 		else
 			$report_show_indexes = get_post_meta( $report_id, $meta_key, true );
 		
+		$meta_key = 'report_show_footer';
+		if( isset($options[$meta_key]) )
+			$report_show_footer = $options[$meta_key];
+		else
+			$report_show_footer = get_post_meta( $report_id, $meta_key, true );
+		
 		$meta_key = 'report_show_caption';
 		if( isset($options[$meta_key]) )
 			$report_show_caption = $options[$meta_key];
 		else
 			$report_show_caption = get_post_meta( $report_id, $meta_key, true );
 		if( $report_show_caption ){
-			$table_caption = $report->post_title;
-			if( $table_caption ){
-				$content .= sprintf('<caption>%s</caption>', $table_caption );
+			$table_caption = static::get_render_caption_dbresults($report, $sql_variables, $options, $table_render);
+			if( is_string($table_caption) ){
+				$content .= sprintf('<caption class="error">#Erreur : %s</caption>', $table_caption );
+			}
+			elseif( is_array($table_caption) ){
+				$content .= sprintf('<caption class="%s">%s</caption>', $table_caption['class'], $table_caption['content'] );
 			}
 		}
 		//thead
@@ -1441,18 +1524,58 @@ class Agdp_Report extends Agdp_Post {
 		}
 	    $content .= '</tbody>';
 		
-		//TODO tfoot
-	    // $content .= '<tfoot><tr>';
-		// foreach($dbresults as $row){
-			// $content .= sprintf('<td>%s ligne%s</td>', count($dbresults), count($dbresults)>1 ? 's' : '');
-			// foreach($row as $field_name => $field_value){
-				// $field_label = $field_name;//TODO
-				// $content .= sprintf('<td field="%s"></td>', $field_name/* , $field_label */);
-			// }
-			// break;
-		// }
-	    // $content .= '</tr></tfoot>';
-	    
+		
+		//tfoot
+		if( $report_show_footer ){
+			$content .= '<tfoot><tr>';
+			foreach($dbresults as $row){
+				if( $report_show_indexes )
+					$content .= sprintf('<th>#</th>');
+				$column_class = '';
+				foreach($row as $column_name => $column_value){
+					if( substr($column_name, 0, 2) === '__' ){
+						if( substr($column_name, 0, 9) === '__class__' ){
+							// if( ! empty($table_columns[ $column_name ])
+							 // && ! empty($table_columns[ $column_name ][ 'class' ])
+							// ){
+								// $value = $table_columns[ $column_name ][ 'class' ];
+								// if( ! self::is_a_class_script( $value ) )
+									// $column_class .= ' ' . $value;
+							// }
+						}
+						continue;
+					}
+					$column_label = $column_name;
+					$column_visible = true;
+					$class = $column_class;
+					$column_class = '';
+					if( $table_columns && isset($table_columns[ $column_name ] ) ){
+						if( is_array($table_columns[ $column_name ]) ){
+							$column_label = empty($table_columns[ $column_name ][ 'label' ]) ? $column_name : $table_columns[ $column_name ][ 'label' ];
+							$column_visible = ! isset($table_columns[ $column_name ][ 'visible' ]) || $table_columns[ $column_name ][ 'visible' ];
+							if( ! empty($table_columns[ $column_name ][ 'class' ]) ){
+								$value = $table_columns[ $column_name ][ 'class' ];
+								if( ! self::is_a_class_script( $value )  )
+									$class .= ' ' . $value;
+							}
+						}
+						else {
+							$column_label = $table_columns[ $column_name ];
+						}
+					}
+					if( ! $column_visible )
+						$class .= ' hidden';
+					$content .= sprintf('<th %s column="%s">%s</th>'
+						, $class ? 'class="' . trim($class) . '"' : ''
+						, $column_name
+						, $column_label
+					);
+				}
+				break;
+			}
+			$content .= '</tr></tfoot>';
+	    } //$report_show_footer
+		
 		$content .= '</table>';
 		
 		if( $sql_prepared ) 
