@@ -308,6 +308,7 @@ abstract class Agdp_Post {
 		if( ! have_posts()){
 			// var_dump($query);
 			//Dans le cas où l'agenda est la page d'accueil, l'url de base avec des arguments ne fonctionne pas.
+			
 			if(is_home()){
 				//TODO et si Agdp_Covoiturage en page d'accueil, hein ?
 				$query_field = Agdp_Evenement::postid_argument;
@@ -326,17 +327,18 @@ abstract class Agdp_Post {
 			}
 			
 			//Dans le cas d'une visualisation d'un post non publié, pour le créateur non connecté
-			if(isset($query->query['post_type'])
-			&& $query->query['post_type'] == static::post_type){
-				foreach(['p', 'post', 'post_id', static::post_type] as $key){
+			if(isset($query->query['post_type']) ){
+				$post_type = $query->query['post_type'];
+				foreach(['p', 'post', 'post_id', $post_type] as $key){
 					if( array_key_exists($key, $query->query)){
 						if(is_numeric($query->query[$key]))
 							$post = get_post($query->query[$key]);
 						else{
 							//Ne fonctionne pas en 'pending', il faut l'id
-							$post = get_page_by_path(static::post_type . '/' . $query->query[$key]);
+							$post = get_page_by_path($post_type . '/' . $query->query[$key]);
 						}
-						if(!$post)
+			
+						if( ! $post)
 							return false;
 		
 						if(in_array($post->post_status, ['draft','pending','future'])){
