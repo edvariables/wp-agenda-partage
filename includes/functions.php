@@ -222,14 +222,37 @@ function decode_spamcause_unrot($pair, $pos, $key = false){
 
 /**
  * Retourne le texte correspondant au html, sans balise html.
+ * $extract_links permet de laisser apparents les hyperliens
  */
-function html_to_plain_text($html){
+function html_to_plain_text($html, $extract_links = false){
 	$html = html_inner_body( $html, false );
 	$html = preg_replace('/(\<(p|div|pre|br|tr|li|ol|br))/', "\n$1", $html);
+	if( $extract_links )
+		$html = html_links_to_plain_text($html);
 	return html_entity_decode(
 			htmlspecialchars_decode(
 			wp_strip_all_tags($html)
 			), ENT_QUOTES | ENT_HTML401);
+}
+
+/**
+ * Extrait les hyperliens 
+ */
+function html_links_to_plain_text($html){
+	$matches = [];
+	preg_match_all('/\<a\s.*href="([^"]*)"[^>]*\>([\s\S]*?)\<\/a\>/i', $html, $matches);
+	for($i = 0; $i < count($matches[0]); $i++){
+		if( ! trim($matches[1][$i])
+		 || trim($matches[1][$i]) === trim($matches[2][$i]) )
+			continue;
+		if( ! $matches[2][$i]
+		|| strpos( $matches[2][$i], 'http' ) === false )
+			$replace = $matches[1][$i];
+		else
+			$replace = sprintf( '%s (%s)', $matches[2][$i], $matches[1][$i] );
+		$html = str_replace( $matches[0][$i], $replace, $html);
+	}
+	return $html;
 }
 
 /**

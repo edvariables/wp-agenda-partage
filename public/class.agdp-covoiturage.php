@@ -877,6 +877,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		if( isset($data['attributes']['format']) ){
 			switch( $data['attributes']['format']) {
 				case 'message' :
+				case 'text' :
 					$post = get_post($data['post_id']);
 					
 					$meta_name = 'cov-organisateur' ;
@@ -891,8 +892,13 @@ class Agdp_Covoiturage extends Agdp_Post {
 						$data['headers'][] = sprintf('Reply-to: %s', $email);
 					}
 					$data['subject'] = sprintf('[Covoiturage] %s', self::get_post_title( $post, true ) );
-					$data['message'] = /* html_to_plain_text */(Agdp_Covoiturages::get_list_item_html( $post, false, ['mode' => 'email'] ));
+					$data['message'] = Agdp_Covoiturages::get_list_item_html( $post, false, ['mode' => 'email'] );
 					
+					switch( $data['attributes']['format']) {
+						case 'text' :
+							$data['message'] = html_to_plain_text( $data['message'], true );
+							break;
+					}
 					break;
 			}
 		}

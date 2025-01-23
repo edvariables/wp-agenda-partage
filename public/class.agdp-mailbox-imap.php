@@ -183,6 +183,7 @@ class Agdp_Mailbox_IMAP {
 			// die();
 		}
 		
+		// debug_log(__FUNCTION__, $content);
 		return trim($content);
 	}
 	

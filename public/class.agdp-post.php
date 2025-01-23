@@ -1086,6 +1086,7 @@ abstract class Agdp_Post {
 		$filter_applied = false;
 		if( isset($attributes['format']) ){
 			switch( $attributes['format']) {
+				case 'text' :
 				case 'message' :
 					$post = get_post($post_id);
 					

@@ -856,6 +856,7 @@ class Agdp_Evenement extends Agdp_Post {
 	public static function on_send_for_diffusion_mailto( $data ){
 		if( isset($data['attributes']['format']) ){
 			switch( $data['attributes']['format']) {
+				case 'text' :
 				case 'message' :
 					$post = get_post($data['post_id']);
 					
@@ -870,8 +871,14 @@ class Agdp_Evenement extends Agdp_Post {
 							$email = sprintf('"%s"<%s>', $organisateur, $email );
 						$data['headers'][] = sprintf('Reply-to: %s', $email);
 					}
-					$data['subject'] = static::get_post_title( $post, true );//sprintf('[Agenda] %s', self::get_post_title( $post, true ) );
-					$data['message'] = /* html_to_plain_text */(Agdp_Evenements::get_list_item_html( $post, false, ['mode' => 'email'] ));
+					$data['subject'] = static::get_post_title( $post, true );
+					$data['message'] = Agdp_Evenements::get_list_item_html( $post, false, ['mode' => 'email'] );
+					
+					switch( $data['attributes']['format']) {
+						case 'text' :
+							$data['message'] = html_to_plain_text( $data['message'], true );
+							break;
+					}
 					
 					break;
 			}
