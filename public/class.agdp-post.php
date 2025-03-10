@@ -10,6 +10,7 @@ abstract class Agdp_Post {
 
 	const post_type = false; //Must override
 	const taxonomy_diffusion = false;//Must override
+	const taxonomy_city = false;//Must override
 	const secretcode_argument = false; //Must override
 	const field_prefix = false; //Must override
 
@@ -22,6 +23,7 @@ abstract class Agdp_Post {
 	private static $post_types = [];
 	
 	private static $taxonomies_diffusion = [];
+	private static $taxonomies_location = [];
 
 	private static $initiated = false;
 	public static function init() {
@@ -33,6 +35,9 @@ abstract class Agdp_Post {
 		self::$post_types[] = static::post_type;
 		if( static::taxonomy_diffusion ){
 			self::$taxonomies_diffusion[static::post_type] = static::taxonomy_diffusion;
+		}
+		if( static::taxonomy_city ){
+			self::$taxonomies_location[static::post_type] = static::taxonomy_city;
 		}
 	}
 
@@ -114,6 +119,13 @@ abstract class Agdp_Post {
 	 */
 	public static function get_taxonomies_diffusion(){
 		return self::$taxonomies_diffusion;
+	}
+	
+	/**
+	 * Retourne les taxonomies de localisation des post_types agdp
+	 */
+	public static function get_taxonomies_location(){
+		return self::$taxonomies_location;
 	}
 	
 	/**
@@ -917,6 +929,7 @@ abstract class Agdp_Post {
 				static::send_for_diffusion( $post_id, $term, $tax_inputs, $previous_tax_inputs );
 			return;
 		}
+		
 		if( is_a($taxonomy_diffusion, 'WP_Term') ){
 			$diffusion_term_id = $taxonomy_diffusion->term_id;
 			$taxonomy_diffusion = $taxonomy_diffusion->taxonomy;
@@ -978,6 +991,13 @@ abstract class Agdp_Post {
 			return false;
 		
 		$attributes = [ 'connexion' => $connexion ];
+		
+		$term_meta = 'connexion_pwd';
+		$connexion_pwd = get_term_meta( $diffusion_term_id, $term_meta, true );
+		// debug_log('send_for_diffusion $connexion',  $diffusion_term_id, $connexion );
+		if( $connexion_pwd )
+			$attributes['connexion_pwd'] = $connexion_pwd;
+		
 		foreach( preg_split( '/[|\n]+/m', $connexion) as $index => $attribute){
 			$attribute = explode( ':', $attribute );
 			if( $index === 0 ) {
@@ -1002,7 +1022,16 @@ abstract class Agdp_Post {
 			$filters['set_post_status'] = 'trash';
 		
 		// Export file_format .ics or 'export' attribute
-		$export_type = 'ics';
+		switch( $action ){
+			case 'openagenda':
+				$export_type = 'openagenda';
+				$export_format = 'json';
+				break;
+			default:
+				$export_type = 'ics';
+				$export_format = 'file';
+				break;
+		}
 		if( isset($attributes['export']) ){
 			switch( $attributes['export'] ){
 				case '0' :
@@ -1017,7 +1046,7 @@ abstract class Agdp_Post {
 		}
 		
 		if( $export_type )
-			$export = static::get_posts_export( [ $post_id ], $export_type, 'file',  $filters );
+			$export = static::get_posts_export( [ $post_id ], $export_type, $export_format,  $filters );
 		else
 			$export = false;
 		// debug_log('send_for_diffusion $export', $attributes, $filters, $export_type, $export ? file_get_contents($export) : '-' );
@@ -1026,6 +1055,9 @@ abstract class Agdp_Post {
 		switch( $action ){
 			case 'mailto':
 				static::send_for_diffusion_mailto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type );
+				break;
+			case 'openagenda':
+				static::send_for_diffusion_openagenda( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type );
 				break;
 			case 'blog' :
 			default:
@@ -1092,7 +1124,7 @@ abstract class Agdp_Post {
 					
 					//Flag du post pour ne pas envoyer des messages à chaque mise à jour.
 					$meta_name = sprintf('%s_%s_%s', $post_class::taxonomy_diffusion, $action, $attributes[$action] );
-				// delete_post_meta($post->ID, $meta_name); //DEBUG
+					// delete_post_meta($post->ID, $meta_name); //DEBUG
 					$already_sent = static::get_post_meta($post, $meta_name, true);
 					
 					if( $data['post_status'] !== 'publish' ){
@@ -1136,6 +1168,57 @@ abstract class Agdp_Post {
 			$result = $data;
 		// debug_log('send_for_diffusion debug ! wp_mail', $data );
 		return $result;
+	}
+	
+	/**
+	 * send_for_diffusion_openagenda
+	 * Param $export is an instance of OpenAgenda\Publisher
+	 */
+	public static function send_for_diffusion_openagenda( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type ){
+		// debug_log( __FUNCTION__, $attributes, $post_is_deleted, $post_status);
+		
+		$secret_key = empty($attributes['connexion_pwd']) ? false : $attributes['connexion_pwd'];
+		if( ! $secret_key ){
+			debug_log( __FUNCTION__, 'Le mot de passe de connexion doit être définie dans la diffusion OpenAgenda.');
+			return false;
+		}
+		$export->set_secret_key( $secret_key );
+		
+		$uid = $attributes['openagenda'];
+		if( ! $uid ){
+			debug_log( __FUNCTION__, 'OpenAgenda UID manquant dans le paramétrage de la diffusion');
+			return false;
+		}
+		$export->set_openagenda_uid( $uid );
+		
+		if( $post_is_deleted
+		 || $post_status !== 'publish' ){
+			// foreach( $export->get_events() as $vevent ){
+				// $vevent->status = 6;
+			// }
+			if( $export->delete( ) ){
+			
+				foreach( $export->get_events() as $vevent ){
+					if( ! empty($vevent->uid) ){
+						$post_id = $vevent->wp_post_id;
+						$meta_name = 'openagenda_event_uid';
+						delete_post_meta( $post_id, $meta_name);
+					}
+				}
+			}
+		}
+		
+		elseif( $export->publish( ) ){
+			
+			foreach( $export->get_events() as $vevent ){
+				if( ! empty($vevent->uid) ){
+					$post_id = $vevent->wp_post_id;
+					$oa_uid = $vevent->uid;
+					$meta_name = 'openagenda_event_uid';
+					update_post_meta( $post_id, $meta_name, $oa_uid, true);
+				}
+			}
+		}
 	}
 	
 	/**

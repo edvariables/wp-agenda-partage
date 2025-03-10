@@ -95,6 +95,10 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 				if( $value = get_term_meta( $term_id, $meta_key, true ) )
 					$properties[] = $value;
 				
+				$meta_key = 'connexion_pwd';
+				if( $value = get_term_meta( $term_id, $meta_key, true ) )
+					$properties[] = '(mot de passe)';
+				
 				echo implode('<br>', $properties);
 				break;
 		}
@@ -144,7 +148,7 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		foreach([ 'default_checked', 'download_link', 'connexion', 'order_index' ] as $meta_name)
+		foreach([ 'default_checked', 'download_link', 'connexion', 'connexion_pwd', 'order_index' ] as $meta_name)
 			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
 				update_term_meta($term_id, $meta_name, $args[$meta_name]);
 			}
@@ -239,7 +243,7 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
         ?></td>
     </tr><?php
     ?><tr class="form-field">
-        <th scope="row"><label for="default_checked">Paramètres de connexion</label></th>
+        <th scope="row"><label for="connexion">Paramètres de connexion</label></th>
         <td><?php
 			$meta_name = 'connexion';
 			$example_email = sprintf('%s@%s',
@@ -298,6 +302,16 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 										. '<br>format:message|text|0'
 										. '</code>'
 								)], $tag, null);
+        ?></td>
+    </tr><?php
+    ?><tr class="form-field">
+        <th scope="row"><label for="connexion_pwd">Mot de passe de connexion</label></th>
+        <td><?php
+			$meta_name = 'connexion_pwd';
+			parent::metabox_html([array('name' => $meta_name,
+							'type' => 'password',
+							// 'input' => 'password',
+						)], $tag, null);
         ?></td>
     </tr><?php
     ?><tr class="form-field">

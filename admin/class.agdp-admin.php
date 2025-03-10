@@ -69,6 +69,9 @@ class Agdp_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-diffusion.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Diffusion', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-location.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Location', 'init' ) );
+
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-newsletter.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Newsletter', 'init' ) );
 

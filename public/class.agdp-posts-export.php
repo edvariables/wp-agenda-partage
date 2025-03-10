@@ -54,17 +54,6 @@ abstract class Agdp_Posts_Export {
 			require_once( sprintf('%s/class.agdp-%ss-export.php', dirname(__FILE__), $post_type) );
 			$posts_class = Agdp_Page::get_posts_class( $post_type );
 			return ($posts_class .'_Export')::do_export( $posts, $file_format, $return, $filters);
-			// switch($post_type){
-
-				// case Agdp_Evenement::post_type:
-					// require_once( dirname(__FILE__) . '/class.agdp-agdpevents-export.php');
-					// return Agdp_Evenements_Export::do_export( $posts, $file_format, $return, $filters);
-				// case Agdp_Covoiturage::post_type:
-					// require_once( dirname(__FILE__) . '/class.agdp-covoiturages-export.php');
-					// return Agdp_Covoiturages_Export::do_export( $posts, $file_format, $return, $filters);
-				// default:
-					// return false;
-			// }
 		}
 			
 		$encode_to = "UTF-8";
@@ -86,6 +75,10 @@ abstract class Agdp_Posts_Export {
 				$encode_to = false;
 				//TODO if empty ?
 				return static::export_posts_docx($posts, $filters, $return);
+			case 'openagenda':
+				$export_data = static::export_posts_openagenda($posts, $filters);
+				$return = 'data';
+				break;
 				
 			default:
 				return sprintf('format inconnu : "%s"', $file_format);
@@ -97,7 +90,10 @@ abstract class Agdp_Posts_Export {
 			else
 				return sprintf('alert:Aucune donnée à exporter');
 		}
-		if( $encode_to ) {
+		if($return === 'data')
+			return $export_data;
+		
+		if( is_string($export_data) && $encode_to ) {
 			$enc = mb_detect_encoding($export_data);
 			$export_data = mb_convert_encoding($export_data, $encode_to, $enc);
 		}
@@ -412,6 +408,132 @@ abstract class Agdp_Posts_Export {
 	/**********************************************************/
 	
 	/**
+	 * Retourne les données json pour une synchronisation OpenAgenda
+	 *
+	 *  $filters['set_post_status']
+	 */
+	public static function export_posts_openagenda($posts, $filters = false){
+
+		require_once(AGDP_PLUGIN_DIR . "/includes/openagenda/oa-publisher.php");
+		
+		$openagenda = static::get_new_OpenAgenda();
+		foreach($posts as $post){
+			if( is_numeric($post) )
+				$post = get_post($post);
+			$event = static::add_post_to_OpenAgenda($post, $openagenda, $filters);
+		}
+		return $openagenda;
+	}
+	
+	public static function get_new_OpenAgenda(){
+		return new OpenAgenda\Publisher();
+	}
+	
+	/**
+	 * add_post_to_OpenAgenda
+	 */
+	public static function add_post_to_OpenAgenda($post, &$openagenda, $filters = false, $metas = false){
+		
+		$vevent = $openagenda->add_event();
+
+		// metas
+		if( ! is_array($metas) ){
+			$metas = get_post_meta($post->ID, '', true);
+			foreach($metas as $key=>$value)
+				if(is_array($value))
+					$metas[$key] = implode(', ', $value);
+		}
+		$vevent->country = [
+			'code' => 'FR',
+			'fr' => 'France (Métropole)',
+		];
+	  
+		$vevent->slug = $post->post_name;
+		$vevent->createdAt = $openagenda->toUTCDateTime($post->post_date);
+		$vevent->updatedAt = $openagenda->toUTCDateTime($post->post_modified);
+		$vevent->private = 0;
+		$vevent->timezone = 'Europe/Paris';
+		$vevent->attendanceMode = 1; //(offline): Participation physique au lieu où se déroule l'événement
+		$post_url = get_permalink($post->ID);
+		if( strpos( $post_url, 'http:' ) !== false ) //DEBUG
+			$post_url = 'https://agenda-partage.fr';
+		$vevent->onlineAccessLink = $post_url;
+		/* $vevent->links = [ [
+			'link' => $post_url,
+			'data' => [
+				'url' => $post_url,
+				"type"=> "rich",
+				"version"=> "1.0",
+				"title"=> substr( $post->post_title, 0, 140 ),
+				"author"=> "Agenda partagé",
+				// "author_url"=> "https://www.calameo.com/accounts/53137",
+				"provider_name"=> "Agenda partagé",
+				"description"=> $post->post_content,
+				// "thumbnail_url"=> "https://p.calameoassets.com/210205112752-fc92911ad9.../p1.jpg",
+				// "thumbnail_width"=> 1125,
+				// "thumbnail_height"=> 1596,
+				"html"=> "<div style=\"left: 0; width: 100%;></div>",
+				"cache_age"=> 86400
+			]
+		] ]; */
+		$vevent->attendanceMode = 2; //(online): DEBUG
+		$vevent->wp_post_id = $post->ID; 
+		$vevent->extIds = [ [ 'key' => AGDP_TAG
+							, 'value' => sprintf('%d@%s', $post->ID, get_site_url() ) ] ]; 
+		
+		// Add status & state
+		switch($post->post_status){
+			case 'publish':
+				$vevent->state = 2;
+				$vevent->status = 1;
+				break;
+			case 'trash':
+				$vevent->state = -1;
+				$vevent->status = 6;
+				break;
+			case 'draft':
+				$vevent->state = 0;
+				$vevent->status = 6;
+				break;
+			default:
+				$vevent->state = 0;
+				$vevent->status = 6;
+				break;
+		}
+
+		// Add description
+		$vevent->title = [ 'fr' => substr( $post->post_title, 0, 140 ) ];
+		$vevent->description = [ 'fr' => substr( $post->post_title, 0, 200 ) ];
+		$vevent->longDescription = [ 'fr' => substr( $post->post_content, 0, 10000 ) ];
+		
+		$vevent->timings = [[]];
+		// add start date
+		if( ! empty($metas['date_start']) )
+			$vevent->timings[0]['begin'] = $openagenda->toUTCDateTime($metas['date_start']);
+
+		// add end date
+		if( ! empty($metas['date_end']) )
+			$vevent->timings[0]['end'] = $openagenda->toUTCDateTime($metas['date_end']);
+		else{
+			$vevent->timings[0]['end'] = $openagenda->toUTCMidnight($metas['date_start']);
+		}
+		// openagenda_event_uid
+		if( ! empty($metas['openagenda_event_uid']) )
+			$vevent->uid = $metas['openagenda_event_uid'];
+
+		//DEBUG
+		// $vevent->title['fr'] = 'test '.$vevent->title['fr'];
+		// $vevent->test = 1;
+		
+		// debug_log( __FUNCTION__, $vevent);
+		
+		return $vevent;
+	}
+	
+	
+	/**********************************************************/
+	
+	/**
 	 * Retourne les données ICS pour le téléchargement de l'export des évènements
 	 *
 	 *  $filters['set_post_status']
@@ -449,7 +571,6 @@ abstract class Agdp_Posts_Export {
 		
 		return $ical;
 	}
-	
 	
 	/**
 	 * add_post_to_ZCiCal

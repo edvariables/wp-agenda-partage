@@ -620,20 +620,22 @@ class Agdp_Evenement_Edit {
 			$data = array();
 			
 			foreach(array(
-				'post_title' => 'ev-titre',
-				'post_content' => 'ev-description',
-				'ev-date-debut' => 1,
-				'ev-heure-debut' => 1,
-				'ev-date-fin' => 1,
-				'ev-heure-fin' => 1,
-				'ev-organisateur' => 1,
-				'ev-email' => 1,
-				'ev-user-email' => 1,
-				'ev-phone' => 1,
-				'ev-siteweb' => 1,
-				'ev-localisation' => 1,
-				) as $post_field => $input_field){
-					if($input_field === 1) $input_field = $post_field;
+			'post_title' => 'ev-titre',
+			'post_content' => 'ev-description',
+			'ev-date-debut' => 1,
+			'ev-heure-debut' => 1,
+			'ev-date-fin' => 1,
+			'ev-heure-fin' => 1,
+			'ev-organisateur' => 1,
+			'ev-email' => 1,
+			'ev-user-email' => 1,
+			'ev-phone' => 1,
+			'ev-siteweb' => 1,
+			'ev-localisation' => 1,
+			) as $post_field => $input_field){
+				if($input_field === 1) $input_field = $post_field;
+				if( ! isset($inputs[$input_field]) )
+					continue;
 				$data[$post_field] = trim($inputs[$input_field]);
 			}
 			//checkboxes
@@ -688,7 +690,7 @@ class Agdp_Evenement_Edit {
 		$data['ev-organisateur-show'] = 1;//TODO
 		$data['ev-email-show'] = 0;//TODO
 		
-		if( ! $data['ev-user-email'] )
+		if( empty( $data['ev-user-email'] ) )
 			$data['ev-user-email'] = $data['ev-email'];
 		elseif( ! $data['ev-email'] )
 			$data['ev-email'] = $data['ev-user-email'];

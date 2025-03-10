@@ -78,6 +78,11 @@ class Agdp_Covoiturages_Export extends Agdp_Posts_Export {
 		return implode("\r\n", $txt);
 	}
 	
+	public static function add_post_to_OpenAgenda($post, $data, $filters = false, $metas = false){
+		//TODO
+		return parent::add_post_to_OpenAgenda($post, $data, $filters, $metas);
+	}
+	
 	public static function add_post_to_ZCiCal($post, $ical, $filters = false, $metas = false){
 		
 		// metas

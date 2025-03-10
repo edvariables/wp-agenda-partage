@@ -235,7 +235,70 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 	
 	/**********************************************************/
 	
+	/**
+	 * OpenAgenda
+	 */
+	public static function add_post_to_OpenAgenda($post, &$openagenda, $filters = false, $metas = false){
+		// metas
+		if( ! $metas ){
+			$metas = get_post_meta($post->ID, '', true);
+			foreach($metas as $key=>$value)
+				if(is_array($value))
+					$metas[$key] = implode(', ', $value);
+		}
+		$metas['date_start'] = self::sanitize_datetime($metas['ev-date-debut'], $metas['ev-heure-debut']);
+		$metas['date_end'] = self::sanitize_datetime($metas['ev-date-fin'], $metas['ev-heure-fin'], $metas['ev-date-debut'], $metas['ev-heure-debut']);
+				
+		$vevent = parent::add_post_to_OpenAgenda($post, $openagenda, $filters, $metas);
+		
+		// Add fields
+		// $fields = [
+			// 'LOCATION'=>'ev-localisation'
+			// , 'ORGANISATEUR'=>'ev-organisateur'
+			// , 'EMAIL'=>'ev-email'
+			// , 'USER-EMAIL'=>'ev-user-email'
+			// , 'PHONE'=>'ev-phone'
+		// ];
+		// if( ! empty($filters[Agdp_Evenement::secretcode_argument]) )
+			// $fields[ strtoupper(Agdp_Evenement::secretcode_argument) ] = Agdp_Evenement::field_prefix . Agdp_Evenement::secretcode_argument;
+		// foreach($fields as $node_name => $meta_key)
+			// if( ! empty( $metas[$meta_key]))
+				// $vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $metas[$meta_key])));
+
+		// Add terms
+		$keywords = [];
+		foreach([ 
+			'CATEGORIES' => Agdp_Evenement::taxonomy_ev_category
+			, 'CITIES' => Agdp_Evenement::taxonomy_city
+		] as $node_name => $tax_name){
+			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'names');
+			if($terms){
+				foreach($terms as $term_name)
+					$keywords[] = $term_name;
+			}
+		}
+		if( $keywords )
+			$vevent->keywords = [ 'fr' => $keywords ];
+		
+		// if( ! empty($metas['ev-organisateur']) )
+			// $vevent->organization = $metas['ev-organisateur'];
+		
+		// registration
+		$registration = [];
+		if( ! empty($metas['ev-siteweb']) )
+			$registration[] = $metas['ev-siteweb'];
+		if( ! empty($metas['ev-email']) )
+			$registration[] = $metas['ev-email'];
+		if( ! empty($metas['ev-phone']) )
+			$registration[] = $metas['ev-phone'];
+		if( $registration )
+			$vevent->registration = $registration;
+		return $vevent;
+	}/** OpenAgenda	 */
 	
+	/**
+	 * ics/ZCiCal
+	 */
 	public static function add_post_to_ZCiCal($post, $ical, $filters = false, $metas = false){
 		
 		// metas
