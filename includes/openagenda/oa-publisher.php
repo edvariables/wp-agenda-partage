@@ -53,9 +53,17 @@ class Publisher {
 	 *
 	 * @return string SQL date-time string
 	 */
-	public function toUTCDateTime($sqldate){
-
-		return wp_date( DATE_ATOM, strtotime( $sqldate ) );
+	public function toUTCDateTime($sqldate, $debug = false){
+		if( is_a( $sqldate, 'DateTime' ))
+			$sqldate = $sqldate->getTimestamp();
+		else {
+			// if(  $debug ){
+				// debug_log( $sqldate, wp_date( DATE_ATOM, strtotime( $sqldate ) ));
+				// die();
+			// }
+			$sqldate = strtotime( $sqldate );
+		}
+		return wp_date( DATE_ATOM, $sqldate, wp_timezone());
 	}
 
 	/**
@@ -66,7 +74,10 @@ class Publisher {
 	 * @return string SQL date-time string
 	 */
 	public function toUTCMidnight($sqldate){
-		$date = new \DateTime(wp_date( DATE_ATOM, strtotime( $sqldate ) ));
+		if( is_a( $sqldate, 'DateTime' ))
+			$date = $sqldate;
+		else
+			$date = new \DateTime(wp_date( DATE_ATOM, strtotime( $sqldate ), new \DateTimeZone( 'UTC' ) ));
 		$date = $date->setTime( 23, 59 );
 		return $date->format( DATE_ATOM );
 	}
@@ -75,7 +86,7 @@ class Publisher {
 	 * publish
 	 */
 	public function publish(){
-		debug_log( __FUNCTION__, $this->get_events());
+		// debug_log( __FUNCTION__, $this->get_events());
 		
 		foreach( $this->get_events() as $vevent ){
 			$event = $this->publish_event( $vevent );
@@ -90,7 +101,7 @@ class Publisher {
 	 * publish
 	 */
 	public function delete(){
-		debug_log( __FUNCTION__, $this->get_events());
+		// debug_log( __FUNCTION__, $this->get_events());
 		
 		foreach( $this->get_events() as $vevent ){
 			$event = $this->delete_event( $vevent );
@@ -164,9 +175,41 @@ class Publisher {
 	}
 
 	/**
+	 * sanitize_event
+	 * Parameter $event : StdClass
+	 */
+	private function sanitize_event( $event ){
+		foreach( $event->title as $lang => $value )
+			$event->title[ $lang ] = substr( $value, 0, 140 );
+		foreach( $event->description as $lang => $value )
+			$event->description[ $lang ] = substr( $value, 0, 200 );
+		foreach( $event->longDescription as $lang => $value )
+			$event->longDescription[ $lang ] = substr( $value, 0, 10000 );
+		
+		foreach( $event->timings as $index => $timing ){
+			$date_begin = new \DateTime( $timing['begin'] );
+			$date_end = new \DateTime( $timing['end'] );
+			$date_diff = date_diff($date_end, $date_begin);
+			if( $date_diff->days > 0 ){
+				$h = ($date_diff->y * 365 + $date_diff->m * 30 + $date_diff->d) * 24
+					+ $date_diff->h + $date_diff->i / 24 + $date_diff->s / 24 / 60;
+				if( $h > 24 ){
+					$date_end = $date_begin->add( new \DateInterval('P1D') );
+					$event->timings[$index]['end'] = $this->toUTCDateTime( $date_end );
+				}
+			}
+		}
+		
+		return $event;
+	}
+	
+	/**
 	 * publish_event : create or update
+	 * Parameter $event : StdClass
 	 */
 	private function publish_event( $event ){
+		$event = $this->sanitize_event( $event );
+		debug_log(__FUNCTION__, $event);
 		$agendaUid = $this->openagenda_uid;
 		if( $create_new = empty($event->uid) )
 			$oa_url = "https://api.openagenda.com/v2/agendas/{$agendaUid}/events";
@@ -188,7 +231,7 @@ class Publisher {
 		if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
 		  // var_dump(__FUNCTION__ . ' received_content', $received_content);
 		  $data = json_decode($received_content, true);
-		  debug_log( __FUNCTION__, $data );
+		  // debug_log( __FUNCTION__, $data );
 		  foreach( $data['event'] as $prop => $val )
 			$event->$prop = $val;
 			
@@ -226,7 +269,7 @@ class Publisher {
 		if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
 		  // var_dump(__FUNCTION__ . ' received_content', $received_content);
 		  $data = json_decode($received_content, true);
-		  debug_log( __FUNCTION__, $data );
+		  // debug_log( __FUNCTION__, $data );
 			
 		  return $event;
 		  // var_dump($data, $received_content);

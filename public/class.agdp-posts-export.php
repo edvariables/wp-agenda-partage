@@ -509,7 +509,7 @@ abstract class Agdp_Posts_Export {
 		$vevent->timings = [[]];
 		// add start date
 		if( ! empty($metas['date_start']) )
-			$vevent->timings[0]['begin'] = $openagenda->toUTCDateTime($metas['date_start']);
+			$vevent->timings[0]['begin'] = $openagenda->toUTCDateTime($metas['date_start'], true);
 
 		// add end date
 		if( ! empty($metas['date_end']) )
