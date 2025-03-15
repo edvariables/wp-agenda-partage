@@ -89,26 +89,63 @@ class Agdp_Evenements extends Agdp_Posts {
 	 */
 	public static function get_month_posts($month){
 		$today_month = date('Y-m');
-		if(!$month) $month = $today_month;
+		if( ! $month) $month = $today_month;
 		$date_min = substr($month, 0,4) . '-' . substr($month, 5,2) . '-' . ($month === $today_month ? date('d') : '01');
 		if(substr($month, 5,2) === '12')
 			$date_max = ((int)substr($month, 0,4) + 1) . '-01-01';
 		else
 			$date_max = substr($month, 0,4) . '-' . sprintf('%02d', ((int)substr($month, 5,2) + 1 )) . '-01';
+		$date_01 = substr($month, 0,4) . '-' . substr($month, 5,2) . '-' . '01';
+		//TODO events à cheval sur deux mois : n'apparait que dans en fin du 1er mois ! ( $date_01 devrait être plus tôt )
 		$query = array(
 			'meta_query' => [
-				'relation' => 'AND',
-				[ [
-					'key' => 'ev-date-debut',
-					'value' => $date_min,
-					'compare' => '>=',
-					'type' => 'DATE',
-				], [
-					'key' => 'ev-date-debut',
-					'value' => $date_max,
-					'compare' => '<',
-					'type' => 'DATE',
-				] ]
+				// 'relation' => 'AND',
+				// [ [
+					// 'key' => 'ev-date-debut',
+					// 'value' => $date_min,
+					// 'compare' => '>=',
+					// 'type' => 'DATE',
+				// ], [
+					// 'key' => 'ev-date-debut',
+					// 'value' => $date_max,
+					// 'compare' => '<',
+					// 'type' => 'DATE',
+				// ] ]
+				
+				'relation' => 'OR',
+				[ 
+					'relation' => 'AND',
+					[ [
+						'key' => 'ev-date-debut',
+						'compare' => '>=',
+						'value' => $date_min,
+						'type' => 'DATE',
+					], [
+						'key' => 'ev-date-debut',
+						'compare' => '<',
+						'value' => $date_max,
+						'type' => 'DATE',
+					] ],
+				],
+				[ 
+					'relation' => 'AND',
+					[ [
+						'key' => 'ev-date-debut',
+						'compare' => '>=',
+						'value' => $date_01,
+						'type' => 'DATE',
+					], [
+						'key' => 'ev-date-fin',
+						'compare' => '>=',
+						'value' => $date_min,
+						'type' => 'DATE',
+					], [
+						'key' => 'ev-date-fin',
+						'compare' => '<',
+						'value' => $date_max,
+						'type' => 'DATE',
+					] ],
+				]
 			],
 			'orderby' => [
 				'ev-date-debut' => 'ASC',
@@ -118,6 +155,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			
 		);
 		
+		// debug_log(__FUNCTION__, $query, self::get_filters_query(false));
 		$posts = self::get_posts($query, self::get_filters_query(false));
 		return $posts;
     }
@@ -133,7 +171,6 @@ class Agdp_Evenements extends Agdp_Posts {
 		
 		$sql_filters = self::get_filters_query(true);
 		
-		//TODO Find this in other blog 
 		$sql = "SELECT DISTINCT DATE_FORMAT(date_debut.meta_value, '%Y') as year
 				, DATE_FORMAT(date_debut.meta_value, '%m') as month
 				, COUNT(post_id) as count

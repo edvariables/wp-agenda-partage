@@ -133,7 +133,7 @@ abstract class Agdp_Posts {
 
 		add_filter( 'posts_clauses', array(__CLASS__, 'on_posts_clauses_meta_query'), 10, 2 );
 		
-		// debug_log(__FUNCTION__, 'get_posts $queries ', $query, $queries);
+		// debug_log(__FUNCTION__, 'get_posts $queries ', $query/* , $queries */);
 		$the_query = new WP_Query( $query );
 		// debug_log(__FUNCTION__, 'get_posts ' . '<pre>'.$the_query->request.'</pre>', $query, count($the_query->posts));
         
