@@ -250,38 +250,46 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 		$metas['date_end'] = self::sanitize_datetime($metas['ev-date-fin'], $metas['ev-heure-fin'], $metas['ev-date-debut'], $metas['ev-heure-debut']);
 				
 		$vevent = parent::add_post_to_OpenAgenda($post, $openagenda, $filters, $metas);
-		
-		// Add fields
-		// $fields = [
-			// 'LOCATION'=>'ev-localisation'
-			// , 'ORGANISATEUR'=>'ev-organisateur'
-			// , 'EMAIL'=>'ev-email'
-			// , 'USER-EMAIL'=>'ev-user-email'
-			// , 'PHONE'=>'ev-phone'
-		// ];
-		// if( ! empty($filters[Agdp_Evenement::secretcode_argument]) )
-			// $fields[ strtoupper(Agdp_Evenement::secretcode_argument) ] = Agdp_Evenement::field_prefix . Agdp_Evenement::secretcode_argument;
-		// foreach($fields as $node_name => $meta_key)
-			// if( ! empty( $metas[$meta_key]))
-				// $vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $metas[$meta_key])));
 
 		// Add terms
 		$keywords = [];
+		$cities = [];
 		foreach([ 
 			'CATEGORIES' => Agdp_Evenement::taxonomy_ev_category
 			, 'CITIES' => Agdp_Evenement::taxonomy_city
 		] as $node_name => $tax_name){
-			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'names');
+			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'all');
 			if($terms){
-				foreach($terms as $term_name)
-					$keywords[] = $term_name;
+				foreach($terms as $term)
+					$keywords[] = $term->name;
+				if( $node_name === 'CITIES' )
+					$cities = $terms;
 			}
 		}
 		if( $keywords )
 			$vevent->keywords = [ 'fr' => $keywords ];
 		
-		// if( ! empty($metas['ev-organisateur']) )
-			// $vevent->organization = $metas['ev-organisateur'];
+		//Localisation avec openagenda_uid
+		if( $cities ){
+			foreach( $cities as $location ){
+				$external_ids = get_term_meta( $location->term_id, 'external_ids', true );
+				if( $external_ids ){
+					$matches = [];
+					if( preg_match_all( '/(\d+)\@(\d+)\.openagenda/', $external_ids, $matches ) ){
+						for($match = 0; $match < count($matches[1]); $match++){
+							if( empty($openagenda->openagenda_uid) ){
+								//Mémorise tous les id en attendant le sanitize_event
+								if( empty($vevent->locationUid) )
+									$vevent->locationUid = [];
+								$vevent->locationUid[ $matches[2][$match].'' ] = $matches[1][$match];
+							}
+							elseif( $openagenda->openagenda_uid === $matches[2][$match] )
+								$vevent->locationUid = $matches[1][$match];
+						}
+					}
+				}
+			}
+		}
 		
 		// registration
 		$registration = [];

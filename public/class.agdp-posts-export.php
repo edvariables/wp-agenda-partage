@@ -453,7 +453,7 @@ abstract class Agdp_Posts_Export {
 		$vevent->updatedAt = $openagenda->toUTCDateTime($post->post_modified);
 		$vevent->private = 0;
 		$vevent->timezone = 'Europe/Paris';
-		$vevent->attendanceMode = 1; //(offline): Participation physique au lieu où se déroule l'événement
+		$vevent->attendanceMode = 1; //(offline): Participation physique au lieu où se déroule l'événement, cf sanitize_event
 		$post_url = get_permalink($post->ID);
 		if( strpos( $post_url, 'http:' ) !== false ) //DEBUG
 			$post_url = 'https://agenda-partage.fr';
@@ -476,12 +476,13 @@ abstract class Agdp_Posts_Export {
 				"cache_age"=> 86400
 			]
 		] ]; */
-		$vevent->attendanceMode = 2; //(online): DEBUG
+		
 		$vevent->wp_post_id = $post->ID; 
 		$vevent->extIds = [ [ 'key' => AGDP_TAG
 							, 'value' => sprintf('%d@%s', $post->ID, get_site_url() ) ] ]; 
 		
 		// Add status & state
+		// Details inutiles car tout non publish est supprimé
 		switch($post->post_status){
 			case 'publish':
 				$vevent->state = 2;
@@ -505,6 +506,10 @@ abstract class Agdp_Posts_Export {
 		$vevent->title = [ 'fr' => substr( $post->post_title, 0, 140 ) ];
 		$vevent->description = [ 'fr' => substr( $post->post_title, 0, 200 ) ];
 		$vevent->longDescription = [ 'fr' => substr( $post->post_content, 0, 10000 ) ];
+		
+		// debug_log( __FUNCTION__, wp_date('Ymd H:i:s'), $openagenda->toUTCDateTime(wp_date('Ymd H:i:s')));
+		// debug_log( __FUNCTION__, $metas['date_start'], $openagenda->toUTCDateTime($metas['date_start']));
+		// die();
 		
 		$vevent->timings = [[]];
 		// add start date

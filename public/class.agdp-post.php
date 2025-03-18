@@ -1193,19 +1193,16 @@ abstract class Agdp_Post {
 		
 		if( $post_is_deleted
 		 || $post_status !== 'publish' ){
-			// foreach( $export->get_events() as $vevent ){
-				// $vevent->status = 6;
-			// }
-			if( $export->delete( ) ){
+			$export->delete( );
 			
-				foreach( $export->get_events() as $vevent ){
-					if( ! empty($vevent->uid) ){
-						$post_id = $vevent->wp_post_id;
-						$meta_name = 'openagenda_event_uid';
-						delete_post_meta( $post_id, $meta_name);
-					}
+			foreach( $export->get_events() as $vevent ){
+				if( ! empty($vevent->uid) ){
+					$post_id = $vevent->wp_post_id;
+					$meta_name = 'openagenda_event_uid';
+					delete_post_meta( $post_id, $meta_name);
 				}
 			}
+			
 		}
 		
 		elseif( $export->publish( ) ){

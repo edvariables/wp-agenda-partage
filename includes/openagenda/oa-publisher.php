@@ -44,43 +44,6 @@ class Publisher {
 		$this->events[] = $event;
 		return $event;
 	}
-
-
-	/**
-	 * Convert local date-time to UTC date-time
-	 * 
-	 * @param string $sqldate SQL date-time string
-	 *
-	 * @return string SQL date-time string
-	 */
-	public function toUTCDateTime($sqldate, $debug = false){
-		if( is_a( $sqldate, 'DateTime' ))
-			$sqldate = $sqldate->getTimestamp();
-		else {
-			// if(  $debug ){
-				// debug_log( $sqldate, wp_date( DATE_ATOM, strtotime( $sqldate ) ));
-				// die();
-			// }
-			$sqldate = strtotime( $sqldate );
-		}
-		return wp_date( DATE_ATOM, $sqldate, wp_timezone());
-	}
-
-	/**
-	 * Convert local date to UTC date at 23:59
-	 * 
-	 * @param string $sqldate SQL date-time string
-	 *
-	 * @return string SQL date-time string
-	 */
-	public function toUTCMidnight($sqldate){
-		if( is_a( $sqldate, 'DateTime' ))
-			$date = $sqldate;
-		else
-			$date = new \DateTime(wp_date( DATE_ATOM, strtotime( $sqldate ), new \DateTimeZone( 'UTC' ) ));
-		$date = $date->setTime( 23, 59 );
-		return $date->format( DATE_ATOM );
-	}
 	
 	/**
 	 * publish
@@ -173,35 +136,6 @@ class Publisher {
 			var_dump($ch, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content);
 		}
 	}
-
-	/**
-	 * sanitize_event
-	 * Parameter $event : StdClass
-	 */
-	private function sanitize_event( $event ){
-		foreach( $event->title as $lang => $value )
-			$event->title[ $lang ] = substr( $value, 0, 140 );
-		foreach( $event->description as $lang => $value )
-			$event->description[ $lang ] = substr( $value, 0, 200 );
-		foreach( $event->longDescription as $lang => $value )
-			$event->longDescription[ $lang ] = substr( $value, 0, 10000 );
-		
-		foreach( $event->timings as $index => $timing ){
-			$date_begin = new \DateTime( $timing['begin'] );
-			$date_end = new \DateTime( $timing['end'] );
-			$date_diff = date_diff($date_end, $date_begin);
-			if( $date_diff->days > 0 ){
-				$h = ($date_diff->y * 365 + $date_diff->m * 30 + $date_diff->d) * 24
-					+ $date_diff->h + $date_diff->i / 24 + $date_diff->s / 24 / 60;
-				if( $h > 24 ){
-					$date_end = $date_begin->add( new \DateInterval('P1D') );
-					$event->timings[$index]['end'] = $this->toUTCDateTime( $date_end );
-				}
-			}
-		}
-		
-		return $event;
-	}
 	
 	/**
 	 * publish_event : create or update
@@ -209,7 +143,7 @@ class Publisher {
 	 */
 	private function publish_event( $event ){
 		$event = $this->sanitize_event( $event );
-		debug_log(__FUNCTION__, $event);
+		// debug_log(__FUNCTION__, $event);
 		$agendaUid = $this->openagenda_uid;
 		if( $create_new = empty($event->uid) )
 			$oa_url = "https://api.openagenda.com/v2/agendas/{$agendaUid}/events";
@@ -240,7 +174,7 @@ class Publisher {
 		}
 		else {
 			debug_log( __FUNCTION__, $oa_url, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content );
-			var_dump($ch, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content);
+			// var_dump($ch, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content);
 		}
 	}
 	
@@ -278,6 +212,135 @@ class Publisher {
 			debug_log( __FUNCTION__, $oa_url, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content );
 			var_dump($ch, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content);
 		}
+	}
+
+	/**
+	 * sanitize_event
+	 * Parameter $event : StdClass
+	 */
+	private function sanitize_event( $event ){
+		//texts length
+		foreach( $event->title as $lang => $value )
+			$event->title[ $lang ] = substr( $value, 0, 140 );
+		foreach( $event->description as $lang => $value )
+			$event->description[ $lang ] = substr( $value, 0, 200 );
+		foreach( $event->longDescription as $lang => $value )
+			$event->longDescription[ $lang ] = substr( $value, 0, 10000 );
+		
+		if( empty($event->locationUid) )
+			$event->attendanceMode = 2; //(online)
+		elseif( is_array($event->locationUid) ){
+			foreach($event->locationUid as $openagenda_uid => $locationUid){
+				if( $openagenda_uid == $this->openagenda_uid ){
+					$event->locationUid = $locationUid;
+					break;
+				}
+			}
+			if( is_array($event->locationUid) ){
+				$event->attendanceMode = 2; //(online)
+				$event->locationUid = '';
+			}
+		}
+		
+		//Dates avec interval de 24H max
+		// foreach( $event->timings as $index => $timing ){
+		for( $index = 0; $index < count($event->timings); $index++){
+			$timing = $event->timings[ $index ];
+			
+			$timing_begin = $timing['begin'];
+			$timing_end = $timing['end'];
+			$date_begin = new \DateTime( $timing_begin);
+				$hour_begin = $date_begin->format('H') * 3600 + $date_begin->format('i') * 60 + $date_begin->format('s') * 1 - $date_begin->getOffset();
+				$has_hour_begin = $hour_begin !== 0;
+			$date_end = new \DateTime( $timing_end );
+				$hour_end = $date_end->format('H') * 3600 + $date_end->format('i') * 60 + $date_end->format('s') * 1 - $date_end->getOffset();
+				$has_hour_end = $hour_end !== 0;
+				
+		// debug_log( __FUNCTION__, $has_hour_begin, $hour_end, ! $has_hour_end );
+			
+			if( $date_end <= $date_begin ) {
+				$date_end = $date_begin->setTime(23,59,59); //TODO tz offset
+				$event->timings[$index]['end'] = $this->toUTCDateTime( $date_end );
+			}
+			elseif( $has_hour_begin && ! $has_hour_end )
+				$date_end = $date_end->setTime(23,59,59); //TODO tz offset
+			
+			$date_diff = date_diff($date_end, $date_begin, false);
+			$h = ($date_diff->y * 365 + $date_diff->m * 30 + $date_diff->d) * 24
+				+ $date_diff->h + $date_diff->i / 24 + $date_diff->s / 24 / 60;
+			if( $h > 24 ){
+				$part_counter = 0;
+				do {
+					if( $h <= 24 ){
+						$date_end = $timing_end;
+					}
+					else
+						$date_end = $date_begin->add( new \DateInterval('P1D') );
+					if( $part_counter === 0)
+						$event->timings[$index]['end'] = $this->toUTCDateTime( $date_end );
+					else
+						$event->timings[] = [
+							'begin' => $timing_begin,
+							'end' => $this->toUTCDateTime( $date_end ),
+						];
+					$timing_begin = $this->toUTCDateTime( $date_end );
+					$date_begin = new \DateTime( $timing_begin );
+					
+					$h -= 24;
+					$part_counter++;
+				} while( $h > 0 );
+			}
+		}
+		
+		// foreach( $event->timings as $index => $timing ){
+			// foreach( ['begin', 'end'] as $field )
+				// $event->timings[$index][$field] = preg_replace( '/\+\d\d\:\d\d$/', '+00:00', $timing[$field] );
+		// }
+		
+		// debug_log( __FUNCTION__, $event);
+		// die();
+		return $event;
+	}
+
+
+	/**
+	 * Convert local date-time to UTC date-time
+	 * 
+	 * @param string $sqldate SQL date-time string
+	 *
+	 * @return string SQL date-time string
+	 */
+	public function toUTCDateTime($sqldate, $debug = false){
+		$timezone = wp_timezone();
+		if( is_a( $sqldate, 'DateTime' ))
+			$sqldate = $sqldate->getTimestamp();
+		else {
+			// if(  $debug ){
+				// debug_log( $sqldate, wp_date( DATE_ATOM, strtotime( $sqldate ) ));
+				// die();
+			// }
+			$dt = new \DateTime($sqldate, $timezone);
+			// debug_log( __FUNCTION__, $dt->getOffset());
+			$sqldate = strtotime( $sqldate );
+			$sqldate -= $dt->getOffset();
+		}
+		return wp_date( DATE_ATOM, $sqldate, $timezone );
+	}
+
+	/**
+	 * Convert local date to UTC date at 23:59
+	 * 
+	 * @param string $sqldate SQL date-time string
+	 *
+	 * @return string SQL date-time string
+	 */
+	public function toUTCMidnight($sqldate){
+		if( is_a( $sqldate, 'DateTime' ))
+			$date = $sqldate;
+		else
+			$date = new \DateTime(wp_date( DATE_ATOM, strtotime( $sqldate ), new \DateTimeZone( 'UTC' ) ));
+		$date = $date->setTime( 23, 59 );
+		return $date->format( DATE_ATOM );
 	}
 }
 ?>
