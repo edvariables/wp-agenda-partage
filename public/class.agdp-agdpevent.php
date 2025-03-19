@@ -885,4 +885,24 @@ class Agdp_Evenement extends Agdp_Post {
 		}
 		return $data;
 	}
+	
+	/**
+	 * has_diffusion_openagenda
+	 */
+	public static function has_diffusion_openagenda( ){
+		
+		$query_args = array(
+			'hide_empty' => false,
+			'taxonomy' => self::get_taxonomies_diffusion(),
+			'meta_key' => 'connexion',
+			'meta_compare' => 'LIKE',
+			'meta_value' => 'openagenda',
+			'fields' => 'slugs',
+		);
+		$terms = get_terms( $query_args );
+		foreach( $terms as $term ){
+			return $term;
+		}
+		return false;
+	}
 }

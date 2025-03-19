@@ -210,7 +210,7 @@ class Publisher {
 		}
 		else {
 			debug_log( __FUNCTION__, $oa_url, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content );
-			var_dump($ch, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content);
+			// var_dump($ch, curl_getinfo($ch, CURLINFO_HTTP_CODE), $received_content);
 		}
 	}
 

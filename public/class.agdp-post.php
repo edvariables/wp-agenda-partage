@@ -613,6 +613,7 @@ abstract class Agdp_Post {
 		if( in_array( $taxonomy, self::get_taxonomies_diffusion() ) ){
 			$meta_names[] = 'default_checked';
 			$meta_names[] = 'download_link';
+			$meta_names[] = 'connexion';
 		}
 		foreach($meta_names as $meta_name){
 			foreach($terms as $term)
@@ -943,7 +944,7 @@ abstract class Agdp_Post {
 		if( ! is_array($tax_inputs) ){
 			$tax_inputs = self::get_post_terms( $taxonomy_diffusion, $post_id, 'ids' );
 			if( is_a($tax_inputs, 'WP_Error') )
-				die( __FUNCTION__ . ' : ' . $taxonomy_diffusion . ' ' . print_r($tax_inputs, true) );
+				die( __FUNCTION__ . ', get_post_terms(' . $taxonomy_diffusion . ') ' . print_r($tax_inputs, true) );
 		}
 			
 		if( is_array($tax_inputs) ){

@@ -305,6 +305,25 @@ class Agdp_Admin_Options {
 					'class' => 'agdp_row',
 				]
 			);
+
+			// 
+			$field_id = 'agdpevent_ev_diffusion_openagenda_publish_events';
+			if( $diffusion_slug = Agdp_Evenement::has_diffusion_openagenda() )
+				add_settings_field(
+					'', 
+					__( 'OpenAgenda', AGDP_TAG ),
+					array(__CLASS__, 'agdp_input_cb'),
+					AGDP_TAG,
+					'agdp_section_agdpevents',
+					[
+						'label' => __('Republier tous les évènements', AGDP_TAG),
+						'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
+						'data' => [ 'term' => $diffusion_slug ],
+						// 'learn-more' => [__( 'L\'importation du document Word (.docx) servant de modèle s\'effectue dans le paramétrage des diffusions des évènements.', AGDP_TAG )],
+						'class' => 'agdp_row',
+						'input_type' => 'ajax_action'
+					]
+				);
 			
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
@@ -758,6 +777,16 @@ class Agdp_Admin_Options {
 				, $value ? 'checked' : ''
 				, $args['label']
 			);
+		} elseif($input_type === 'ajax_action'){
+			// echo sprintf('<label><a id="%s" class="%s" href="%s"> %s</a>'
+				// , esc_attr( $option_id )
+				// , esc_attr( $args['class'] )
+				// , esc_attr( $args['href'] )
+				// , $args['label']
+			// );
+			$ajax_data = empty($args['data']) ? [] : $args['data'];
+			echo Agdp::get_ajax_action_link('', $args['method'], 'update', $args['label'], '', false, $ajax_data);
+			
 		} elseif($input_type) {
 			echo sprintf('<input id="%s" name="%s[%s]" type="%s" class="%s" placeholder="%s" value="%s">'
 				, esc_attr( $option_id )

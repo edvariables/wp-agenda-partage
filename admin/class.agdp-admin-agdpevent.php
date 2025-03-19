@@ -427,5 +427,31 @@ class Agdp_Admin_Evenement {
 			return Agdp::icon('warning', $result->get_error_message());
 		return Agdp::icon('info', sprintf('Le terme "%s" a été ajouté.', $tax_name));
 	}
+	
+	/**
+	 * Republie les événements dans OpenAgenda
+	 *
+	 * cf Agdp_Admin::on_wp_ajax_admin_action_cb
+	 */
+	public static function on_wp_ajax_action_openagenda_publish_events( $data ){
+		$term = $data['term'];
+		$filters = array(
+			'tax_query' => [[
+				'taxonomy' => Agdp_Evenement::taxonomy_diffusion,
+				'operator' => 'IN',
+				'field' => 'slug',
+				'terms' => $term,
+			]],
+			'posts_per_page' => 100,
+			'post_status' => 'publish',
+		);
+		$posts = Agdp_Evenements::get_posts($filters);
+		$events = [];
+		foreach( $posts as $post ){
+			Agdp_Evenement::send_for_diffusion( $post->ID, $term );
+		}
+		$count = count($posts);
+		return Agdp::icon('info', sprintf('Publication de %s évènement(s).', $count));
+	}
 }
 ?>
