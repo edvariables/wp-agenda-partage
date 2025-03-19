@@ -909,42 +909,50 @@ abstract class Agdp_Post {
 	 * Traite les termes ayant un paramètre "connexion",
 	 * par exemple : mailto:evenement.un-autre-site@agenda-partage.fr|from:mon-site@agenda-partage.fr
 	 */
-	public static function send_for_diffusion( $post_id, $taxonomy_diffusion = false, $tax_inputs = false, $previous_tax_inputs = false ){
-		// debug_log('send_for_diffusion', $post_id, $taxonomy_diffusion, $tax_inputs/* , $previous_tax_inputs */ );
+	public static function send_for_diffusion( $post_id, $diffusion_term = false, $tax_inputs = false, $previous_tax_inputs = false ){
+		// debug_log('send_for_diffusion', $post_id, $diffusion_term, $tax_inputs , $previous_tax_inputs );
 		$post_class = self::abstracted_class();
 		
-		if( ! $taxonomy_diffusion
-		 || ( is_string($taxonomy_diffusion)
-			&& ! is_numeric($taxonomy_diffusion) )
+		if( ! $diffusion_term
+		 || ( is_string($diffusion_term)
+			&& ! is_numeric($diffusion_term) )
 		){
-			$tax_name = is_string($taxonomy_diffusion) ? $taxonomy_diffusion : false;
-			$taxonomy_diffusion = $post_class::taxonomy_diffusion;
+			$tax_name = is_string($diffusion_term) ? $diffusion_term : false;
 			$query_args = [
 				'meta_key' => 'connexion',
 				'meta_value' => '',
 				'meta_compare' => '!=',
 			];
 			$terms = self::abstracted_post_type_class()::get_all_diffusions( 'term_id', $query_args );
-			// debug_log('send_for_diffusion  terms ', $taxonomy_diffusion, $terms );
-			foreach( $terms as $term )
+			// debug_log('send_for_diffusion  terms ', $diffusion_term, $terms );
+			foreach( $terms as $term ){
+				if( $diffusion_term
+				 && is_string($diffusion_term)
+				 && ! is_numeric($diffusion_term)
+				 && $term->slug != $diffusion_term
+				 && $term->name != $diffusion_term
+				)
+					continue;
 				static::send_for_diffusion( $post_id, $term, $tax_inputs, $previous_tax_inputs );
+			}
 			return;
-		}
+		} /////////
 		
-		if( is_a($taxonomy_diffusion, 'WP_Term') ){
-			$diffusion_term_id = $taxonomy_diffusion->term_id;
-			$taxonomy_diffusion = $taxonomy_diffusion->taxonomy;
+		if( is_a($diffusion_term, 'WP_Term') ){
+			$diffusion_term_id = $diffusion_term->term_id;
+			$diffusion_term_slug = $diffusion_term->slug;
+			$diffusion_term = $diffusion_term->taxonomy;
 		}
 		else
-			$diffusion_term_id = $taxonomy_diffusion;
+			$diffusion_term_id = $diffusion_term;
 		
 		if( empty($diffusion_term_id ) )
 			return false;
 		
 		if( ! is_array($tax_inputs) ){
-			$tax_inputs = self::get_post_terms( $taxonomy_diffusion, $post_id, 'ids' );
+			$tax_inputs = self::get_post_terms( $diffusion_term, $post_id, 'ids' );
 			if( is_a($tax_inputs, 'WP_Error') )
-				die( __FUNCTION__ . ', get_post_terms(' . $taxonomy_diffusion . ') ' . print_r($tax_inputs, true) );
+				die( __FUNCTION__ . ', get_post_terms(' . $diffusion_term . ') ' . print_r($tax_inputs, true) );
 		}
 			
 		if( is_array($tax_inputs) ){
@@ -959,31 +967,51 @@ abstract class Agdp_Post {
 		}
 		
 		//N'existe ni avant ni après
-		if( is_array($tax_inputs) || is_array($previous_tax_inputs) )
+		if( is_array($tax_inputs) || is_array($previous_tax_inputs) ){
 			if( ! (
 				is_array($tax_inputs) && in_array( $diffusion_term_id, $tax_inputs)
-				|| is_array($previous_tax_inputs) && in_array( $diffusion_term_id, $previous_tax_inputs)
-			) )
+				|| is_array($previous_tax_inputs) 
+					&& ( in_array( $diffusion_term_id, $previous_tax_inputs)
+						|| in_array( $diffusion_term_slug, $previous_tax_inputs) )
+			) ) {
+				// debug_log( __FUNCTION__ , "N'existe ni avant ni après");
 				return false;
+			}
+		}
 		
 		$post_is_deleted = false;
 		$post_status = get_post_status($post_id);
 		
 		if( $post_status !== 'publish' ){
-			if( ! in_array( $diffusion_term_id, $tax_inputs) )
+			if( ! in_array( $diffusion_term_id, $tax_inputs)
+				&& ! ( is_array($previous_tax_inputs) 
+						&& ( in_array( $diffusion_term_id, $previous_tax_inputs)
+							|| in_array( $diffusion_term_slug, $previous_tax_inputs) )
+					)
+			) {
+				// debug_log( __FUNCTION__ , "$post_status !== 'publish'");
 				return false;
+			}
 			$post_is_deleted = true;
 		}
 		//Existait mais n'existe plus
 		elseif( is_array($tax_inputs) && ! in_array( $diffusion_term_id, $tax_inputs) 
-		 && is_array($previous_tax_inputs) && in_array( $diffusion_term_id, $previous_tax_inputs) ){
-			foreach($previous_tax_inputs as $index=>$term)
+		 && is_array($previous_tax_inputs) 
+		 && ( in_array( $diffusion_term_id, $previous_tax_inputs)
+			|| in_array( $diffusion_term_slug, $previous_tax_inputs) )
+		 ){
+			foreach($previous_tax_inputs as $index=>$term){
 				$post_is_deleted = true;
+				break;
+			}
 		}
 		//N'existe pas
 		elseif( is_array($tax_inputs) && ! in_array( $diffusion_term_id, $tax_inputs) ){
+			// debug_log( __FUNCTION__ , "N'existe pas");
 			return false;
 		}
+	
+		// debug_log( __FUNCTION__ , $post_is_deleted  ? "post_is_deleted " : "publish");
 		
 		$term_meta = 'connexion';
 		$connexion = get_term_meta( $diffusion_term_id, $term_meta, true );

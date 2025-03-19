@@ -435,6 +435,7 @@ class Agdp_Admin_Evenement {
 	 */
 	public static function on_wp_ajax_action_openagenda_publish_events( $data ){
 		$term = $data['term'];
+		//publish
 		$filters = array(
 			'tax_query' => [[
 				'taxonomy' => Agdp_Evenement::taxonomy_diffusion,
@@ -443,15 +444,47 @@ class Agdp_Admin_Evenement {
 				'terms' => $term,
 			]],
 			'posts_per_page' => 100,
-			'post_status' => 'publish',
+			'post_status' => 'all',
+			'fields' => 'ids',
 		);
 		$posts = Agdp_Evenements::get_posts($filters);
 		$events = [];
-		foreach( $posts as $post ){
-			Agdp_Evenement::send_for_diffusion( $post->ID, $term );
+		foreach( $posts as $post_id ){
+			Agdp_Evenement::send_for_diffusion( $post_id, $term );
+			$events[] = $post_id;
 		}
-		$count = count($posts);
-		return Agdp::icon('info', sprintf('Publication de %s évènement(s).', $count));
+		$count = count($events);
+		
+		//delete
+		$filters = array(
+			'meta_query' => [
+				'key' => 'openagenda_event_uid',
+				'compare' => '!=',
+				'value' => '',
+			],
+			'tax_query' => [[
+				'taxonomy' => Agdp_Evenement::taxonomy_diffusion,
+				'operator' => 'NOT IN',
+				'field' => 'slug',
+				'terms' => $term,
+			]],
+			'posts_per_page' => 100,
+			'post_status' => 'all',
+			'fields' => 'ids',
+		);
+		$deleted = [];
+		$posts = Agdp_Evenements::get_posts($filters);
+		// debug_log(__FUNCTION__, $posts);
+		foreach( $posts as $post_id ){
+			if( in_array( $post_id, $events ) )
+				continue;
+			Agdp_Evenement::send_for_diffusion( $post_id, $term, [], [$term]);
+			$deleted[] = $post_id;
+		}
+		$count = count($events);
+		
+		return Agdp::icon('info', sprintf('Rafraîchissement de %s évènement(s).%s', count($events), 
+									$deleted ? sprintf(' Suppression de %s évènement(s).', count($deleted)) : ''));
 	}
 }
 ?>
