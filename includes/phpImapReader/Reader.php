@@ -37,7 +37,21 @@ class Reader
      * 
      * @var string
      */
-    public $password;
+    public $password;	
+
+    /**
+	 * The IMAP Encoding
+     *
+     * @var string
+     */
+    public $encoding; 	
+
+    /**
+	 * The IMAP Encoding of content
+     * ED250319
+     * @var string
+     */
+    public $content_encoding; 
 
     /**
      * Save attachment status - should we save attachments.
@@ -122,6 +136,20 @@ class Reader
      * @var string
      */
     public $mailbox = 'INBOX';
+	
+    /**
+     * Defines whether the email should be auto-marked as read.
+     *
+     * @var boolean
+     */
+    public $mark_as_read = false;
+	
+    /**
+     * Defines the attachment directory on disk.
+     *
+     * @var string
+     */
+    public $attachment_dir = null; 
 
     /**
      * Sets the IMAP Reader
@@ -1254,6 +1282,7 @@ class Reader
                     }
                 } else {
                     //$attachment->setAttachmentContent($data);
+                    $attachment->setAttachmentData($data);
                 }
 
                 $email->addAttachment($attachment);

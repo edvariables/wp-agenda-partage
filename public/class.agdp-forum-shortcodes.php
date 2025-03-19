@@ -258,11 +258,10 @@ class Agdp_Forum_Shortcodes {
 					if($val)
 						switch($meta_name){
 							case 'imap_email' :
-								$val = antispambot(esc_html($val), -0.5);
+								$label = $atts['mailto'] === '1' || $atts['mailto'] === true ? antispambot(esc_html($val)) : $atts['mailto'];
+								$val = antispambot(esc_html($val), 1);
 								if( isset($atts['mailto']) && $atts['mailto'] && ($atts['mailto'] !== '0'))
-									$val = sprintf('<a href="mailto:%s">%s</a>', $val,
-										$atts['mailto'] === '1' || $atts['mailto'] === true ? $val : $atts['mailto']
-									);
+									$val = sprintf('<a href="mailto:%s">%s</a>', $val, $label );
 								return $val;
 								break;
 						}

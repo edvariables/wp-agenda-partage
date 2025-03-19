@@ -405,7 +405,7 @@ class Agdp_Covoiturage_Shortcodes {
 							$val = Agdp_Covoiturage::get_phone_html($post_id);
 							break;
 						case 'email' :
-							$val = antispambot(esc_html($val), -0.5);
+							$val = antispambot(esc_html($val));
 							break;
 					}
 				if($val || $content){

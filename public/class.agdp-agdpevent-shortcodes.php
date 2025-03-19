@@ -487,7 +487,7 @@ class Agdp_Evenement_Shortcodes {
 							break;
 						case 'phone' :
 						case 'email' :
-							$val = antispambot(esc_html($val), -0.5);
+							$val = antispambot(esc_html($val));
 							break;
 					}
 				if($val || $content){
