@@ -307,24 +307,31 @@ class Agdp_Admin_Options {
 			);
 
 			// 
-			$field_id = 'agdpevent_ev_diffusion_openagenda_publish_events';
-			if( $diffusion_slug = Agdp_Evenement::has_diffusion_openagenda() )
+			if( $diffusion_slug = Agdp_Evenement::has_diffusion_openagenda() ){
+				$field_id = 'agdpevent_ev_diffusion_openagenda_publish_events';
 				add_settings_field(
 					'', 
 					__( 'OpenAgenda', AGDP_TAG ),
 					array(__CLASS__, 'agdp_input_cb'),
 					AGDP_TAG,
 					'agdp_section_agdpevents',
-					[
-						'label' => __('Republier tous les évènements', AGDP_TAG),
-						'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
-						'data' => [ 'term' => $diffusion_slug ],
-						// 'learn-more' => [__( 'L\'importation du document Word (.docx) servant de modèle s\'effectue dans le paramétrage des diffusions des évènements.', AGDP_TAG )],
-						'class' => 'agdp_row',
-						'input_type' => 'ajax_action'
+					[	[
+							'label' => __('Republier les derniers évènements (48H)', AGDP_TAG),
+							'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
+							'data' => [ 'term' => $diffusion_slug, 'last_updates' => 48 ],
+							'class' => 'agdp_row',
+							'input_type' => 'ajax_action'
+						],
+						[
+							'label' => __('Republier tous les évènements', AGDP_TAG),
+							'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
+							'data' => [ 'term' => $diffusion_slug ],
+							'class' => 'agdp_row',
+							'input_type' => 'ajax_action'
+						]
 					]
 				);
-			
+			}
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
 		add_settings_section(
@@ -759,7 +766,13 @@ class Agdp_Admin_Options {
 	 * Attention, les auteurs de ces pages doivent être administrateurs
 	 * $args['post_type'] doit être fourni
 	 */
-	public static function agdp_input_cb( $args ) {
+	public static function agdp_input_cb( $args, $sub_args_index = 0 ) {
+		if( ! empty($args[0]) && is_array($args) ){
+			foreach( $args as $index => $sub_args )
+				self::agdp_input_cb( $sub_args, $index );
+			return;
+		}
+		
 		if( empty($args['label_for']) )
 			$value = $option_id = false;
 		else {
@@ -778,12 +791,8 @@ class Agdp_Admin_Options {
 				, $args['label']
 			);
 		} elseif($input_type === 'ajax_action'){
-			// echo sprintf('<label><a id="%s" class="%s" href="%s"> %s</a>'
-				// , esc_attr( $option_id )
-				// , esc_attr( $args['class'] )
-				// , esc_attr( $args['href'] )
-				// , $args['label']
-			// );
+			if( $sub_args_index > 0 )
+				echo '<br>';
 			$ajax_data = empty($args['data']) ? [] : $args['data'];
 			echo Agdp::get_ajax_action_link('', $args['method'], 'update', $args['label'], '', false, $ajax_data);
 			
