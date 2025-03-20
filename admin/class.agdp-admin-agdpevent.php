@@ -450,28 +450,27 @@ class Agdp_Admin_Evenement {
 			'order' => 'DESC',
 		);
 		
-		$debug = false;
-		
 		if( ! empty( $data['last_updates'] ) ){
 			$max_modified_date = wp_date('Y-m-d H:i:s', strtotime('-'.$data['last_updates'].' hours'));
 		}
-		else
+		else {
 			$max_modified_date = false;
-				
+		}
 		$posts = Agdp_Evenements::get_posts($filters);
 		$events = [];
 		foreach( $posts as $post_id ){
 			if( $max_modified_date ){
 				$post = get_post( $post_id );
-				if( $max_modified_date < $post->modified )
+				if( $max_modified_date > $post->post_modified ){
 					break;
+				}
 			}
-			if( ! $debug )
-				Agdp_Evenement::send_for_diffusion( $post_id, $term );
+			
+			Agdp_Evenement::send_for_diffusion( $post_id, $term );
 			$events[] = $post_id;
 		}
 		$count = count($events);
-		
+			
 		//delete
 		$filters = array(
 			'meta_query' => [
@@ -497,11 +496,10 @@ class Agdp_Admin_Evenement {
 				continue;
 			if( $max_modified_date ){
 				$post = get_post( $post_id );
-				if( $max_modified_date < $post->modified )
+				if( $max_modified_date > $post->post_modified )
 					break;
 			}
-			if( ! $debug )
-				Agdp_Evenement::send_for_diffusion( $post_id, $term, [], [$term]);
+			Agdp_Evenement::send_for_diffusion( $post_id, $term, [], [$term]);
 			$deleted[] = $post_id;
 		}
 		$count = count($events);
