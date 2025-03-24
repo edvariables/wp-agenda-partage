@@ -1256,7 +1256,7 @@ class Agdp {
 								$icon = 'external';
 								if( isset( $out['connexion'] )
 								 && isset( $out['connexion'] ) ){
-									$title = sprintf('%s (%s: %s)'
+									$title = sprintf('%s <small>(%s: %s)</small>'
 										, $title
 										, $out['connexion']['action']
 										, $out['connexion'][$out['connexion']['action']]
