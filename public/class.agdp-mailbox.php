@@ -533,7 +533,9 @@ class Agdp_Mailbox {
 		foreach( $wpdb->get_results( $sql ) as $dbrow )	{
 			$email = $dbrow->email;
 			$mailbox_domain = $dbrow->mailbox_email ? explode('@', $dbrow->mailbox_email)[1] : $_SERVER['HTTP_HOST'];
-			if( strpos($email, '@') === false )
+			if( ! $email )
+				$email = '';
+			elseif( strpos($email, '@') === false )
 				$email .= '@' . $mailbox_domain;
 			elseif( strpos($email, '@*') !== false )
 				$email = str_replace('@*', '@' . $mailbox_domain );

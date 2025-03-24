@@ -1162,6 +1162,7 @@ class Agdp {
 				
 				$emails = '';
 				foreach( $forum['emails'] as $email ){
+					$email = sprintf('<a href="mailto:%s">%s</a>', $email, $email);
 					if( $emails )
 						$emails .= sprintf('<small><br>    ou %s</small>', $email);
 					else
@@ -1195,11 +1196,19 @@ class Agdp {
 						}
 						if( is_a( $in, 'WP_Post') ){
 							$title = $in->post_title;
+							$href = sprintf('/wp-admin/admin.php?page=%s&post=%s&action=edit'
+								, $in->post_type === 'wpcf7_contact_form' ? 'wpcf7' : $in->post_type
+								, $in->ID
+							);
+							$title = sprintf('<a href="%s">%s</a>'
+								, $href
+								, $title
+							);
 						}
 						else
 							$title = $in;
 						$html .= sprintf('<div rowspan="%d">%s %s</div>'
-							, count( $forum['OUT'] )
+							, count( $forum['IN'] )
 							, Agdp::icon($icon)
 							, $title
 						);
@@ -1214,10 +1223,17 @@ class Agdp {
 						, count($forum['OUT']) ? '1' : '3'
 					);
 					$icon = Agdp_Page::get_icon( $page->ID );
-					$html .= sprintf('<div rowspan="%d" data="ICICIC">%s %s</div>'
-						, count( $forum['IN'] ) * count( $forum['OUT'] )
+					$href = sprintf('/wp-admin/post.php?post=%s&action=edit'
+						, $page->ID
+					);
+					$title = sprintf('<a href="%s">%s %s</a>'
+						, $href
 						, Agdp::icon($icon)
 						, $page->post_title
+					);
+					$html .= sprintf('<div rowspan="%d" data="ICICIC">%s</div>'
+						, count( $forum['IN'] ) * count( $forum['OUT'] )
+						, $title
 					);
 					$html .= sprintf('</td>');
 					
@@ -1254,12 +1270,17 @@ class Agdp {
 									$posts_class = Agdp_Page::get_posts_class( $post_class::post_type );
 									if( $out['id'] == self::get_option($posts_class::newsletter_diffusion_term_id) )
 										continue;//Skip, la newsletter suit
+									$href = sprintf('/wp-admin/term.php?taxonomy=%s&tag_ID=%d&post_type=%s'
+										, $out['name']
+										, $out['id']
+										, $post_class::post_type
+									);
 								}
-								$title = sprintf('<a href="#%s[%s]">%s %s</a>'
-									, $type
-									, $out['id']
+								else
+									$href = '';
+								$title = sprintf('<a href="%s">%s</a>'
+									, $href
 									, $title
-									, Agdp::icon('edit show-mouse-over')
 								);
 							}
 						}
@@ -1278,11 +1299,12 @@ class Agdp {
 							}
 						if( ! $title )
 							if( is_a( $out, 'WP_Post') ){
-								$title = sprintf('<a href="#%s[%s]">%s %s</a>'
-									, $out->post_type
+								$href = sprintf('/wp-admin/post.php?post=%s&action=edit'
 									, $out->ID
+								);
+								$title = sprintf('<a href="%s">%s</a>'
+									, $href
 									, $out->post_title
-									, Agdp::icon('edit show-mouse-over')
 								);
 							}
 							elseif( is_array( $out ) )

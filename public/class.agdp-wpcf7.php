@@ -475,6 +475,12 @@ class Agdp_WPCF7 {
 					$posts[ $post->ID.'' ] = $post;
 			}
 		}
+		
+		$meta_key = 'forum_edit_message_form';
+		if( ( $form_id = get_post_meta( $page->ID, $meta_key, true ) )
+		 && empty( $posts[ $form_id.'' ] ) ){
+			$posts[ $form_id.'' ] = get_post( $form_id );
+		}
 		return $posts;
 	}
 	/**
