@@ -460,8 +460,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					elseif( ! is_array($val) )
 						$val = [$val];
 					foreach( $val as $value){
-						$value = trim($value, "\r\t ");
-						if($value)
+						if( $value
+						 && ($value = trim($value, "\r\t ")) )
 							add_post_meta($post_ID, $name, $value);
 					}
 				}

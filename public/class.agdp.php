@@ -1162,13 +1162,17 @@ class Agdp {
 				
 				$emails = '';
 				foreach( $forum['emails'] as $email ){
+					if( ! $email )
+						continue;
 					$email = sprintf('<a href="mailto:%s">%s</a>', $email, $email);
 					if( $emails )
 						$emails .= sprintf('<small><br>    ou %s</small>', $email);
 					else
 						$emails = $email;
 				}
-				$forum['IN'] = [ 'emails' => $emails ];
+				$forum['IN'] = [];
+				if( $emails )
+					$forum['IN'][ 'emails' ] = $emails;
 				if( isset($forum['forms']) )
 					$forum['IN'] = array_merge($forum['IN'], $forum['forms']);
 				
@@ -1231,7 +1235,7 @@ class Agdp {
 						, Agdp::icon($icon)
 						, $page->post_title
 					);
-					$html .= sprintf('<div rowspan="%d" data="ICICIC">%s</div>'
+					$html .= sprintf('<div rowspan="%d">%s</div>'
 						, count( $forum['IN'] ) * count( $forum['OUT'] )
 						, $title
 					);
@@ -1283,7 +1287,7 @@ class Agdp {
 									, $title
 								);
 							}
-						}
+						} #1 ($string) of type string is deprecated in C:\Arbeit\www\agenda-partage\wp-content\plugins\agenda-partage\admin\class.agdp-admin-edit-post-type.php on line 463
 						if( ! $icon )
 							switch($type){
 								case 'diffusion':
