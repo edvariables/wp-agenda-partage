@@ -251,6 +251,8 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 				
 		$vevent = parent::add_post_to_OpenAgenda($post, $openagenda, $filters, $metas);
 
+		$location = empty($metas['ev-localisation']) ? '' : $metas['ev-localisation'];
+
 		// Add terms
 		$keywords = [];
 		$cities = [];
@@ -260,12 +262,17 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 		] as $node_name => $tax_name){
 			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'all');
 			if($terms){
-				foreach($terms as $term)
+				foreach($terms as $term){
 					$keywords[] = $term->name;
+					if( $location && $location === $term->name )
+						$location = false;
+				}
 				if( $node_name === 'CITIES' )
 					$cities = $terms;
 			}
 		}
+		if( $location )
+			$keywords[] = $location;
 		if( $keywords )
 			$vevent->keywords = [ 'fr' => $keywords ];
 		
