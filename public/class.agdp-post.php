@@ -924,6 +924,7 @@ abstract class Agdp_Post {
 				'meta_compare' => '!=',
 			];
 			$terms = self::abstracted_post_type_class()::get_all_diffusions( 'term_id', $query_args );
+			$diffusion_term = false;
 			// debug_log('send_for_diffusion  terms ', $diffusion_term, $terms );
 			foreach( $terms as $term ){
 				if( $diffusion_term
