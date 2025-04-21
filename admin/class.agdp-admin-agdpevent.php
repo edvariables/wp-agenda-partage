@@ -73,6 +73,18 @@ class Agdp_Admin_Evenement {
 						, $import_refused ? ' - Refusé !' : ''
 					);
 				}
+				
+				if( $post->post_status === 'pending' ){
+					if( current_user_can('moderate_comments')
+					|| (Agdp_Evenement::user_can_change_post($post_id))){
+						$data = [
+							'post_type'=>$post->post_type,
+							'post_id'=>$post->ID
+						];
+						$html = Agdp::get_ajax_action_link(false, 'publish_post', 'add', 'Publier', 'Publier l\'évènement', true, $data);
+						echo $html;
+					}
+				}
 				break;
 			case 'organisateur' :
 				$organisateur = get_post_meta( $post_id, 'ev-organisateur', true );
@@ -408,6 +420,19 @@ class Agdp_Admin_Evenement {
 		echo sprintf('<li><a href="%s">%s...</a></li>', get_home_url( null, 'wp-admin/edit.php?post_type=' . Agdp_Evenement::post_type), __('Tous les évènements', AGDP_TAG));
 		?>
 		</ul><?php
+	}
+	
+	/**
+	 *
+	 *
+	 * cf Agdp_Admin::on_wp_ajax_admin_action_cb
+	 */
+	public static function on_wp_ajax_action_publish_post($data){
+		$post_id = $data['post_id'];
+		$result = Agdp_Evenement::agdpevent_action_publish( $post_id );
+		if( is_wp_error($result) )
+			return Agdp::icon('warning', $result->get_error_message());
+		return $result;
 	}
 	
 	/**
