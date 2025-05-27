@@ -874,6 +874,9 @@ class Agdp {
 			
 			if( self::get_option(AGDP_CONNECT_MENU_ENABLE) ){
 				if(is_user_logged_in()){
+					//TODO CONFLICT avec AIOS et la page de login renommée
+					return $items;
+					
 					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 					$url = wp_login_url($url, true) . '&action=logout';
 					$label = 'Se déconnecter';
