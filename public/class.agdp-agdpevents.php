@@ -81,7 +81,6 @@ class Agdp_Evenements extends Agdp_Posts {
 			
 			'posts_per_page' => self::$default_posts_per_page
 		);
-
 	}
 	
 	/**

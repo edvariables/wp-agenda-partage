@@ -873,13 +873,12 @@ class Agdp {
 		if ( $args->theme_location == 'top' ) {
 			
 			if( self::get_option(AGDP_CONNECT_MENU_ENABLE) ){
-				if(is_user_logged_in()){
-					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-					$url = wp_login_url($url, true) . '&action=logout';
+				$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+				if(is_user_logged_in()){					
+					$url = wp_logout_url($url);
 					$label = 'Se déconnecter';
 				}
 				else{
-					$url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 					$url = wp_login_url($url);
 					$label = 'Se connecter';
 				}
