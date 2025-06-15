@@ -534,7 +534,8 @@ class Agdp_Mailbox {
 			$email = $dbrow->email;
 			$mailbox_domain = $dbrow->mailbox_email ? explode('@', $dbrow->mailbox_email)[1] : $_SERVER['HTTP_HOST'];
 			if( ! $email )
-				$email = '';
+				continue;
+				// $email = '';
 			elseif( strpos($email, '@') === false )
 				$email .= '@' . $mailbox_domain;
 			elseif( strpos($email, '@*') !== false )
