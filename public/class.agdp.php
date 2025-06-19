@@ -954,6 +954,12 @@ class Agdp {
 			$post_types_url[$posts_page->ID.''] = $post_types_url[$post_type] = get_permalink($posts_page);
 		$blog['post_types'] = $post_types;
 		$blog['posts_pages'] = $posts_pages;
+				
+		$blog_forums = [];
+		foreach($forums as $forum_id => $forum){
+			$blog_forums[$forum_id.''] = Agdp_Forum::get_diagram( $blog, $forum );
+		}
+		$blog['forums'] = $blog_forums;
 		
 		$menu_items = false;
 		foreach(get_nav_menu_locations() as $location => $menu_id ){
@@ -962,61 +968,56 @@ class Agdp {
 				break;
 			}
 		}
+		if( $menu_items ){
+			$menu = [];
+			foreach($menu_items as $menu_item){
+				$skip = true;
 				
-		$blog_forums = [];
-		foreach($forums as $forum_id => $forum){
-			$blog_forums[$forum_id.''] = Agdp_Forum::get_diagram( $blog, $forum );
-		}
-		$blog['forums'] = $blog_forums;
-		
-		$menu = [];
-		foreach($menu_items as $menu_item){
-			$skip = true;
-			
-			$page = [
-				'name' => $menu_item->title,
-				'url' => $menu_item->url,
-			];
-			if( $menu_item->object === 'page' ){
-				$page['page_id'] = $menu_item->object_id;
-				if( isset( $forums[ $page['page_id'].'' ] ) ){
-					$skip = false;
-					$page['forum'] = $forums[ $menu_item->object_id.'' ];
-				}
-				if( isset( $posts_pages[$menu_item->object_id] ) ){
-					$posts_page = $posts_pages[$menu_item->object_id]['page'];
-					$posts_type = $posts_pages[$menu_item->object_id]['posts_type'];
-					if( $posts_page->ID == $menu_item->object_id ){
+				$page = [
+					'name' => $menu_item->title,
+					'url' => $menu_item->url,
+				];
+				if( $menu_item->object === 'page' ){
+					$page['page_id'] = $menu_item->object_id;
+					if( isset( $forums[ $page['page_id'].'' ] ) ){
 						$skip = false;
-						$page[$posts_type.'_page'] = $posts_page;
+						$page['forum'] = $forums[ $menu_item->object_id.'' ];
+					}
+					if( isset( $posts_pages[$menu_item->object_id] ) ){
+						$posts_page = $posts_pages[$menu_item->object_id]['page'];
+						$posts_type = $posts_pages[$menu_item->object_id]['posts_type'];
+						if( $posts_page->ID == $menu_item->object_id ){
+							$skip = false;
+							$page[$posts_type.'_page'] = $posts_page;
+						}
+					}
+					elseif( $skip
+					&& $menu_item->menu_item_parent === 0) {
+						$skip = false;
+						$page['page'] = get_post( $menu_item->object_id );
 					}
 				}
-				elseif( $skip
-				&& $menu_item->menu_item_parent === 0) {
-					$skip = false;
-					$page['page'] = get_post( $menu_item->object_id );
-				}
-			}
-			else { //menu "lien personnalisé"
-				$url = $menu_item->url;
-				if( ! $url || substr($url, 0, 4) !== 'http')
-					$url = home_url( $url );
-				$url = (explode('#', $url))[0];
-				foreach($posts_pages as $posts_page_info )
-					if( $posts_page_info['url'] === $url ){
-						$skip = false;
-						$page[$posts_page_info['posts_type'].'_page'] = $posts_page_info['page'];
-						$page['page_id'] = $posts_page_info['page']->ID;
-						break;
+				else { //menu "lien personnalisé"
+					$url = $menu_item->url;
+					if( ! $url || substr($url, 0, 4) !== 'http')
+						$url = home_url( $url );
+					$url = (explode('#', $url))[0];
+					foreach($posts_pages as $posts_page_info )
+						if( $posts_page_info['url'] === $url ){
+							$skip = false;
+							$page[$posts_page_info['posts_type'].'_page'] = $posts_page_info['page'];
+							$page['page_id'] = $posts_page_info['page']->ID;
+							break;
+						}
+					//TODO lien personnalisé vers autre page
+					if( $skip ){
 					}
-				//TODO lien personnalisé vers autre page
-				if( $skip ){
 				}
+				if( ! $skip )
+					$menu[$page['page_id'].''] = $page;
 			}
-			if( ! $skip )
-				$menu[$page['page_id'].''] = $page;
+			$blog['menu'] = $menu;
 		}
-		$blog['menu'] = $menu;
 		
 		$other_pages = [];
 		foreach( Agdp_Page::get_pages() as $page ){

@@ -34,7 +34,7 @@ class Agdp_Admin_Options {
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
 		$section_args = array(
-			'before_section' => '<div class="agdp-tabs-wrap">',
+			'before_section' => '<div class="agdp-tabs-nav">',
 			'after_section' => '</div>'
 		);
 		
@@ -607,7 +607,7 @@ class Agdp_Admin_Options {
 			var $submit = jQuery(this).find('p.submit');
 			var default_tab_name = '<?=$default_tab?>';
 			var default_tab = 0;
-			jQuery(this).find('div.agdp-tabs-wrap > h2').each(function(){
+			jQuery(this).find('div.agdp-tabs-nav > h2').each(function(){
 				tabs_counter++;
 				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
@@ -967,15 +967,17 @@ class Agdp_Admin_Options {
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<form action="options.php" method="post">
-				<?php
-				// output security fields for the registered setting "agendapartage"
-				settings_fields( AGDP_TAG );
-				// output setting sections and their fields
-				// (sections are registered for "agendapartage", each field is registered to a specific section)
-				do_settings_sections( AGDP_TAG );
-				// output save settings button
-				submit_button( __('Enregistrer', AGDP_TAG) );
-				?>
+				<div class="agdp-tabs-wrap">
+					<?php
+					// output security fields for the registered setting "agendapartage"
+					settings_fields( AGDP_TAG );
+					// output setting sections and their fields
+					// (sections are registered for "agendapartage", each field is registered to a specific section)
+					do_settings_sections( AGDP_TAG );
+					// output save settings button
+					submit_button( __('Enregistrer', AGDP_TAG) );
+					?>
+				</div>
 			</form>
 		</div>
 		<?php
