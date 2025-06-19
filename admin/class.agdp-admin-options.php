@@ -1120,10 +1120,10 @@ class Agdp_Admin_Options {
 		if ( ! current_user_can( 'manage_network_plugins' ) ) 
 			die( 'Accès non autorisé' );
 		
-		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>', $cmd );
+		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
 		
 		if( empty($_REQUEST['action']) ){
-			echo sprintf('<h2>Etat courant</h2>', $cmd );
+			echo sprintf('<h2>Etat courant</h2>' );
 			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
 		} else {
 			echo sprintf('<h2>Mise à jour</h2>', $cmd );
