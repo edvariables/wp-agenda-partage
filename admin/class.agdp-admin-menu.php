@@ -48,8 +48,9 @@ class Agdp_Admin_Menu {
 			'dashicons-lightbulb',
 			25
 		);
-
-		if(! current_user_can('manage_options')){
+		
+		$capability = 'manage_options';
+		if(! current_user_can( $capability )){
 
 		    $user = wp_get_current_user();
 		    $roles = ( array ) $user->roles;
@@ -59,7 +60,6 @@ class Agdp_Admin_Menu {
 			}
 		}
 		else {
-			$capability = 'manage_options';
 			
 			//Menu Newsletters
 			$option = 'admin_nl_post_id';

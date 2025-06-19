@@ -963,10 +963,15 @@ class Agdp_Admin_Options {
 
 		// show error/update messages
 		settings_errors( 'agdp_messages' );
+		
+		if( ! empty($_POST[AGDP_TAG]) ){
+			foreach($_POST[AGDP_TAG] as $option=>$value)
+				Agdp::update_option( $option, $value);
+		}
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<form action="options.php" method="post">
+			<form action="<?php echo $_SERVER['REQUEST_URI'];?>" skip-action="options.php" method="post">
 				<div class="agdp-tabs-wrap">
 					<?php
 					// output security fields for the registered setting "agendapartage"
@@ -994,6 +999,7 @@ class Agdp_Admin_Options {
 		  'admin_message_contact_form_id' => 'WPCF7_Contact_Form'
 		, 'newsletter_subscribe_form_id' => 'WPCF7_Contact_Form'
 		, 'events_nl_post_id' => 'agdpnl'
+		, 'covoiturages_nl_post_id' => 'agdpnl'
 		, 'newsletter_subscribe_page_id' => 'page'
 		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
 		, 'contact_page_id' => 'page'
@@ -1002,8 +1008,8 @@ class Agdp_Admin_Options {
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'
-		, 'agdpevents_nl_diffusion_term_id' => 'term'
-		, 'covoiturages_nl_diffusion_term_id' => 'term']
+		, 'agdpevents_nl_diffusion_term_id' => 'term'/* 
+		, 'covoiturages_nl_diffusion_term_id' => 'term' */]
 		as $option_name => $post_type){
 		
 			$option_label = Agdp::get_option_label($option_name);
