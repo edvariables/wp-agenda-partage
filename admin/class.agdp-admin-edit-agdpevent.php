@@ -419,7 +419,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 	}
 	
 	public static function on_wp_terms_checklist_args($args, int $post_id){
-		if($args['taxonomy'] === Agdp_Evenement::taxonomy_diffusion){
+		if( in_array( $args['taxonomy'], [ Agdp_Evenement::taxonomy_city, Agdp_Evenement::taxonomy_diffusion ] )){
 			$meta_name = 'default_checked';
 			$args['selected_cats'] = [];
 			foreach($args['popular_cats'] as $term_id)

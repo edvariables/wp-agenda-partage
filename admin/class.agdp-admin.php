@@ -105,7 +105,11 @@ class Agdp_Admin {
 		if(class_exists('WPCF7_ContactForm')){
 			add_action( 'wpcf7_admin_notices', array( __CLASS__, 'wpcf7_admin_notices' ), 10, 3 ); //edit
 			add_action( 'wpcf7_save_contact_form', array( __CLASS__, 'on_wpcf7_save_contact_form' ), 10, 3 ); //update
-			add_action( 'saved_term', array( __CLASS__, 'on_saved_term_linked_to_wpcf7' ), 10, 5 ); //update
+			
+			foreach( Agdp_Post::get_taxonomies() as $tax_name => $taxonomy){
+				//'saved_term' appends before 'saved_<taxonomy>' and it's not good : see class.agdp-admin-edit-location.php
+				add_action( 'saved_'.$tax_name, array( __CLASS__, 'on_saved_term_linked_to_wpcf7' ), 20, 5 ); //update
+			}
 			add_action( 'deleted_term_taxonomy', array( __CLASS__, 'on_deleted_term_linked_to_wpcf7' ), 10, 1 ); //update
 		}
 		
@@ -452,11 +456,12 @@ class Agdp_Admin {
 	/**
 	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
 	 */
-	public static function on_saved_term_linked_to_wpcf7( $term_id, $tt_id, $taxonomy, $update, $args ){
+	public static function on_saved_term_linked_to_wpcf7( $term_id, $tt_id, $update, $args ){
 		if( $args && ! empty($args['post_type']) )
 			$post_type = $args['post_type'];
-		elseif( $taxonomy ) {
-			if( ! ($taxonomy = get_taxonomy( $taxonomy ))) return;
+		elseif( $args && ! empty($args['taxonomy']) ){
+			if( ! ($taxonomy = get_taxonomy( $args['taxonomy'] )))
+				return;
 			$post_type = $taxonomy->object_type;
 		}
 		else

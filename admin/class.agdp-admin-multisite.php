@@ -69,7 +69,7 @@ class Agdp_Admin_Multisite {
 						$term_metas = get_term_meta($term->term_id, '', true);
 					restore_current_blog();
 					
-					if( $tax_name === Agdp_Evenement::taxonomy_diffusion ){
+					if( in_array( $tax_name, [ Agdp_Evenement::taxonomy_city, Agdp_Evenement::taxonomy_diffusion ] )){
 						
 						//create only "default_checked" terms
 						$meta_name = 'default_checked';

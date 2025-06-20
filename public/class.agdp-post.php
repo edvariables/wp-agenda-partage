@@ -615,6 +615,9 @@ abstract class Agdp_Post {
 			$meta_names[] = 'download_link';
 			$meta_names[] = 'connexion';
 		}
+		elseif( in_array( $taxonomy, self::get_taxonomies_location() ) ){
+			$meta_names[] = 'default_checked';
+		}
 		foreach($meta_names as $meta_name){
 			foreach($terms as $term)
 				$term->$meta_name = get_term_meta($term->term_id, $meta_name, true);
@@ -643,6 +646,14 @@ abstract class Agdp_Post {
 	 * Taxonomies
 	 */
 	public static function get_taxonomies ( $except = false ){
+		if( ! static::post_type ){
+			$taxonomies = [];
+			foreach(self::$post_types as $post_type){
+				$abstracted_class = self::abstracted_class( $post_type );
+				$taxonomies = array_merge( $taxonomies, $abstracted_class::get_taxonomies ( $except ));
+			}
+			return $taxonomies;
+		}
 		return self::abstracted_post_type_class()::get_taxonomies ( $except );
 	}
 	

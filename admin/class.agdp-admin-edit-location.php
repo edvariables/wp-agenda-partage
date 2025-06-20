@@ -21,7 +21,7 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 	public static function init_hooks() {
 		
 		foreach( Agdp_Post::get_taxonomies_location() as $post_type => $taxonomy_location){
-			add_action( 'saved_' . $taxonomy_location , array(__CLASS__, 'saved_term_cb'), 10, 4 );
+			add_action( 'saved_' . $taxonomy_location , array(__CLASS__, 'saved_term_cb'), 10, 4 );//appends after 'saved_term')
 
 			add_action( $taxonomy_location . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
 			add_action( $taxonomy_location . '_edit_form_fields', array( __CLASS__, 'on_edit_form_fields' ), 10, 2); //edit
@@ -77,7 +77,7 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 	public static function get_metabox_all_fields(){}//for abstract
 
 	/**
-	 * Callback lors de l'enregistrement d'un évènement.
+	 * Callback lors de l'enregistrement d'un term.
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
@@ -102,12 +102,10 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 	 * Register Meta Boxes (boite en édition du term)
 	 */
 	public static function on_edit_form_fields( $tag, string $taxonomy ){
-		
-    ?>
-	<tr class="form-field">
-        <th scope="row"><label for="default_checked">Coché par défaut</label></th>
+    $meta_name = 'default_checked';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Coché par défaut</label></th>
         <td><?php
-			$meta_name = 'default_checked';
 			parent::metabox_html([array('name' => $meta_name,
 									'label' => __('Coché par défaut lors de la création d\'un enregistrement.', AGDP_TAG),
 									'type' => 'bool',
@@ -115,11 +113,12 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 								)], $tag, null);
         ?></td>
     </tr>
-	<tr class="form-field">
-        <th scope="row"><label for="latitude">Coord. GPS</label></th>
+	<?php
+	$meta_name = 'latitude';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+		<th scope="row"><label for="<?php echo $meta_name;?>">Coord. GPS</label></th>
         <td><table><tr>
 			<td style="padding: 0px"><?php
-				$meta_name = 'latitude';
 				parent::metabox_html([array('name' => $meta_name,
 										'label' => 'latitude x longitude ',
 										'type' => 'text',
@@ -137,10 +136,11 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 			</tr></table>
 		</td>
     </tr>
-	<tr class="form-field">
-        <th scope="row"><label for="default_location">Localisation par défaut</label></th>
+	<?php
+	$meta_name = 'default_location';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Localisation par défaut</label></th>
         <td><?php
-			$meta_name = 'default_location';
 			parent::metabox_html([array('name' => $meta_name,
 									'label' => __('Localisation par défaut dans l\'Agenda', AGDP_TAG),
 									'type' => 'bool',
@@ -148,10 +148,11 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 								)], $tag, null);
         ?></td>
     </tr>
-	<tr class="form-field">
-        <th scope="row"><label for="external_ids">Paramètres externes</label></th>
+	<?php
+	$meta_name = 'external_ids';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Paramètres externes</label></th>
         <td><?php
-			$meta_name = 'external_ids';
 			$example_ids = '{location_uid}@{agenda_uid}.openagenda';
 			parent::metabox_html([array('name' => $meta_name,
 									// 'label' => __('Paramètres.', AGDP_TAG),
