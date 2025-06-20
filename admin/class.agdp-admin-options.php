@@ -704,8 +704,8 @@ class Agdp_Admin_Options {
 		<div class="toggle-trigger dashicons-before dashicons-welcome-learn-more"><a href="#">Pour configurer un nouveau site, il faut : </a><span class="dashicons-before dashicons-arrow-right"/></div>
 		<div class="toggle-container">
 			<li>Configurer le SMTP (menu Réglages/SMTP).</li>
-			<li>Configurer l'intégration du reCaptcha (menu Contacts / Intégration).</li>
-			<li>Configurer la version du reCaptcha (menu Contacts / reCaptcha version).</li>
+			<li>Configurer l'intégration du reCaptcha (menu Formulaires / Intégration).</li>
+			<li>Configurer la version du reCaptcha (menu Formulaires / reCaptcha version).</li>
 			<li>Saisir les communes du territoire du site (menu Evènements / communes).</li>
 			<li>Contrôler la liste des diffusions (menu Evènements / diffusions). En particulier, que pour "La lettre-info", sélectionner "Coché par défaut lors de la création d'un évènement."</li>
 			<li>Contrôler les options de périodicités de la lettre-info.</li>
@@ -965,8 +965,9 @@ class Agdp_Admin_Options {
 		settings_errors( 'agdp_messages' );
 		
 		if( ! empty($_POST[AGDP_TAG]) ){
+			
 			foreach($_POST[AGDP_TAG] as $option=>$value)
-				Agdp::update_option( $option, $value, false);
+				Agdp::update_option( $option, $value/* //TODO , false*/);
 			Agdp::save_options();
 		}
 		?>
