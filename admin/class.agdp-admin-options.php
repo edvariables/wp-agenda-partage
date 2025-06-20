@@ -966,7 +966,8 @@ class Agdp_Admin_Options {
 		
 		if( ! empty($_POST[AGDP_TAG]) ){
 			foreach($_POST[AGDP_TAG] as $option=>$value)
-				Agdp::update_option( $option, $value);
+				Agdp::update_option( $option, $value, false);
+			Agdp::save_options();
 		}
 		?>
 		<div class="wrap">

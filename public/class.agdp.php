@@ -446,7 +446,15 @@ class Agdp {
 	 */
 	private static function update_options( $options ) {
 		self::$options_cache = $options;
-		return update_option( AGDP_TAG, $options );
+		return self::save_options();
+	}
+
+	/**
+	 * Enregistre la valeur d'un paramétrage.
+	 * Cf Agdp_Admin_Menu
+	 */
+	public static function save_options() {
+		return update_option( AGDP_TAG, self::$options_cache );
 	}
 
 
@@ -475,7 +483,7 @@ class Agdp {
 	 * Enregistre la valeur d'un paramétrage.
 	 * Cf Agdp_Admin_Menu
 	 */
-	public static function update_option( $name, $value ) {
+	public static function update_option( $name, $value, $save_to_db = true ) {
 		$options = get_option( AGDP_TAG );
 		$options = ( false === $options ) ? array() : (array) $options;
 		if( $value === null){
@@ -485,7 +493,10 @@ class Agdp {
 		else
 			$options = array_merge( $options, array( $name => $value ) );
 		
-		$result = self::update_options( $options );
+		if( $save_to_db )
+			$result = self::update_options( $options );
+		else
+			self::$options_cache = $options;
 	}
 		
 	/**
