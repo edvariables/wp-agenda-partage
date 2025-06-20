@@ -34,12 +34,19 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 	}
 	/****************/
 	public static function manage_columns($columns){
+		$columns['default_checked'] = 'Coché par défaut';
 		$columns['default_location'] = 'Localisation par défaut';
 		$columns['properties'] = 'Références externes';
 		return $columns;
 	}
 	public static function manage_custom_columns($content, string $column_name, int $term_id){
 		switch ( $column_name ) {
+			case 'default_checked' :
+				if( get_term_meta( $term_id, $column_name, true ) )
+					echo 'coché';
+				else
+					echo 'non';
+				break;
 			case 'default_location' :
 				if( get_term_meta( $term_id, $column_name, true ) )
 					echo 'Localisation par défaut';
@@ -74,7 +81,7 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		foreach([ 'default_location', 'latitude', 'longitude', 'external_ids' ] as $meta_name)
+		foreach([ 'default_checked', 'default_location', 'latitude', 'longitude', 'external_ids' ] as $meta_name)
 			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
 				if( in_array( $meta_name, ['latitude', 'longitude']) )
 					$args[$meta_name] = str_replace( ',', '.', $args[$meta_name] );
@@ -96,7 +103,19 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function on_edit_form_fields( $tag, string $taxonomy ){
 		
-    ?><tr class="form-field">
+    ?>
+	<tr class="form-field">
+        <th scope="row"><label for="default_checked">Coché par défaut</label></th>
+        <td><?php
+			$meta_name = 'default_checked';
+			parent::metabox_html([array('name' => $meta_name,
+									'label' => __('Coché par défaut lors de la création d\'un enregistrement.', AGDP_TAG),
+									'type' => 'bool',
+									// 'default' => $checked
+								)], $tag, null);
+        ?></td>
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="latitude">Coord. GPS</label></th>
         <td><table><tr>
 			<td style="padding: 0px"><?php
@@ -117,8 +136,8 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 			?></td>
 			</tr></table>
 		</td>
-    </tr><?php
-    ?><tr class="form-field">
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="default_location">Localisation par défaut</label></th>
         <td><?php
 			$meta_name = 'default_location';
@@ -128,8 +147,8 @@ class Agdp_Admin_Edit_Location extends Agdp_Admin_Edit_Post_Type {
 									// 'default' => $checked
 								)], $tag, null);
         ?></td>
-    </tr><?php
-    ?><tr class="form-field">
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="external_ids">Paramètres externes</label></th>
         <td><?php
 			$meta_name = 'external_ids';

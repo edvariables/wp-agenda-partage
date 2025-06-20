@@ -241,8 +241,8 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 									// 'default' => $checked
 								)], $tag, null);
         ?></td>
-    </tr><?php
-    ?><tr class="form-field">
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="connexion">Paramètres de connexion</label></th>
         <td><?php
 			$meta_name = 'connexion';
@@ -303,8 +303,8 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 										. '</code>'
 								)], $tag, null);
         ?></td>
-    </tr><?php
-    ?><tr class="form-field">
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="connexion_pwd">Mot de passe de connexion</label></th>
         <td><?php
 			$meta_name = 'connexion_pwd';
@@ -313,8 +313,8 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 							// 'input' => 'password',
 						)], $tag, null);
         ?></td>
-    </tr><?php
-    ?><tr class="form-field">
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="download_link">Lien en bas de l'agenda</label></th>
         <td><?php
 			$meta_name = 'download_link';
@@ -332,8 +332,8 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 									'values' => $values
 								)], $tag, null);
         ?></td>
-    </tr><?php
-    ?><tr class="form-field">
+    </tr>
+	<tr class="form-field">
         <th scope="row"><label for="download_link"></label></th>
         <td><?php
 			$meta_name = 'download_file_model';
