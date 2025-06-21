@@ -351,8 +351,6 @@ class Agdp_Evenements extends Agdp_Posts {
 				break;
 			}
 		}
-		if( $events_count === 0)
-			return false;
 		
 		$requested_id = array_key_exists(AGDP_ARG_EVENTID, $_GET) ? $_GET[AGDP_ARG_EVENTID] : false;
 		$requested_month = false;
@@ -363,9 +361,23 @@ class Agdp_Evenements extends Agdp_Posts {
 		}
 		
 		$html = sprintf('<div class="agdp-agdpevents agdp-agdpevents-%s">', $options['mode']);
+			
+		if( $events_count === 0){
+			if( $options['mode'] != 'email' ){
+				$filters = self::get_filters();
+				if($filters && count($filters)){
+					$html .= self::get_list_header($requested_month);
+					$html .= '</div><p><i>Aucun résultat à cette recherche</i></p>';
+					$html .= $content;
+					return $html;
+				}
+			}
+			return false;
+		}
+		
 		if( $options['mode'] != 'email')
 			$html .= self::get_list_header($requested_month);
-			
+		
 		$not_empty_month_index = 0;
 		$events_count = 0;
 		
