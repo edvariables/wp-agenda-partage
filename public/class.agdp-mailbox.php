@@ -564,7 +564,8 @@ class Agdp_Mailbox {
 				'moderate' => $dbrow->moderate
 			];
 		}
-		if( ! $destination_filter )
+		if( ! $destination_filter
+			&& $mailbox_id !== false )
 			$dispatches[ $email = AUTO_MAILBOX ] = [
 				'email' => $email,
 				'type' => Agdp_Mailbox::post_type/* 'page' */,
@@ -578,7 +579,7 @@ class Agdp_Mailbox {
 				'moderate' => true
 			];
 		
-		// debug_log('get_emails_dispatch', $sql, $dispatches );
+		debug_log('get_emails_dispatch', $sql, $dispatches );
 		
 		$dispatches = array_merge( $dispatches, static::get_emails_redirections( $mailbox_id ) );
 		return $dispatches;
@@ -681,6 +682,7 @@ class Agdp_Mailbox {
 			else
 				$pages[$page_id.''][] = $dispatch;
 		}
+		// debug_log('get_pages_dispatches $pages', $pages);
 		return $pages;
 	}
 	

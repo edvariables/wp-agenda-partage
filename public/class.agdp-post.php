@@ -138,7 +138,8 @@ abstract class Agdp_Post {
 			else
 				$post_type = static::post_type;
 		$option = $post_type . '_managed';
-		return Agdp::get_option($option, true);
+		// debug_log(__FUNCTION__, $option, Agdp::get_option($option), Agdp::get_option($option, true), Agdp::get_option());
+		return !! Agdp::get_option($option, true);
 	}
 	
 	/**
@@ -741,9 +742,9 @@ abstract class Agdp_Post {
 		//Admin : ok 
 		//TODO check is_admin === interface ou user
 		//TODO user can edit only his own posts
-		if( is_admin() && !wp_doing_ajax()){
-			die("is_admin");
-			return true;
+		if( is_admin() && ! wp_doing_ajax()){
+			// die(__CLASS__ . '::' . __FUNCTION__ . " is_admin");
+			// return true;
 		}		
 		
 		//Session id de création du post identique à la session en cours
@@ -763,13 +764,15 @@ abstract class Agdp_Post {
 		
 		if(is_user_logged_in()){
 			global $current_user;
-			//Rôle autorisé
-			if(	$current_user->has_cap( 'edit_posts' ) ){
-				return true;
-			}
 			
 			//Utilisateur associé
 			if(	$current_user->ID == $post->post_author ){
+				return true;
+			}
+			
+			//Rôle autorisé
+			//TODO Rôles
+			if(	$current_user->has_cap( 'edit_posts' ) ){
 				return true;
 			}
 			

@@ -41,6 +41,9 @@ class Agdp_Covoiturage_Post_type {
 			'filter_items_list'     => __( 'Filtrer la liste des covoiturages', AGDP_TAG ),
 		);
 		$capabilities = self::post_type_capabilities();
+		
+		$is_managed = Agdp_Covoiturage::is_managed();
+			
 		$args = array(
 			'label'                 => __( 'Covoiturage', AGDP_TAG ),
 			'description'           => __( 'Covoiturage de l\'agenda partagé', AGDP_TAG ),
@@ -49,9 +52,9 @@ class Agdp_Covoiturage_Post_type {
 			'taxonomies'            => array( Agdp_Covoiturage::taxonomy_city
 											, Agdp_Covoiturage::taxonomy_diffusion ),
 			'hierarchical'          => false,
-			'public'                => true,
-			'show_ui'               => true,
-			'show_in_menu'          => true,
+			'public'                => $is_managed,
+			'show_ui'               => $is_managed,
+			'show_in_menu'          => $is_managed,
 			'menu_icon'				=> 'dashicons-car',
 			'menu_position'         => 26,
 			'show_in_admin_bar'     => true,

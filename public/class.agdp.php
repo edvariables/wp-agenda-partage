@@ -147,8 +147,9 @@ class Agdp {
 		 || ! DOING_CRON
 		 || ! is_multisite()
 		 || get_current_blog_id() !== BLOG_ID_CURRENT_SITE
-		)
+		){
 			return;
+		}
 		add_action( 'agendapartage-init', array(__CLASS__, 'multisite_spawn_wp_cron' ), 30 );
 	}
 	/**
@@ -163,7 +164,7 @@ class Agdp {
 			 ]);
 			// else //debug
 				// $blogs = get_blogs_of_user( get_current_user_id(), true );
-		$my_delay = (30*1000000)/count($blogs); // 30 microseconds divided by the number of sites
+		$my_delay = (30*1000000)/count($blogs); // 30 seconds divided by the number of sites
 		foreach( $blogs as $blog)
 		{
 			$blog_id = isset($blog->userblog_id) ? $blog->userblog_id : $blog->blog_id;
@@ -176,7 +177,7 @@ class Agdp {
 				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog_id) );
 				self::call_blog_wp_cron( $blog );
 				
-				usleep($my_delay); // sleep the calculated amount of time to spread out the calls over 30 secconds
+				usleep($my_delay); // sleep the calculated amount of time to spread out the calls over 30 seconds
 				
 				// switch_to_blog($blog_id);
 				

@@ -22,13 +22,27 @@ class Agdp_Admin_Options {
 	public static function init_hooks() {
 		
 		global $pagenow;
-		if ( $pagenow === 'admin.php' && isset($_GET['page'])
-		&& in_array($_GET['page'], [AGDP_TAG, AGDP_TAG . '-rights'] )) {
-			add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
-			add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
+		if ( $pagenow === 'admin.php' && isset($_GET['page']) ) {
+			if( in_array( $_GET['page'], [AGDP_TAG, AGDP_TAG . '-rights'] ) ) {
+				add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
+				add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
+				
+				if ( $_POST && isset($_POST['submit']) ) {
+					add_action( 'pre_update_option_' . AGDP_TAG, array(__CLASS__,'on_pre_update_option'), 10, 3 );
+					add_action( 'update_option_' . AGDP_TAG, array(__CLASS__,'on_updated_option'), 10, 3 );
+				}
+				
+			}
 		}
+		
+		
 	}
 
+	/**
+	 * Initialise les champs
+	 *
+	 *	Les cases à cocher doivent être référencées dans save_unchecked_boxes()
+	 **/
 	public static function init_settings(){
 		// register a new setting for "agendapartage" page
 		register_setting( AGDP_TAG, AGDP_TAG );
@@ -635,11 +649,11 @@ class Agdp_Admin_Options {
 		?><script type="text/javascript">
 				jQuery(document).ready(function(){
 					var $form = jQuery('#wpbody-content form:first');
-					var $input = $form.children('input[name="option_page"][value="<?php echo($tag)?>"]:first');
-					if($input.length){
+					// var $input = $form.children('input[name="option_page"][value="<?php echo($tag)?>"]:first');
+					// if($input.length){
 						$form.attr('enctype','multipart/form-data');
 						$form.attr('encoding', 'multipart/form-data');
-					}
+					// }
 				});
 			</script><?php
 	}
@@ -1155,6 +1169,112 @@ class Agdp_Admin_Options {
 			Agdp_Admin_Posts_Import::init();
 		}
 		return Agdp_Admin_Posts_Import::agdp_import_page_html();
+	}
+	
+	/*********
+	 * SUBMIT
+	 ****/
+	 
+	/**
+	* Hook avant mise à jour d'option
+	*/
+	public static function on_pre_update_option( $values, $old_values, $option ) {
+		if( $option !== AGDP_TAG )
+			return;
+		
+		$values = self::submit_unchecked_boxes( $values );
+		
+		//clear confirmation and force a random value to hook update_option
+		foreach(['site_import', 'agdpevent_import_ics'] as $option_key){
+			if(array_key_exists($option_key . '-confirm', $values)){
+				$values[$option_key . '-confirm'] = rand();
+			}
+		}
+		return $values;
+	}
+	
+	/**
+	* Au submit de la pages d'options, contrôle les cases à cocher décochées (qui ne sont pas dans $_POST)
+	*/
+	public static function submit_unchecked_boxes( $values ) {
+		if( empty( $_POST )
+		 || ! isset( $_POST['submit'] )
+		 || ! isset( $_POST[AGDP_TAG] )
+		 || isset( $_POST[AGDP_TAG][ '__' . __FUNCTION__ ] )
+		)
+			return $values;
+		
+		foreach( [
+			'agdpevent_need_validation',
+			'covoiturage_managed',
+			'covoiturage_need_validation',
+			AGDP_CONNECT_MENU_ENABLE,
+			AGDP_MAILLOG_ENABLE,
+			AGDP_DEBUGLOG_ENABLE,
+			
+		] as $option ){
+			
+			if( ! isset( $_POST[ AGDP_TAG ][ $option ] ) )
+				$values[ $option ] = false;
+		}
+		$_POST[AGDP_TAG][ '__' . __FUNCTION__ ] = 'done';
+		return $values;
+	}
+	
+	/**
+	* Hook de mise à jour d'option
+	*/
+	public static function on_updated_option( $old_values, $values, $option ) {
+		if( $option !== AGDP_TAG )
+			return;
+		
+		static $static_updating;
+		if( ! empty($static_updating))
+			return;		
+		$static_updating = true;
+				
+		//Import d'un fichier d'évènements
+		$option_key = 'agdpevent_import_ics';
+		// debug_log( __FUNCTION__, array_key_exists($option_key . '-confirm', $values), $_FILES );
+		if( array_key_exists($option_key . '-confirm', $values) ){
+			if( count($_FILES)
+				&& array_key_exists( AGDP_TAG, $_FILES)
+				&& array_key_exists( 'name', $_FILES[AGDP_TAG])
+				&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
+			){
+				$fileName = $_FILES[AGDP_TAG]['tmp_name'][$option_key];
+				if($fileName){
+					$original_file_name = $_FILES[AGDP_TAG]['name'][$option_key];
+					if(array_key_exists($option_key . '-post_status', $values)){
+						$post_status = $values[$option_key . '-post_status'];
+					}
+					else
+						$post_status = 'publish';
+					if( ! array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
+						Agdp_Admin::set_import_report(sprintf('<div class="error notice"><p><strong>%s</strong></p></div>', 
+								__('Vous n\'avez pas confirmé l\'importation.', AGDP_TAG)));
+						var_dump($_POST);
+					}
+					elseif( $_POST[AGDP_TAG][$option_key . '-confirm'] !== 'done' ){
+						require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts-import.php');
+						require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents-import.php');
+						Agdp_Evenements_Import::import_ics($fileName, $post_status, $original_file_name);
+						$_POST[AGDP_TAG][$option_key . '-confirm'] = 'done';
+					}
+				}
+			}
+		}
+		
+		//Import d'un site
+		$option_key = 'site_import';
+		if( array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])
+		 && $_POST[AGDP_TAG][ $option_key . '-confirm' ] !== 'done' ){
+			$source_id = Agdp::get_option($option_key . '-source');
+			Agdp_Admin_Multisite::import_site($source_id);
+			$_POST[AGDP_TAG][ $option_key . '-confirm' ] = 'done';
+		}
+		
+		$static_updating = false;
 	}
 }
 

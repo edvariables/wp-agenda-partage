@@ -1041,7 +1041,7 @@ class Agdp_Report extends Agdp_Post {
 			$options['_no_table_columns'] = true;
 			$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
 			array_push( $options['_sqls'], $sql );
-			debug_log( __FUNCTION__ . ' get_sql_dbresults ', $dbresults, $sql);
+			// debug_log( __FUNCTION__ . ' get_sql_dbresults ', $dbresults, $sql);
 			if( is_a($dbresults, 'Exception') ){
 				$dbresults = sprintf('%s (%d)<br>%s', $dbresults->getMessage(), 'caption', $sql);
 				return $dbresults;

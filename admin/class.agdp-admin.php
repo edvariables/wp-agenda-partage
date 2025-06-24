@@ -99,9 +99,6 @@ class Agdp_Admin {
 
         add_action( 'admin_notices', array(__CLASS__,'show_admin_notices') );
 		
-		add_action( 'pre_update_option_' . AGDP_TAG, array(__CLASS__,'on_pre_update_option'), 10, 3 );
-		add_action( 'update_option_' . AGDP_TAG, array(__CLASS__,'on_updated_option'), 10, 3 );
-		
 		if(class_exists('WPCF7_ContactForm')){
 			add_action( 'wpcf7_admin_notices', array( __CLASS__, 'wpcf7_admin_notices' ), 10, 3 ); //edit
 			add_action( 'wpcf7_save_contact_form', array( __CLASS__, 'on_wpcf7_save_contact_form' ), 10, 3 ); //update
@@ -232,68 +229,6 @@ class Agdp_Admin {
 		}
 		else
 			wp_admin_notice($message, $attrs);
-	}
-	/**
-	* Hook de mise à jour d'option
-	*/
-	public static function on_updated_option( $old_values, $values, $option ) {
-		if( $option !== AGDP_TAG )
-			return;
-		
-		static $static_updating;
-		if( ! empty($static_updating))
-			return;		
-		$static_updating = true;
-		
-		//Import d'un fichier d'évènements
-		$option_key = 'agdpevent_import_ics';
-		if( array_key_exists($option_key . '-confirm', $values) ){
-			if( count($_FILES)
-				&& array_key_exists( AGDP_TAG, $_FILES)
-				&& array_key_exists( 'name', $_FILES[AGDP_TAG])
-				&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
-			){
-				$fileName = $_FILES[AGDP_TAG]['tmp_name'][$option_key];
-				if($fileName){
-					$original_file_name = $_FILES[AGDP_TAG]['name'][$option_key];
-					if(array_key_exists($option_key . '-post_status', $values)){
-						$post_status = $values[$option_key . '-post_status'];
-					}
-					else
-						$post_status = 'publish';
-					if( ! array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
-						self::set_import_report(sprintf('<div class="error notice"><p><strong>%s</strong></p></div>', 
-								__('Vous n\'avez pas confirmé l\'importation.', AGDP_TAG)));
-						var_dump($_POST);
-					}
-					else{
-						require_once(AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents-import.php');
-						Agdp_Evenements_Import::import_ics($fileName, $post_status, $original_file_name);
-					}
-				}
-			}
-		}
-		
-		//Import d'un site
-		$option_key = 'site_import';
-		if( array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
-			$source_id = Agdp::get_option($option_key . '-source');
-			Agdp_Admin_Multisite::import_site($source_id);
-		}
-		
-		$static_updating = false;
-	}
-	/**
-	* Hook avant mise à jour d'option
-	*/
-	public static function on_pre_update_option( $values, $old_values, $option ) {
-		//clear confirmation and force a random value to hook update_option
-		foreach(['site_import', 'agdpevent_import_ics'] as $option_key){
-			if(array_key_exists($option_key . '-confirm', $values)){
-				$values[$option_key . '-confirm'] = rand();
-			}
-		}
-		return $values;
 	}
 	
 	//import

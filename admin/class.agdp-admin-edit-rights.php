@@ -39,14 +39,25 @@ class Agdp_Admin_Edit_Rights {
 		$publish_all_rights = Agdp_Forum::get_all_rights_labels();
 		$pages = Agdp_Mailbox::get_pages_dispatches();
 		
+		if( ! $pages ){
+			echo '<h3 class="alert">Aucune boîte e-mail n\'est utilisée sur ce site.</h3>';
+			return;
+		}
+		
 		foreach( $pages as $page_id => $dispatches ){
+			if( ! $page_id ){
+				debug_log(__FUNCTION__, $dispatches);
+				continue;
+			}
+				
 			$dispatch = $dispatches[0];
 			$email = $dispatch['email'];
 			$email_esc = str_replace('@', '_', $email);
 			if( is_numeric($page_id) )
 				$page = get_post($page_id);
-			else
+			else{
 				$page = $page_id;
+			}
 			add_settings_section(
 				'page_section_' . $page_id,
 				$page->post_title ,

@@ -32,7 +32,7 @@ class Agdp_Admin_Covoiturage {
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 	}
 	/****************/
-
+	
 	/**
 	 * Liste de covoiturages
 	 */
