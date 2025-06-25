@@ -409,7 +409,7 @@ class Agdp_Mailbox {
 			if( $timestamp && ( $timestamp > time() ) )
 				return;
 		}
-		debug_log( sprintf('[blog %d]%s::%s', get_current_blog_id(), __CLASS__, __FUNCTION__, $if_scheduled ));
+		debug_log_callstack( sprintf('[blog %d]%s::%s', get_current_blog_id(), __CLASS__, __FUNCTION__, $if_scheduled ));
 		self::cron_exec(false);
 	}
 	
