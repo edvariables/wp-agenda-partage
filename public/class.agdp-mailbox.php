@@ -579,7 +579,7 @@ class Agdp_Mailbox {
 				'moderate' => true
 			];
 		
-		debug_log('get_emails_dispatch', $sql, $dispatches );
+		// debug_log('get_emails_dispatch', $sql, $dispatches );
 		
 		$dispatches = array_merge( $dispatches, static::get_emails_redirections( $mailbox_id ) );
 		return $dispatches;
