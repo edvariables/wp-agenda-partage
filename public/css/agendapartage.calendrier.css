@@ -220,3 +220,7 @@ body.colors-dark .agdp-agdpevents-email *, body.colors-dark .aevs-email * {
 	background-color: #FFFFFF;
 	color: #000000 !important;
 }
+
+p.agdpevent-add + p.agdpevent-add {
+	display: none;
+}

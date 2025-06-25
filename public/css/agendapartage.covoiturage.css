@@ -233,3 +233,7 @@ form.is-cov-periodique .if-not-cov-periodique {
 form.is-cov-periodique .if-cov-periodique {
 	display: initial;
 }
+
+p.covoiturage-add + p.covoiturage-add {
+	display: none;
+}

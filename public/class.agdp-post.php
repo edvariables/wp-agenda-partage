@@ -771,7 +771,7 @@ abstract class Agdp_Post {
 			}
 			
 			//Rôle autorisé
-			//TODO Rôles
+			//TODO Rôles 
 			if(	$current_user->has_cap( 'edit_posts' ) ){
 				return true;
 			}
