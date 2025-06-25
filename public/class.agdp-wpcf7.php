@@ -392,7 +392,7 @@ class Agdp_WPCF7 {
 			$contact_form = $submission->get_contact_form();
 			$messages = ($contact_form->get_properties())['messages'];
 		
-			$messages['spam'] = __("Désolé vous avez peut-être été trop rapide. Veuillez essayer à nouveau ou rechargez la page et recommencez.", AGDP_TAG);
+			$messages['spam'] = __("Désolé, vous avez peut-être été trop rapide ou une configuration est manquante (recaptcha?). Veuillez essayer à nouveau ou rechargez la page et recommencez.", AGDP_TAG);
 				
 			$contact_form->set_properties(array('messages' => $messages));
 		}
