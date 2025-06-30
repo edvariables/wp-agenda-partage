@@ -304,12 +304,28 @@ class Agdp_Admin_Options {
 					'input_type' => 'checkbox'
 				]
 			);
+			
+			// 
+			$field_id = 'allow_html_in_' . Agdp_Evenement::post_type;
+			add_settings_field(
+				$field_id, 
+				'Html dans le descriptif',
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				'agdp_section_agdpevents',
+				[
+					'label_for' => $field_id,
+					'label' => 'Autoriser',
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
 
 			// 
 			$field_id = 'agdpevent_ev_diffusion';
 			add_settings_field(
 				$field_id, 
-				__( 'Diffusions', AGDP_TAG ),
+				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
 				'agdp_section_agdpevents',
@@ -462,6 +478,22 @@ class Agdp_Admin_Options {
 									, __( 'Si vous cochez cette option, la saise des covoiturages va se complexifier pour les utilisateurs.', AGDP_TAG )
 									, __( 'Même si cette option n\'est pas cochée, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
 									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
+			
+			// 
+			$field_id = 'allow_html_in_' . Agdp_Covoiturage::post_type;
+			add_settings_field(
+				$field_id, 
+				'Html dans le descriptif',
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				'agdp_section_covoiturages',
+				[
+					'label_for' => $field_id,
+					'label' => 'Autoriser',
 					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
 				]
@@ -1211,6 +1243,8 @@ class Agdp_Admin_Options {
 			AGDP_CONNECT_MENU_ENABLE,
 			AGDP_MAILLOG_ENABLE,
 			AGDP_DEBUGLOG_ENABLE,
+			'allow_html_in_' . Agdp_Evenement::post_type,
+			'allow_html_in_' . Agdp_Covoiturage::post_type,
 			
 		] as $option ){
 			

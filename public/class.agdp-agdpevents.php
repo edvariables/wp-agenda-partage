@@ -701,6 +701,9 @@ class Agdp_Evenements extends Agdp_Posts {
 	public static function get_list_item_html($event, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 		
+		$allow_html_in_content = Agdp::get_option( 'allow_html_in_' . Agdp_Evenement::post_type );
+		debug_log(__FUNCTION__,$allow_html_in_content);
+		
 		if( $event->post_status === 'pending'
 		 && ( $email_mode
 			|| ! current_user_can('moderate_comments') ) )
@@ -766,9 +769,11 @@ class Agdp_Evenements extends Agdp_Posts {
 		
 		
 		$value = $event->post_content;
-		if($value)
-			$html .= sprintf('<pre>%s</pre>', htmlentities($value) );
-		
+		if($value){
+			if( ! $allow_html_in_content )
+				$value = htmlentities($value);
+			$html .= sprintf('<pre>%s</pre>', $value );
+		}
 		$value = get_post_meta($event->ID, 'ev-organisateur', true);
 		if($value){
 			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
