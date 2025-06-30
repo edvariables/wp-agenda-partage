@@ -702,7 +702,6 @@ class Agdp_Evenements extends Agdp_Posts {
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 		
 		$allow_html_in_content = Agdp::get_option( 'allow_html_in_' . Agdp_Evenement::post_type );
-		debug_log(__FUNCTION__,$allow_html_in_content);
 		
 		if( $event->post_status === 'pending'
 		 && ( $email_mode
