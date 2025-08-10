@@ -112,7 +112,7 @@ class Agdp_Evenements extends Agdp_Posts {
 				// ] ]
 				
 				'relation' => 'OR',
-				[ 
+				[ //commence dans cette fin de mois
 					'relation' => 'AND',
 					[ [
 						'key' => 'ev-date-debut',
@@ -126,7 +126,7 @@ class Agdp_Evenements extends Agdp_Posts {
 						'type' => 'DATE',
 					] ],
 				],
-				[ 
+				[ //a déjà commencé et fini ce mois
 					'relation' => 'AND',
 					[ [
 						'key' => 'ev-date-debut',
@@ -144,6 +144,25 @@ class Agdp_Evenements extends Agdp_Posts {
 						'value' => $date_max,
 						'type' => 'DATE',
 					] ],
+				],
+				[ //a déjà commencé et continue le mois suivant
+					'relation' => 'AND',
+					[ [
+						'key' => 'ev-date-debut',
+						'compare' => '>=',
+						'value' => $date_01,
+						'type' => 'DATE',
+					], [
+						'key' => 'ev-date-debut',
+						'compare' => '<',
+						'value' => $date_max,
+						'type' => 'DATE',
+					], [
+						'key' => 'ev-date-fin',
+						'compare' => '>=',
+						'value' => $date_max,
+						'type' => 'DATE',
+					] ],
 				]
 			],
 			'orderby' => [
@@ -154,7 +173,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			
 		);
 		
-		// debug_log(__FUNCTION__, $query, self::get_filters_query(false));
+		debug_log(__FUNCTION__, $query, self::get_filters_query(false));
 		$posts = self::get_posts($query, self::get_filters_query(false));
 		return $posts;
     }

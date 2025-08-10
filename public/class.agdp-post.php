@@ -375,20 +375,22 @@ abstract class Agdp_Post {
 	 */
 	public static function on_redirect_canonical_cb ( $redirect_url, $requested_url ){
 		$query = parse_url($requested_url, PHP_URL_QUERY);
-		parse_str($query, $query);
-		//var_dump($query, $redirect_url, $requested_url);
-		if(isset($query['post_type']) && $query['post_type'] == static::post_type
-		&& isset($query['p']) && $query['p']){
-			$post = get_post($query['p']);
-			if($post){
-				if($post->post_status != 'publish'){
-					// die();
-					return false;
+		if( $query ){
+			// debug_log(__FUNCTION__, $query, $redirect_url, $requested_url);
+			parse_str($query, $query);
+			if(isset($query['post_type']) && $query['post_type'] == static::post_type
+			&& isset($query['p']) && $query['p']){
+				$post = get_post($query['p']);
+				if($post){
+					if($post->post_status != 'publish'){
+						// die();
+						return false;
+					}
+					else{
+						$redirect_url = str_replace('&etat=en-attente', '', $redirect_url);
+					}
+					//TODO nocache_headers();
 				}
-				else{
-					$redirect_url = str_replace('&etat=en-attente', '', $redirect_url);
-				}
-				//TODO nocache_headers();
 			}
 		}
 		return $redirect_url;
