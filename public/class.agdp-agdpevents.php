@@ -173,7 +173,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			
 		);
 		
-		debug_log(__FUNCTION__, $query, self::get_filters_query(false));
+		// debug_log(__FUNCTION__, $query, self::get_filters_query(false));
 		$posts = self::get_posts($query, self::get_filters_query(false));
 		return $posts;
     }
