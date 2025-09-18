@@ -297,3 +297,11 @@ if (typeof uniqid === 'undefined')
 	  if(length) uuid = uuid.substring(0,length);
 	  return uuid;
 	}
+	
+/**
+ * grecaptcha
+ */
+if( ! grecaptcha )
+	grecaptcha = {
+		ready : function(){ return false; },
+	};
