@@ -1180,8 +1180,8 @@ class Agdp_Admin_Options {
 			echo sprintf('<h2>Etat courant</h2>' );
 			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
 		} else {
-			echo sprintf('<h2>Mise à jour</h2>', $cmd );
 			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
+			echo sprintf('<h2>Mise à jour</h2>' );
 		}
 		echo sprintf('<label>%s</label>', $cmd );
 		$result = shell_exec( $cmd );
