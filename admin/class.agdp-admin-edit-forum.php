@@ -277,6 +277,12 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'input' => 'checkbox'
 		];
 		
+		$fields[] = [
+			'name' => AGDP_ENABLE_DUPLICATE_COMMENT,
+			'label' => __('Autoriser les messages du même auteur avec le même titre', AGDP_TAG),
+			'input' => 'checkbox',
+		];
+		
 		//Newsletters
 		foreach( Agdp_Page::get_page_newsletters($post) as $newsletter)
 			$fields[] = [

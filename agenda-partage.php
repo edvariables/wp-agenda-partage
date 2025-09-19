@@ -58,6 +58,7 @@ define( 'AGDP_FORUM_META_PAGE', 'comments-page' );
 define( 'AGDP_IMPORT_UID', 'post-import-uid' ); 
 define( 'AGDP_IMPORT_REFUSED', 'post-import-refused' ); 
 define( 'AGDP_FORUM_GENERIC', 'agdpforum-generic' ); 
+define( 'AGDP_ENABLE_DUPLICATE_COMMENT', 'enable-duplicate-comment' ); 
 
 define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');
 define( 'AGDP_JS_SKIP_FIELD', '_js_skip_field');

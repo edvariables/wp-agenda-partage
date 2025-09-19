@@ -1043,6 +1043,7 @@ class Agdp_Mailbox {
 		if( ! $comment ){
 			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
 			$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
+			$enable_duplicate_comment = Agdp_Forum::get_forum_enable_duplicate_comment($page->ID);
 			
 			$comment_parent = self::find_comment_parent( $page, $message );
 			// var_dump($message);
@@ -1104,11 +1105,17 @@ class Agdp_Mailbox {
 			$has_wp_filter_kses = has_filter( 'pre_comment_content', 'wp_filter_kses' );
 			remove_filter( 'pre_comment_content', 'wp_filter_kses' );
 			
+			if( $enable_duplicate_comment )
+				add_filter( 'duplicate_comment_id', '__return_false' );
+			
 			//wp_new_comment
 			$comment = wp_new_comment($commentdata, true);
 			
 			if( $has_wp_filter_kses )
 				add_filter( 'pre_comment_content', 'wp_filter_kses' );
+			
+			if( $enable_duplicate_comment )
+				remove_filter( 'duplicate_comment_id', '__return_false' );
 			
 			// debug_log(__FUNCTION__, ! is_wp_error($comment), $message, $commentdata['comment_content']);
 			// echo '<pre>'; var_dump($message, $commentdata/* , $comment */);echo '</pre>'; 
@@ -1398,9 +1405,18 @@ class Agdp_Mailbox {
 				$comment = $commentdata['comment_ID'];
 		}
 		else {
+			$enable_duplicate_comment = Agdp_Forum::get_forum_enable_duplicate_comment($page->ID);
+			
+			if( $enable_duplicate_comment )
+				add_filter( 'duplicate_comment_id', '__return_false' );
+			
 			add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+			//wp_new_comment
 			$comment = wp_new_comment($commentdata, true);
 			remove_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+			
+			if( $enable_duplicate_comment )
+				remove_filter( 'duplicate_comment_id', '__return_false' );
 		}
 		if(	is_wp_error( $comment ) ){
 			$message = 'Erreur : ' . $comment->get_error_message();

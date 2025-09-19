@@ -831,6 +831,15 @@ class Agdp_Forum extends Agdp_Page {
 	}
 	
 	/**
+	 * Retourne le paramétrage permettant de dupliquer des commentaires (même titre, même auteur)
+	 */
+	public static function get_forum_enable_duplicate_comment($forum_id){
+		if( is_a($forum_id, 'WP_Post') )
+			$forum_id = $forum_id->ID;
+		return get_post_meta( $forum_id, AGDP_ENABLE_DUPLICATE_COMMENT, true);
+	}
+	
+	/**
 	 * Avant affichage, filtre ou ajoute des commentaires
 	 */
 	public static function on_comments_array($comments, $post_id){
