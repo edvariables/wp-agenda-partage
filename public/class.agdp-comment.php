@@ -352,6 +352,7 @@ class Agdp_Comment {
 				exit;
 			}
 		}
+		
 		return $commentdata;
 	}
 	

@@ -341,6 +341,8 @@ class Agdp_Newsletter {
 			$terms = get_terms( array( 'taxonomy' => self::taxonomy_period, 'hide_empty' => false) );
 		} else {
 			$newsletter = self::get_newsletter($newsletter);
+			if( ! $newsletter )
+				return [];
 			$terms = wp_get_post_terms($newsletter->ID, self::taxonomy_period);
 		
 			if( ! $terms || count($terms) === 0)

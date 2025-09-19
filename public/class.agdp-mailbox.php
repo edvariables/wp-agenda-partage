@@ -1174,7 +1174,7 @@ class Agdp_Mailbox {
 		//L'origine du mail est l'adresse d'envoi de newsletter de ce site
 		$source_email = Agdp_Newsletter::get_mail_sender();
 		if( $user_email === $source_email )
-			return false;
+			return true;
 		
 		// debug_log('user_email_approved', "email_to $email_to");
 		
@@ -1194,7 +1194,6 @@ class Agdp_Mailbox {
 		
 		$comment_approved = Agdp_Forum::get_forum_comment_approved($page, $user, $user_email);
 		
-		// debug_log('user_email_approved', "page_id $page_id", "user_subscription", $user_subscription, "user " . ($user ? $user->name : 'NON'), "comment_approved $comment_approved");
 		
 		return $comment_approved;
 	}
