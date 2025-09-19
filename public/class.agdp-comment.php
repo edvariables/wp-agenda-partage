@@ -493,6 +493,7 @@ class Agdp_Comment {
 				
 				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
 				$url = upload_file_url( $attachment );
+				$file_action = 'Télécharger';
 				switch($extension){
 					case 'png':
 					case 'jpg':
@@ -506,9 +507,12 @@ class Agdp_Comment {
 						if( ! preg_match( $pattern, $comment->comment_content, $matches ) )
 							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url);
 						break;
+					case 'mp3' :
+						$file_action = 'Ecouter';
 					default:
-						$html .= sprintf('<li><a href="%s">%sTélécharger %s</a></li>'
+						$html .= sprintf('<li><a href="%s">%s%s %s</a></li>'
 							, $url
+							, $file_action
 							, '<span class="dashicons-before dashicons-download"></span>'
 							, pathinfo($attachment, PATHINFO_BASENAME));
 						break;
