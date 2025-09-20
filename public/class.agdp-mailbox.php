@@ -1395,15 +1395,21 @@ class Agdp_Mailbox {
 		else
 			$update_comment = false;
 		
+		//attachments
+		self::import_wpcf7_to_comment_attachments($submission, $mailbox_id, $update_comment, $posted_data, $commentdata);
+		
+		//posted_data
 		foreach( $posted_data as $key=>$value )
 			$commentdata['comment_meta']['posted_data_' . $key] = $value;
 		
+		//update comment
 		if( $update_comment ){
 			$commentdata['comment_ID'] = $update_comment;
 			$comment = wp_update_comment($commentdata, true);
 			if( $comment && ! is_wp_error( $comment ) )
 				$comment = $commentdata['comment_ID'];
 		}
+		//add new comment
 		else {
 			$enable_duplicate_comment = Agdp_Forum::get_forum_enable_duplicate_comment($page->ID);
 			
@@ -1411,8 +1417,10 @@ class Agdp_Mailbox {
 				add_filter( 'duplicate_comment_id', '__return_false' );
 			
 			add_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
+			
 			//wp_new_comment
 			$comment = wp_new_comment($commentdata, true);
+			
 			remove_filter('pre_comment_approved', array(__CLASS__, 'on_import_pre_comment_approved'), 10, 2 );
 			
 			if( $enable_duplicate_comment )
@@ -1446,6 +1454,50 @@ class Agdp_Mailbox {
 
 		add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
 	} 
+	/*
+	 * Intégration des fichiers attachés
+	 */
+	private static function import_wpcf7_to_comment_attachments($submission, $mailbox_id, $update_comment, &$posted_data, &$commentdata){
+		$uploaded_files = $submission->uploaded_files();
+		if( $uploaded_files 
+		&& ! empty($uploaded_files['attachments']) ){
+			
+			if( ! class_exists('Agdp_Mailbox_IMAP') )
+				require_once( AGDP_PLUGIN_DIR . "/public/class.agdp-mailbox-imap.php");
+			$uploaded_files = Agdp_Mailbox_IMAP::sanitize_attachments( $uploaded_files );
+			
+			$dest_dir = self::get_attachments_path( $mailbox_id );
+			
+			if( $update_comment ){
+				$files = get_comment_meta($update_comment, 'attachments', false);
+				if( ! $files )
+					$files = [];
+				elseif( ! is_array($files) ){
+					$files = [ $files ];
+				}
+				elseif( count($files) && is_array($files[0]) ){
+					$files = $files[ 0 ];
+				}
+			}
+			else
+				$files = [];
+			
+			foreach( $uploaded_files['attachments'] as $upfile ){
+				$file = path_join( $dest_dir, basename($upfile) );
+				$i = 1;
+				while( file_exists($file) ) {
+					$file = path_join( $dest_dir, pathinfo($upfile, PATHINFO_FILENAME) . ' (' . ($i++) . ').' . pathinfo($upfile, PATHINFO_EXTENSION) );
+				}
+				rename( $upfile, $file );
+				$files[] = $file;
+			}
+			
+			if( isset($posted_data['attachments']) )
+				unset($posted_data['attachments']);
+			$commentdata['comment_meta']['attachments'] = $files;
+			
+		}
+	}
 	
 	/*
 	 * wpcf7_skip_mail callback 

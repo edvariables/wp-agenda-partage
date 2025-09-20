@@ -487,6 +487,10 @@ class Agdp_Comment {
 		$html = '';
 		$attachments = get_comment_meta($comment->comment_ID, 'attachments', true);
 		if($attachments){
+			if( is_string($attachments) )
+				$attachments = [ $attachments ];
+			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
+				$attachments = $attachments[0];
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;
@@ -802,7 +806,13 @@ class Agdp_Comment {
 	public static function on_delete_comment($comment_id, $comment) {
 
 		$attachments = get_comment_meta($comment_id, 'attachments', true);
+		
 		if($attachments){
+			if( is_string($attachments) )
+				$attachments = [ $attachments ];
+			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
+				$attachments = $attachments[0];
+				
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;

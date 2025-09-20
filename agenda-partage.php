@@ -79,6 +79,8 @@ define( 'USER_LEVEL_CONTRIBUTOR', 1 );
 define( 'USER_LEVEL_SUBSCRIBER', 0 ); 
 define( 'USER_LEVEL_NONE', 0 ); 
 
+ini_set('upload_max_filesize', ini_get('post_max_size') );
+
 require_once( AGDP_PLUGIN_DIR . '/includes/functions.php' );
 require_once( AGDP_PLUGIN_DIR . '/public/class.agdp.php' );
 
