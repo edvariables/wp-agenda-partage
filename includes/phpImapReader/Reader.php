@@ -1256,7 +1256,7 @@ class Reader
             }
 
             if ($file_name) {
-                $file_name = $attachment_id . '-' . $file_name;
+                //ED250920 $file_name = $attachment_id . '-' . $file_name;
 
                 $attachment = new EmailAttachment();
                 $attachment->setId($attachment_id);
@@ -1271,6 +1271,11 @@ class Reader
                 }
 
                 if ($this->save_attachments) {
+					$index = 1;
+					while( file_exists( path_join( $this->attachment_dir, $attachment->name() ) ) ){
+						$file_name = pathinfo($file_name, PATHINFO_FILENAME) . '(' . ($index++) . ').' . pathinfo($file_name, PATHINFO_EXTENSION);
+						$attachment->setName($file_name);
+					}
 					$attachment->setFilePath(
                         path_join( $this->attachment_dir, $attachment->name() )
                     );

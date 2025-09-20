@@ -1484,9 +1484,9 @@ class Agdp_Mailbox {
 			
 			foreach( $uploaded_files['attachments'] as $upfile ){
 				$file = path_join( $dest_dir, basename($upfile) );
-				$i = 1;
+				$index = 1;
 				while( file_exists($file) ) {
-					$file = path_join( $dest_dir, pathinfo($upfile, PATHINFO_FILENAME) . ' (' . ($i++) . ').' . pathinfo($upfile, PATHINFO_EXTENSION) );
+					$file = path_join( $dest_dir, pathinfo($upfile, PATHINFO_FILENAME) . '(' . ($index++) . ').' . pathinfo($upfile, PATHINFO_EXTENSION) );
 				}
 				rename( $upfile, $file );
 				$files[] = $file;
