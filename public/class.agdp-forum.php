@@ -294,7 +294,7 @@ class Agdp_Forum extends Agdp_Page {
 	 */
 	public static function on_the_content( $content ) {
 		if( $comment_css = self::get_property('comment_css') ){
-			$content .= '<style>/**ICICIC*/'.  $comment_css . '</style>';
+			$content .= '<style>'.  $comment_css . '</style>';
 		}
 		return $content;
 	}
@@ -391,6 +391,14 @@ class Agdp_Forum extends Agdp_Page {
 		$wp_query->query_vars['orderby'] = 'comment_date_gmt';
 		$wp_query->query_vars['order'] = 'DESC';
 		
+		global $post;
+		$sort_date_field = Agdp_Forum::get_forum_sort_date_field($post);
+		if( $sort_date_field
+		&& $sort_date_field !== 'comment_date_gmt'
+		&& $sort_date_field !== 'comment_date' ){
+			$wp_query->query_vars['orderby'] = $sort_date_field;
+			add_action('comments_clauses', array(__CLASS__, 'on_comments_clauses_add_orderby'), 10, 2);
+		}
 		
 	}
 	
@@ -405,6 +413,7 @@ class Agdp_Forum extends Agdp_Page {
 			// debug_log('on_comments_pre_query parent__in', $comment_data, $wp_query);
 			return;
 		}
+		// debug_log('on_comments_pre_query wp_query', $comment_data, $wp_query);
 	}
 	
 	public static function on_sub_comments_clauses($clauses, $wp_query){
@@ -422,6 +431,20 @@ class Agdp_Forum extends Agdp_Page {
 								. " OR {$blog_prefix}comments.comment_author_email = '{$user_email}'"
 								. " OR meta_is_private.meta_value =  '{$user_email}')";
 		remove_action('comments_clauses', array(__CLASS__, 'on_sub_comments_clauses'), 10, 2);
+		return $clauses;
+	}
+	
+	public static function on_comments_clauses_add_orderby($clauses, $wp_query){
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		
+		$clauses['fields'] .= ', orderby_meta.meta_value AS orderby_meta_value';
+		$clauses['join'] .= " LEFT JOIN {$blog_prefix}commentmeta orderby_meta"
+							. " ON orderby_meta.comment_id = {$blog_prefix}comments.comment_ID"
+							. " AND orderby_meta.meta_key = '" . $wp_query->query_vars['orderby'] . "'";
+		$clauses['orderby'] = 'orderby_meta_value ' . $wp_query->query_vars['order']
+			. ', ' . $clauses['orderby'];
+		remove_action('comments_clauses', array(__CLASS__, __FUNCTION__), 10, 2);
 		return $clauses;
 	}
 	
@@ -837,6 +860,15 @@ class Agdp_Forum extends Agdp_Page {
 		if( is_a($forum_id, 'WP_Post') )
 			$forum_id = $forum_id->ID;
 		return get_post_meta( $forum_id, AGDP_ENABLE_DUPLICATE_COMMENT, true);
+	}
+	
+	/**
+	 * Retourne le champ de date de référence
+	 */
+	public static function get_forum_sort_date_field($forum_id){
+		if( is_a($forum_id, 'WP_Post') )
+			$forum_id = $forum_id->ID;
+		return get_post_meta( $forum_id, AGDP_SORT_DATE_FIELD, true);
 	}
 	
 	/**

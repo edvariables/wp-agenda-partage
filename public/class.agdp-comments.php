@@ -37,6 +37,9 @@ class Agdp_Comments {
 	 * Appelée lors du get_list_html
 	 */
 	public static function init_default_comments_query( $page ) {
+		$sort_date_field = Agdp_Forum::get_forum_sort_date_field($page);
+		if( ! $sort_date_field )
+			$sort_date_field = 'comment_date';
 		
 		self::$default_comments_query = array(
 			'post_id' => $page->ID,
@@ -45,7 +48,7 @@ class Agdp_Comments {
 			'hierarchical' => 'threaded',
 			
 			'orderby' => [
-				'comment_date' => 'DESC'
+				$sort_date_field => 'DESC'
 			],
 			
 			'number' => self::$default_comments_per_page
@@ -121,7 +124,13 @@ class Agdp_Comments {
 		);
 		if( is_array($options) && ! empty($options['orderby']) )
 			$query['orderby'] = $options['orderby'];
-		
+		else {
+			//TODO ?
+			// $sort_date_field = Agdp_Forum::get_forum_sort_date_field($page);
+			// if( ! $sort_date_field )
+				// $sort_date_field = 'comment_date';
+			// $query['orderby'][$sort_date_field] = 'DESC';
+		}
 		$comments = self::get_comments($query);
 		
 		return $comments;
@@ -243,7 +252,10 @@ class Agdp_Comments {
 		$for_email = $options['mode'] == 'email';
 		if( $for_email ){
 			$options['ajax'] = false;
-			$options['orderby']['comment_date'] = 'ASC';
+			$sort_date_field = Agdp_Forum::get_forum_sort_date_field($page);
+			if( ! $sort_date_field )
+				$sort_date_field = 'comment_date';
+			$options['orderby'][$sort_date_field] = 'ASC';
 		}
 		$option_ajax = (bool)$options['ajax'];
 		

@@ -283,6 +283,13 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'input' => 'checkbox',
 		];
 		
+		$fields[] = [
+			'name' => AGDP_SORT_DATE_FIELD,
+			'label' => __('Date de référence', AGDP_TAG),
+			'input' => 'select',
+			'values' => self::get_sort_date_field_values( $post ),
+		];
+		
 		//Newsletters
 		foreach( Agdp_Page::get_page_newsletters($post) as $newsletter)
 			$fields[] = [
@@ -307,7 +314,10 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		];
 		return $fields;
 	}
-		
+	
+	/**
+	 * get_metabox_render_fields
+	 **/
 	public static function get_metabox_render_fields(){
 		global $post;
 		$fields = [];
@@ -533,6 +543,65 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		}
 	}
 	
+	/**
+	 * get_sort_date_field_values
+	 */
+	private static function get_sort_date_field_values( $post ){
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		switch( $post->ID ){
+		//posts
+		case Agdp::get_option('agenda_page_id'):
+			$post_type = Agdp_Evenement::post_type;
+			break;
+		case Agdp::get_option('covoiturages_page_id'):
+			$post_type = Agdp_Covoiturage::post_type;
+			break;
+		//comments
+		default:
+			$post_type = false;
+		}
+		
+		//posts
+		if( $post_type ){
+			$fields = [
+				'' => '(par défaut)',
+				'post_date' => 'post_date',
+				'post_modified' => 'post_modified',
+			];
+			$sql = "SELECT DISTINCT meta_key
+					FROM {$blog_prefix}posts post
+					INNER JOIN {$blog_prefix}postmeta postmeta
+					ON post.ID = postmeta.post_id
+					WHERE post.post_type = '$post_type'
+					AND meta_key LIKE '%date%'
+					ORDER BY meta_key";
+			foreach($wpdb->get_results($sql) as $raw){
+				$meta_key = $raw->meta_key;
+				$label = str_replace('posted_data_', '', $meta_key);
+				$fields[ $meta_key ] = $label;
+			}
+		}
+		//Comments
+		else {
+			$fields = [
+				'comment_date_gmt' => 'comment_date_gmt',
+			];
+			
+			//wpcf7 form
+			$form_id = get_post_meta($post->ID, 'forum_edit_message_form', true);
+			if( $form_id ){
+				$html = get_post_meta($form_id, '_form', true);
+				$matches = [];
+				//extract [date field
+				if( preg_match_all('/\[date\*?\s+(\w+)(\s|\])/', $html, $matches) ){
+					foreach($matches[1] as $index=>$match)
+						$fields['posted_data_' . $match] = $match;
+				}
+			}
+		}
+		return $fields;
+	}
 	
 	/**
 	 * Callback lors de l'enregistrement du post.
