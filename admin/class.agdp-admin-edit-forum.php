@@ -288,6 +288,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 			'label' => __('Date de référence', AGDP_TAG),
 			'input' => 'select',
 			'values' => self::get_sort_date_field_values( $post ),
+			'unit' => ' (champ de date utilisé pour le tri)',
 		];
 		
 		//Newsletters
@@ -585,7 +586,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		//Comments
 		else {
 			$fields = [
-				'comment_date_gmt' => 'comment_date_gmt',
+				'comment_date_gmt' => 'date de modification',
 			];
 			
 			//wpcf7 form
