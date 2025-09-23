@@ -286,9 +286,9 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		$fields[] = [
 			'name' => AGDP_SORT_DATE_FIELD,
 			'label' => __('Date de référence', AGDP_TAG),
-			'input' => 'select',
+			'input' => 'multiselect',
 			'values' => self::get_sort_date_field_values( $post ),
-			'unit' => ' (champ de date utilisé pour le tri)',
+			// 'unit' => ' (champ(s) de date et heure utilisé(s) pour le tri)',
 		];
 		
 		//Newsletters
@@ -575,10 +575,15 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 					INNER JOIN {$blog_prefix}postmeta postmeta
 					ON post.ID = postmeta.post_id
 					WHERE post.post_type = '$post_type'
-					AND meta_key LIKE '%date%'
+					AND ( meta_key LIKE '%date%'
+						OR meta_key LIKE '%hour%'
+						OR meta_key LIKE '%heure%'
+						OR meta_key LIKE '%time%'
+					)
 					ORDER BY meta_key";
 			foreach($wpdb->get_results($sql) as $raw){
 				$meta_key = $raw->meta_key;
+				if( strpos($meta_key, '_oembed_time_') !== false ) continue;
 				$label = str_replace('posted_data_', '', $meta_key);
 				$fields[ $meta_key ] = $label;
 			}
@@ -596,6 +601,11 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 				$matches = [];
 				//extract [date field
 				if( preg_match_all('/\[date\*?\s+(\w+)(\s|\])/', $html, $matches) ){
+					foreach($matches[1] as $index=>$match)
+						$fields['posted_data_' . $match] = $match;
+				}
+				//extract [text time_ field
+				if( preg_match_all('/\[text\*?\s+(\w*(time|hour|heure)\w*)(\s|\])/', $html, $matches) ){
 					foreach($matches[1] as $index=>$match)
 						$fields['posted_data_' . $match] = $match;
 				}

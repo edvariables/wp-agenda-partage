@@ -60,6 +60,15 @@ body.colors-dark .color-red {
 .agdp-metabox-row > input[type="submit"] {
 	width: auto;
 }
+.agdp-metabox-row > .multiselect-wrap {
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 6px;
+	margin-bottom: 4px;
+}
+.agdp-metabox-row > .multiselect-wrap > label {
+	padding-right: 1em;
+}
 .agdp-metabox-row.is_not_admin.admin_only {
 	display: none;
 }

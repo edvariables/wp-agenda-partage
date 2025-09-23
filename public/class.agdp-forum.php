@@ -396,6 +396,8 @@ class Agdp_Forum extends Agdp_Page {
 		if( $sort_date_field
 		&& $sort_date_field !== 'comment_date_gmt'
 		&& $sort_date_field !== 'comment_date' ){
+			if( is_array($sort_date_field) )
+				$sort_date_field = implode(',', $sort_date_field);
 			$wp_query->query_vars['orderby'] = $sort_date_field;
 			add_action('comments_clauses', array(__CLASS__, 'on_comments_clauses_add_orderby'), 10, 2);
 		}
@@ -437,13 +439,29 @@ class Agdp_Forum extends Agdp_Page {
 	public static function on_comments_clauses_add_orderby($clauses, $wp_query){
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
+		$metas_orderby = $wp_query->query_vars['orderby'];
+		debug_log( __FUNCTION__, $metas_orderby );
+		if( ! is_array($metas_orderby) )
+			$metas_orderby = explode(',', $metas_orderby);
+		//$meta_orderby = implode(',', array_map( function($s){ return "'$s'"; }, $meta_orderby ) );
+		debug_log( __FUNCTION__, $metas_orderby );
+		$order = $wp_query->query_vars['order'];
+		$original_orderby = $clauses['orderby'];
+		$clauses['orderby'] = '';
+		foreach($metas_orderby as $index=>$meta_orderby){
+			$clauses['fields'] .= ", orderby_meta_$index.meta_value AS orderby_meta_value_$index";
+			$clauses['join'] .= " LEFT JOIN {$blog_prefix}commentmeta orderby_meta_$index"
+								. " ON orderby_meta_$index.comment_id = {$blog_prefix}comments.comment_ID"
+								. " AND orderby_meta_$index.meta_key = '$meta_orderby'";
+			if( $clauses['orderby'] )
+				$clauses['orderby'] .= ', ';
+			$clauses['orderby'] .= "orderby_meta_value_$index $order";
+		}
+		if( $clauses['orderby'] && $original_orderby )
+				$clauses['orderby'] .= ', ';
+		$clauses['orderby'] .= $original_orderby;
 		
-		$clauses['fields'] .= ', orderby_meta.meta_value AS orderby_meta_value';
-		$clauses['join'] .= " LEFT JOIN {$blog_prefix}commentmeta orderby_meta"
-							. " ON orderby_meta.comment_id = {$blog_prefix}comments.comment_ID"
-							. " AND orderby_meta.meta_key = '" . $wp_query->query_vars['orderby'] . "'";
-		$clauses['orderby'] = 'orderby_meta_value ' . $wp_query->query_vars['order']
-			. ', ' . $clauses['orderby'];
+		debug_log( __FUNCTION__, $clauses['orderby'] );
 		remove_action('comments_clauses', array(__CLASS__, __FUNCTION__), 10, 2);
 		return $clauses;
 	}

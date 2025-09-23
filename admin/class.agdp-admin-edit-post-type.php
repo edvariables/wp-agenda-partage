@@ -256,30 +256,78 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			
 			////////////////
 			case 'select':
-				echo '<select id="'.$id.'"'
-					. ($class ? ' class="'.esc_attr($class).'"' : '') 
-					. ($style ? ' style="'.esc_attr($style).'"' : '') 
-					// . ($val ? ' value="'.esc_attr($val).'"' : '') 
-					.' name="' . $name . '"'
-					. ($readonly ? ' readonly ' : '')
-					. ($input_attributes ? ' '.$input_attributes : '')
-					. '">';
-
+			case 'multiselect':
+			case 'multicheckbox':
 				$values = ! array_key_exists ( 'values', $field ) || ! $field['values'] ? false : $field['values'];
-				if(is_array($values)){
-					$is_associative = is_associative_array($values);
-					foreach($values as $item_key => $item_label){
-						if( is_a($item_label, 'WP_Post') ){
-							$item_key = $item_label->ID;
-							$item_label = $item_label->post_title;
+				if( $input === 'select'
+				 || ( $input === 'multiselect' && is_array($values) && count($values) > 4)
+				){
+					echo '<select id="'.$id.'"'
+						. ($class ? ' class="'.esc_attr($class).'"' : '') 
+						. ($style ? ' style="'.esc_attr($style).'"' : '') 
+						// . ($val ? ' value="'.esc_attr($val).'"' : '') 
+						.' name="' . $name
+							. ($input === 'multiselect' ? '[]' : '')
+							. '"'
+						. ($readonly ? ' readonly ' : '')
+						. ($input === 'multiselect' ? ' multiple ' : '')
+						. ($input_attributes ? ' '.$input_attributes : '')
+						. '">';
+					if(is_array($values)){
+						$is_associative = is_associative_array($values);
+						foreach($values as $item_key => $item_label){
+							if( is_a($item_label, 'WP_Post') ){
+								$item_key = $item_label->ID;
+								$item_label = $item_label->post_title;
+							}
+							elseif( ! $is_associative )
+								$item_key = $item_label;
+							
+							if( is_array($val) )
+								$selected_item = in_array( $item_key, $val ) ? selected( '1', '1', false ) : '';
+							else
+								$selected_item = selected( $val, $item_key, false );
+							
+							echo sprintf('<option %s value="%s">%s</option>', $selected_item, $item_key, htmlentities($item_label));
 						}
-						elseif( ! $is_associative )
-							$item_key = $item_label;
-						echo sprintf('<option %s value="%s">%s</option>', selected( $val, $item_key, false ), $item_key, htmlentities($item_label));
 					}
+					echo '</select>'
+						. (is_array($val) && count($val) ? ' <span>' . implode(', ', $val) . '</span>' : '')
+						. ($unit ? ' <span>' . $unit : '</span>')
+					;
 				}
-				echo '</select>'
-					. ($unit ? ' ' . $unit : '');
+				else { //multicheckbox || multiselect / checkboxes
+					echo '<span id="'.$id.'"'
+						. ' class="multiselect-wrap ' . ($class ? ' '.esc_attr($class) : '') . '"'
+						. ($style ? ' style="'.esc_attr($style).'"' : '') 
+						. '">';
+					if(is_array($values)){
+						$is_associative = is_associative_array($values);
+						foreach($values as $item_key => $item_label){
+							if( is_a($item_label, 'WP_Post') ){
+								$item_key = $item_label->ID;
+								$item_label = $item_label->post_title;
+							}
+							elseif( ! $is_associative )
+								$item_key = $item_label;
+							
+							if( is_array($val) )
+								$selected_item = in_array( $item_key, $val );
+							else
+								$selected_item = selected( $val, $item_key, false );
+							
+							echo sprintf('<label><input type="checkbox" name="%s[]" %s%s%s value="%s">%s</label>'
+								, $name
+								, $selected_item ? ' checked="checked"' : ''
+								, ($readonly ? ' readonly ' : '')
+								, ($input_attributes ? ' '.$input_attributes : '')
+								, $item_key
+								, htmlentities($item_label));
+						}
+					}
+					echo '</span>'
+						. ($unit ? ' <span>' . $unit : '</span>');
+				}
 				break;
 			
 			////////////////
@@ -410,7 +458,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		}
 		else
 			$fields = $parent_field['fields'];
-		// debug_log(__FUNCTION__, $_POST, '', $fields );
+		debug_log(__FUNCTION__, $_POST, '', $fields );
 		foreach ($fields as $field) {
 			if( ! isset($field['type'] ) || $field['type'] !== 'label'){
 				$name = $field['name'];
