@@ -185,7 +185,7 @@ jQuery( function( $ ) {
 			});
 			
 			//Forum comments
-			$("article.use-agdpforum").each(	function(){
+			$("article.use-agdpforum").each( function(){
 				function show_new_comment(id, nonce){
 					var $comment_list = $('#comments .comment-list');
 					if( $comment_list.length === 0)
@@ -237,6 +237,10 @@ jQuery( function( $ ) {
 				}, false );
 				
 			});
+			
+			//input time
+			$('form.wpcf7-form input.input-time').prop('type', 'time');
+			
 		}).trigger('wpcf7_form_fields-init');
 		
 		

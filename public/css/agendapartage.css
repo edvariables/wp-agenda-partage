@@ -265,14 +265,13 @@ div.ajax_action-response {
 	padding: 5px;
 }
 
-input.wpcf7-form-control[name^="ev-date-"],
-input.wpcf7-form-control[name^="cov-date-"],
-input.wpcf7-form-control[name^="msg-date-"] {
+input.wpcf7-form-control[type=date] {
 	width: 11em;
 }
 input.wpcf7-form-control[name^="ev-heure-"],
 input.wpcf7-form-control[name^="cov-heure-"],
-input.wpcf7-form-control[name^="msg-heure-"] {
+input.wpcf7-form-control[name^="msg-heure-"],
+input.wpcf7-form-control[type=time] {
 	width: 5em;
 }
 input.wpcf7-form-control[name="cov-nb-places"] {
