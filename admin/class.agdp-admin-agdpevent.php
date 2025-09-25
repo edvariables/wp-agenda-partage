@@ -20,19 +20,68 @@ class Agdp_Admin_Evenement {
 		add_action( 'admin_head', array(__CLASS__, 'init_post_type_supports'), 10, 4 );
 		add_filter( 'map_meta_cap', array(__CLASS__, 'map_meta_cap'), 10, 4 );
 		
+		//add views
+		//add_filter( 'views_edit-' . Agdp_Evenement::post_type, array( __CLASS__, 'on_get_views' ), 10, 1 );
+		
 		//add custom columns for list view
 		add_filter( 'manage_' . Agdp_Evenement::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
 		add_action( 'manage_' . Agdp_Evenement::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		//set custom columns sortable
 		add_filter( 'manage_edit-' . Agdp_Evenement::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
 		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
-		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Evenement::post_type)
-			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
+		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Evenement::post_type){
+			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'));
+			add_filter( 'manage_posts_extra_tablenav', array( __CLASS__, 'on_manage_posts_extra_tablenav' ), 10, 1 );
+		}
 
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 	}
 	/****************/
+	/**
+	 * Ajout de filtres dans la liste des posts
+	 */
+	public static function on_manage_posts_extra_tablenav( $which ){
+		
+		if ($which !== 'top') 
+			return;
+		
+		echo '<div class="alignleft actions custom-posts-filters">';
+		
+			$selected_filter = isset($_REQUEST['supprimables'] ) ? $_REQUEST['supprimables'] : false;
+			echo sprintf('<label><input type="checkbox" name="supprimables" %s>Supprimables</label>'
+				, $selected_filter ? 'checked="checked"' : ''
+			);
+		
+		echo '</div>';
+	}
 
+	/**
+	 * Vues en titre de liste
+	 */
+	/* public static function on_get_views( $views ){
+		debug_log(__FUNCTION__, $views);
+		
+		$date = (new DateTime())
+		  ->sub(new DateInterval('P2M'))
+		  ->format('Y-m-d');
+		$deletable_args = array(
+			'post_type' => Agdp_Evenement::post_type,
+			'ev-date-fin'    => $date,
+		);
+		$deletable = array(
+			'url'     => esc_url( add_query_arg( $deletable_args, 'edit.php' ) ),
+			'label'   => 'Supprimables',
+			'current' => ! empty( $_REQUEST['ev-date-fin'] ),
+		);
+		$views[] = sprintf(
+				'<a href="%s"%s>%s</a>',
+				esc_url( $deletable['url'] ),
+				isset( $deletable['current'] ) && true === $deletable['current'] ? ' class="current" aria-current="page"' : '',
+				$deletable['label']
+			);
+		return $views;
+	} */
+	
 	/**
 	 * Liste de évènements
 	 */
@@ -139,6 +188,8 @@ class Agdp_Admin_Evenement {
 	 */
 	public static function on_pre_get_posts( $query ) {
 		global $wpdb;
+		if( $query->query['post_type'] !== Agdp_Evenement::post_type )
+			return;
 		if(empty($query->query_vars))
 			return;
 		if( ! empty( $_REQUEST['date_max'] ) ){
@@ -149,6 +200,15 @@ class Agdp_Admin_Evenement {
 			$query->set('meta_compare', '<');  
 			$query->set('meta_value', $_REQUEST['date_max']);  
 		}
+		//TODO relou
+		// if( ! empty( $_REQUEST['supprimables'] ) ){
+			// $date = (new DateTime())
+			  // ->sub(new DateInterval('P2M'))
+			  // ->format('Y-m-d');
+			// $query->query_vars['meta_key'] = 'ev-date-fin';  
+			// $query->query_vars['meta_compare'] = '<';
+			// $query->query_vars['meta_value'] = $date;  
+		// }
 		
 		if( ! empty($query->query_vars['orderby']) ){
 			switch( $query->query_vars['orderby']) {
@@ -162,6 +222,7 @@ class Agdp_Admin_Evenement {
 					break;
 			}
 		}
+			// debug_log(__FUNCTION__, $query);
 	}
 	/****************/
 

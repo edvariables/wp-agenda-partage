@@ -364,6 +364,8 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 		
 		if( ! copy($filename, $new_file) )
 			return false;
+		
+		chmod( $new_file, 644 );
 	}
 	else
 		$new_file = $filename;
