@@ -440,11 +440,11 @@ class Agdp_Forum extends Agdp_Page {
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$metas_orderby = $wp_query->query_vars['orderby'];
-		debug_log( __FUNCTION__, $metas_orderby );
+		// debug_log( __FUNCTION__, $metas_orderby );
 		if( ! is_array($metas_orderby) )
 			$metas_orderby = explode(',', $metas_orderby);
 		//$meta_orderby = implode(',', array_map( function($s){ return "'$s'"; }, $meta_orderby ) );
-		debug_log( __FUNCTION__, $metas_orderby );
+		// debug_log( __FUNCTION__, $metas_orderby );
 		$order = $wp_query->query_vars['order'];
 		$original_orderby = $clauses['orderby'];
 		$clauses['orderby'] = '';
@@ -461,7 +461,7 @@ class Agdp_Forum extends Agdp_Page {
 				$clauses['orderby'] .= ', ';
 		$clauses['orderby'] .= $original_orderby;
 		
-		debug_log( __FUNCTION__, $clauses['orderby'] );
+		// debug_log( __FUNCTION__, $clauses['orderby'] );
 		remove_action('comments_clauses', array(__CLASS__, __FUNCTION__), 10, 2);
 		return $clauses;
 	}
