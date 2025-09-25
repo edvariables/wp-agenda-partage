@@ -307,7 +307,11 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 			$use_exif = true;
 			break;
 		default:
-			return $filename;
+			$source = false;
+	}
+	
+	if( ! $source ){
+		return $filename;
 	}
 	
 	// Calcul des nouvelles dimensions
@@ -321,19 +325,21 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 		if( ! empty($exif['Orientation'])) {
 			switch($exif['Orientation']) {
 				case 8:
-					$source = imagerotate($source,90,0);
+					$tmp_source = imagerotate($source,90,0);
 					$width = $size[1];
 					$height = $size[0];
 					break;
 				case 3:
-					$source = imagerotate($source,180,0);
+					$tmp_source = imagerotate($source,180,0);
 					break;
 				case 6:
-					$source = imagerotate($source,-90,0);
+					$tmp_source = imagerotate($source,-90,0);
 					$width = $size[1];
 					$height = $size[0];
 					break;
 			}
+			if( $tmp_source )
+				$source = $tmp_source;
 		}
 	}
 
@@ -365,10 +371,11 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 		if( ! copy($filename, $new_file) )
 			return false;
 		
-		chmod( $new_file, 644 );
 	}
 	else
 		$new_file = $filename;
+	
+	chmod( $new_file, 0644 );
 
 	// Chargement
 	$thumb = imagecreatetruecolor($new_width, $new_height);

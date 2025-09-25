@@ -222,6 +222,8 @@ class Agdp_Mailbox_IMAP {
 			
 			$filename = image_reduce($filename, AGDP_IMG_MAX_WIDTH, AGDP_IMG_MAX_HEIGHT, false );
 			
+			chmod( $filename, 0644 );
+			
 			//Remplace les sources des balises img
 			if( ! empty($message['text_html']) ){
 				$text_html = $message['text_html'];
