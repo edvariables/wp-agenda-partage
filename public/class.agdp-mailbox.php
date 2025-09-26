@@ -1134,10 +1134,29 @@ class Agdp_Mailbox {
 							? sprintf('Duplication %s : "%s"', $user_email, $commentdata['comment_meta']['title'])
 							: print_r($comment, true));
 			}
+			else
+				self::import_comment_set_default_date( $comment, $page->ID );
 			
 		}
 		
 		return $comment;
+	}
+	
+	
+	/********************
+	 * Posts
+	 */
+	//Cherche un message déjà importé
+	private static function import_comment_set_default_date( $comment_id, $forum_id ){
+		$date_field = Agdp_Forum::get_forum_sort_date_field($forum_id);
+		if( ! $date_field )
+			return;
+		if( is_string($date_field) && strpos( $date_field, ',') != false )
+			$date_field = explode(',', $date_field);
+		if( is_array($date_field) )
+			$date_field = $date_field[0];
+		if( $date_field && ! get_comment_meta( $comment_id, $date_field, true ) )
+			update_comment_meta( $comment_id, $date_field, date('Y-m-d') );
 	}
 	
 	
