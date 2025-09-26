@@ -548,6 +548,8 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 	 * get_sort_date_field_values
 	 */
 	private static function get_sort_date_field_values( $post ){
+		if( ! $post )
+			return;
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		switch( $post->ID ){
