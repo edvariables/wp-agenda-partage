@@ -458,7 +458,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		}
 		else
 			$fields = $parent_field['fields'];
-		debug_log(__FUNCTION__, $_POST, '', $fields );
+		// debug_log(__FUNCTION__, $_POST, '', $fields );
 		foreach ($fields as $field) {
 			if( ! isset($field['type'] ) || $field['type'] !== 'label'){
 				$name = $field['name'];

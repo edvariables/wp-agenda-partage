@@ -177,7 +177,7 @@ class Agdp {
 				debug_log(sprintf('%s > blog %s#%d', __FUNCTION__, $blog->blogname, $blog_id) );
 				self::call_blog_wp_cron( $blog );
 				
-				usleep($my_delay); // sleep the calculated amount of time to spread out the calls over 30 seconds
+				usleep(intval($my_delay)); // sleep the calculated amount of time to spread out the calls over 30 seconds
 				
 				// switch_to_blog($blog_id);
 				
