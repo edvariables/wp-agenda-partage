@@ -133,6 +133,10 @@ class Agdp {
 		add_filter( 'wp_nav_menu_items', array(__CLASS__, 'register_custom_menus' ), 10, 2 );
 		
 		add_action( 'agendapartage-init', array(__CLASS__, 'do_action_on_queried_object' ), 20 );
+		
+		
+		if( self::get_option('disable_sitemaps') )
+			add_filter(  'wp_sitemaps_enabled', '__return_false' );
 	}
 	
 	/**
@@ -431,6 +435,9 @@ class Agdp {
 				
 			case 'forums_parent_id':
 				return __( 'Page parente des forums', AGDP_TAG );
+				
+			case 'disable_sitemaps':
+				return __( 'Désactivation des sitemaps', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}

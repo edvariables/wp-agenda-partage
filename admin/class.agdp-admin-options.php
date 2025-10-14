@@ -585,6 +585,23 @@ class Agdp_Admin_Options {
 				]
 			);
 
+			// 
+			$field_id = 'disable_sitemaps';
+			add_settings_field(
+				$field_id, 
+				__( 'Désactivation des sitemaps', AGDP_TAG ),
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				'agdp_section_security',
+				[
+					'label_for' => $field_id,
+					'label' => __( 'Désactiver', AGDP_TAG ),
+					'learn-more' => ['Les sitemaps sont utilisés par les robots.', 'La désactivation peut limiter les atteintes au site mais limite le référencement.'],
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
+
 		// register a new section in the "agendapartage" page
 		add_settings_section(
 			'agdp_section_agdpevents_import',
