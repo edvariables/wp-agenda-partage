@@ -83,7 +83,9 @@ class Agdp_Evenement extends Agdp_Post {
 		[agdpevent-description]
 		[agdpevent info="organisateur" label="Organisateur : "][agdpevent-cree-depuis][/agdpevent]
 		[agdpevent info="phone" label="Téléphone : "]
-		[agdpevent info="siteweb"]';
+		[agdpevent info="siteweb"]
+		[agdpevent info="attachments"]
+		';
 		if( Agdp_Evenement_Post_type::is_diffusion_managed() )
 			$html .='[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
 		

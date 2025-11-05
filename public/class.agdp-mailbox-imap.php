@@ -190,10 +190,11 @@ class Agdp_Mailbox_IMAP {
 	/**
 	 * Fait le ménage dans les fichiers attachés
 	 */
-	public static function sanitize_attachments( $message ){
-		$attachments = $message['attachments'];
-		if( ! $attachments || count($attachments) === 0 )
+	public static function sanitize_attachments( $message, $property = 'attachments' ){
+		if( empty($message[$property]) ){
 			return $message;
+		}
+		$attachments = $message[$property];
 			
 		$files = [];
 		foreach($attachments as $attachment){
@@ -236,7 +237,7 @@ class Agdp_Mailbox_IMAP {
 			$files[] = $filename;
 			
 		}
-		$message['attachments'] = $files;
+		$message[$property] = $files;
 		return $message;
 	}
 

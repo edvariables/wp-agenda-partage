@@ -696,7 +696,12 @@ class Agdp_Mailbox {
 		// if( is_multisite())
 			// $mailbox_dirname .= '/sites/' . get_current_blog_id();
 		
-		$mailbox_dirname .= sprintf('/%s/%d/%d/%d/', self::post_type, $mailbox_id, date('Y'), date('m'));
+		if( ! $mailbox_id )
+			$mailbox_id = 0;
+		if( is_numeric($mailbox_id) )
+			$mailbox_dirname .= sprintf('/%s/%s/%d/%d/', self::post_type, $mailbox_id, date('Y'), date('m'));
+		else
+			$mailbox_dirname .= sprintf('/%s/%d/%d/', $mailbox_id, date('Y'), date('m'));
 		
 		if ( ! file_exists( $mailbox_dirname ) ) {
 			wp_mkdir_p( $mailbox_dirname );
@@ -1473,22 +1478,23 @@ class Agdp_Mailbox {
 
 		add_filter('wpcf7_skip_mail', array(__CLASS__, 'wpcf7_skip_mail_forced'), 10, 2);
 	} 
+	
 	/*
 	 * Intégration des fichiers attachés
 	 */
-	private static function import_wpcf7_to_comment_attachments($submission, $mailbox_id, $update_comment, &$posted_data, &$commentdata){
+	private static function import_wpcf7_to_comment_attachments($submission, $mailbox_id, $is_update, &$posted_data, &$commentdata){
 		$uploaded_files = $submission->uploaded_files();
 		if( $uploaded_files 
-		&& ! empty($uploaded_files['attachments']) ){
+		&& ! empty($uploaded_files['attachment_add']) ){
 			
 			if( ! class_exists('Agdp_Mailbox_IMAP') )
 				require_once( AGDP_PLUGIN_DIR . "/public/class.agdp-mailbox-imap.php");
-			$uploaded_files = Agdp_Mailbox_IMAP::sanitize_attachments( $uploaded_files );
+			$uploaded_files = Agdp_Mailbox_IMAP::sanitize_attachments( $uploaded_files, 'attachment_add' );
 			
 			$dest_dir = self::get_attachments_path( $mailbox_id );
 			
-			if( $update_comment ){
-				$files = get_comment_meta($update_comment, 'attachments', false);
+			if( $is_update ){
+				$files = get_comment_meta($is_update, 'attachments', false);
 				if( ! $files )
 					$files = [];
 				elseif( ! is_array($files) ){
@@ -1501,7 +1507,7 @@ class Agdp_Mailbox {
 			else
 				$files = [];
 			
-			foreach( $uploaded_files['attachments'] as $upfile ){
+			foreach( $uploaded_files['attachment_add'] as $upfile ){
 				$file = path_join( $dest_dir, basename($upfile) );
 				$index = 1;
 				while( file_exists($file) ) {
@@ -1511,11 +1517,67 @@ class Agdp_Mailbox {
 				$files[] = $file;
 			}
 			
+			if( isset($posted_data['attachment_add']) )
+				unset($posted_data['attachment_add']);
 			if( isset($posted_data['attachments']) )
 				unset($posted_data['attachments']);
 			$commentdata['comment_meta']['attachments'] = $files;
 			
 		}
+	}
+	
+	/*
+	 * Intégration des fichiers attachés dans les évènements
+	 */
+	public static function import_wpcf7_save_post_type_attachments($submission, $post_type, $post_id, $is_update){
+		$uploaded_files = $submission->uploaded_files();
+		if( $uploaded_files 
+		&& ! empty($uploaded_files['attachment_add']) ){
+			
+			if( ! class_exists('Agdp_Mailbox_IMAP') )
+				require_once( AGDP_PLUGIN_DIR . "/public/class.agdp-mailbox-imap.php");
+			$uploaded_files = Agdp_Mailbox_IMAP::sanitize_attachments( $uploaded_files, 'attachment_add' );
+			
+			$dest_dir = self::get_attachments_path( $post_type );
+			
+			if( $is_update ){
+				$files = get_post_meta($post_id, 'attachments', false);
+				if( ! $files )
+					$files = [];
+				elseif( ! is_array($files) ){
+					$files = [ $files ];
+				}
+				elseif( count($files) && is_array($files[0]) ){
+					$files = $files[ 0 ];
+				}
+			}
+			else
+				$files = [];
+			
+			foreach( $uploaded_files['attachment_add'] as $upfile ){
+				$file = path_join( $dest_dir, basename($upfile) );
+				$index = 1;
+				while( file_exists($file) ) {
+					$file = path_join( $dest_dir, pathinfo($upfile, PATHINFO_FILENAME) . '(' . ($index++) . ').' . pathinfo($upfile, PATHINFO_EXTENSION) );
+				}
+				rename( $upfile, $file );
+				$files[] = $file;
+			}
+			update_post_meta( $post_id, 'attachments', $files );
+			
+		}		
+	}
+	
+	/*
+	 * format attachments to be managed
+	 */
+	public static function get_attachments_manageable( $attachments ){ 
+		// if( ! $attachments )
+			return json_encode($attachments);
+		$data = [];
+		foreach($attachments as $index => $attachment )
+			$data[] = [ 'file' => $attachment ];
+		return $data;
 	}
 	
 	/*

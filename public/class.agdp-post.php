@@ -1445,4 +1445,53 @@ abstract class Agdp_Post {
 		return $html;
 	}
 
+	
+	/**
+	 * Affichage des attachments
+	 */
+	public static function get_attachments_links($post){
+				
+		$html = '';
+		$attachments = get_post_meta($post->ID, 'attachments', true);
+		if($attachments){
+			if( is_string($attachments) )
+				$attachments = [ $attachments ];
+			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
+				$attachments = $attachments[0];
+			foreach($attachments as $attachment){
+				if( ! file_exists($attachment) )
+					continue;
+				
+				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
+				$url = upload_file_url( $attachment );
+				$file_action = 'Télécharger';
+				switch($extension){
+					case 'png':
+					case 'jpg':
+					case 'jpeg':
+					case 'bmp':
+					case 'tiff':
+						//Vérifie que l'image n'est pas déjà intégré dans le message
+						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
+						// debug_log( __FUNCTION__, $url, $pattern, $post->post_content);
+						$matches = [];
+						if( ! preg_match( $pattern, $post->post_content, $matches ) )
+							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url);
+						break;
+					case 'mp3' :
+						$file_action = 'Ecouter';
+					default:
+						$html .= sprintf('<li><a href="%s">%s%s %s</a></li>'
+							, $url
+							, $file_action
+							, '<span class="dashicons-before dashicons-download"></span>'
+							, pathinfo($attachment, PATHINFO_BASENAME));
+						break;
+				}
+			}
+			if( $html )
+				$html = '<ul class="attachments">' . $html . '</ul>';
+		}
+		return $html;
+	}
 }

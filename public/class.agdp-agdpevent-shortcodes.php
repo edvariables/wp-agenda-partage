@@ -48,6 +48,7 @@ class Agdp_Evenement_Shortcodes {
 		add_shortcode( 'agdpevent-localisation', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-is-imported', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-details', array(__CLASS__, 'shortcodes_callback') );
+		add_shortcode( 'agdpevent-attachments', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-message-contact', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent', array(__CLASS__, 'shortcodes_callback') );
 		add_shortcode( 'agdpevent-avec-email', array(__CLASS__, 'shortcodes_callback') );
@@ -224,11 +225,12 @@ class Agdp_Evenement_Shortcodes {
 	}
 	
 	/**
-	* [agdpevent info=titre|description|dates|localisation|details|message-contact|modifier-evenement]
+	* [agdpevent info=titre|description|dates|localisation|details|message-contact|modifier-evenement|attachments]
 	* [agdpevent-titre]
 	* [agdpevent-description]
 	* [agdpevent-dates]
 	* [agdpevent-localisation]
+	* [agdpevent-attachments]
 	* [agdpevent-details]
 	* [agdpevent-message-contact]
 	* [agdpevent-avec-email]
@@ -256,7 +258,9 @@ class Agdp_Evenement_Shortcodes {
 		if($shortcode == 'agdpevent'
 		&& count($atts) > 0){
 			
-			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-evenement', 'is-imported', 'details', 'categories'];
+			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact'
+							, 'modifier-evenement', 'is-imported', 'details', 'categories'
+							, 'attachments'];
 			if(array_key_exists('info', $atts)
 			&& in_array($atts['info'], $specificInfos))
 				$shortcode .= '-' . $atts['info'];
@@ -410,6 +414,10 @@ class Agdp_Evenement_Shortcodes {
 			case 'agdpevent-covoiturage':
 
 				return Agdp_Evenement::get_agdpevent_covoiturage();
+
+			case 'agdpevent-attachments':
+				
+				return Agdp_Post::get_attachments_links( $post );
 
 			case 'agdpevent-details':
 

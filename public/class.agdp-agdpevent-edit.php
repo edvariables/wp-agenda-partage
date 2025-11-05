@@ -364,10 +364,13 @@ class Agdp_Evenement_Edit {
 			];
 			$html .= sprintf('<br>Vous connaissez le code secret de cet évènement :&nbsp;'
 				. '<form class="agdp-ajax-action" data="%s">'
-				. wp_nonce_field(AGDP_TAG . '-' . AGDP_EVENT_SECRETCODE, AGDP_TAG . '-' . AGDP_EVENT_SECRETCODE, true, false)
-				.'<input type="text" placeholder="ici le code" name="'.AGDP_EVENT_SECRETCODE.'" size="7"/>
+				. '%s'
+				.'<input type="text" placeholder="ici le code" name="%s" size="7"/>
 				<input type="submit" value="Valider" /></form>'
-					, esc_attr(json_encode($query)));
+					, esc_attr(json_encode($query))
+					, wp_nonce_field(AGDP_TAG . '-' . AGDP_EVENT_SECRETCODE, AGDP_TAG . '-' . AGDP_EVENT_SECRETCODE, true, false)
+					, AGDP_EVENT_SECRETCODE
+				);
 			$html .= '</li>';
 			
 			$html .= '<li>utiliser la même session internet qu\'à la création de l\'évènement et, ce, le même jour.';
@@ -745,6 +748,8 @@ class Agdp_Evenement_Edit {
 		
 		if( ! $error_message){
 			
+			$post_id = false;
+			
 			if( $post_is_new = ! $post){
 					
 				if(is_user_logged_in()){
@@ -818,6 +823,10 @@ class Agdp_Evenement_Edit {
 				return false;
 			}
 		}
+			
+		//attachments
+		Agdp_Mailbox::import_wpcf7_save_post_type_attachments($submission, Agdp_Evenement::post_type, $post_id, ! $post_is_new);
+		
 				
 		//Gestion interne du mail
 		Agdp::$skip_mail = true;

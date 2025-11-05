@@ -932,6 +932,9 @@ class Agdp_Comment {
 				$attrs[ substr($meta_key, strlen('posted_data_')) ] = maybe_unserialize($meta_value[0]);
 				//TODO count( $meta_value ) > 1
 			}
+			else if($meta_key === 'attachments'){
+				$attrs[ $meta_key ] = Agdp_Mailbox::get_attachments_manageable(maybe_unserialize($meta_value[0]));
+			}
 		}
 		
 		//Dans le cas d'un message provenant d'un email, le contenu du mail est affecté à un champ "message"
@@ -946,7 +949,7 @@ class Agdp_Comment {
 				$attrs[ 'user-city' ] = $value;
 		}
 		
-		// debug_log(__FUNCTION__, $comment_id, $attrs);
+		debug_log(__FUNCTION__, $comment_id, $attrs);
 		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
 		$input = sprintf('<input type="hidden" class="agdpmessage_edit_form_data" data="%s"/>', $attrs);
 		
