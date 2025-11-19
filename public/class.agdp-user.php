@@ -55,7 +55,7 @@ class Agdp_User {
 	 * Filtre avant envoi de l'email de validation d'un nouvel utilisateur
 	 */
 	public static function on_invited_user_email( $new_user_email, $user_id, $role, $newuser_key ){
-		$new_user_email['subject'] = preg_replace('/^\[.*\]/', '[' . get_bloginfo('blogname') . ']');
+		$new_user_email['subject'] = preg_replace('/^\[.*\]/', '[' . get_bloginfo('blogname') . ']', $new_user_email['subject']);
 		if( stripos($new_user_email['headers'], 'Reply-to:') === false )
 			$new_user_email['headers'] .= "\n".sprintf('Reply-to: "%s"<%s>', get_bloginfo('blogname'), get_bloginfo('admin_email'));
 		return $new_user_email;
