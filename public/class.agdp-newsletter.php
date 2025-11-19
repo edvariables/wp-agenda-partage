@@ -1656,12 +1656,8 @@ class Agdp_Newsletter {
 			}
 			$next_hour = self::get_mailing_hour($newsletter);
 			if( $next_hour > $hour ){
-				if(count($next_dates)){
-					$s_hour = $next_hour . 'H';
-					if( $next_dates[count($next_dates) - 1] == $today )
-						$s_hour .= ' (il est ' . $hour . 'H)';
-					$next_dates[count($next_dates) - 1] .= ' ' . $s_hour;
-				}
+				if(count($next_dates))
+					$next_dates[count($next_dates) - 1] .= ' ' . $next_hour . 'H';
 				else
 					$next_dates[] = sprintf('%s : %s', $newsletter->post_title, $next_hour . 'H (il est ' . $hour . 'H)');
 				continue;
