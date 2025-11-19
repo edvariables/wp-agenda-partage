@@ -272,7 +272,11 @@ class Agdp_Admin_Stats {
 			if( count($commentscounters) > $i )
 				$postcounters[ $i ] += $commentscounters[ $i ];
 		}
-		return implode('|', $postcounters);
+		$stats = implode('|', $postcounters);
+		if( ( count($postcounters) > 1 && $postcounters[1] != 0 )
+		 || ( count($postcounters) > 3 && $postcounters[3] != 0 ) )
+			$stats = 'Modo!' . $stats;
+		return $stats;
 	}
 
 	public static function agdpevents_stats_counters() {
