@@ -800,7 +800,7 @@ class Agdp_Comment {
 	}
 	
 	/**
-	 * Action lors de la suppression d'un commentaire
+	 * Action lors de la suppression définitive d'un commentaire
 	 * Supprime les fichiers attachés
 	 */
 	public static function on_delete_comment($comment_id, $comment) {

@@ -52,6 +52,8 @@ abstract class Agdp_Post {
 		
 		add_filter( 'pre_handle_404', array(static::class, 'on_pre_handle_404_cb'), 10, 2 );
 		add_filter( 'redirect_canonical', array(static::class, 'on_redirect_canonical_cb'), 10, 2);
+		
+		add_filter('before_delete_post', array(__CLASS__, 'on_before_delete_post'), 10, 2 );
 	}
 
 	/**
@@ -1493,5 +1495,30 @@ abstract class Agdp_Post {
 				$html = '<ul class="attachments">' . $html . '</ul>';
 		}
 		return $html;
+	}
+	
+	
+	/**
+	 * Purge les attachments
+	 */
+	public static function on_before_delete_post( $post_id, $post ){
+		
+		if( ! in_array( $post->post_type, self::$post_types ) )
+			return;
+		
+		$attachments = get_post_meta($post_id, 'attachments', true);
+		
+		if($attachments){
+			if( is_string($attachments) )
+				$attachments = [ $attachments ];
+			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
+				$attachments = $attachments[0];
+				
+			foreach($attachments as $attachment){
+				if( ! file_exists($attachment) )
+					continue;
+				unlink($attachment);
+			}
+		}
 	}
 }
