@@ -1185,14 +1185,16 @@ class Agdp {
 				}
 				
 				$emails = '';
-				foreach( $forum['emails'] as $email ){
-					if( ! $email )
-						continue;
-					$email = sprintf('<a href="mailto:%s">%s</a>', $email, $email);
-					if( $emails )
-						$emails .= sprintf('<small><br>    ou %s</small>', $email);
-					else
-						$emails = $email;
+				if( ! empty($forum['emails']) ){
+					foreach( $forum['emails'] as $email ){
+						if( ! $email )
+							continue;
+						$email = sprintf('<a href="mailto:%s">%s</a>', $email, $email);
+						if( $emails )
+							$emails .= sprintf('<small><br>    ou %s</small>', $email);
+						else
+							$emails = $email;
+					}
 				}
 				$forum['IN'] = [];
 				if( $emails )
