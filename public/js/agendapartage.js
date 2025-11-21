@@ -171,6 +171,80 @@ jQuery( function( $ ) {
 			
 			
 			/****************
+			 *	attachments_manager
+			 ****************************/
+			$('form.wpcf7-form .attachments_manager:not(.initialized)').each(function(){
+				var $this = $(this);
+				$this.addClass('initialized');
+				var $data = $this.find('textarea[name="attachments"]:first');
+				var data = $data.val();
+				if( ! data ) 
+					return;
+				var attachments = data.split(',');
+				for(var a in attachments){
+					var attachment = attachments[a];
+					var label = attachment.split('/');
+					label = label[label.length-1];
+					$('<li></li>')
+						.addClass('attachment')
+						.attr('data', attachment)
+						.append($('<label></label>')
+							.text(label))
+						.append($('<span class="tools"></span>')
+							.append('<a href="#" class="move_up dashicons dashicons-arrow-up-alt"></a>')
+							.append('<a href="#" class="move_down dashicons dashicons-arrow-down-alt"></a>')
+							.append('<a href="#" class="delete dashicons dashicons-trash"></a>')
+						)
+						.appendTo($this);
+				}
+				$this
+					.on('click', '.tools .delete', function(e){
+						$(this).parents('.attachment:first').toggleClass('deleted');
+						manager_save_attachments();
+						return false;
+					})
+					.on('click', '.tools .move_up', function(e){
+						var $attachment = $(this).parents('.attachment:first');
+						var $previous = $attachment.prev('.attachment:first');
+						if( $previous.length ){
+							
+							var $tmp = $('<span>').hide();
+							$previous.before($tmp);
+							$attachment.before($previous);
+							$tmp.replaceWith($attachment);
+							// $attachment.before($previous);
+							manager_save_attachments();
+						}
+						return false;
+					})
+					.on('click', '.tools .move_down', function(e){
+						var $attachment = $(this).parents('.attachment:first');
+						var $next = $attachment.next('.attachment:first');
+						if( $next.length ){
+							
+							var $tmp = $('<span>').hide();
+							$attachment.before($tmp);
+							$next.before($attachment);
+							$tmp.replaceWith($next);
+							// $attachment.after($next);
+							manager_save_attachments();
+						}
+						return false;
+					})
+				;
+				function manager_save_attachments(){
+					var data = [];
+					$this.find('.attachment').each(function(e){
+						var $attachment = $(this);
+						data.push( this.getAttribute('data')
+							+ ( $attachment.is('.deleted') ? '|DELETE' : '' ) );
+					});
+					$data.val( JSON.stringify(data) );
+				}
+			});
+
+			
+			/****************
 			 *	Forums et commentaires
 			 ****************************/
 			

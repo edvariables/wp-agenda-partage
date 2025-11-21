@@ -589,6 +589,47 @@ article.covoiturage ul.agdp-agdpevents-list label {
 	font-weight: normal;
 }
 
+article.agdpevent ul.attachments,
+article.covoiturage ul.attachments {
+	list-style: none;
+}
+
 .wp-block-page-list li {
   list-style: none;
+}
+
+/**
+ * attachments_manager
+ */
+.attachments_manager .attachment label {
+	display: inline-block;
+}
+.attachments_manager li.attachment {
+	margin-left: 10px;
+}
+#comments .attachments_manager li.attachment {
+	margin-left: 10px;
+}
+.attachments_manager .tools a {
+	margin-left: 8px;
+	outline: none;
+	box-shadow: none;
+	color: gray;
+}
+.attachments_manager .tools a:hover {
+	color: inherit;
+}
+.attachments_manager .attachment:first-of-type .tools a.move_up,
+.attachments_manager .attachment:last-of-type .tools a.move_down {
+	 color:transparent;
+}
+/* deleted */
+.attachments_manager li.attachment.deleted {
+	list-style: circle;
+}
+.attachments_manager .attachment.deleted label {
+	text-decoration: line-through;
+}
+.attachments_manager .attachment.deleted .tools .delete {
+	color: red;
 }

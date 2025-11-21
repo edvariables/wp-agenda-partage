@@ -301,7 +301,8 @@ if (typeof uniqid === 'undefined')
 /**
  * grecaptcha
  */
-if( ! grecaptcha )
+if( typeof grecaptcha === 'undefined'
+ || ! grecaptcha )
 	grecaptcha = {
 		ready : function(){ return false; },
 	};

@@ -183,7 +183,8 @@ class Agdp_Evenement_Edit {
 					'ev-phone',
 					'ev-organisateur',
 					'ev-email',
-					'ev-message-contact']
+					'ev-message-contact',
+					'attachments']
 					as $meta_name){
 				$attrs[$meta_name] = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
 			}
@@ -825,7 +826,7 @@ class Agdp_Evenement_Edit {
 		}
 			
 		//attachments
-		Agdp_Mailbox::import_wpcf7_save_post_type_attachments($submission, Agdp_Evenement::post_type, $post_id, ! $post_is_new);
+		Agdp_Mailbox::import_wpcf7_save_post_type_attachments($submission, Agdp_Evenement::post_type, $post_id, ! $post_is_new, $inputs);
 		
 				
 		//Gestion interne du mail

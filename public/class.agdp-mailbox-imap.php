@@ -110,7 +110,7 @@ class Agdp_Mailbox_IMAP {
 			$encoding = 'UTF-8';
 		$content_encoding = 'UTF-8';
 		
-		$attachment_path = Agdp_Mailbox::get_attachments_path($mailbox_id);
+		$attachment_path = Agdp_Mailbox::get_attachments_path(Agdp_Mailbox::post_type, $mailbox_id);
 		
 		$imap = new benhall14\phpImapReader\Reader($server, $email, $password, $attachment_path, $mark_as_read, $encoding, $content_encoding);
 

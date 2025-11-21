@@ -929,27 +929,35 @@ class Agdp_Comment {
 		$attrs = [];
 		foreach( get_comment_meta( $comment_id ) as $meta_key => $meta_value){
 			if( str_starts_with( $meta_key, 'posted_data_' ) ){
-				$attrs[ substr($meta_key, strlen('posted_data_')) ] = maybe_unserialize($meta_value[0]);
+				$meta_key = substr($meta_key, strlen('posted_data_'));
+				// if( empty($attrs[ $meta_key ]) )
+					$attrs[ $meta_key ] = maybe_unserialize($meta_value[0]);
 				//TODO count( $meta_value ) > 1
 			}
 			else if($meta_key === 'attachments'){
-				$attrs[ $meta_key ] = Agdp_Mailbox::get_attachments_manageable(maybe_unserialize($meta_value[0]));
+				$attrs[ $meta_key ] = maybe_unserialize($meta_value[0]);
+			}
+			else if( $meta_value[0] && in_array( $meta_key, ['title'] ) ){
+				$attrs[ $meta_key ] = $meta_value[0];
 			}
 		}
 		
 		//Dans le cas d'un message provenant d'un email, le contenu du mail est affecté à un champ "message"
-		if( count($attrs) === 0 ){
-			if( $value = html_to_plain_text( $comment->comment_content ) )
-				$attrs[ 'message' ] = $value;
-			if( $value = get_comment_meta( $comment->comment_ID, 'title', true ))
-				$attrs[ 'title' ] = $value;
-			$attrs[ 'user-name' ] = $comment->comment_author;
-			$attrs[ 'user-email' ] = $comment->comment_author_email;
-			if( $value = Agdp_User::get_user_meta($comment->comment_author_email, 'city') )
-				$attrs[ 'user-city' ] = $value;
-		}
+		// if( count($attrs) === 0 ){
+			if( empty($attrs[ 'message' ]) )
+				if( $value = html_to_plain_text( $comment->comment_content ) )
+					$attrs[ 'message' ] = $value;
+			// if( $value = get_comment_meta( $comment->comment_ID, 'title', true ))
+				// $attrs[ 'title' ] = $value;
+			if( empty($attrs[ 'user-name' ]) )
+				$attrs[ 'user-name' ] = $comment->comment_author;
+			if( empty($attrs[ 'user-email' ]) )
+				$attrs[ 'user-email' ] = $comment->comment_author_email;
+			if( empty($attrs[ 'user-city' ]) )
+				if( $value = Agdp_User::get_user_meta($comment->comment_author_email, 'city') )
+					$attrs[ 'user-city' ] = $value;
+		// }
 		
-		debug_log(__FUNCTION__, $comment_id, $attrs);
 		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
 		$input = sprintf('<input type="hidden" class="agdpmessage_edit_form_data" data="%s"/>', $attrs);
 		

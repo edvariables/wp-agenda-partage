@@ -688,20 +688,22 @@ class Agdp_Mailbox {
 	
 	/**
 	 * Retourne le répertoire de stockage des fichiers attachés aux messages
+	 * $post_type ou 'comment'
+	 * $mailbox_id
 	 */
-	public static function get_attachments_path($mailbox_id){
+	public static function get_attachments_path($post_type, $mailbox_id){
 		$upload_dir = wp_upload_dir();
 		
 		$mailbox_dirname = str_replace('\\', '/', $upload_dir['basedir']);
 		// if( is_multisite())
 			// $mailbox_dirname .= '/sites/' . get_current_blog_id();
 		
-		if( ! $mailbox_id )
-			$mailbox_id = 0;
-		if( is_numeric($mailbox_id) )
+		if( $post_type === 'comment' )
+			$post_type = self::post_type;
+		if( $post_type === self::post_type )
 			$mailbox_dirname .= sprintf('/%s/%s/%d/%d/', self::post_type, $mailbox_id, date('Y'), date('m'));
 		else
-			$mailbox_dirname .= sprintf('/%s/%d/%d/', $mailbox_id, date('Y'), date('m'));
+			$mailbox_dirname .= sprintf('/%s/%d/%d/', $post_type, date('Y'), date('m'));
 		
 		if ( ! file_exists( $mailbox_dirname ) ) {
 			wp_mkdir_p( $mailbox_dirname );
@@ -888,7 +890,6 @@ class Agdp_Mailbox {
 			'from' => strtolower($message['from']->email),
 			'to' => strtolower($message['to'][0]->email),
 			'title' => trim($message['subject']),
-			'attachments' => $message['attachments'],
 			'send_date' => $email_date,
 			'mailbox_id' => $mailbox->ID,
 		];
@@ -902,14 +903,28 @@ class Agdp_Mailbox {
 		];
 		
 		//TODO attention aux boucles infinies de mails qui partent et reviennent
-		if( ! empty($message['attachments']) ){					
-			foreach($message['attachments'] as $attachment){
-				if( '.ics' === substr($attachment, -4) ){
-					$posts = Agdp_Post::import_post_type_ics($post_type, $attachment, $data);
-					return $posts;
+		if( ! empty($message['attachments']) ){
+			$attachments = [];
+			$ics = [];//post exports
+			foreach($message['attachments'] as $attachment)
+				if( '.ics' === substr($attachment, -4) )
+					$ics[] = $attachment;
+				else
+					$attachments[] = $attachment;
+			
+			$meta_input['attachments'] = $attachments;
+			
+			$posts = [];
+			foreach($ics as $attachment){
+				$p = Agdp_Post::import_post_type_ics($post_type, $attachment, $data);
+				if( $p ){
+					$posts[] = $p;
+					unlink($attachment);
 				}
 			}
+			return $posts;
 		}
+		
 		return false;
 		
 		//TODO
@@ -1483,53 +1498,73 @@ class Agdp_Mailbox {
 	 * Intégration des fichiers attachés
 	 */
 	private static function import_wpcf7_to_comment_attachments($submission, $mailbox_id, $is_update, &$posted_data, &$commentdata){
-		$uploaded_files = $submission->uploaded_files();
-		if( $uploaded_files 
-		&& ! empty($uploaded_files['attachment_add']) ){
-			
-			if( ! class_exists('Agdp_Mailbox_IMAP') )
-				require_once( AGDP_PLUGIN_DIR . "/public/class.agdp-mailbox-imap.php");
-			$uploaded_files = Agdp_Mailbox_IMAP::sanitize_attachments( $uploaded_files, 'attachment_add' );
-			
-			$dest_dir = self::get_attachments_path( $mailbox_id );
-			
-			if( $is_update ){
-				$files = get_comment_meta($is_update, 'attachments', false);
-				if( ! $files )
-					$files = [];
-				elseif( ! is_array($files) ){
-					$files = [ $files ];
-				}
-				elseif( count($files) && is_array($files[0]) ){
-					$files = $files[ 0 ];
-				}
-			}
-			else
-				$files = [];
-			
-			foreach( $uploaded_files['attachment_add'] as $upfile ){
-				$file = path_join( $dest_dir, basename($upfile) );
-				$index = 1;
-				while( file_exists($file) ) {
-					$file = path_join( $dest_dir, pathinfo($upfile, PATHINFO_FILENAME) . '(' . ($index++) . ').' . pathinfo($upfile, PATHINFO_EXTENSION) );
-				}
-				rename( $upfile, $file );
-				$files[] = $file;
-			}
-			
-			if( isset($posted_data['attachment_add']) )
-				unset($posted_data['attachment_add']);
-			if( isset($posted_data['attachments']) )
-				unset($posted_data['attachments']);
-			$commentdata['comment_meta']['attachments'] = $files;
-			
-		}
+		self::submit_wpcf7_save_attachments($submission, 'comment', $is_update, $posted_data, $commentdata);
+		self::submit_wpcf7_attachment_add($submission, 'comment', $mailbox_id, $is_update, $posted_data, $commentdata);
 	}
 	
 	/*
 	 * Intégration des fichiers attachés dans les évènements
 	 */
-	public static function import_wpcf7_save_post_type_attachments($submission, $post_type, $post_id, $is_update){
+	public static function import_wpcf7_save_post_type_attachments($submission, $post_type, $post_id, $is_update, &$posted_data){
+		$data = [];
+		self::submit_wpcf7_save_attachments($submission, $post_type, $post_id, $posted_data, $data);
+		self::submit_wpcf7_attachment_add($submission, $post_type, $post_id, $is_update, $posted_data, $data);
+	}
+	
+	/*
+	 * Submit depuis le attachments_manager (cf .js) d'un wpcf7
+	 * $submission : wpcf7
+	 * $post_type : may be 'comment'
+	 * $item_id == $post_id | $comment_id
+	 * $is_update : null or @item_id
+	 */
+	public static function submit_wpcf7_save_attachments($submission, $post_type, $item_id, &$posted_data, &$commentdata){
+		if( isset($posted_data['attachments']) ){
+			
+			$attachments = $posted_data['attachments'];
+			if( $attachments && in_array( $attachments[0], ['[', '{'] ) ){
+				$upload_dir = wp_upload_dir();
+				$upload_dir = str_replace("\\", '/', $upload_dir['basedir']);
+				//Modifiés par attachments_manager (cf .js)
+				$input = json_decode($attachments);
+				$attachments = [];
+				foreach($input as $attachment){
+					$data = explode('|', $attachment);
+					$data[0] = str_replace("//", '/', str_replace("\\", '/', $data[0]));
+					//Contrôle de sécurité sur le dossier (sinon, on pourrait trasher n'importe quel fichier)
+					if( strcasecmp( $upload_dir, substr( $data[0], 0, strlen($upload_dir) ) ) !== 0 ){
+						debug_log(__FUNCTION__, 'Erreur de répertoire', $data, $upload_dir  );
+						continue;
+					}
+					if( count($data) > 1 ){
+						if( $data[1] === 'DELETE' ){
+							if( file_exists($data[0]) )
+								unlink($data[0]);
+							continue;
+						}
+					}
+					$attachments[] = $data[0];
+				}
+				if( $post_type === 'comment' ){
+					$commentdata['comment_meta']['attachments'] = $attachments;
+				}
+				else {
+					$commentdata['post_meta']['attachments'] = $attachments;
+					update_post_meta( $item_id, 'attachments', $attachments );
+				}
+			}
+			unset($posted_data['attachments']);
+		}
+	}
+	
+	/*
+	 * Submit d'un ajout de fichier attaché
+	 * $submission : wpcf7
+	 * $post_type : may be 'comment'
+	 * $item_id == $post_id | $comment_id
+	 * $is_update : null or @item_id
+	 */
+	private static function submit_wpcf7_attachment_add($submission, $post_type, $item_id, $is_update, &$posted_data, &$commentdata){
 		$uploaded_files = $submission->uploaded_files();
 		if( $uploaded_files 
 		&& ! empty($uploaded_files['attachment_add']) ){
@@ -1538,10 +1573,27 @@ class Agdp_Mailbox {
 				require_once( AGDP_PLUGIN_DIR . "/public/class.agdp-mailbox-imap.php");
 			$uploaded_files = Agdp_Mailbox_IMAP::sanitize_attachments( $uploaded_files, 'attachment_add' );
 			
-			$dest_dir = self::get_attachments_path( $post_type );
+			$dest_dir = self::get_attachments_path( $post_type, $item_id );
 			
 			if( $is_update ){
-				$files = get_post_meta($post_id, 'attachments', false);
+				if( $post_type === 'comment' ){
+					if( isset($commentdata['comment_meta']['attachments'] ) )
+						$files = $commentdata['comment_meta']['attachments'];
+					else
+						$files = get_comment_meta($is_update, 'attachments', false);
+				}
+				else {
+					if( $commentdata && isset($commentdata['post_meta']) && ! empty($commentdata['post_meta']['attachments'] ) ){
+						$files = $commentdata['post_meta']['attachments'];
+						debug_log(__FUNCTION__, "commentdata['post_meta']['attachments']");
+					}
+					else{
+						$files = get_post_meta($item_id, 'attachments', false);
+						debug_log(__FUNCTION__, "get_post_meta attachments");
+					}
+					debug_log(__FUNCTION__, '$files', $files);
+				}
+				
 				if( ! $files )
 					$files = [];
 				elseif( ! is_array($files) ){
@@ -1563,21 +1615,16 @@ class Agdp_Mailbox {
 				rename( $upfile, $file );
 				$files[] = $file;
 			}
-			update_post_meta( $post_id, 'attachments', $files );
 			
-		}		
-	}
-	
-	/*
-	 * format attachments to be managed
-	 */
-	public static function get_attachments_manageable( $attachments ){ 
-		// if( ! $attachments )
-			return json_encode($attachments);
-		$data = [];
-		foreach($attachments as $index => $attachment )
-			$data[] = [ 'file' => $attachment ];
-		return $data;
+			if( $post_type === 'comment' ){
+				if( isset($posted_data['attachment_add']) )
+					unset($posted_data['attachment_add']);
+				$commentdata['comment_meta']['attachments'] = $files;
+			}
+			else {
+				update_post_meta( $item_id, 'attachments', $files );
+			}
+		}
 	}
 	
 	/*
