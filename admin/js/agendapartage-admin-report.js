@@ -373,6 +373,14 @@ jQuery( function( $ ) {
 									$input.append($('<option selected>' + value + '</option>').attr('value', value));//temporairement
 									admin_report_get_posts( post_type, options, add_input_options, { '$input': $input, 'variable': variable, 'value': value } );
 								}
+								$input.on('change', function(e){
+									var $this = $(this);
+									$this.next('.input-helper').remove();
+									if( this.value )
+										$this.after('<a class="input-helper" href="/wp-admin/post.php?post=' + this.value + '&action=edit">'
+												+ '<span class="dashicons-before dashicons-edit-page"></span></a>')
+									;
+								});
 								options = false;
 								break;
 							case 'asc_desc' :
@@ -410,6 +418,7 @@ jQuery( function( $ ) {
 							.append($input)
 							.appendTo( $container )
 						;
+						$input.trigger('change');
 					}
 					
 					if( current_variable ){

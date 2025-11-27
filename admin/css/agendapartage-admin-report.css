@@ -29,6 +29,16 @@
 #agdp_report-variables .sql_variable .var_edit:hover {
 	opacity: inherit;
 }
+#agdp_report-variables .sql_variable .input-helper {
+	margin-left: 0.3em;
+	opacity: 80%;
+}
+#agdp_report-variables .sql_variable .var_edit,
+#agdp_report-variables .sql_variable .input-helper {
+  position: relative;
+  top: 3px;
+}
+
 #agdp_report-variables .sql_variable input[type="number"] {
 	width: 5em;
 }
@@ -179,6 +189,9 @@
 }
 #agdp_report-render-menu.active a.report_menu_item  {
 	padding-top: 6px;
+}
+#agdp_report-render-menu.active a.reset-designer  {
+	cursor: pointer;
 }
 #agdp_report-render-menu.active .report_menu_item select  {
 	margin-top: 4px;
