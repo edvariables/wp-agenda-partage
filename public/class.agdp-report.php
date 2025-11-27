@@ -129,12 +129,14 @@ class Agdp_Report extends Agdp_Post {
 		
 		if( ! is_array($options) )
 			$options = [];
-		
+		// debug_log( __FUNCTION__, 'sql IN',$sql);
 		//sql
 		if( ! $sql )
 			$sql = get_post_meta( $report_id, 'sql', true );
 		
 		$sqls = self::get_sql_as_array( $sql );
+		
+		// debug_log( __FUNCTION__, 'sqls ',$sqls);
 		
 		if( count($sqls) !== 1 ){
 			$sqls_ne = [];
@@ -191,8 +193,9 @@ class Agdp_Report extends Agdp_Post {
 			
 		//comments
 		$sql = self::remove_sql_comments( $sql );
-		
+				
 		//strings ""
+		//BUGG !!! si CONCAT('<a class="dbquote" href="', `url`, '">')
 		$matches = [];
 		$pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/s';
 		$strings_prefix = uniqid('__sqlstr_');
@@ -522,7 +525,7 @@ class Agdp_Report extends Agdp_Post {
 			}
 			/* foreach variables
 			 *******************/
-			
+			 
 			//escape '%' (wpdb could manage but we lost SQL readability)
 			$escape_flag = uniqid('__esc__');
 			//- sql
@@ -533,6 +536,7 @@ class Agdp_Report extends Agdp_Post {
 				 && strpos($value, '%') !== false )
 					$prepare[$i] = str_replace( '%', $escape_flag, $value );
 					
+					
 			//wpdb prepare
 			if( count($prepare) )
 				try {
@@ -541,7 +545,7 @@ class Agdp_Report extends Agdp_Post {
 				catch( Exception $exception ){
 					$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $exception->getMessage());
 				}
-			
+				
 			//unescape
 			$sql = str_replace( $escape_flag, '%', $sql );
 			
@@ -579,7 +583,7 @@ class Agdp_Report extends Agdp_Post {
 		}
 		$sql = self::remove_sql_comments( $sql );
 		
-		$sqls = preg_split( '/[;]\s*\n/', $sql);
+		$sqls = preg_split( '/[;]\s*\n/', $sql );
 		
 		return $sqls;
 	}
@@ -990,7 +994,17 @@ class Agdp_Report extends Agdp_Post {
 		$select = '';
 		
 		//sort by column index
-		array_multisort(array_column($table_columns, 'index'), $table_columns);
+		$column_index = 0;
+		//add missing 'index' field
+		foreach( $table_columns as $column => $column_data ){
+			if( ! isset($table_columns[ $column ][ 'index' ])
+			 || ! is_numeric($table_columns[ $column ][ 'index' ]))
+				$table_columns[ $column ][ 'index' ] = $column_index;
+			$column_index++;
+		}
+		
+		$column_indexes = array_column($table_columns, 'index');
+		array_multisort($column_indexes, SORT_ASC, $table_columns);
 		
 		foreach( $table_columns as $column => $column_data ){
 			if( isset($table_columns[ $column ][ 'class' ]) ){
@@ -1004,8 +1018,10 @@ class Agdp_Report extends Agdp_Post {
 			}
 			if( empty($column_data['script']) )
 				$column_sql = sprintf('`%s`', $column );
-			else
+			else{
 				$column_sql = $column_data['script'];
+				// debug_log( __FUNCTION__, 'sprintf(\'%s AS `%s`\', $column_sql, $column)',sprintf('%s AS `%s`', $column_sql, $column));
+			}
 			if( $select )
 				$select .= ', ';
 			$select .= sprintf('%s AS `%s`', $column_sql, $column);
@@ -1243,7 +1259,6 @@ class Agdp_Report extends Agdp_Post {
 				foreach( $sql_uu as $sql_uuu ){
 					//$wpdb->get_results
 					$result_u = $wpdb->get_results($sql_uuu);
-					// debug_log( __FUNCTION__, $sql_uuu);
 					array_push( $options['_sqls'], $sql_uuu );
 					if( $wpdb->last_error ){
 						// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
@@ -1514,6 +1529,8 @@ class Agdp_Report extends Agdp_Post {
 				}
 				if( ! $column_visible )
 					$class .= ' hidden';
+				if( $column_value === null )
+					$column_value = '';
 				$content .= sprintf('<td %s>%s</td>'
 					, $class ? 'class="' . trim($class) . '"' : ''
 					, $escape_function ? $escape_function( $column_value ) : $column_value

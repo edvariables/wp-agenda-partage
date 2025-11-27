@@ -1162,7 +1162,12 @@ jQuery( function( $ ) {
 			return JSON.parse(value);
 		}
 		catch(ex){
-			alert("Erreur de format dans '" + path + "'.val() : " + value + "\n" + ex);
+			try{
+				return JSON.parse(value.replaceAll('{','{\n ').replaceAll('}','}\n'));//plus lisible avec un n° de ligne
+			}
+			catch(ex){
+				alert("Erreur de format dans '" + path + "'.val() : " + value + "\n" + ex);
+			}
 		}
 		return {};
 	}

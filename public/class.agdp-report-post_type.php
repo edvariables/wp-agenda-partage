@@ -77,7 +77,7 @@ class Agdp_Report_Post_type {
 			'parent_item'                => __( 'Style parent', AGDP_TAG ),
 			'parent_item_colon'          => __( 'Style parent:', AGDP_TAG ),
 			'new_item_name'              => __( 'Nouveau style', AGDP_TAG ),
-			'add_new_item'               => __( 'Ajouter une nouveau style', AGDP_TAG ),
+			'add_new_item'               => __( 'Ajouter un nouveau style', AGDP_TAG ),
 			'edit_item'                  => __( 'Modifier', AGDP_TAG ),
 			'update_item'                => __( 'Mettre à jour', AGDP_TAG ),
 			'view_item'                  => __( 'Afficher', AGDP_TAG ),
