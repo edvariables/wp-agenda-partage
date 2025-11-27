@@ -48,7 +48,7 @@ class Agdp_Forum extends Agdp_Page {
 	];
 	
 	const subscription_roles = [
-			'' => '(non membre)',
+			'' => '(non défini)',
 			'subscriber' => 'Membre',
 			'moderator' => 'Modérateurice',
 			'administrator' => 'Administrateurice',

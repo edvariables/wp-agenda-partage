@@ -71,7 +71,7 @@ class Agdp_DB_Update {
 <label class=\"next-radio-br\"> Votre abonnement à \"{{titre}}\"</label>[radio nl-period-agdpforum-generic default:2 use_label_element \"(no_change)\" \"Aucun abonnement|none\" \"Tous les jours|d\" \"Toutes les semaines|w\" \"Tous les quinze jours|2w\" \"Tous les mois|m\"]
 
 <div class=\"moderator-user-only\">
-    <label> Rôle en tant que membre</label>[select forum-subscription-agdpforum-generic default:4 use_label_element  \"(non membre)|\" \"Membre|subscriber\" \"Modérateurice|moderator\" \"Administrateurice|administrator\" \"Banni-e|banned\"]
+    <label> Rôle en tant que membre</label>[select forum-subscription-agdpforum-generic default:4 use_label_element  \"(non défini)|\" \"Membre|subscriber\" \"Modérateurice|moderator\" \"Administrateurice|administrator\" \"Banni-e|banned\"]
 </div>
 
 [checkbox nl-send_newsletter-now-agdpforum-generic use_label_element \"Recevoir maintenant les messages\"]
