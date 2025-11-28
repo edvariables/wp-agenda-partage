@@ -190,7 +190,7 @@
 #agdp_report-render-menu.active a.report_menu_item  {
 	padding-top: 6px;
 }
-#agdp_report-render-menu.active a.reset-designer  {
+#agdp_report-render-menu.active a {
 	cursor: pointer;
 }
 #agdp_report-render-menu.active .report_menu_item select  {

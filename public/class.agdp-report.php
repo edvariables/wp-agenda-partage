@@ -124,7 +124,8 @@ class Agdp_Report extends Agdp_Post {
 	 * SQL
 	 */
  	public static function get_sql( $report = false, $sql = false, $sql_variables = false, &$options = false ) {
-		
+		if( is_numeric($report) )
+			$report = get_post($report);
 		$report_id = $report->ID;
 		
 		if( ! is_array($options) )
@@ -244,8 +245,9 @@ class Agdp_Report extends Agdp_Post {
 					$format_args = $matches[4][$index];
 					$format_IN = $format === '%IN';
 					$format_Inject = $format === '%I';
-					$format_LIKE = substr( $format, strlen($format_args) + 1, 1 ) === 'K';
-					$format_JSON = substr( $format, strlen($format_args) + 1, 1 ) === 'J';
+					$format_mode = substr( $format, strlen($format_args) + 1, 1 );
+					$format_LIKE = $format_mode  === 'K';
+					$format_JSON = $format_mode  === 'J';
 					if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 						switch($sql_variables[$variable]['type']){
 							case 'range': 
@@ -985,6 +987,7 @@ class Agdp_Report extends Agdp_Post {
 	 * Wrap sql in a SELECT scripts FROM ( sql )
 	 */
  	public static function get_render_sql( $report, $sql, $sql_variables, &$options, $table_render ) {
+		
 		if( ! $table_render
 		|| empty( $table_render['columns'] ) )
 			return $sql;
@@ -1122,12 +1125,54 @@ class Agdp_Report extends Agdp_Post {
 	 * get_default_table
 	 * Returns a html table based on $table_columns in case of sql error
 	 */
- 	public static function get_default_table( $report, $table_render, $sql_variables, &$options ) {
+ 	public static function get_default_table( $report, $sql, $table_render, $sql_variables, &$options ) {
 		$table_columns = $table_render && isset($table_render['columns']) ? $table_render['columns'] : false;
 		$table_caption = $report ? $report->post_title : '';
 		$html = sprintf('<table class="error"><caption>Erreur dans <var>%s</var></caption><thead><tr>', $table_caption);
 		if( ! is_array($table_columns) )
 			return $html . '<th></th></tr></thead></table>';
+		
+		//Query sans formatage de colonne
+		$false = false;
+		if( ! is_array($sql_variables) )
+			$sql_variables = [];
+		$sql_variables['LIMIT'] = 1; //TODO
+		$dbresults_no_render = self::get_sql_dbresults( $report, $sql, $sql_variables, $options, $false );
+		if( is_array($dbresults_no_render) and count($dbresults_no_render) ){
+			$table_columns_missing = [];
+			foreach( $dbresults_no_render[0] as $column_name => $column_data ){
+				if( ! array_key_exists( $column_name, $table_columns ) )
+					$table_columns_missing[$column_name] = [
+						'label' => $column_name,
+						'error' => 'Colonne manquante !'
+					];
+			}
+			foreach( $table_columns as $column_name => $column_data ){
+				if( ! isset( $dbresults_no_render[0]->$column_name ) ){
+					if( empty($table_columns[$column_name]) )
+						$table_columns[$column_name] = ['label' => $column_name];
+					elseif( ! is_array($table_columns[$column_name]) )
+						$table_columns[$column_name] = ['label' => $table_columns[$column_name]];
+					if( empty($table_columns[$column_name]['label']) )
+						$table_columns[$column_name]['label'] = $column_name;
+					
+					if( $table_columns[$column_name]['label'] != $column_name )
+						$column_error = sprintf('Colonne [%s] hors SQL !', $column_name);
+					else
+						$column_error = 'Colonne hors SQL !';
+					$table_columns[$column_name]['error'] = $column_error;
+				}
+			}
+			
+			if( $table_columns_missing ){
+				//Les colonnes manquantes apparaissent en 1er
+				foreach( $table_columns as $column_name => $column_data ){
+					$table_columns_missing[$column_name] = $column_data;
+				}
+				$table_columns = $table_columns_missing;
+			}
+		}
+		
 		//thead
 		foreach( $table_columns as $column_name => $column_data ){
 			if( substr($column_name, 0, 2) === '__' )
@@ -1138,17 +1183,23 @@ class Agdp_Report extends Agdp_Post {
 			if( is_array($column_data) ){
 				$column_label = $column_data[ 'label' ];
 				$column_visible = ! isset($column_data[ 'visible' ]) || $column_data[ 'visible' ];
+				$column_error = empty($column_data[ 'error' ]) ? '' : $column_data[ 'error' ];
 			}
 			else {
 				$column_label = $column_data;
+				$column_error = '';
 			}
+			if( $column_error )
+				$column_error = sprintf('<br><span class="dashicons-before dashicons-warning color-red">%s</span>', $column_error);
 			
-			if( ! $column_visible )
+			if( ! $column_visible && ! $column_error )
 				$class .= ' hidden';
-			$html .= sprintf('<th %s column="%s">%s</th>'
+			
+			$html .= sprintf('<th %s column="%s">%s%s</th>'
 				, $class ? 'class="' . trim($class) . '"' : ''
 				, $column_name
 				, $column_label
+				, $column_error
 			);
 		}
 		$html .= '</tr></thead>';
@@ -1282,7 +1333,7 @@ class Agdp_Report extends Agdp_Post {
 				 break;
 		}/* foreach( $sql as $index => $sql_u )
 		 .........*/
-		
+					
 		
 		if($wpdb->last_error){
 			if( ! is_a($result, 'WP_Error') )
@@ -1353,6 +1404,7 @@ class Agdp_Report extends Agdp_Post {
 			if( $report_admin_no_render )
 				$options['_no_table_columns'] = true;			
 		}
+		$options_copy = $options;
 		
 		$wpdb = self::wpdb( TRUE ); //reset des variables
 		$wpdb->suppress_errors(true);
@@ -1392,15 +1444,19 @@ class Agdp_Report extends Agdp_Post {
 		if( ! $dbresults )
 			return sprintf('<div class="agdpreport" agdp_report="%d">(aucun résultat)%s</div>', $report_id, $sql_prepared);
 		
+		$content = '';
+		
 		if( is_a($dbresults, 'Exception') ){
-			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre><pre>%s</pre></div>'
+			$content = sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre><pre>%s</pre></div>'
 				, $report_id
 				, $dbresults->getMessage()
 				, $sql_prepared
-			) . sprintf('<div class="agdpreport" agdp_report="%d">%s</div>'
-				, $report_id
-				, static::get_default_table( $report, $table_render, $sql_variables, $options )
 			);
+			$content .= sprintf('<div class="agdpreport" agdp_report="%d">%s</div>'
+				, $report_id
+				, static::get_default_table( $report, $sql, $table_render, $sql_variables, $options )
+			);
+			return $content;
 		}
 		if( ! is_array($dbresults) )
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre><pre>%s</pre></div>'
@@ -1408,7 +1464,7 @@ class Agdp_Report extends Agdp_Post {
 		
 		$tag_id =sprintf( 'report_%s', Agdp::get_secret_code( 6 ) );
 		
-		$content = sprintf('<div id="%s" class="agdpreport" agdp_report="%d"><table>',
+		$content .= sprintf('<div id="%s" class="agdpreport" agdp_report="%d"><table>',
 				$tag_id,
 				$report_id
 		);
@@ -1708,7 +1764,7 @@ class Agdp_Report extends Agdp_Post {
 	}
 
 	/**
-	 * Requête Ajax de changement d'état du commentaire
+	 * Requête Ajax d'obtention du rapport en html
 	 */
 	public static function on_ajax_action_report_html($data) {
 		if( isset($data['report_id']) )
@@ -1733,6 +1789,89 @@ class Agdp_Report extends Agdp_Post {
 			$sql = false;
 		
 		return self::get_report_html($report_id, $sql, $sql_variables, $data);
+	}
+
+	/**
+	 * Requête Ajax d'obtention des colonnes du report
+	 */
+	public static function on_ajax_action_get_report_columns($data) {
+		if( isset($data['report_id']) )
+			$report_id = $data['report_id'];
+		elseif( is_admin() && isset($_POST['post_id']) )
+			$report_id = $_POST['post_id'];
+		else
+			$report_id = false;
+		if( isset($data['sql_variables']) ){
+			$sql_variables = $data['sql_variables'];
+			if( ! $sql_variables
+			|| $sql_variables === 'false' )
+				$sql_variables = [];
+		}
+		else
+			$sql_variables = [];
+		if( isset($data['sql']) ){
+			$sql = $data['sql'];
+			if( $sql === 'false' )
+				$sql = false;
+		}
+		else
+			$sql = false;
+		
+		
+		// Rendu du tableau
+		$meta_key = 'table_render';
+		$table_render = isset($data[$meta_key]) ? $data[$meta_key] : get_post_meta( $report_id, $meta_key, true );
+		if( $table_render && is_string($table_render) ){
+			$table_render = json_decode($table_render, true);
+		}
+		$table_render_columns = isset($table_render['columns']) ? $table_render['columns'] : [];
+		
+		// Exécution de la requête sans mise en forme
+		$false = false;
+		$sql_variables['LIMIT'] = 1; //TODO
+		$dbresults = self::get_sql_dbresults( $report_id, $sql, $sql_variables, $false, $false );
+		
+		if( is_a($dbresults, 'Exception') )
+			return "Désolé, la requête SQL comporte une erreur.";
+		
+		if( is_array($dbresults) and count($dbresults) ){
+			$table_columns = [];
+			foreach( $dbresults[0] as $column_name => $column_data ){
+				$table_columns[$column_name] = [
+					'label' => $column_name
+				];
+				if( is_array($table_render_columns) ){
+					if( empty($table_render_columns[$column_name]) )
+						$table_columns[$column_name]['render'] = false;
+					elseif( isset($table_render_columns[$column_name]['visible'])
+					&& $table_render_columns[$column_name]['visible'] === false )
+						$table_columns[$column_name]['render'] = 'hidden';
+				}
+			}
+			if( is_array($table_render_columns) ){
+				foreach( $table_render_columns as $column_name => $column_data ){
+					if( ! $column_data )
+						$column_label = $column_name;
+					elseif( is_string($column_data) )
+						$column_label = $column_data;
+					elseif( ! empty($column_data['label']) )
+						$column_label = $column_data['label'];
+					if( empty($table_columns[$column_name]) ){
+						$table_columns[$column_name] = [
+							'label' => $column_label,
+							'info' => "renommé (absent des champs de la requête SQL)",
+						];
+					}
+					if( isset($column_data['visible']) && ! $column_data['visible'] )
+						$table_columns[$column_name]['render'] = 'hidden';
+				}
+			}
+			$ajax_response = $table_columns;
+		}
+		else
+			$ajax_response = "Désolé, la requête ne retourne aucun résultat pour analyser les colonnes.";
+		
+		return $ajax_response;
 	}
 	
 	/**

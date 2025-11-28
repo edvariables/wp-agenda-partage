@@ -435,7 +435,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	}
 	
 	/**
-	 * Retourne la liste de toutes les tables
+	 * Retourne la liste de toutes les colonnes d'une table
 	 */
 	public static function on_ajax_action_get_table_columns( ){
 		$data = isset($_POST['data']) ? $_POST['data'] : [];

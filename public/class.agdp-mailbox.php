@@ -358,8 +358,9 @@ class Agdp_Mailbox {
 	 * Log l'état du cron
 	 */
 	public static function log_cron_state(){
-		if( self::$cron_state && strpos( self::$cron_state , '0 e-mail(s)' ) === false )
+		if( self::$cron_state && strpos( self::$cron_state , '0 e-mail(s)' ) === false ){
 			debug_log('[agdpmailbox-cron state]' . self::$cron_state);
+		}
 	}
 	
 	/**
@@ -374,14 +375,14 @@ class Agdp_Mailbox {
 			if( $cron_time !== false )
 				wp_unschedule_event( $cron_time, self::cron_hook );
 			if( $next_time < 1024 )
-				$cron_time = strtotime( date('Y-m-d H:i:s') . ' + ' . $next_time . ' second');
+				$cron_time = strtotime( wp_date('Y-m-d H:i:s') . ' + ' . $next_time . ' second');
 			else
 				$cron_time = $next_time;
 			$result = wp_schedule_single_event( $cron_time, self::cron_hook, [], true );
 			// debug_log('[agdpmailbox::init_cron] wp_schedule_single_event', date('H:i:s', $cron_time - time()));
 		}
 		if( $cron_time === false ){
-			$next_time = strtotime( date('Y-m-d H:i:s') . ' + 1 Hour');
+			$next_time = strtotime( wp_date('Y-m-d H:i:s') . ' + 1 Hour');
 			$cron_time = wp_schedule_event( $next_time, 'hourly', self::cron_hook );
 			// debug_log('[agdpmailbox::init_cron] wp_schedule_event', $cron_time);
 			register_deactivation_hook( __CLASS__, 'deactivate_cron' ); 
@@ -462,7 +463,8 @@ class Agdp_Mailbox {
 				, print_r($imported, true)
 				, $simulate ? ' << Simulation <<' : ''
 			);
-
+		else
+			self::$cron_state = false;
 		if( ! $simulate){
 			self::log_cron_state();
 		}

@@ -669,7 +669,7 @@ jQuery( function( $ ) {
 	/**
 	 * refresh_report : get data + designer
 	 */
-	function refresh_report(){
+	function ajax_report_action( method, success_callback ){
 		var $actionElnt = $(this);
 		var $form = $actionElnt.parents('form:first');
 		var post_id = $form.find('#post_ID').val();
@@ -702,12 +702,12 @@ jQuery( function( $ ) {
 		});
 		var data = {
 			action : "agendapartage_report_action",
-			method : "report_html",
+			method : method,
 			post_id : post_id,
 			contentType: "application/json; charset=utf-8",
 			data: JSON.stringify(report_options /* //needs stripslashes() at server side */)
 		};
-		var report_id = $actionElnt
+		var report_id = $actionElnt;
 		jQuery.ajax({
 			url : agdp_ajax.ajax_url,
 			method : 'POST',
@@ -715,32 +715,7 @@ jQuery( function( $ ) {
 				_nonce : agdp_ajax.check_nonce
 			}),
 			success : function( response ) {
-				if(response){
-					if(typeof response === 'string' || response instanceof String){
-						if(response.endsWith('null'))
-							response = substr(response, 0, response.length-4);
-						var $response = $(response);
-						var id;
-						if( ! (id = $response.attr('id') ) ){
-							id = 'report_' + uniqid(6);
-							$response.attr('id', id);
-						}
-						var css = get_report_css( $form, id );
-						if( css )
-							$response.append( '<style>' + css + '</style>' );
-						$form.find('.agdpreport:eq(0)')
-							.nextAll('.agdpreport')
-								.remove()
-								.end()
-							.replaceWith($response);
-						$('#wpbody-content > .wrap > .agdpreport.error').remove();
-						//masque le menu
-						$form.find('#agdp_report-render-menu.active > a.toggler').trigger('click');
-						$response.each(refresh_report_table_designer);
-					}
-				}
-				else
-					$form.find('.agdpreport').html('!');
+				success_callback.call($actionElnt, response);
 				$spinner.remove();
 			},
 			fail : function( response ){
@@ -756,6 +731,52 @@ jQuery( function( $ ) {
 				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
 		event.preventDefault();  
 		return false;
+	}
+
+	/**
+	 * refresh_report : get data + designer
+	 */
+	function refresh_report(){
+		var $actionElnt = $(this);
+		ajax_report_action.call(this, "report_html", function( response ) {
+			var $form = $actionElnt.parents('form:first');
+			if(response){
+				if(typeof response === 'string' || response instanceof String){
+					if(response.endsWith('null'))
+						response = substr(response, 0, response.length-4);
+					var $response = $(response);
+					var id;
+					if( ! (id = $response.attr('id') ) ){
+						id = 'report_' + uniqid(6);
+						$response.attr('id', id);
+					}
+					var css = get_report_css( $form, id );
+					if( css )
+						$response.append( '<style>' + css + '</style>' );
+					$form.find('.agdpreport:eq(0)')
+						.nextAll('.agdpreport')
+							.remove()
+							.end()
+						.replaceWith($response);
+					$('#wpbody-content > .wrap > .agdpreport.error').remove();
+					//masque le menu
+					$form.find('#agdp_report-render-menu.active > a.toggler').trigger('click');
+					$response.each(refresh_report_table_designer);
+				}
+			}
+			else
+				$form.find('.agdpreport').html('!');
+		});
+	}
+
+	/**
+	 * get_report_all_columns
+	 */
+	function get_report_all_columns( callback ){
+		var $actionElnt = $(this);
+		ajax_report_action.call(this, "get_report_columns", function( response ) {
+			callback.call(this, response);
+		});
 	}
 
 	/**
@@ -784,7 +805,10 @@ jQuery( function( $ ) {
 				)
 			;
 		}
-		//hidden_columns
+		
+		/*****************
+		 * hidden_columns
+		 */
 		var table_render = get_input_jso.call($render, 'textarea[name="table_render"]');
 		var table_columns = table_render["columns"] ? table_render["columns"] : {};
 		var $hidden_columns = $menu.find('.hidden_columns:first');
@@ -841,6 +865,52 @@ jQuery( function( $ ) {
 				$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
 			$hidden_columns.show();
 		}
+		/* hidden_columns
+		 ****************/
+		
+		/*****************
+		 * Check columns
+		 */
+		var $ckeck_columns_menu = $menu.find('.ckeck_columns:first');
+		if( $ckeck_columns_menu.length === 0 ){
+			$ckeck_columns_menu = $('<a class="ckeck_columns dashicons-before dashicons-editor-help">Contrôler les colonnes</a>')
+				.on('click', function(e){
+					get_report_all_columns.call( this, function( response ){
+						if(typeof response === 'string' || response instanceof String){
+							alert(response);
+							return;
+						}
+						var msg = '';
+						columns = response;
+						for( var c in columns ){
+							switch( columns[c]['render'] ){
+								case false:
+									msg += "\n`" + c + "` : ABSENT !";
+									break;
+								case 'hidden':
+									msg += "\n`" + c + "` : masquée";
+									break;
+							}
+							if( columns[c]['info'] )
+								msg += "\n`" + c + "` : " + columns[c]['info'];
+						}
+						if( msg === '' )
+							msg = 'Rien à déclarer, tout va bien.';
+						alert(msg);
+					});
+					e.preventDefault();
+				})
+				.appendTo( $('<label></label>')
+					.appendTo(
+						$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+							.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+					)
+				)
+			;
+		}		
+		/* Check columns
+		 ****************/
+		 
 		return true;
 	}
 
@@ -903,7 +973,7 @@ jQuery( function( $ ) {
 				$(this)
 					.children('th[column]')
 						.each(function(){
-							this.innerHTML += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne"></a>';
+							this.innerHTML += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne.&#013;Pour supprimer définitivement, appuyer sur la touche Ctrl."></a>';
 							var column = this.getAttribute('column');
 							this.setAttribute( 'title', column );
 							
@@ -918,18 +988,26 @@ jQuery( function( $ ) {
 							column_index++;
 						})
 						//hide_column
-						.on('click', '.hide_column', function(){
+						.on('click', '.hide_column', function(e){
+							var trash_column = e.ctrlKey;
 							var $th = $(this).parents('th:first');
 							var column = $th.attr('column');
-							set_table_render_option.call( this, 'columns', column, 'visible', false );
+							if( ! trash_column )
+								set_table_render_option.call( this, 'columns', column, 'visible', false );
 							var index = $th.prevAll('th').length;
-							$th.parents('table:first')
+							var $table = $th.parents('table:first');
+							$table
 								.find('tr').each(function(){
-									$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
-										.hide();
+									var $cell = $(this).find('th:eq(' + index + '), td:eq(' + index + ')');
+									if( trash_column )
+										$cell.remove();
+									else
+										$cell.hide();
 								})
 							;
-							refresh_report_menu.call( this );
+							refresh_report_menu.call( $table );
+							if( trash_column )
+								save_table_designer.call( $table );
 						})
 						//move_column
 						.on('click', '.move_column', function(){
@@ -970,7 +1048,7 @@ jQuery( function( $ ) {
 							.attr('class', '')
 							.each(function(){
 								var column = this.getAttribute('column');
-								var label = this.innerText;
+								var label = $(this).clone().children().remove().end().text();
 								if( columns[ column ] === undefined )
 									columns[ column ] = {};
 								else if( columns[ column ][ 'visible' ] === false )
@@ -1041,6 +1119,14 @@ jQuery( function( $ ) {
 								$(this)
 									.html($script)
 								;
+								$script.on('change', function(){
+									$script.nextAll('.input-alert').remove();
+									if( /'.*(?<!\\)"/.exec(this.value) )
+										$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
+											.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\")
+											.insertAfter($script)
+										;
+								}).trigger('change');
 							})
 							.on('change', ':input', save_table_designer)
 							.end()
