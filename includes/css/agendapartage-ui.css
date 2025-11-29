@@ -149,7 +149,6 @@ div.agdp-tabs .agdp-panel fieldset legend {
 	width: 100%;
 }
 .agdpreport table {
-	margin: 4px;
 	border-collapse: collapse;
 	border: 1px solid black;
 }
@@ -178,6 +177,11 @@ body.colors-dark .agdpreport th {
 
 .agdpreport caption.text-align-left {
 	padding-left: 1em;
+}
+
+.agdpreport .entry-content a {
+  -webkit-box-shadow: none;
+  box-shadow: none;
 }
  
 /*******
