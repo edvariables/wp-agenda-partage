@@ -880,23 +880,111 @@ jQuery( function( $ ) {
 							alert(response);
 							return;
 						}
-						var msg = '';
+						var $msg = $('<ul></ul>');
 						columns = response;
 						for( var c in columns ){
 							switch( columns[c]['render'] ){
 								case false:
-									msg += "\n`" + c + "` : ABSENT !";
+									$msg.append(
+										$('<li><code>`' + c + '`</code> : <b>ABSENT !</b>&nbsp;</li>')
+											.attr('column', c)
+											.append($('<a></a>')
+												.attr('title', 'Ajoute la colonne')
+												.addClass('float-right')
+												.append('<span class=" dashicons-before dashicons-table-col-after"></span>')
+												.on('click', function(e){
+													var $this = $(this);
+													var column = $this.parents('li:first').attr('column');
+													var $table = $render.find('.agdpreport > table');
+													$td = $table.find('tr > [column=' + column + ']');
+													var remove = $td.length;
+													if( remove ){
+														$td.remove();
+													} else {
+														//TODO prepend ne va pas avec Afficher colonne d'index
+														$table.find('> thead > tr')
+															.prepend('<th column="' + column + '">' + column + '</th>');
+														$table.find('> tbody > tr')
+															.prepend('<td column="' + column + '">' + column + '</td>');
+														$table.find('> tfoot > tr')
+															.prepend('<th column="' +column + '">' + column + '</th>');
+													}
+													$this
+														.children('span:first')
+															.toggleClass('dashicons-table-col-after')
+															.toggleClass('dashicons-table-col-delete')
+															.end()
+														.attr('title', remove ? 'Ajoute la colonne' : 'Masque la colonne')
+													;
+													// save_table_designer();
+													// var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
+													// var columns = table_render["columns"] ? table_render["columns"] : {};
+													// if( remove )
+														// columns[column] = undefined;
+													// else
+														// columns[column] = column;
+													// table_render["columns"] = columns;
+													// var $input_table_render = get_input.call( $table, 'textarea[name="table_render"]');
+													// $input_table_render.text( JSON.stringify( table_render ) );
+													if( remove ){
+														columns.splice(column,1);
+													} else {
+														set_table_render_option.call( this, 'columns', column, 'label', column);
+														set_table_render_option.call( this, 'columns', column, 'index', 0);
+														set_table_render_option.call( this, 'columns', column, 'visible', true);
+													}
+													refresh_report.call($table);
+													e.preventDefault();
+												})
+											)
+									);
 									break;
 								case 'hidden':
-									msg += "\n`" + c + "` : masquée";
+									$msg.append(
+										$('<li><code>`' + c + '`</code> : <b>masquée</b>&nbsp;</li>')
+											.attr('column', c)
+											.append($('<a></a>')
+												.attr('title', 'Rend visible la colonne')
+												.addClass('float-right')
+												.append('<span class=" dashicons-before dashicons-visibility"></span>')
+												.on('click', function(e){
+													var $this = $(this);
+													var column = $this.parents('li:first').attr('column');
+													var $table = $render.find('.agdpreport > table');
+													$td = $table.find('tr > [column=' + column + ']')
+														.toggleClass('hidden');
+													var isHidden = $td.is('.hidden');
+													$this
+														.children('span:first')
+															.toggleClass('dashicons-visibility')
+															.toggleClass('dashicons-hidden')
+															.end()
+														.attr('title', isHidden ? 'Rend visible la colonne' : 'Masque la colonne')
+													;
+													save_table_designer();
+													e.preventDefault();
+												})
+											)
+									);
 									break;
 							}
 							if( columns[c]['info'] )
-								msg += "\n`" + c + "` : " + columns[c]['info'];
+								$msg.append($('<li><code>`' + c + '`</code> : <b>' + columns[c]['info'] + '</b></li>')
+									.attr('column', c)
+								);
 						}
-						if( msg === '' )
-							msg = 'Rien à déclarer, tout va bien.';
-						alert(msg);
+						if( $msg.children().length === 0 )
+							$msg.text('Rien à déclarer, tout va bien.');
+						
+						$msg.dialog({                   
+							'dialogClass'   : 'wp-dialog',           
+							'modal'         : true,
+							'closeOnEscape' : true,      
+							'buttons'       : { "Fermer": function() { $(this).dialog('close'); } },
+							'title'			: "Contrôle des colonnes",
+						});
+						
+						$menu.toggleClass('active');
 					});
 					e.preventDefault();
 				})
@@ -932,7 +1020,6 @@ jQuery( function( $ ) {
 						.remove();
 			return false;
 		}
-		var $table = $render.find('.agdpreport > table');
 		if( $table.length === 0
 		|| $table.is('.report_table_designer') )
 			return false;

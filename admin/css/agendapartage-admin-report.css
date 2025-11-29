@@ -242,3 +242,6 @@
 #agdp_report-render .report_table_designer input.column_class{
 	max-width: 60%;
 }
+#agdp_report-render .toggle-trigger:not(.dashicons-before) {
+  background-size: 12px;
+}

@@ -2,12 +2,8 @@
  * ED20200326
  * Feuille de styles pour Agenda partagé
  */
- 
-a:active, a:focus {
-	outline: none;
-}
 
-.alerte {
+.alert, .alerte {
 	border-style: solid;
 	border-color:orange;
 	padding: 5px;

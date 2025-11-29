@@ -172,6 +172,11 @@ jQuery( function( $ ) {
 			}
 			if(ajaxData){
 				var ajaxData = JSON.parse(ajaxData);
+				$container = $toggler.parents('form[id="post"]:first');
+				ajaxData['post_ref'] = {
+					'id' : $container.find('input[name="post_ID"]').val(),
+					'type' : $container.find('input[name="post_type"]').val(),
+				};
 				jQuery.ajax({
 					url : agdp_ajax.ajax_url,
 					type : 'post',
@@ -209,7 +214,7 @@ jQuery( function( $ ) {
 					}
 				});
 				$toggler.addClass('loading');//Todo Hourglass
-				var $spinner = $toggler.children('.wpcf7-spinner');
+				var $spinner = $toggler.next('.wpcf7-spinner');
 				if($spinner.length == 0)
 					$toggler.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
 					// $spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>')

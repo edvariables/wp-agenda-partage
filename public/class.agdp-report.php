@@ -15,6 +15,7 @@ class Agdp_Report extends Agdp_Post {
 
 	const post_type = 'agdpreport';
 	const taxonomy_report_style = 'report_style';
+	const taxonomy_sql_function = 'sql_function';
 		
 	// const user_role = 'author';
 	
@@ -121,6 +122,48 @@ class Agdp_Report extends Agdp_Post {
 	}
 
 	/**
+	 * SQL variables
+	 */
+ 	private static function normalize_sql_variables( $report, $sql_variables, $options ) {
+		$report_id = $report->ID;
+		//valeurs des variables
+		if( ! $sql_variables )
+			$sql_variables = [];
+		elseif( is_string($sql_variables) )
+			$sql_variables = json_decode($sql_variables, true);
+		if( $report_id && ! empty( $options['_default_sql_variables_' . $report_id ] ) )
+			$default_sql_variables = $options['_default_sql_variables_' . $report_id ];
+		else{
+			$default_sql_variables = get_post_meta( $report_id, 'sql_variables', true );
+			$options['_default_sql_variables_' . $report_id ] = $default_sql_variables;//cache
+		}
+		if( $default_sql_variables && is_string($default_sql_variables) ){
+			$default_sql_variables = json_decode($default_sql_variables, true);
+		}
+		else
+			$default_sql_variables = [];
+		if( ! $sql_variables )
+			$sql_variables = $default_sql_variables;
+		else {
+			$sql_variables = array_merge($default_sql_variables, $sql_variables);
+		}
+		//normalize sql_variables
+		foreach($sql_variables as $var=>$value){
+			if( ! is_array($value) ){
+				if( isset($default_sql_variables[$var]) ){
+					$sql_variables[$var] = $default_sql_variables[$var];
+					$sql_variables[$var]['value'] = $value;
+				}
+				else {
+					$sql_variables[$var] = [ 'value' => $value ];
+				}
+			}
+		}
+		
+		return $sql_variables;
+	}
+
+	/**
 	 * SQL
 	 */
  	public static function get_sql( $report = false, $sql = false, $sql_variables = false, &$options = false ) {
@@ -174,24 +217,8 @@ class Agdp_Report extends Agdp_Post {
 		$blog_prefix = $wpdb->get_blog_prefix();
 	    $sql = static::replace_sql_tables_prefix( $sql );
 		
-		//valeurs des variables
-		if( ! $sql_variables )
-			$sql_variables = [];
-		elseif( is_string($sql_variables) )
-			$sql_variables = json_decode($sql_variables, true);
-		if( $report_id && ! empty( $options['_default_sql_variables_' . $report_id ] ) )
-			$default_sql_variables = $options['_default_sql_variables_' . $report_id ];
-		else{
-			$default_sql_variables = get_post_meta( $report_id, 'sql_variables', true );
-			$options['_default_sql_variables_' . $report_id ] = $default_sql_variables;//cache
-		}
-		if( $default_sql_variables && is_string($default_sql_variables) ){
-			if( ! $sql_variables )
-				$sql_variables = json_decode($default_sql_variables, true);
-			else
-				$sql_variables = array_merge(json_decode($default_sql_variables, true), $sql_variables);
-		}
-			
+		$sql_variables = self::normalize_sql_variables( $report, $sql_variables, $options );
+		
 		//comments
 		$sql = self::remove_sql_comments( $sql );
 				
@@ -968,17 +995,25 @@ class Agdp_Report extends Agdp_Post {
 	 * get_global_vars_sql
 	 */
  	public static function get_global_vars_sql( $vars, $sql_variables = false, $options = false ) {
-		
 		$set_vars = '';
 		foreach( $vars as $var => $value ){
 			if( $set_vars )
 				$set_vars .= ', ';
 			$set_vars .= sprintf(' %s = "%s"', $var, esc_attr( $value ));
 		}
+		// sql_variables commençant par @
+		if( is_array($sql_variables) )
+			foreach( $sql_variables as $var => $value ){
+				if( $var[0] !== '@' )
+					continue;
+				if( $set_vars )
+					$set_vars .= ', ';
+				$set_vars .= sprintf(' %s = "%s"', $var, esc_attr( $value ));
+			}
 		if( $set_vars ){
 			$set_vars = sprintf('SET %s', $set_vars);
 		}
-
+		
 		return $set_vars;
 	}
 	
@@ -1066,7 +1101,7 @@ class Agdp_Report extends Agdp_Post {
 				return $dbresults;
 			}
 			if( is_array( $dbresults ) && count( $dbresults ) ){
-				return [ 'content' => $dbresults[0]->content,  'class' => $dbresults[0]->class ];
+				return [ 'content' => $dbresults[0]->content,  'class' => isset($dbresults[0]->class) ? $dbresults[0]->class : '' ];
 			}
 		}
 		return [ 'content' => $report->post_title, 'class' => '' ];
@@ -1249,6 +1284,9 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	public static function get_sql_dbresults( $report = false, $sql = false, $sql_variables = false, &$options = false, &$table_render = false ) {
 		
+		if( is_numeric($report) )
+			$report = get_post($report);
+		
 		$table_columns = $table_render ? $table_render['columns'] : false;
 		
 		if( ! is_array($options) )
@@ -1274,7 +1312,8 @@ class Agdp_Report extends Agdp_Post {
 			$sql = array_filter( $sql, function( $value ){ 
 						return trim($value, " ;\n\r") !== '';
 			} );
-		
+			
+		$result = false;
 		foreach( $sql as $index => $sql_u ){
 			
 			$matches = [];
@@ -1310,6 +1349,7 @@ class Agdp_Report extends Agdp_Post {
 				foreach( $sql_uu as $sql_uuu ){
 					//$wpdb->get_results
 					$result_u = $wpdb->get_results($sql_uuu);
+						
 					array_push( $options['_sqls'], $sql_uuu );
 					if( $wpdb->last_error ){
 						// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
@@ -1340,8 +1380,6 @@ class Agdp_Report extends Agdp_Post {
 				$result = new Exception( $wpdb->last_error );
 		}
 		
-		if( ! isset($result) )
-			return false;
 		return $result;
 	}
 
@@ -1773,6 +1811,21 @@ class Agdp_Report extends Agdp_Post {
 			$report_id = $_POST['post_id'];
 		else
 			$report_id = false;
+		//slug
+		if( is_string($report_id) && ! is_numeric($report_id) ){
+				//chemin relatif
+			if( isset($_POST['post_ref']) )
+				$relative_to = $_POST['post_ref']['id'];
+			else
+				$relative_to = false;
+			$report = get_relative_page($report_id, $relative_to, self::post_type);
+				
+			debug_log(__FUNCTION__, '$report', $report);
+			if( ! is_a( $report, 'WP_Post') )
+				return sprintf('%s : rapport introuvable', $report_id);
+			$report_id = $report->ID;
+		}
+		
 		if( isset($data['sql_variables']) ){
 			$sql_variables = $data['sql_variables'];
 			if( $sql_variables === 'false' )
@@ -1816,7 +1869,26 @@ class Agdp_Report extends Agdp_Post {
 		}
 		else
 			$sql = false;
+		return self::get_report_columns( $report_id, $sql, $sql_variables, $data );
+	}
+	
+	/**
+	 * Returns SQL and render columns
+	 */
+ 	public static function get_report_columns( $report = false, $sql = false, $sql_variables = false, $options = false ) {
+		if( ! $report ){
+			global $post;
+			if( ! $post || $post->post_type !== self::post_type)
+				return false;
+			$report = $post;
+		}
+		elseif( is_numeric($report) ){
+			$report = get_post($report);
+			if( ! $report || $report->post_type !== self::post_type)
+				return false;
+		}
 		
+		$report_id = $report->ID;
 		
 		// Rendu du tableau
 		$meta_key = 'table_render';
@@ -1829,7 +1901,7 @@ class Agdp_Report extends Agdp_Post {
 		// Exécution de la requête sans mise en forme
 		$false = false;
 		$sql_variables['LIMIT'] = 1; //TODO
-		$dbresults = self::get_sql_dbresults( $report_id, $sql, $sql_variables, $false, $false );
+		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables, $false, $false );
 		
 		if( is_a($dbresults, 'Exception') )
 			return "Désolé, la requête SQL comporte une erreur.";

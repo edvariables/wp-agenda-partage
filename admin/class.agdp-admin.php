@@ -41,6 +41,9 @@ class Agdp_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-report.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Report', 'init' ) );
 
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-sql-function.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_SQL_Function', 'init' ) );
+
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-forum.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Forum', 'init' ) );
 
@@ -121,13 +124,14 @@ class Agdp_Admin {
 	    wp_enqueue_style( AGDP_TAG);
 	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '_ui');
+		wp_enqueue_style (  'wp-jquery-ui-dialog');
 	}
 
 	/**
 	 * Registers js files.
 	 */
 	public static function register_plugin_js() {
-		wp_enqueue_script(array( 'jquery', 'jquery-ui-tabs' ));
+		wp_enqueue_script(array( 'jquery', 'jquery-ui-tabs', 'jquery-ui-dialog' ));
 		
 	    wp_register_script( AGDP_TAG . '-tools', plugins_url( 'agenda-partage/includes/js/agendapartage-tools.js' ), array('jquery'), AGDP_VERSION , false );
 		wp_localize_script( AGDP_TAG . '-tools', 'agdp_ajax', array( 

@@ -59,6 +59,7 @@ class Agdp_Post_Types {
 		
 		Agdp_Report_Post_type::register_post_type();
 		Agdp_Report_Post_type::register_taxonomy_report_style();
+		Agdp_Report_Post_type::register_taxonomy_sql_function();
 		
 		Agdp_Evenement_Post_type::register_post_type();
 		Agdp_Evenement_Post_type::register_taxonomy_ev_category();

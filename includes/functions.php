@@ -469,3 +469,55 @@ function is_associative_array($array){
 		return true;
 	return $keys !== $array;
 }
+
+/**
+ * get_relative_page
+ */
+function get_post_path($post){
+	if( is_numeric($post) )
+		$post = get_post($post);
+	if($post->post_parent)
+		return get_post_path( $post->post_parent ) . '/' . $post->post_name;
+	return $post->post_name;
+}
+
+/**
+ * get_relative_page
+ */
+function get_relative_page($slug, $relative_to, $post_type = false){
+	
+	if( is_a($slug, 'WP_Post') ){
+		return $slug;
+	}
+	if( is_numeric($slug) ){
+		$post = get_post( $slug );
+		return $post;
+	}
+	
+	if( $relative_to ){
+		$relative_to = get_post($relative_to);
+		if( ! is_a($relative_to, 'WP_Post') )
+			throw new Exception("Impossible de retrouver le post de référence");
+		if( ! $post_type ){
+			$post_type = $relative_to->post_type;
+		}
+	}
+	
+	if($slug[0] === ':'){ //Fils de 
+		$path = get_post_path($relative_to) . '/' . substr( $slug, 1 );
+	}
+	elseif($slug[0] === '.'){ 
+		if($slug[1] === '/'){ //Fils de 
+			$path = get_post_path($relative_to) . '/' . substr( $slug, 2 );
+		}
+	}
+	elseif($slug[0] === '/'){ //Racine
+		$path = substr( $slug, 1 );
+	}
+	else { //Même parent
+		$path = get_post_path($relative_to->post_parent) . '/' . $slug;
+	}
+	
+	return get_page_by_path( $path, OBJECT, $post_type );
+}
+

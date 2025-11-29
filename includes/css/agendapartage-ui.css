@@ -1,4 +1,13 @@
 
+.float-right {
+	float: right;
+}
+ 
+a:active, a:focus {
+	outline: none;
+	box-shadow: none;
+}
+
 /*
  * Tabs
  */
@@ -163,3 +172,20 @@ body.colors-dark .agdpreport th {
 	background-color: darkgray;
 	font-size: larger;
 }
+
+ 
+/*******
+/* jquery ui-dialog
+ *******/
+.ui-dialog {
+  box-shadow: 1px 3px 6px 2px rgb(0, 0, 0) !important;
+}
+.ui-dialog-content a {
+	cursor: pointer;
+}
+.ui-dialog-content a[disabled] {
+	pointer-events: none;
+	opacity: 70%;
+}
+/*
+ *******/

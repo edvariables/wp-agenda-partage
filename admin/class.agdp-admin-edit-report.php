@@ -195,6 +195,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$report = get_post();
 		$tax_report_styles = '';//<div class="report_style_terms">';
 		$taxonomy = Agdp_Report::taxonomy_report_style;
+		$icon_edit = Agdp::icon('edit');
 		foreach( Agdp_Report::get_report_styles( $report, 'all' ) as $style ){
 			$tax_report_styles .= sprintf('<div>%s<a href="/wp-admin/term.php?taxonomy=%s&tag_ID=%d&post_type=%s" target="_blank">%s</a></div>'
 				, sprintf('<label><input type="checkbox" checked data-report-style="%s">%s</label>'
@@ -204,7 +205,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				, $taxonomy
 				, $style->term_id
 				, $report->post_type
-				, Agdp::icon('edit')
+				, $icon_edit
 			);
 		}
 		// $tax_report_styles .= '</div>';
