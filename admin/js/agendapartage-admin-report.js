@@ -999,6 +999,25 @@ jQuery( function( $ ) {
 		/* Check columns
 		 ****************/
 		 
+		
+		/*****************
+		 * Refresh
+		 */
+		var $refresh_report_menu = $menu.find('.refresh_report:first');
+		if( $refresh_report_menu.length === 0 ){
+			$refresh_report_menu = $('<a class="refresh_report dashicons-before dashicons-update">Rafraîchir</a>')
+				.on('click', refresh_report)
+				.appendTo( $('<label></label>')
+					.appendTo(
+						$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+							.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+					)
+				)
+			;
+		}
+		/* Refresh
+		 ****************/
+		 
 		return true;
 	}
 

@@ -42,8 +42,13 @@ body.colors-dark .color-red {
 	display: inline-block;
 }
 .agdp-metabox-row > textarea#sql, .agdp-metabox-row > textarea.sql {
-	width: 100%;
+	width: 95%;
 	font-family: "Lucida Console", "Courier New", monospace;
+	font-size: 90%;
+}
+.agdp-metabox-row > input.sql {
+	font-family: "Lucida Console", "Courier New", monospace;
+	font-size: 90%;
 }
 .agdp-metabox-row.side-box > input, 
 .agdp-metabox-row.side-box > textarea {

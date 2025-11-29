@@ -97,8 +97,8 @@ class Agdp_Report_Post_type {
 			'public'                     => true,
 			'show_ui'                    => true,
 			'show_admin_column'          => true,
-			'show_in_nav_menus'          => true,
-			'show_tagcloud'              => true,
+			'show_in_nav_menus'          => false,
+			'show_tagcloud'              => false,
 		);
 		register_taxonomy( Agdp_Report::taxonomy_report_style, array( Agdp_Report::post_type ), $args );
 
@@ -137,8 +137,8 @@ class Agdp_Report_Post_type {
 			'public'                     => false,
 			'show_ui'                    => true,
 			'show_admin_column'          => true,
-			'show_in_nav_menus'          => true,
-			'show_tagcloud'              => true,
+			'show_in_nav_menus'          => false,
+			'show_tagcloud'              => false,
 		);
 		register_taxonomy( Agdp_Report::taxonomy_sql_function, array( Agdp_Report::post_type ), $args );
 

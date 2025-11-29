@@ -1820,7 +1820,6 @@ class Agdp_Report extends Agdp_Post {
 				$relative_to = false;
 			$report = get_relative_page($report_id, $relative_to, self::post_type);
 				
-			debug_log(__FUNCTION__, '$report', $report);
 			if( ! is_a( $report, 'WP_Post') )
 				return sprintf('%s : rapport introuvable', $report_id);
 			$report_id = $report->ID;

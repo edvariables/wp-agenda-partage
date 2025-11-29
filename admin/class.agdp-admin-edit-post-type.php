@@ -393,6 +393,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			////////////////
 			case 'input':
 			default:
+				if( $input === '' )
+					$input = 'input';
 				//TODO phone, email, checkbox, number, int, bool, yes|no, ...
 				if( ! $val && $default_val) $val = $default_val;
 				echo '<input id="'.$id.'"'
@@ -408,7 +410,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				break;
 		}
 		
-		$need_label = ! in_array( $input, ['input', 'checkbox', 'textarea'] );
+		$need_label = ! in_array( $input, ['input', 'checkbox', 'textarea', 'tinymce'] );
 		if($learn_more)
 			foreach($learn_more as $comment){
 				echo '<br>';

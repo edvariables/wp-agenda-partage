@@ -61,6 +61,34 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			else {
 				delete_term_meta($term_id, $meta_name);
 			}
+		self::create_sql_function_in_db( $term_id, $args['name'] );
+	}
+	/**
+	 * create_sql_function_in_db
+	 */
+	public static function create_sql_function_in_db( int $term_id, string $term_name ){
+		$term_metas = get_term_meta($term_id, false, true);
+		global $wpdb;
+		$sql = sprintf('DROP FUNCTION `%s`', $term_name);
+		$wpdb->hide_errors();
+		$wpdb->query($sql);
+		$wpdb->show_errors();
+		
+		$wpdb->last_error = false;
+		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s %s\nBEGIN\n%s\nEND"
+			, $term_name
+			, $term_metas['parameters'][0]
+			, $term_metas['return_type'][0]
+			, 'DETERMINISTIC NO SQL' //TODO
+			, $term_metas['body'][0]
+		);
+		$result = $wpdb->query($sql);
+		if($wpdb->last_error){
+			if( is_a($result, 'WP_Error') )
+				throw $result ;
+			else
+				throw new Exception( $wpdb->last_error );
+		}
 	}
 	/**
 	 * Register Meta Boxes (boite en édition du term)
@@ -86,7 +114,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 									'input' => 'textarea',
 									'class' => 'sql',
 									'learn-more' => 'De la forme : '
-										. '<br><code>' . $example_ids
+										. '<br><code>' . htmlentities( $example_ids )
 										. '</code>'
 								)], $tag, null);
         ?></td>
@@ -97,11 +125,10 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
         <td><?php
 			$example_ids = 'VARCHAR(1024) | INT | JSON | ... ';
 			parent::metabox_html([array('name' => $meta_name,
-									'type' => 'input',
-									'input' => 'text',
+									'type' => 'text',
 									'class' => 'sql',
 									'learn-more' => 'Type de données MySQL'
-										. '<br><code>' . $example_ids
+										. '<br><code>' . htmlentities( $example_ids )
 										. '</code>'
 								)], $tag, null);
         ?></td>
@@ -111,26 +138,29 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
     ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
         <th scope="row"><label for="<?php echo $meta_name;?>">Script de la fonction</label></th>
         <td><?php
-			$example_ids = 'RETURN CONCAT(\'<label class=\"toggle-trigger\" ajax=1\', \' data=\"\', @DATA, \'\">\', \'<a href=\"#\">\', `TITLE`, \'</a>\', \'</label>\');';
+			$example_ids = 'RETURN CONCAT(\'<label class="toggle-trigger" ajax=1\', \' data="\', @DATA, \'">\', \'<a href="#">\', `TITLE`, \'</a>\', \'</label>\');';
+			$comment = '<i>Les fonctions SQL sont créées comme déterministes et n\'exécutant pas de requête SQL dans leur script.</i>';
 			parent::metabox_html([array('name' => $meta_name,
 									// 'label' => __('Paramètres.', AGDP_TAG),
 									'type' => 'input',
 									'input' => 'textarea',
 									'class' => 'sql',
+									'input_attributes' => [ 'rows' => 12 ],
 									'learn-more' => 'Contenu entre BEGIN et END. Doit contenir un RETURN value;'
-										. '<br><code>' . $example_ids
+										. '<br><code>' . htmlentities( $example_ids )
 										. '</code>'
+										.'<br>' . $comment
 								)], $tag, null);
         ?></td>
     </tr><?php
 	$meta_name = 'use_example';
     ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
-        <th scope="row"><label for="<?php echo $meta_name;?>">Exemple</label></th>
+        <th scope="row"><label for="<?php echo $meta_name;?>">Exemple d'utilisation dans une cellule de rapport</label></th>
         <td><?php
-			$parameters = get_term_meta($tag->term_id, 'parameters', true);
+			$parameters = $tag ? get_term_meta($tag->term_id, 'parameters', true) : '';
 			//retire les types
 			$parameters = preg_replace('/(`?\w+`?)(\s\w+(\s*[\(][^\)]*[\)])?)?(\s*,\s*|$)/', '$1$4', $parameters);
-			$example = "$tag->name($parameters)";
+			$example = $tag ? "$tag->name($parameters)" : '';
 			parent::metabox_html([array('name' => $meta_name,
 									// 'label' => __('Paramètres.', AGDP_TAG),
 									'type' => 'input',
