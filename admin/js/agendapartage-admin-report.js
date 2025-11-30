@@ -791,19 +791,36 @@ jQuery( function( $ ) {
 			$menu = $('<div id="agdp_report-render-menu"></div>')
 				.html( $('<a class="toggler dashicons-before dashicons-menu"></a>')
 					.on('click', function(){
-						$(this).parent().toggleClass('active');
-					})	
+						if( $menu.is('.active') )
+							hide_report_menu( true );
+						else {
+							$menu.addClass('active');
+							$(document.body).on('click', '*', hide_report_menu );
+						}
+					})
 				)
 				.insertBefore( $menu_items.first() )
 				.append( $menu_items )
 				
+				//reset all inputs
 				.append( $('<a class="report_menu_item reset-designer dashicons-before dashicons-trash">Réinitialiser</a>')
-					.on('click', function(){ //reset all inputs
+					.on('click', function(){ 
+						if( ! confirm("Êtes vous sûr de vouloir tout réinitialiser ?") )
+							return;
 						$render.find('textarea[name="table_render"]').text('');
 						refresh_report.call($render);
 					})
 				)
 			;
+			/* Masque le menu si le click est hors menu */
+			function hide_report_menu(event) {
+				if( event !== true
+				&& ! $menu.is('.active')
+				|| $menu.get(0).contains( event.target ) )
+					return;
+				$menu.removeClass('active');
+				$(document.body).off('click', '*', hide_report_menu );
+			}
 		}
 		
 		/*****************

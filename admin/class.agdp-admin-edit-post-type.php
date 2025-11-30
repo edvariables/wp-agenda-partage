@@ -122,6 +122,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		$style = ! array_key_exists ( 'style', $field ) || ! $field['style'] ? '' : $field['style'];
 		$class = ! array_key_exists ( 'class', $field ) || ! $field['class'] ? '' : $field['class'];
 		$container_class = ! array_key_exists ( 'container_class', $field ) || ! $field['container_class'] ? '' : $field['container_class'];
+		$container_tag = ! array_key_exists ( 'container_tag', $field ) || ! $field['container_tag'] ? 'div' : $field['container_tag'];
 		$input_attributes = ! array_key_exists ( 'input_attributes', $field ) || ! $field['input_attributes'] ? '' : $field['input_attributes'];
 		$readonly = ! array_key_exists ( 'readonly', $field ) || ! $field['readonly'] ? false : $field['readonly'];
 		$unit = ! array_key_exists ( 'unit', $field ) || ! $field['unit'] ? false : $field['unit'];
@@ -153,7 +154,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$input_attributes = $attributes_str;
 		}
 		
-		?><div class="<?php echo trim($container_class);?>"><?php
+		?><<?php echo trim($container_tag);?> class="<?php echo trim($container_class);?>"><?php
 
 		switch ($input_type) {
 			case 'number' :
@@ -442,7 +443,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		}
 	
 		
-		?></div><?php
+		?></<?php echo trim($container_tag);?>><?php
 	}
 	
 	/**

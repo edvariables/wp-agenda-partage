@@ -43,6 +43,10 @@
 	width: 5em;
 }
 
+#agdp_report-variables .sql_variable textarea {
+	width: 95%;
+}
+
 #agdp_report-variables .var_editor {
 	border: gray 1px solid;
 	margin: 0.5em;
@@ -153,7 +157,7 @@
 
 #agdp_report-render-menu {
 	text-align: left;
-	padding: 0px 0px 5px 0px;
+	padding: 0px 5px 5px 0px;
 	margin: unset;
 	float: left;
 	top: -34px;

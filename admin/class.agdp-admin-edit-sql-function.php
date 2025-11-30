@@ -70,24 +70,28 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		$term_metas = get_term_meta($term_id, false, true);
 		global $wpdb;
 		$sql = sprintf('DROP FUNCTION `%s`', $term_name);
+		$wpdb->suppress_errors( true );
 		$wpdb->hide_errors();
 		$wpdb->query($sql);
-		$wpdb->show_errors();
 		
 		$wpdb->last_error = false;
-		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s %s\nBEGIN\n%s\nEND"
+		$wpdb->show_errors();
+		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s %s\nBEGIN\n%s;\nEND"
 			, $term_name
 			, $term_metas['parameters'][0]
 			, $term_metas['return_type'][0]
-			, 'DETERMINISTIC NO SQL' //TODO
+			, 'DETERMINISTIC NO SQL' //TODO paramétrables
 			, $term_metas['body'][0]
 		);
+		$wpdb->suppress_errors( true );
 		$result = $wpdb->query($sql);
 		if($wpdb->last_error){
 			if( is_a($result, 'WP_Error') )
-				throw $result ;
+				$msg = $result->message;
 			else
-				throw new Exception( $wpdb->last_error );
+				$msg = $wpdb->last_error;
+			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction MySQL n'existe pas ou plus.";
+			Agdp_Admin::add_admin_notice( $msg, 'error', true);
 		}
 	}
 	/**

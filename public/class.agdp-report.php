@@ -111,13 +111,16 @@ class Agdp_Report extends Agdp_Post {
 	public static function wpdb( $reset = false) {
 		if( ! $reset && self::$wpdb )
 			return self::$wpdb;
-		self::$wpdb = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		self::$wpdb = new Agdp_wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		
 		global $wpdb;
 		self::$wpdb->set_blog_id( $wpdb->blogid, $wpdb->siteid );
 		$global_wpdb = $wpdb;
 			$wpdb = self::$wpdb;
 			wp_set_wpdb_vars();
 		$wpdb = $global_wpdb;
+		
+		self::$wpdb->suppress_errors( true );
 		return self::$wpdb;
 	}
 
@@ -449,8 +452,10 @@ class Agdp_Report extends Agdp_Post {
 							if( $value && is_string( $value ) ){
 								$value = json_decode( $value, true );
 							}
-							if( ! $value )
+							if( ! $value ){
 								$value = '[]';
+								$str_columns = '';
+							}
 							else {
 								if( is_numeric($format_args) )
 									$rows = $format_args;
@@ -458,7 +463,7 @@ class Agdp_Report extends Agdp_Post {
 								$is_object = false;
 								$columns = [];
 								foreach( $value as $index => $item ){
-									if( $index !== 0 ){
+									if( $index !== 0 ){//tableau brut
 										$is_object = true;
 									}
 									break;
@@ -470,9 +475,20 @@ class Agdp_Report extends Agdp_Post {
 								}
 								else {
 									foreach( $value as $object ){
+										if( ! is_array($object) )
+											continue;
 										foreach( $object as $key => $item )
 											$columns[] = $key;
 										break;
+									}
+									//Tableau de données brutes, sans clé de colonne
+									if( count($columns) === 0 && count($value) > 0 ){
+										$columns[] = 'item';
+										$values = [];
+										foreach( $value as $index => $item ){
+											$values[] = [ $columns[0] => $item ];
+										}
+										$value = $values;
 									}
 									$value = json_encode( $value, JSON_UNESCAPED_UNICODE );
 									$value = sprintf('[%s]', substr($value, 1, strlen($value) - 2) );
@@ -546,8 +562,17 @@ class Agdp_Report extends Agdp_Post {
 								break;
 						}
 					}
-					else
+					else {
+						if( is_string($variables[$variable]) ){
+							// $variables[$variable] = str_replace("\n", '',  str_replace("\r", '', $variables[$variable]));
+							if( strpos($variables[$variable], '"') ){
+								//debug_log(__FUNCTION__, 'Contient double-quote', $variables[$variable] );
+								//TODO est-ce bien raisonnable ?
+								$variables[$variable] = str_replace('"', '&quot;', $variables[$variable]);
+						}}
+						
 						$prepare[] = $variables[$variable];
+					}
 				}
 				elseif( $var_domain === '@' ){
 				}
@@ -1095,13 +1120,13 @@ class Agdp_Report extends Agdp_Post {
 			$options['_no_table_columns'] = true;
 			$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
 			array_push( $options['_sqls'], $sql );
-			// debug_log( __FUNCTION__ . ' get_sql_dbresults ', $dbresults, $sql);
 			if( is_a($dbresults, 'Exception') ){
 				$dbresults = sprintf('%s (%d)<br>%s', $dbresults->getMessage(), 'caption', $sql);
 				return $dbresults;
 			}
 			if( is_array( $dbresults ) && count( $dbresults ) ){
-				return [ 'content' => $dbresults[0]->content,  'class' => isset($dbresults[0]->class) ? $dbresults[0]->class : '' ];
+				return [ 'content' => isset($dbresults[0]->content) ? $dbresults[0]->content : ''
+					  ,  'class' => isset($dbresults[0]->class) ? $dbresults[0]->class : '' ];
 			}
 		}
 		return [ 'content' => $report->post_title, 'class' => '' ];
@@ -1161,6 +1186,8 @@ class Agdp_Report extends Agdp_Post {
 	 * Returns a html table based on $table_columns in case of sql error
 	 */
  	public static function get_default_table( $report, $sql, $table_render, $sql_variables, &$options ) {
+		self::wpdb( TRUE );
+		
 		$table_columns = $table_render && isset($table_render['columns']) ? $table_render['columns'] : false;
 		$table_caption = $report ? $report->post_title : '';
 		$html = sprintf('<table class="error"><caption>Erreur dans <var>%s</var></caption><thead><tr>', $table_caption);
@@ -1287,7 +1314,7 @@ class Agdp_Report extends Agdp_Post {
 		if( is_numeric($report) )
 			$report = get_post($report);
 		
-		$table_columns = $table_render ? $table_render['columns'] : false;
+		$table_columns = $table_render && isset($table_render['columns']) ? $table_render['columns'] : false;
 		
 		if( ! is_array($options) )
 			$options = [];
@@ -1348,8 +1375,9 @@ class Agdp_Report extends Agdp_Post {
 					
 				foreach( $sql_uu as $sql_uuu ){
 					//$wpdb->get_results
+					$wpdb->check_current_query = false;
 					$result_u = $wpdb->get_results($sql_uuu);
-						
+					
 					array_push( $options['_sqls'], $sql_uuu );
 					if( $wpdb->last_error ){
 						// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
@@ -1445,10 +1473,8 @@ class Agdp_Report extends Agdp_Post {
 		$options_copy = $options;
 		
 		$wpdb = self::wpdb( TRUE ); //reset des variables
-		$wpdb->suppress_errors(true);
 		$wpdb->last_error = false;
 		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
-		$wpdb->suppress_errors(false);
 		
 		$sql_prepared ='';
 		//report_show_sql
@@ -1474,7 +1500,7 @@ class Agdp_Report extends Agdp_Post {
 				}
 				if( is_array($sql_prepared) )
 					$sql_prepared = implode( ";\n", $sql_prepared );
-				$sql_prepared = sprintf('<div class="sql_prepared">%s</pre>', htmlspecialchars($sql_prepared));
+				$sql_prepared = sprintf('<div class="sql_prepared">%s</div>', htmlspecialchars($sql_prepared));
 			}	
 			
 		}
@@ -1900,7 +1926,8 @@ class Agdp_Report extends Agdp_Post {
 		// Exécution de la requête sans mise en forme
 		$false = false;
 		$sql_variables['LIMIT'] = 1; //TODO
-		$dbresults = self::get_sql_dbresults( $report, $sql, $sql_variables, $false, $false );
+		
+		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $false, $false );
 		
 		if( is_a($dbresults, 'Exception') )
 			return "Désolé, la requête SQL comporte une erreur.";

@@ -484,7 +484,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			/* $href = */ '#',
 			/* $container_class = */ 'toggle-trigger'
 		);
-		$html = sprintf("<span>Utilisez le préfixe <b><code>%s</code></b> avant chaque nom de table.</span><br>", AGDP_BLOG_PREFIX);
+		$html = sprintf("<span>Utilisez le préfixe <b><code>%s</code></b> avant chaque nom de table WP.</span><br>", AGDP_BLOG_PREFIX);
 		$html .= $ajax 
 			. '<div class="toggle-container sql-helper-variables"></div>';
 		return $html;

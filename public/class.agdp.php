@@ -28,6 +28,8 @@ class Agdp {
 	}
 
 	public static function init_includes() {
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-wpdb.php' );
 			
 		//TODO seulemet à l'activation / desactivation, non ? pourtant sans ça, le menu du plugin n'est plus visible
 		add_action( 'agendapartage-init', array( __CLASS__, 'register_post_types' ) );
