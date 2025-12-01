@@ -183,7 +183,11 @@ body.colors-dark .agdpreport th {
   -webkit-box-shadow: none;
   box-shadow: none;
 }
- 
+
+.agdpreport .col-width-min {
+	width: 0px;
+}
+
 /*******
 /* jquery ui-dialog
  *******/

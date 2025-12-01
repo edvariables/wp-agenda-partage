@@ -172,11 +172,6 @@ jQuery( function( $ ) {
 			}
 			if(ajaxData){
 				var ajaxData = JSON.parse(ajaxData);
-				$container = $toggler.parents('form[id="post"]:first');
-				ajaxData['post_ref'] = {
-					'id' : $container.find('input[name="post_ID"]').val(),
-					'type' : $container.find('input[name="post_type"]').val(),
-				};
 				jQuery.ajax({
 					url : agdp_ajax.ajax_url,
 					type : 'post',

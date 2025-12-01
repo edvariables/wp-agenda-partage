@@ -814,10 +814,15 @@ jQuery( function( $ ) {
 			;
 			/* Masque le menu si le click est hors menu */
 			function hide_report_menu(event) {
-				if( event !== true
-				&& ! $menu.is('.active')
-				|| $menu.get(0).contains( event.target ) )
-					return;
+				if( event !== true ){
+					if( hide_report_menu.previous_target === event.target ) //optimise because repeated test
+						return;
+					if( $menu.is('.active')
+					&& $menu.get(0).contains( event.target ) ){
+						hide_report_menu.previous_target = event.target; //cache
+						return; //is inside, keep open
+					}
+				}
 				$menu.removeClass('active');
 				$(document.body).off('click', '*', hide_report_menu );
 			}
@@ -1038,8 +1043,14 @@ jQuery( function( $ ) {
 		return true;
 	}
 
+	/*************************
+	 *
+	 * report table designer *
+	 *
+	 *************************
+	 */
 	/**
-	 * refresh_report_designer 
+	 * refresh_report_designer()
 	 */
 	function refresh_report_table_designer(){
 		var $this = $(this);
@@ -1186,9 +1197,11 @@ jQuery( function( $ ) {
 			.find('tbody > tr:first').each(function(){
 				//TODO ajouter une colonne de th avec le label "Classe" ou "Cellule"
 				$(this)
+					//Init attributes
 					.children('td[column]')
 						.each(function(){
 							var column = this.getAttribute('column');
+							//title="script"
 							var script = columns[ column ]['script'];
 							if( ! script )
 								script = '';
@@ -1197,6 +1210,7 @@ jQuery( function( $ ) {
 						.on('click', '.is_new_column', function(){
 						})
 						.end()
+					//Ligne de Classe class
 					.clone()
 						.addClass('report_table_designer')
 						.insertBefore(this)
@@ -1224,6 +1238,7 @@ jQuery( function( $ ) {
 							.on('change', ':input', save_table_designer)
 							.end()
 						.end()
+					//Ligne de Script script
 					.clone()
 						.addClass('report_table_designer')
 						.insertBefore(this)

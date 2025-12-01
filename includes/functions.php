@@ -485,7 +485,9 @@ function get_post_path($post){
  * get_relative_page
  */
 function get_relative_page($slug, $relative_to, $post_type = false){
-	
+	if( ! $slug ){
+		return $relative_to;
+	}
 	if( is_a($slug, 'WP_Post') ){
 		return $slug;
 	}
@@ -493,6 +495,9 @@ function get_relative_page($slug, $relative_to, $post_type = false){
 		$post = get_post( $slug );
 		return $post;
 	}
+	
+	if( $slug === '.' )
+		return get_post( $relative_to );
 	
 	if( $relative_to ){
 		$relative_to = get_post($relative_to);

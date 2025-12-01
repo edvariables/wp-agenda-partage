@@ -74,14 +74,20 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		$wpdb->hide_errors();
 		$wpdb->query($sql);
 		
+		if( $wpdb->last_error && strpos($wpdb->last_error, 'does not exist') === false )
+			Agdp_Admin::add_admin_notice( $wpdb->last_error, 'error', true);
+			
+		$body = rtrim( $term_metas['body'][0], " ;\r\n" );
+		
 		$wpdb->last_error = false;
 		$wpdb->show_errors();
-		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s %s\nBEGIN\n%s;\nEND"
+		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s %s\nBEGIN\n%s\n%s;\nEND"
 			, $term_name
 			, $term_metas['parameters'][0]
 			, $term_metas['return_type'][0]
 			, 'DETERMINISTIC NO SQL' //TODO paramétrables
-			, $term_metas['body'][0]
+			, '/* fonction générée par Wordpress, extension Agdp_Report */'
+			, $body
 		);
 		$wpdb->suppress_errors( true );
 		$result = $wpdb->query($sql);
@@ -90,6 +96,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 				$msg = $result->message;
 			else
 				$msg = $wpdb->last_error;
+			$sql = htmlentities($sql);
 			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction MySQL n'existe pas ou plus.";
 			Agdp_Admin::add_admin_notice( $msg, 'error', true);
 		}

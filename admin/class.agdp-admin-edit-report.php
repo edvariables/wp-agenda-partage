@@ -308,46 +308,36 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * Retourne la liste de toutes les tables
 	 */
 	public static function get_dbtables_helper(){
-		// $html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
-			// . '<ul class="toggle-container sql-helper-tables">';
-		global $post;
-		$ajax  = Agdp::get_ajax_action_link(
-			$post, 
-			__CLASS__ .'::get_dbtables_helper',
-			/* $icon =  */false,
-			/* $caption =  */'Liste des tables',
-			/* $title =  */false,
-			/* $confirmation =  */false,
-			/* $data =  */ 'get_content',
-			/* $href = */ '#',
-			/* $container_class = */ 'toggle-trigger'
-		);
-		$html = $ajax 
-			. '<div class="toggle-container sql-helper-tables"></div>';
-		return $html;
+		
+		$ajax = toggle_shortcode_cb([
+			'tag' => 'label',
+			'title' => 'Liste des tables',
+			'ajax' => [
+				'action' => sprintf('%s_admin_action', AGDP_TAG),
+				'method' => __CLASS__ .'::get_dbtables_helper',
+				'data' => 'get_content',
+				'refresh' => 'once',
+			]
+		]);
+		return $ajax ;
 	}
 	
 	/**
 	 * Retourne la liste de toutes les tables
 	 */
 	public static function get_sql_helper(){
-		// $html = '<span class="toggle-trigger dashicons-before dashicons-plus">Liste des tables</span>'
-			// . '<ul class="toggle-container sql-helper-tables">';
-		global $post;
-		$ajax  = Agdp::get_ajax_action_link(
-			$post, 
-			__CLASS__ .'::get_sql_helper',
-			/* $icon =  */false,
-			/* $caption =  */'Instructions SQL',
-			/* $title =  */false,
-			/* $confirmation =  */false,
-			/* $data =  */ 'get_content',
-			/* $href = */ '#',
-			/* $container_class = */ 'toggle-trigger'
-		);
-		$html = $ajax 
-			. '<div class="toggle-container sql-helper-sql"></div>';
-		return $html;
+		
+		$ajax = toggle_shortcode_cb([
+			'tag' => 'label',
+			'title' => 'Instructions SQL',
+			'ajax' => [
+				'action' => sprintf('%s_admin_action', AGDP_TAG),
+				'method' => __CLASS__ .'::get_sql_helper',
+				'data' => 'get_content',
+				'refresh' => 'once',
+			]
+		]);
+		return $ajax ;
 	}
 	/**
 	 * Retourne la liste de toutes les tables
@@ -389,10 +379,10 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 					'method' => 'get_table_columns',
 					'data' => ['table' => $table]
 				)));
-			$ajax = sprintf(' ajax=1 data="%s"', $ajax);
-			$html .= sprintf('<li><a>%s</a><span class="toggle-trigger" %s><span></span></span></li>'
-					, esc_html( $table )
+			$ajax = sprintf(' ajax="once" data="%s"', $ajax);
+			$html .= sprintf('<li><a class="toggle-trigger" %s>%s</a></li>'
 					, $ajax
+					, esc_html( $table )
 			);
 			// $html .= toggle_shortcode_cbb(false, [ 'admin_edit_report','get_table_columns'], false, $table, false
 												// , false, ['table'=>$table]);
@@ -473,21 +463,19 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function get_variables_helper( ){
 		global $post;
-		$ajax  = Agdp::get_ajax_action_link(
-			$post, 
-			__CLASS__ .'::get_variables_helper',
-			/* $icon =  */false,
-			/* $caption =  */'Formatage des variables',
-			/* $title =  */false,
-			/* $confirmation =  */false,
-			/* $data =  */ 'get_content',
-			/* $href = */ '#',
-			/* $container_class = */ 'toggle-trigger'
-		);
+		
+		$ajax = toggle_shortcode_cb([
+			'tag' => 'label',
+			'title' => 'Formatage des variables',
+			'ajax' => [
+				'action' => sprintf('%s_admin_action', AGDP_TAG),
+				'method' => __CLASS__ .'::get_variables_helper',
+				'data' => 'get_content',
+				'refresh' => 'once',
+			]
+		]);
 		$html = sprintf("<span>Utilisez le préfixe <b><code>%s</code></b> avant chaque nom de table WP.</span><br>", AGDP_BLOG_PREFIX);
-		$html .= $ajax 
-			. '<div class="toggle-container sql-helper-variables"></div>';
-		return $html;
+		return $html . $ajax ;
 	}
 	/**
 	 * Retourne le commentaire sur le formatage de variables
@@ -516,6 +504,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%J</code> : transforme en objet JSON pour MySQL. ex. : <code>SET @JSON = :json%J</code> qui est remplacé par <code>CAST( [variable] AS JSON )</code></li>';
 			$html .= '<li><label><var>Sous-Rapports</var></label> : transforme le résultat de la sous-requête en objet JSON. <code>JSON_SEARCH( :termes%J, \'all\', \'search\' );</code>. <code>%J</code> peut être ignoré dans le cas d\'un <code>SET</code> : <code>SET @TERMS = :termes;</code></li>';
 		$html .= '<li><code>%JT</code> : transforme du json en table. ex. : <code>SELECT * FROM :table%JT</code> Ex. de valeur : <code>[{"x":2,"y":"8"},{"x":"3","y":"7"},{"x":"4","y":6}]</code> cf <a href="#TODO">Rapports > Tutoriels > JSON > JSON_TABLE</a></li>';
+		$html .= '<li><code>%JKV</code> : transforme du json en table de 2 colonnes : `key` et `value`. ex. : <code>SELECT * FROM :table%JKV</code> Ex. de valeur : <code>{ "small" : "Petit", "big" : "Grand" }</code> cf <a href="#TODO">Rapports > Tutoriels > JSON > Key : Value AS Table</a></li>';
 		$html .= '<li><code>SET @DICO = SELECT key, name FROM ...</code> : transforme en dictionnaire JSON utilisable <code>@DICO.`key_field`</code> ou <code>@DICO[`key_field`]</code> ou <code>@DICO[\'key_value\']</code> ou <code>@DICO[@key_value]</code></li>';
 		
 		$html .= '<li><b>Variables globales</b> affectées par l\'instruction <code>SET <var>@var_name<var> = <var>value<var>;</code></li>';

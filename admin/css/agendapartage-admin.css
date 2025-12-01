@@ -196,7 +196,7 @@ a.dashicons-before:focus {
 	margin: 0px !important;
 }
 .toggle-trigger:not(.dashicons-before) {
-	background-color: #F5F5F5;
+	background-color: transparent;/*#F5F5F5;*/
 	background-image: url('../../public/images/toggle-plus.png');
 	background-position: 10px center;
 	background-repeat: no-repeat;
@@ -239,10 +239,10 @@ body.colors-dark .toggle-trigger a:hover {
 }
 
 .toggle-container {
-	/* display: none; TODO hide on load before jQuery */
 	display: none;
 	overflow: hidden;
 	padding: 10px 10px;
+	padding-left: 1.5em;
 }
 textarea.toggle-container {
 	overflow: inherit;

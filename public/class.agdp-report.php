@@ -47,6 +47,7 @@ class Agdp_Report extends Agdp_Post {
 		define( 'AGDP_VAR_BLOG_NAME', '@BLOGNAME'); 
 		define( 'AGDP_VAR_BLOG_URL', '@BLOGURL'); 
 		define( 'AGDP_VAR_POST_ID', '@POSTID'); 
+		define( 'AGDP_VAR_PARENT_ID', '@PARENTID'); 
 		define( 'AGDP_VAR_POST_TYPE', '@POSTTYPE'); 
 		define( 'AGDP_VAR_REPORT_ID', '@REPORTID'); 
 		define( 'AGDP_VAR_REPORT_TITLE', '@REPORTTITLE'); 
@@ -63,6 +64,7 @@ class Agdp_Report extends Agdp_Post {
 			AGDP_VAR_BLOG_NAME => null,
 			AGDP_VAR_BLOG_URL => null,
 			AGDP_VAR_POST_ID => null,
+			AGDP_VAR_PARENT_ID => null,
 			AGDP_VAR_POST_TYPE => null,
 			AGDP_VAR_REPORT_ID => null,
 			AGDP_VAR_REPORT_TITLE => null,
@@ -242,7 +244,7 @@ class Agdp_Report extends Agdp_Post {
 		//Variables
 		$matches = [];
 		$allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?'; //cf /wp-includes/class-wpdb.php
-		$pattern = "/((?<!\\\\)\:|\@)([a-zA-Z_][a-zA-Z0-9_]*)(%($allowed_format)?[sdfFiIKJ][NLRT]?)?/";
+		$pattern = "/((?<!\\\\)\:|\@)([a-zA-Z_][a-zA-Z0-9_]*)(%($allowed_format)?[sdfFiIKJ][NLRTK]?(V)?)?/";
 		if( preg_match_all( $pattern, $sql, $matches ) ){
 			$errors = [];
 			$variables = [];
@@ -446,7 +448,8 @@ class Agdp_Report extends Agdp_Post {
 							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
 							continue 2;
 						
-						case '%JT' :
+						case '%JKV' ://{key: value, key: value, key: value, ...}
+						case '%JT' : //[{col1: value, col2: value, col3: value}, ...]
 							$rows = '*';
 							$value = $variables[$variable];
 							if( $value && is_string( $value ) ){
@@ -469,9 +472,20 @@ class Agdp_Report extends Agdp_Post {
 									break;
 								}
 								if( $is_object ){
-									foreach( $value as $key => $item )
-										$columns[] = $key;
-									$value = sprintf('[%s]', json_encode( $value, JSON_UNESCAPED_UNICODE ) );
+									if( '%JKV' === $format ){
+										$columns[] = 'key';
+										$columns[] = 'value';
+										$keys_values = [];
+										foreach( $value as $k => $v ){
+											$keys_values[] = [ 'key' => $k, 'value' => $v ];
+										}
+										$value = json_encode( $keys_values, JSON_UNESCAPED_UNICODE );
+									}
+									else {
+										foreach( $value as $key => $item )
+											$columns[] = $key;
+										$value = sprintf('[%s]', json_encode( $value, JSON_UNESCAPED_UNICODE ) );
+									}
 								}
 								else {
 									foreach( $value as $object ){
@@ -483,12 +497,23 @@ class Agdp_Report extends Agdp_Post {
 									}
 									//Tableau de données brutes, sans clé de colonne
 									if( count($columns) === 0 && count($value) > 0 ){
-										$columns[] = 'item';
-										$values = [];
-										foreach( $value as $index => $item ){
-											$values[] = [ $columns[0] => $item ];
+										if( '%JKV' === $format ){
+											$columns[] = 'key';
+											$columns[] = 'value';
+											$keys_values = [];
+											foreach( $value as $index => $item ){
+												$keys_values[] = [ 'key' => $index . '', 'value' => $item ];
+											}
+											$value = $keys_values;
 										}
-										$value = $values;
+										else {
+											$columns[] = 'item';
+											$values = [];
+											foreach( $value as $index => $item ){
+												$values[] = [ $columns[0] => $item ];
+											}
+											$value = $values;
+										}
 									}
 									$value = json_encode( $value, JSON_UNESCAPED_UNICODE );
 									$value = sprintf('[%s]', substr($value, 1, strlen($value) - 2) );
@@ -497,7 +522,7 @@ class Agdp_Report extends Agdp_Post {
 								foreach( $columns as $column ){
 									if( $str_columns )
 										$str_columns .= ', ';
-									$str_columns .= sprintf('%s VARCHAR(512) PATH "$.%s"', $column, $column);
+									$str_columns .= sprintf('`%s` TEXT PATH "$.%s"', $column, $column);
 								}
 							}
 							
@@ -567,8 +592,8 @@ class Agdp_Report extends Agdp_Post {
 							// $variables[$variable] = str_replace("\n", '',  str_replace("\r", '', $variables[$variable]));
 							if( strpos($variables[$variable], '"') ){
 								//debug_log(__FUNCTION__, 'Contient double-quote', $variables[$variable] );
-								//TODO est-ce bien raisonnable ?
-								$variables[$variable] = str_replace('"', '&quot;', $variables[$variable]);
+								//TODO est-ce bien raisonnable ? NON en json
+								// $variables[$variable] = str_replace('"', '&quot;', $variables[$variable]);
 						}}
 						
 						$prepare[] = $variables[$variable];
@@ -585,21 +610,34 @@ class Agdp_Report extends Agdp_Post {
 			//- sql
 			$sql = str_replace( '\%', $escape_flag, $sql );
 			//- values
-			foreach( $prepare as $i => $value )
-				if( is_string($value)
-				 && strpos($value, '%') !== false )
-					$prepare[$i] = str_replace( '%', $escape_flag, $value );
-					
-					
+			foreach( $prepare as $i => $value ){
+				if( is_string($value) ){
+					if( strpos($value, '%') !== false ){
+						$prepare[$i] = str_replace( '%', $escape_flag, $value );
+					}
+				}
+			}
 			//wpdb prepare
-			if( count($prepare) )
+			if( count($prepare) ){
+				$dbquote_escape = false;
+				// if( strpos($sql, '"') !== false ){
+					// if( ! $dbquote_escape )
+						// $dbquote_escape = uniqid('__dbquote__');
+					// $sql = str_replace( '"', $dbquote_escape, $sql );
+				// }
 				try {
 					$sql = $wpdb->prepare($sql, $prepare);
+					if( $dbquote_escape )
+						$sql = str_replace( $dbquote_escape, '"', $sql );
 				}
 				catch( Exception $exception ){
-					$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $exception->getMessage());
+					$msg = $exception->getMessage();
+					if( $dbquote_escape )
+						$msg = str_replace( $dbquote_escape, '"', $msg );
+					$errors[] = sprintf('Erreur lors de la préparation des variables : %s', $msg);
 				}
-				
+			}
+			
 			//unescape
 			$sql = str_replace( $escape_flag, '%', $sql );
 			
@@ -854,14 +892,19 @@ class Agdp_Report extends Agdp_Post {
 			return static::$sql_global_vars;
 		
 		global $post;
-		if( $post && $post->post_type === self::post_type ){
+		if( ! empty( $_REQUEST['report_id'] ) ){
+			$report_id = $_REQUEST['report_id'];
+			$report = get_post($report_id);
+		}
+		elseif( $post && $post->post_type === self::post_type ){
 			$report = $post;
 			$report_id = $post->ID;
 		}
-		elseif( ! empty( $_REQUEST['post_id'] ) ){
+		if( ! empty( $_REQUEST['post_id'] ) ){
 			$post_id = $_REQUEST['post_id'];
 			$post = get_post( $post_id );
-			if( $post && $post->post_type === self::post_type ){
+			if( empty($report)
+			&& $post && $post->post_type === self::post_type ){
 				$report = $post;
 				$report_id = $post->ID;
 			}
@@ -872,6 +915,7 @@ class Agdp_Report extends Agdp_Post {
 			AGDP_VAR_BLOG_NAME /* @BLOGNAME */ => get_bloginfo('name'),
 			AGDP_VAR_BLOG_URL /* @BLOGURL */ => get_bloginfo('url'),
 			AGDP_VAR_POST_ID => $post ? $post->ID : false,
+			AGDP_VAR_PARENT_ID => $post ? $post->post_parent : false,
 			AGDP_VAR_POST_TYPE => $post ? $post->post_type : false,
 			AGDP_VAR_REPORT_ID => isset($report_id) ? $report_id : false,
 			AGDP_VAR_REPORT_TITLE => isset($report) ? $report->post_title : false,
@@ -881,6 +925,7 @@ class Agdp_Report extends Agdp_Post {
 	}
 
 
+	/**
 	/**
 	 * add_sql_global_vars
 	 */
@@ -1121,12 +1166,14 @@ class Agdp_Report extends Agdp_Post {
 			$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
 			array_push( $options['_sqls'], $sql );
 			if( is_a($dbresults, 'Exception') ){
-				$dbresults = sprintf('%s (%d)<br>%s', $dbresults->getMessage(), 'caption', $sql);
+				$dbresults = sprintf('[SQL pour %s] : %s ()', 'caption', htmlentities($dbresults->getMessage()));
 				return $dbresults;
 			}
 			if( is_array( $dbresults ) && count( $dbresults ) ){
 				return [ 'content' => isset($dbresults[0]->content) ? $dbresults[0]->content : ''
-					  ,  'class' => isset($dbresults[0]->class) ? $dbresults[0]->class : '' ];
+					,  'class' => isset($dbresults[0]->class) ? $dbresults[0]->class : '' 
+					// ,  'script' => $sql
+				];
 			}
 		}
 		return [ 'content' => $report->post_title, 'class' => '' ];
@@ -1272,13 +1319,15 @@ class Agdp_Report extends Agdp_Post {
 				continue;
 			$column_visible = true;
 			$class = '';
+			$attributes = '';
 			if( is_array($column_data) ){
 				$column_visible = ! isset($column_data[ 'visible' ]) || $column_data[ 'visible' ];
 			}
 			if( ! $column_visible )
 				$class .= ' hidden';
-			$html .= sprintf('<td %s>%s</td>'
+			$html .= sprintf('<td %s%s>%s</td>'
 				, $class ? 'class="' . trim($class) . '"' : ''
+				, $attributes ? ' ' . trim($attributes) : ''
 				, '#erreur'
 			);
 		}
@@ -1375,7 +1424,6 @@ class Agdp_Report extends Agdp_Post {
 					
 				foreach( $sql_uu as $sql_uuu ){
 					//$wpdb->get_results
-					$wpdb->check_current_query = false;
 					$result_u = $wpdb->get_results($sql_uuu);
 					
 					array_push( $options['_sqls'], $sql_uuu );
@@ -1463,7 +1511,6 @@ class Agdp_Report extends Agdp_Post {
 		
 		//table_columns
 		$table_columns = isset($table_render['columns']) ? $table_render['columns'] : [];
-		
 		if( Agdp::is_admin_referer() ){
 			$meta_key = 'report_admin_no_render';
 			$report_admin_no_render = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
@@ -1472,7 +1519,7 @@ class Agdp_Report extends Agdp_Post {
 		}
 		$options_copy = $options;
 		
-		$wpdb = self::wpdb( TRUE ); //reset des variables
+		$wpdb = self::wpdb( TRUE ); //reset des variables. TODO Quid d'appels imbriqués ?
 		$wpdb->last_error = false;
 		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
 		
@@ -1590,25 +1637,30 @@ class Agdp_Report extends Agdp_Post {
 				$column_visible = true;
 				$class = $column_class;
 				$column_class = '';
+				$attributes = '';
 				if( $table_columns && isset($table_columns[ $column_name ] ) ){
-					if( is_array($table_columns[ $column_name ]) ){
-						$column_label = empty($table_columns[ $column_name ][ 'label' ]) ? $column_name : $table_columns[ $column_name ][ 'label' ];
-						$column_visible = ! isset($table_columns[ $column_name ][ 'visible' ]) || $table_columns[ $column_name ][ 'visible' ];
-						if( ! empty($table_columns[ $column_name ][ 'class' ]) ){
-							$value = $table_columns[ $column_name ][ 'class' ];
+					$table_column = $table_columns[ $column_name ];
+					if( is_array($table_column) ){
+						$column_label = empty($table_column[ 'label' ]) ? $column_name : $table_column[ 'label' ];
+						$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
+						if( ! empty($table_column[ 'class' ]) ){
+							$value = $table_column[ 'class' ];
 							if( ! self::is_a_class_script( $value )  )
 								$class .= ' ' . $value;
 						}
+						// if( ! empty($table_column[ 'script' ]) )
+							// $attributes .= ' column_script="' . esc_attr($table_column[ 'script' ]) . '"';
 					}
 					else {
-						$column_label = $table_columns[ $column_name ];
+						$column_label = $table_column;
 					}
 				}
 				if( ! $column_visible )
 					$class .= ' hidden';
-				$content .= sprintf('<th %s column="%s">%s</th>'
+				$content .= sprintf('<th %s column="%s" %s>%s</th>'
 					, $class ? 'class="' . trim($class) . '"' : ''
 					, $column_name
+					, $attributes ? ' ' . trim($attributes) : ''
 					, $column_label
 				);
 			}
@@ -1637,22 +1689,27 @@ class Agdp_Report extends Agdp_Post {
 				$column_visible = true;
 				$class = $column_class;
 				$column_class = '';
+				$attributes = '';
 				if( $table_columns
 				&& isset($table_columns[ $column_name ] ) 
 				&& is_array($table_columns[ $column_name ]) ){
-					$column_visible = ! isset($table_columns[ $column_name ][ 'visible' ]) || $table_columns[ $column_name ][ 'visible' ];
-					if( ! empty($table_columns[ $column_name ][ 'class' ]) ){
-						$value = $table_columns[ $column_name ][ 'class' ];
+					$table_column = $table_columns[ $column_name ];
+					$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
+					if( ! empty($table_column[ 'class' ]) ){
+						$value = $table_column[ 'class' ];
 						if( ! self::is_a_class_script( $value ) ) 
 							$class .= ' ' . $value;
 					}
+					// if( ! empty($table_column[ 'script' ]) )
+						// $attributes .= ' column_script="' . esc_attr($table_column[ 'script' ]) . '"';
 				}
 				if( ! $column_visible )
 					$class .= ' hidden';
 				if( $column_value === null )
 					$column_value = '';
-				$content .= sprintf('<td %s>%s</td>'
+				$content .= sprintf('<td %s%s>%s</td>'
 					, $class ? 'class="' . trim($class) . '"' : ''
+					, $attributes ? ' ' . trim($attributes) : ''
 					, $escape_function ? $escape_function( $column_value ) : $column_value
 				);
 			}
@@ -1687,17 +1744,18 @@ class Agdp_Report extends Agdp_Post {
 					$class = $column_class;
 					$column_class = '';
 					if( $table_columns && isset($table_columns[ $column_name ] ) ){
-						if( is_array($table_columns[ $column_name ]) ){
-							$column_label = empty($table_columns[ $column_name ][ 'label' ]) ? $column_name : $table_columns[ $column_name ][ 'label' ];
-							$column_visible = ! isset($table_columns[ $column_name ][ 'visible' ]) || $table_columns[ $column_name ][ 'visible' ];
-							if( ! empty($table_columns[ $column_name ][ 'class' ]) ){
-								$value = $table_columns[ $column_name ][ 'class' ];
+						$table_column = $table_columns[ $column_name ];
+						if( is_array($table_column) ){
+							$column_label = empty($table_column[ 'label' ]) ? $column_name : $table_column[ 'label' ];
+							$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
+							if( ! empty($table_column[ 'class' ]) ){
+								$value = $table_column[ 'class' ];
 								if( ! self::is_a_class_script( $value )  )
 									$class .= ' ' . $value;
 							}
 						}
 						else {
-							$column_label = $table_columns[ $column_name ];
+							$column_label = $table_column;
 						}
 					}
 					if( ! $column_visible )
@@ -1839,9 +1897,16 @@ class Agdp_Report extends Agdp_Post {
 			$report_id = false;
 		//slug
 		if( is_string($report_id) && ! is_numeric($report_id) ){
-				//chemin relatif
-			if( isset($_POST['post_ref']) )
-				$relative_to = $_POST['post_ref']['id'];
+			//chemin relatif
+			if( isset($data['parent_post']) ){
+				$relative_to = $data['parent_post'];
+			}
+			elseif( isset($_POST['post_ref']) ){
+				if( is_array($_POST['post_ref']) )
+					$relative_to = $_POST['post_ref']['id'];
+				else
+					$relative_to = $_POST['post_ref'];
+			}
 			else
 				$relative_to = false;
 			$report = get_relative_page($report_id, $relative_to, self::post_type);
@@ -1850,7 +1915,11 @@ class Agdp_Report extends Agdp_Post {
 				return sprintf('%s : rapport introuvable', $report_id);
 			$report_id = $report->ID;
 		}
-		
+			
+		if( $report_id
+		&& empty($_REQUEST['report_id']) )
+			$_REQUEST['report_id'] = $report_id;
+
 		if( isset($data['sql_variables']) ){
 			$sql_variables = $data['sql_variables'];
 			if( $sql_variables === 'false' )
