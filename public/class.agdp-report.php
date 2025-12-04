@@ -204,122 +204,124 @@ class Agdp_Report extends Agdp_Post {
 					
 					$format = $matches[3][$index];
 					$format_args = $matches[4][$index];
+					//------------------------
+					
 					$format_IN = $format === '%IN';
 					$format_Inject = $format === '%I';
 					$format_mode = substr( $format, strlen($format_args) + 1, 1 );
 					$format_LIKE = $format_mode  === 'K';
 					$format_JSON = $format_mode  === 'J';
-					if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
-						switch($sql_variables[$variable]['type']){
-							case 'range': 
-							case 'numeric':
-							case 'number':
-							case 'integer':
-								if( ! $format )
-									$format = '%d';
-								break;
-							case 'decimal':
-							case 'float':
-								if( ! $format )
-									$format = '%f';
-								break;
-							case 'field':
-								if( ! $format )
-									$format = '%i';
-								break;
-							case 'table':
-								if( ! $format )
-									$format_Inject = $format = '%I';
-								if( ! $variables[$variable] )
-									$variables[$variable] = '';
-								else
-									$variables[$variable] = self::add_table_blog_prefix( $variables[$variable] );
-								break;
-							case 'column':
-								if( ! $format )
-									$format_Inject = $format = '%I';
-								break;
-							case 'checkboxes': 
-								if( $format_IN ){
-									if( $variables[$variable] ){
-										if( is_string( $variables[$variable] ) ){
-											if( $variables[$variable][0] === '|' )
-												$variables[$variable] = explode( '|', substr($variables[$variable], 1, strlen($variables[$variable]) - 2 ));
-											else
-												$variables[$variable] = explode( "\n", $variables[$variable] );
-										}
-										$format = implode(', ', array_fill(0, count($variables[$variable]), '%s'));
+					
+					$variable_type = $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ? $sql_variables[$variable]['type'] : null;
+					switch($variable_type){
+						case 'range': 
+						case 'numeric':
+						case 'number':
+						case 'integer':
+							if( ! $format )
+								$format = '%d';
+							break;
+						case 'decimal':
+						case 'float':
+							if( ! $format )
+								$format = '%f';
+							break;
+						case 'field':
+							if( ! $format )
+								$format = '%i';
+							break;
+						case 'table':
+							if( ! $format )
+								$format_Inject = $format = '%I';
+							if( ! $variables[$variable] )
+								$variables[$variable] = '';
+							else
+								$variables[$variable] = self::add_table_blog_prefix( $variables[$variable] );
+							break;
+						case 'column':
+							if( ! $format )
+								$format_Inject = $format = '%I';
+							break;
+						case 'checkboxes': 
+							if( $format_IN ){
+								if( $variables[$variable] ){
+									if( is_string( $variables[$variable] ) ){
+										if( $variables[$variable][0] === '|' )
+											$variables[$variable] = explode( '|', substr($variables[$variable], 1, strlen($variables[$variable]) - 2 ));
+										else
+											$variables[$variable] = explode( "\n", $variables[$variable] );
 									}
-									else {
-										$format = '%s';
-									}
+									$format = implode(', ', array_fill(0, count($variables[$variable]), '%s'));
 								}
 								else {
-									// ( :post_status = '' || :post_status = post.post_status || :post_status LIKE CONCAT('%|', post.post_status, '|%' )
-									if( $variables[$variable] && is_string($variables[$variable]) && $variables[$variable][0] !== '|' ){
-										$variables[$variable] = "|" . str_replace("\n", "|", $variables[$variable]) . "|";
-									}
+									$format = '%s';
 								}
-								break;
-							case 'asc_desc': 
-								if( $variables[$variable] === '' )
-									$variables[$variable] = 'ASC';
-								elseif( ! $variables[$variable] )
-									$variables[$variable] = 'DESC';
-								$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
-								//skip prepare
-								continue 2;
-								
-							case 'report': 
-								$error = '';
-								if( is_numeric($variables[$variable])
-								 && ( $sub_report = get_post($variables[$variable]) )){
-									if( ! isset($options[__FUNCTION__.':stack']) )
-										$options[__FUNCTION__.':stack'] = [];
-									elseif( $sub_report->ID == $report_id
-									|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
-										$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
-										$variables[$variable] = $error;
-									}
-									if( ! $error ){
-										// if( isset($sql_variables[$variable]['report_sql']) )
-											// $sub_sql = $sql_variables[$variable]['report_sql'];
-										// else {
-											array_push( $options[__FUNCTION__.':stack'], $report_id );
-											// debug_log( __FUNCTION__ . ' sub_report' );
-											$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
-											// debug_log( __FUNCTION__ . ' sub_report DONE' );
-											array_pop( $options[__FUNCTION__.':stack'] );
-											$sql_variables[$variable]['report_sql'] = $sub_sql;
-										// }
-										
-										if( ! $format ) { 
-											//is SQL SET
-											if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
-												// and not SELECT
-												if( preg_match( '/\sSELECT\s/i', $sql ) === 0 )
-													$format = $format_JSON = '%J';
-											}
-										}
-										if( $format === '%d' ){
-											//$variables[$variable] retourne l'id
-										}
-										elseif( ! $format_JSON ) {
-											$sub_sql = self::sanitize_sub_report_sql( $sub_sql );
-											
-											$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
-											//skip prepare
-											continue 2;
-										}
-									}
-								}				 
-								else {
-									$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variables[$variable]);
+							}
+							else {
+								// ( :post_status = '' || :post_status = post.post_status || :post_status LIKE CONCAT('%|', post.post_status, '|%' )
+								if( $variables[$variable] && is_string($variables[$variable]) && $variables[$variable][0] !== '|' ){
+									$variables[$variable] = "|" . str_replace("\n", "|", $variables[$variable]) . "|";
+								}
+							}
+							break;
+						case 'asc_desc': 
+							if( $variables[$variable] === '' )
+								$variables[$variable] = 'ASC';
+							elseif( ! $variables[$variable] )
+								$variables[$variable] = 'DESC';
+							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
+							//skip prepare
+							continue 2;
+							
+						case 'report': 
+							$error = '';
+							if( is_numeric($variables[$variable])
+							 && ( $sub_report = get_post($variables[$variable]) )){
+								if( ! isset($options[__FUNCTION__.':stack']) )
+									$options[__FUNCTION__.':stack'] = [];
+								elseif( $sub_report->ID == $report_id
+								|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
+									$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
 									$variables[$variable] = $error;
 								}
-								break;
-							default:
-						}
+								if( ! $error ){
+									// if( isset($sql_variables[$variable]['report_sql']) )
+										// $sub_sql = $sql_variables[$variable]['report_sql'];
+									// else {
+										array_push( $options[__FUNCTION__.':stack'], $report_id );
+										// debug_log( __FUNCTION__ . ' sub_report' );
+										$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
+										// debug_log( __FUNCTION__ . ' sub_report DONE' );
+										array_pop( $options[__FUNCTION__.':stack'] );
+										$sql_variables[$variable]['report_sql'] = $sub_sql;
+									// }
+									
+									if( ! $format ) { 
+										//is SQL SET
+										if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
+											// and not SELECT
+											if( preg_match( '/\sSELECT\s/i', $sql ) === 0 )
+												$format = $format_JSON = '%J';
+										}
+									}
+									if( $format === '%d' ){
+										//$variables[$variable] retourne l'id
+									}
+									elseif( ! $format_JSON ) {
+										$sub_sql = self::sanitize_sub_report_sql( $sub_sql );
+										
+										$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
+										//skip prepare
+										continue 2;
+									}
+								}
+							}				 
+							else {
+								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variables[$variable]);
+								$variables[$variable] = $error;
+							}
+							break;
+						default:
 					}
 					
 					//Format
@@ -478,7 +480,7 @@ class Agdp_Report extends Agdp_Post {
 						$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
 						continue;
 					}
-					
+					//----------
 					//Remplacement de la variable par %format
 					$sql = preg_replace( '/(?<!\\\\)' . preg_quote($src) . '(?!%)/', $format, $sql );
 					
@@ -1682,7 +1684,7 @@ class Agdp_Report extends Agdp_Post {
 				// global $wp_query;
 				// $wp_query->set_404();
 				// status_header( 404 );
-				die( 404 );
+				die( "Accès par url réservé aux administrateurs" );
 			}
 			$shortcode = empty($_GET['shortcode']) ? '' : $_GET['shortcode'];
 			if( ! $shortcode )

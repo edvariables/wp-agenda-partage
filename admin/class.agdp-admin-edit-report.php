@@ -301,34 +301,32 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		if( ! $report )
 			return;
 		
-		$variables = [];
-		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, null, 'shortcode' );
-		foreach($sql_variables as $var=>$variable){
-			if( ! is_array($variable) )
-				$value = print_r($variable, true);
-			elseif( ! isset($variable['value']) )
-				$value = $variable ? print_r($variable, true) : '';
-			elseif( is_numeric($variable['value']) )
-				$value = $variable['value'];
-			elseif( is_array($variable['value']) )
-				$value = $variable['value'] ? implode( '|', $variable['value'] ) : '';
-			else
-				$value = '"'. str_replace("\n", '|',$variable['value']) . '"';
-			$variables[$var] = ':' . $var . '='. $value;
-		}
-		
-		$shortcode = sprintf('[%s %d|%s %s]'
-					, Agdp_Report::shortcode
-					, $report->ID
-					, get_post_path($report, '/')
-					, implode( ' ', $variables )
-				);
+		$shortcode = '';// js manages
 		$url = Agdp_Post::get_post_permalink($report
 				, 'mode=shortcode'
 				, 'shortcode=' . esc_attr($shortcode)
 		);
-		$test_msg = sprintf('Test : <a href="%s" target="_blank">Afficher le test</a>'
+		$test_url = sprintf('<a href="%s" target="_blank" class="%s" onclick="%s">Tester le code ci-dessus</a>'
 				, $url
+				, 'agdpreport-test-above-input dashicons-welcome-add-page dashicons-before dashicons-superhero-alt'
+				, esc_attr(
+					  "var $ = jQuery; var \$this = $(this);"
+					. "var shortcode = \$this.parents('.agdp-metabox-row').find(':input:first').val();"
+					. "var url = \$this.attr('href').split('&shortcode=')[0];"
+					. "\$this.attr( 'href', url + '&shortcode=' + shortcode );"
+					// . "return false;"
+				)
+		);
+		
+		$shortcode = Agdp_Report_Shortcodes::get_shortcode( $report );
+		$url = Agdp_Post::get_post_permalink($report
+				, 'mode=shortcode'
+				, 'shortcode=' . esc_attr($shortcode)
+		);
+		$test_url .= sprintf('<br><a href="%s" target="_blank" class="%s">Afficher</a>&nbsp;<code>%s</code>'
+				, $url
+				, 'dashicons-before dashicons-welcome-add-page'
+				, htmlentities($shortcode)
 		);
 		
 		// debug_log(__FUNCTION__,$shortcode, implode( 'implode ', $variables ));
@@ -341,8 +339,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'class' => 'shortcode',
 				'input_attributes' => 'rows="2" spellcheck="false"',
 				'default' => $shortcode,
-				'learn-more' => 
-						$test_msg 
+				'comments' => $test_url 
 						. '<br>' . static::get_shortcode_helper()
 					,
 			],

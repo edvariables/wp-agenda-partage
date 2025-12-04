@@ -275,6 +275,40 @@ class Agdp_Report_Shortcodes {
 		wp_die();
 	}
 	
+	/**
+	 * get_shortcode
+	 */
+ 	public static function get_shortcode($report, $sql_variables = false){
+		$variables = [];
+		if( $sql_variables && is_string( $sql_variables ) ){
+			$variables = $sql_variables; 
+		}
+		else {
+			$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, 'shortcode' );
+			foreach($sql_variables as $var=>$variable){
+				if( ! is_array($variable) )
+					$value = print_r($variable, true);
+				elseif( ! isset($variable['value']) )
+					$value = $variable ? print_r($variable, true) : '';
+				elseif( is_numeric($variable['value']) )
+					$value = $variable['value'];
+				elseif( is_array($variable['value']) )
+					$value = $variable['value'] ? implode( '|', $variable['value'] ) : '';
+				else
+					$value = '"'. str_replace("\n", '|',$variable['value']) . '"';
+				$variables[$var] = ':' . $var . '='. $value;
+			}
+			$variables = implode( ' ', $variables );
+		}
+		$shortcode = sprintf('[%s %d|%s %s]'
+					, Agdp_Report::shortcode
+					, $report->ID
+					, get_post_path($report, '/')
+					, $variables
+				);
+		return $shortcode;
+	}
+	
 	// shortcodes //
 	///////////////
 }

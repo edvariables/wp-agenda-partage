@@ -83,7 +83,7 @@ class Agdp_Report_Variables {
 		}
 		else
 			$default_sql_variables = [];
-		if( ! $sql_variables )
+		if( ! is_array($sql_variables) )
 			$sql_variables = $default_sql_variables;
 		else {
 			$sql_variables = array_merge($default_sql_variables, $sql_variables);
