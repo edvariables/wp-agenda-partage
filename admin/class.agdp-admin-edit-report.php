@@ -100,6 +100,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		add_meta_box('agdp_report-inputs', __('Requête', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-variables', __('Variables', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
+		add_meta_box('agdp_report-shortcode', __('Intégration', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -124,6 +125,10 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				echo Agdp_Report::get_report_html();
 				break;
 			
+			case 'agdp_report-shortcode':
+				parent::metabox_html( self::get_metabox_shortcode_fields(), $post, $metabox );
+				break;
+			
 			default:
 				break;
 		}
@@ -137,6 +142,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			self::get_metabox_inputs_fields(),
 			self::get_metabox_variables_fields(),
 			self::get_metabox_render_fields(),
+			self::get_metabox_shortcode_fields(),
 		);
 	}
 	
@@ -144,11 +150,6 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * get_metabox_inputs_fields
 	 */
 	public static function get_metabox_inputs_fields(){
-		
-		$report = get_post();
-		
-		global $wpdb;
-		$blog_prefix = $wpdb->get_blog_prefix();
 		
 		$fields = [
 			[	'name' => 'sql',
@@ -163,19 +164,13 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 					,
 			],
 		];
-		return $fields;
-				
+		return $fields;				
 	}
 	
 	/**
 	 * get_metabox_variables_fields
 	 */
 	public static function get_metabox_variables_fields(){
-		
-		$report = get_post();
-		
-		global $wpdb;
-		$blog_prefix = $wpdb->get_blog_prefix();
 		
 		$fields = [
 			[	'name' => 'sql_variables',
@@ -186,8 +181,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'style' => 'display:none',
 			],
 		];
-		return $fields;
-				
+		return $fields;				
 	}
 	
 	public static function get_metabox_render_fields(){
@@ -293,6 +287,64 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				
 	}
 		
+	/**
+	 * get_metabox_shortcode_fields
+	 */
+	public static function get_metabox_shortcode_fields(){
+		
+		$report = get_post();
+		if( ! $report )
+			return;
+		
+		$variables = [];
+		$sql_variables = Agdp_Report::normalize_sql_variables( $report, null, 'shortcode' );
+		foreach($sql_variables as $var=>$variable){
+			if( ! is_array($variable) )
+				$value = print_r($variable, true);
+			elseif( ! isset($variable['value']) )
+				$value = $variable ? print_r($variable, true) : '';
+			elseif( is_numeric($variable['value']) )
+				$value = $variable['value'];
+			elseif( is_array($variable['value']) )
+				$value = $variable['value'] ? implode( '|', $variable['value'] ) : '';
+			else
+				$value = '"'. str_replace("\n", '|',$variable['value']) . '"';
+			$variables[$var] = ':' . $var . '='. $value;
+		}
+		
+		$shortcode = sprintf('[%s %d|%s %s]'
+					, Agdp_Report::shortcode
+					, $report->ID
+					, get_post_path($report, '/')
+					, implode( ' ', $variables )
+				);
+		$url = Agdp_Post::get_post_permalink($report
+				, 'mode=shortcode'
+				, 'shortcode=' . esc_attr($shortcode)
+		);
+		$test_msg = sprintf('Test : <a href="%s" target="_blank">Afficher le test</a>'
+				, $url
+		);
+		
+		// debug_log(__FUNCTION__,$shortcode, implode( 'implode ', $variables ));
+		
+		$fields = [
+			[	'name' => 'shortcode',
+				'label' => '['.Agdp_Report::shortcode.' ...]',//__('Requête', AGDP_TAG),
+				'type' => 'text',
+				'input' => 'textarea',
+				'class' => 'shortcode',
+				'input_attributes' => 'rows="2" spellcheck="false"',
+				'default' => $shortcode,
+				'learn-more' => 
+						$test_msg 
+						. '<br>' . static::get_shortcode_helper()
+					,
+			],
+		];
+		return $fields;
+				
+	}
 	/**
 	 * Callback lors de l'enregistrement du post.
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
@@ -477,10 +529,20 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html = sprintf("<span>Utilisez le préfixe <b><code>%s</code></b> avant chaque nom de table WP.</span><br>", AGDP_BLOG_PREFIX);
 		return $html . $ajax ;
 	}
+	
+	/**
+	 * Retourne le commentaire sur le formatage du shortcode
+	 */
+	public static function get_shortcode_helper( ){
+		$html = '';
+		return $html ;
+	}
 	/**
 	 * Retourne le commentaire sur le formatage de variables
 	 */
 	public static function on_wp_ajax_action_get_variables_helper( $data ){
+		global $post;
+		
 		$html = '<ul>';
 		
 		$html .= '<li>De la forme : <code>:var_name[%format]</code></li>';
@@ -510,7 +572,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><b>Variables globales</b> affectées par l\'instruction <code>SET <var>@var_name<var> = <var>value<var>;</code></li>';
 		$html .= '<li><label><var>'.AGDP_VAR_DBRESULTS.'</var></label> vous donne accès aux résultats de la requête précédente sous forme JSON. ex. <code>'.AGDP_VAR_DBRESULTS.'.post_id</code>.</li>';
 		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT('.AGDP_VAR_DBRESULTS.'[2].post_id, "-", '.AGDP_VAR_DBRESULTS.'.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite si il n\'est pas précisé.</li>';
-		foreach( Agdp_Report::sql_global_vars() as $var => $value )
+		foreach( Agdp_Report::sql_global_vars( $post ) as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
 		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`post_status`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_POST_STATUSES );
 		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`taxonomy`</var> : { <var>`slug`</var> : <var>`name`</var>, ... }, ... } </li>', AGDP_VAR_TAX_TERMS );

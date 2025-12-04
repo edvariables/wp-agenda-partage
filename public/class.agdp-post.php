@@ -18,6 +18,8 @@ abstract class Agdp_Post {
 	const posts_page_option = false; //Must override
 	const newsletter_option = false; //Must override
 	
+	const shortcode = false;
+	
 	private static $send_for_diffusion_history = [];
 	
 	private static $post_types = [];

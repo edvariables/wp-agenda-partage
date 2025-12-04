@@ -16,6 +16,7 @@ class Agdp_Report extends Agdp_Post {
 	const post_type = 'agdpreport';
 	const taxonomy_report_style = 'report_style';
 	const taxonomy_sql_function = 'sql_function';
+	const shortcode = 'report';
 		
 	// const user_role = 'author';
 	
@@ -129,7 +130,11 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * SQL variables
 	 */
- 	private static function normalize_sql_variables( $report, $sql_variables, $options ) {
+ 	public static function normalize_sql_variables( $report, $sql_variables, $options ) {
+		if( ! $options )
+			$options = [];
+		elseif( is_string($options) )
+			$options = [ 'mode' => $options ];
 		$report_id = $report->ID;
 		//valeurs des variables
 		if( ! $sql_variables )
@@ -664,7 +669,7 @@ class Agdp_Report extends Agdp_Post {
 	 * SQL as array
 	 * clear SQL comments
 	 */
- 	private static function get_sql_as_array( $sql ) {
+ 	public static function get_sql_as_array( $sql ) {
 		
 		if( ! $sql )
 			return [];
@@ -887,28 +892,33 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * returns sql_global_vars initiated
 	 */
- 	public static function sql_global_vars( $options = false ) {
+ 	public static function sql_global_vars( $report, $options = false ) {
 		if( self::$sql_global_vars_init )
 			return static::$sql_global_vars;
 		
 		global $post;
-		if( ! empty( $_REQUEST['report_id'] ) ){
-			$report_id = $_REQUEST['report_id'];
-			$report = get_post($report_id);
-		}
-		elseif( $post && $post->post_type === self::post_type ){
-			$report = $post;
-			$report_id = $post->ID;
-		}
-		if( ! empty( $_REQUEST['post_id'] ) ){
-			$post_id = $_REQUEST['post_id'];
-			$post = get_post( $post_id );
-			if( empty($report)
-			&& $post && $post->post_type === self::post_type ){
+		if( ! $report ){
+			if( ! empty( $_REQUEST['report_id'] ) ){
+				$report_id = $_REQUEST['report_id'];
+				$report = get_post($report_id);
+			}
+			elseif( $post && $post->post_type === self::post_type ){
 				$report = $post;
 				$report_id = $post->ID;
 			}
+			if( ! empty( $_REQUEST['post_id'] ) ){
+				$post_id = $_REQUEST['post_id'];
+				$post = get_post( $post_id );
+				if( empty($report)
+				&& $post && $post->post_type === self::post_type ){
+					$report = $post;
+					$report_id = $post->ID;
+				}
+			}
 		}
+		else
+			$report_id = $report->ID;
+		
 		self::$sql_global_vars_init = true;
 		static::$sql_global_vars = array_merge( static::$sql_global_vars, [
 			AGDP_VAR_BLOG_ID /* @BLOGID */ => get_current_blog_id(),
@@ -929,14 +939,14 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * add_sql_global_vars
 	 */
- 	public static function add_sql_global_vars( $sql, $sql_variables = false, &$options = false ) {
+ 	public static function add_sql_global_vars( $report, $sql, $sql_variables = false, &$options = false ) {
 		if( ! $sql
 		|| ! empty($options['_add_sql_global_vars']) )
 			return self::get_sql_as_array( $sql );
 		
 		$options['_add_sql_global_vars'] = true;
 		
-		$vars = static::sql_global_vars( $options );
+		$vars = static::sql_global_vars( $report, $options );
 		
 		//get_global_vars_sql
 		$set_vars =  static::get_global_vars_sql( $vars, $sql_variables, $options );
@@ -1078,7 +1088,9 @@ class Agdp_Report extends Agdp_Post {
 					continue;
 				if( $set_vars )
 					$set_vars .= ', ';
-				$set_vars .= sprintf(' %s = "%s"', $var, esc_attr( $value ));
+				if( ! is_numeric($value) )
+					$value = sprintf('"%s"', esc_attr($value) );
+				$set_vars .= sprintf(' %s = %s', $var, $value);
 			}
 		if( $set_vars ){
 			$set_vars = sprintf('SET %s', $set_vars);
@@ -1379,7 +1391,7 @@ class Agdp_Report extends Agdp_Post {
 		$wpdb = self::wpdb();
 		
 		//global vars : @BLOGID, ...
-		$sql = static::add_sql_global_vars( $sql, $sql_variables, $options );
+		$sql = static::add_sql_global_vars( $report, $sql, $sql_variables, $options );
 		
 		if( empty($options['_sqls'] ) )
 			$options['_sqls'] = [];
@@ -1536,7 +1548,7 @@ class Agdp_Report extends Agdp_Post {
 				$meta_key = 'report_show_vars';
 				$report_show_vars = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
 				if( $report_show_vars ){
-					// $sql_prepared = static::add_sql_global_vars( $sql_prepared, $sql_variables, $options );
+					// $sql_prepared = static::add_sql_global_vars( $report, $sql_prepared, $sql_variables, $options );
 				}
 				else {
 					if( is_array($sql_prepared) )
@@ -1806,13 +1818,27 @@ class Agdp_Report extends Agdp_Post {
 	 * Hook the_content
 	 */
  	public static function the_content( $content ) {
-		
  		global $post;
-		$content = $post->post_content;
-		
-		if( ! $post	){
- 			return $content;
+		if( ! empty($_GET['mode'])
+		&& $_GET['mode'] === 'shortcode' ){
+			if( ! current_user_can('manage_options')){
+				// global $wp_query;
+				// $wp_query->set_404();
+				// status_header( 404 );
+				die( 404 );
+			}
+			$shortcode = empty($_GET['shortcode']) ? '' : $_GET['shortcode'];
+			if( ! $shortcode )
+				$shortcode = sprintf('[%s %s]', self::shortcode, $post->ID);
+			$html = sprintf("<h3>Evaluation de l'expression <code>%s</code></h3><br>%s"
+				, str_replace('[', htmlentities('[', ENT_QUOTES | ENT_HTML5), htmlentities( $shortcode ) )
+				, $shortcode
+			);
+			return $html;
 		}
+		
+		$content = $post->post_content; // TODO quid de $content dans l'argument ?
+		
 		$html = self::get_report_html( $post );
 		if( ! $html )
 			return $content;

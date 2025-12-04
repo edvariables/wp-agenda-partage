@@ -473,12 +473,15 @@ function is_associative_array($array){
 /**
  * get_relative_page
  */
-function get_post_path($post){
+function get_post_path($post, $root = ''){
 	if( is_numeric($post) )
 		$post = get_post($post);
 	if($post->post_parent)
-		return get_post_path( $post->post_parent ) . '/' . $post->post_name;
-	return $post->post_name;
+		$path = get_post_path( $post->post_parent, $root ) . '/' . $post->post_name;
+	else {
+		$path = $root . $post->post_name;
+	}
+	return $path;
 }
 
 /**
@@ -520,8 +523,13 @@ function get_relative_page($slug, $relative_to, $post_type = false){
 		$path = substr( $slug, 1 );
 	}
 	else { //Même parent
-		$path = get_post_path($relative_to->post_parent) . '/' . $slug;
+		if( is_object($relative_to) )
+			$path = get_post_path($relative_to->post_parent) . '/' . $slug;
+		else {
+			$path = $slug;
+		}
 	}
+	// debug_log(__FUNCTION__, $path, $post_type, !!get_page_by_path( $path, OBJECT, $post_type ));
 	
 	return get_page_by_path( $path, OBJECT, $post_type );
 }

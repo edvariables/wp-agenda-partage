@@ -229,6 +229,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 
 			////////////////
 			case 'textarea':
+				if( ! $val && $default_val) $val = $default_val;
 				if( /* $is_array_field && */ is_array($val) ){
 					//debug_log(__FUNCTION__ . ' is_array($val)', $val);
 					$val = implode("\n", $val);
@@ -246,6 +247,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			
 			////////////////
 			case 'tinymce':
+				if( ! $val && $default_val) $val = $default_val;
 				$editor_settings = ! array_key_exists ( 'settings', $field ) || ! $field['settings'] ? null : $field['settings'];
 				$editor_settings = wp_parse_args($editor_settings, array( //valeurs par défaut
 					'textarea_rows' => 10,

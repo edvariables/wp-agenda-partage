@@ -55,7 +55,7 @@ class Agdp_Report_Shortcodes {
 		if( ! is_array($atts)){
 			$atts = array();
 		}
-		debug_log(__FUNCTION__, $shortcode, $atts);
+		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts);
 		
 		//champs sans valeur transformer en champ=true
 		foreach($atts as $key=>$value){
@@ -63,8 +63,17 @@ class Agdp_Report_Shortcodes {
 				if( $key == 0 )
 					$atts['report_id']=$value;
 				elseif( ! array_key_exists($value, $atts)){
-					$atts[$value] = true;
 					unset($atts[$key]);
+					if( ($i = strpos($value, '=', 1)) > 0
+					&& ( $value[0] === ':' || $value[0] === '@' )){
+						$key = substr($value, 0, $i);
+						$value = substr($value, $i + 1);
+						if( strlen($value) > 1 && $value[0] === '"' && $value[strlen($value)-1] === '"' )
+							$value = substr($value, 1, strlen($value) - 2);
+						$atts[ $key ] = $value;
+					}
+					else
+						$atts[$value] = true;
 				}
 			}
 		}
@@ -138,7 +147,7 @@ class Agdp_Report_Shortcodes {
 	*/
 	private static function shortcodes_report_callback($atts, $content = '', $shortcode = null){
 		$label = isset($atts['label']) ? $atts['label'] : '' ;
-				
+		
 		$html = '';
 		
 		foreach($atts as $key=>$value){
@@ -148,7 +157,7 @@ class Agdp_Report_Shortcodes {
 					unset($atts[$key]);
 			}
 		}
-		debug_log(__FUNCTION__, $shortcode, $atts);
+		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts, $_REQUEST);
 		if($shortcode == 'report'
 		&& count($atts) > 0){
 			
@@ -168,8 +177,49 @@ class Agdp_Report_Shortcodes {
 		$no_html = isset($atts['no-html']) && $atts['no-html']
 				|| isset($atts['html']) && $atts['html'] == 'no';
 		
-		$report_id = $atts['report_id'];
+		// report_id
+		if( ! empty($atts['report_id']) )
+			$report_id = $atts['report_id'];
+		if( empty($report_id) ){
+			global $post;
+			if( $post && $post->post_type === Agdp_Report::post_type ){
+				$report = $post;
+				$report_id = $post->ID;
+			}
+		}
+		if( empty($report) ){
+			if( ! $report_id ){
+				return sprintf('Shortcode %s : il manque la référence du report. <code>%s</code>', $shortcode, print_r($atts, true));
+			}
+			if( is_numeric($report_id) ){
+				$report = get_post( $report_id );
+				if( $report && $report->post_type !== Agdp_Report::post_type ){
+					return sprintf('Le document %d n\'est pas du type %s. <code>%s</code>', $report->ID, Agdp_Report::post_type, print_r($atts, true));
+				}
+			}
+			elseif( is_string($report_id) ){
+				if( strpos($report_id, '|') && is_numeric( substr($report_id, 0, strpos($report_id, '|') ) ) )
+					$report_id = substr($report_id, 0, strpos($report_id, '|') );
+				else
+					$report_id = trim( $report_id, '"\'' );
+				$relative_to = false;
+				$report = get_relative_page( $report_id, $relative_to, Agdp_Report::post_type );
+			}
+		}
+		if( ! $report ) {
+			return sprintf('Référence du rapport incorrect : %s. <code>%s</code>', $report_id, print_r($atts, true));
+		}
+		$report_id = $report->ID;
+			
 		
+		$sql_variables = [];
+		foreach($atts as $key=>$value){
+			if( ! is_numeric($key) )
+				if( $key[0] === ':' )
+					$sql_variables[ substr($key,1) ] = $value;
+				elseif( $key[0] === '@' )
+					$sql_variables[ $key ] = $value;
+		}
 		switch($shortcode){
 				
 			case 'report':
@@ -183,7 +233,7 @@ class Agdp_Report_Shortcodes {
 				switch($meta_name){
 					case 'table' :
 					case 'results' :
-						$val = Agdp_Report::get_report_html( $report_id );
+						$val = Agdp_Report::get_report_html( $report_id, false, $sql_variables );
 						break;
 				}
 				if($val === false)

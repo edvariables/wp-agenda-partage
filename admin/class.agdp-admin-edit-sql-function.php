@@ -12,6 +12,8 @@
  */
 class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 
+	private const Agdp_Report_Stamp = '/* Fonction générée par Wordpress, extension Agdp_Report. */';		
+
 	public static function init() {
 		parent::init();
 		
@@ -54,22 +56,31 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		foreach([ 'parameters', 'return_type', 'body', 'use_example' ] as $meta_name)
+		foreach([ 'parameters', 'return_type', 'body', 'use_example', 'use_example_execute' ] as $meta_name)
 			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
 				update_term_meta($term_id, $meta_name, $args[$meta_name]);
 			}
 			else {
 				delete_term_meta($term_id, $meta_name);
 			}
-		self::create_sql_function_in_db( $term_id, $args['name'] );
+		
+		$meta_name = 'body';
+		if( empty($args[$meta_name]) ){
+			$mysql_script = self::get_current_mysql_function_body( $args['name'] );
+			if( $mysql_script )
+				update_term_meta($term_id, $meta_name, $mysql_script);
+		}
+		else
+			self::create_sql_function_in_db( $term_id, $args['name'] );
 	}
+	
 	/**
 	 * create_sql_function_in_db
 	 */
 	public static function create_sql_function_in_db( int $term_id, string $term_name ){
 		$term_metas = get_term_meta($term_id, false, true);
 		global $wpdb;
-		$sql = sprintf('DROP FUNCTION `%s`', $term_name);
+		$sql = sprintf('DROP FUNCTION IF EXISTS `%s`', $term_name);
 		$wpdb->suppress_errors( true );
 		$wpdb->hide_errors();
 		$wpdb->query($sql);
@@ -79,17 +90,30 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			
 		$body = rtrim( $term_metas['body'][0], " ;\r\n" );
 		
+		if( stripos($term_metas['return_type'][0], ' CHARSET') === false
+		 && ( stripos($term_metas['return_type'][0], 'TEXT') !== false
+			|| stripos($term_metas['return_type'][0], 'VARCHAR') !== false) )
+			$charset = ' CHARSET utf8mb4';
+		else
+			$charset = '';
+		
+		//Agdp_Report_Stamp
+		if( stripos($body, self::Agdp_Report_Stamp) === false)
+			$agdp_stamp = self::Agdp_Report_Stamp;
+		//errors
 		$wpdb->last_error = false;
-		$wpdb->show_errors();
-		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s %s\nBEGIN\n%s\n%s;\nEND"
+		$wpdb->hide_errors();
+		$wpdb->suppress_errors( true );
+		//sql
+		$sql = sprintf("CREATE FUNCTION `%s` (%s) \nRETURNS %s%s %s\nBEGIN\n%s\n%s;\nEND"
 			, $term_name
 			, $term_metas['parameters'][0]
 			, $term_metas['return_type'][0]
+			, $charset
 			, 'DETERMINISTIC NO SQL' //TODO paramétrables
-			, '/* fonction générée par Wordpress, extension Agdp_Report */'
+			, isset($agdp_stamp) ? $agdp_stamp : ''
 			, $body
 		);
-		$wpdb->suppress_errors( true );
 		$result = $wpdb->query($sql);
 		if($wpdb->last_error){
 			if( is_a($result, 'WP_Error') )
@@ -100,7 +124,65 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction MySQL n'existe pas ou plus.";
 			Agdp_Admin::add_admin_notice( $msg, 'error', true);
 		}
+		else {
+			$msg = "La fonction MySQL a été créée ou mise à jour.";
+			Agdp_Admin::add_admin_notice( $msg, 'info', true);
+		}
 	}
+	
+	/**
+	 * get_current_mysql_function_body
+	 */
+	public static function get_current_mysql_function_body( string $sql_function_name ){
+		if( ! $sql_function_name )
+			throw new WP_Error("Le paramètre 'sql_function_name' est vide.");
+		global $wpdb;
+		
+		$wpdb->suppress_errors( true );
+		$wpdb->hide_errors();
+		
+		$sql = "SHOW CREATE FUNCTION $sql_function_name";
+		$mysql_function = $wpdb->get_results($sql);
+		
+		if( $wpdb->last_error ){
+			if( $wpdb->last_error && (strpos($wpdb->last_error, 'does not exist') === false) )
+				Agdp_Admin::add_admin_notice( 
+					sprintf('%s<br><pre><code>%s</code></pre>', $wpdb->last_error, $wpdb->last_query)
+					, 'error', true);
+			return false;
+		}
+		
+		if( count($mysql_function) === 0 )
+			return false;
+		$field = "Create Function";
+		$mysql_script = empty($mysql_function[0]->$field) ? false : $mysql_function[0]->$field;
+		//debug_log(__FUNCTION__, $mysql_function, $mysql_script);
+		
+		return $mysql_script;
+	}
+	
+	/**
+	 * compare_current_mysql_function_body
+	 */
+	public static function compare_current_mysql_function_body( $tag ){
+		$sql_function_name = $tag->name;
+		$mysql_script = self::get_current_mysql_function_body( $sql_function_name );
+		if( ! $mysql_script )
+			return true;
+		$sql_function_body = get_term_meta( $tag->term_id, 'body', true );
+		if( strpos( $mysql_script, $sql_function_body ) !== false
+		)
+			return true;
+		
+		$msg = sprintf('Attention, la fonction %s est différente dans la base MySQL et dans cet écran.'
+				. '<br><textarea style="width: 95%%;" rows=8 readonly=1>%s</textarea></pre>'
+				, $sql_function_name
+				, $mysql_script
+			);
+		
+		Agdp_Admin::add_admin_notice_now( $msg, 'error', true);
+	}
+	
 	/**
 	 * Register Meta Boxes (boite en édition du term)
 	 */
@@ -111,9 +193,94 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	/**
 	 * Register Meta Boxes (boite en édition du term)
 	 */
-	public static function on_edit_form_fields( $tag, string $taxonomy ){
-	// debug_log(__FUNCTION__, $tag, $taxonomy );
+	public static function try_example( $tag ){
+		if( ! $tag )
+			return;
 		
+		$meta_name = 'use_example_execute';
+		if( ! get_term_meta($tag->term_id, $meta_name, true) )
+			return;
+			
+		$meta_name = 'use_example';
+		$use_example = get_term_meta($tag->term_id, $meta_name, true);
+		
+		if( ! $use_example )
+			return;
+		
+		if( stripos($use_example, 'SELECT ') === false )
+			$sql = sprintf('SELECT %s `_try_example_`', $use_example);
+		else
+			$sql = $use_example;
+		$sqls = Agdp_Report::get_sql_as_array( $sql );
+		
+		global $wpdb;
+		$wpdb->suppress_errors( true );
+		$wpdb->hide_errors();
+		$wpdb->last_error = false;
+		
+		foreach($sqls as $sql_u){
+			$results = $wpdb->get_results($sql_u);
+		
+			if( $wpdb->last_error ){
+				if( $wpdb->last_error && (strpos($wpdb->last_error, 'does not exist') === false) )
+					Agdp_Admin::add_admin_notice_now( 
+						sprintf('<h3>%s</h3><br>%s<br><pre><code>%s</code></pre>'
+							, "Erreur dans l'exécution de la requête d'exemple :"
+							, $wpdb->last_error
+							, $wpdb->last_query
+						)
+						, 'error'
+						, true
+					);
+				return $wpdb->last_error;
+			}
+		}
+		if( ! $results )
+			$html = false;
+		elseif( is_array( $results ) ) {
+			$html = '';
+			$col_index = 0;
+			foreach($results[0] as $key=>$value){
+				if( $col_index++ !== 0 )
+					$html .= "\t";
+				if( $key === '_try_example_' )
+					$html .= "item";
+				else
+					$html .= "$key";
+			}
+			foreach($results as $result){
+				$html .= "\n";
+				$col_index = 0;
+				foreach($result as $key=>$value){
+					if( $col_index++ !== 0 )
+						$html .= "\t";
+					$html .= "$value";
+				}
+			}
+			$html = trim($html, "\t\n");
+			if( strpos($html, "\t") ){
+				$html = sprintf('<table class="use_example_results"><tr><td>%s</tr></table>'
+						, str_replace("\n", '<tr><td>', 
+								str_replace("\t", '<td>', $html
+						))
+				);
+			}
+		}
+		else
+			$html = print_r( $results, true );
+		if( $html )
+			$html = sprintf('<pre><code>%s</code></pre>', $html, true);
+		return $html;
+	}
+
+	/**
+	 * Register Meta Boxes (boite en édition du term)
+	 */
+	public static function on_edit_form_fields( $tag, string $taxonomy ){
+	// debug_log(__FUNCTION__, $tag->name, $taxonomy );
+	if( $tag )
+		self::compare_current_mysql_function_body( $tag );
+	
 	$meta_name = 'parameters';
     ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
         <th scope="row"><label for="<?php echo $meta_name;?>">Paramètres de la fonction</label></th>
@@ -179,6 +346,19 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 									'class' => 'sql',
 									'learn-more' => '<code>' . $example
 										. '</code>'
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+	$meta_name = 'use_example_execute';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>"></label></th>
+        <td><?php
+			$results = self::try_example( $tag );
+			parent::metabox_html([array('name' => $meta_name,
+									'label' => __('Tester cet exemple', AGDP_TAG),
+									'type' => 'checkbox',
+									'input' => 'input',
+									'comments' => $results
 								)], $tag, null);
         ?></td>
     </tr><?php

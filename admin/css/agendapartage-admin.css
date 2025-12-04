@@ -41,6 +41,7 @@ body.colors-dark .color-red {
 	width: 25em;
 	display: inline-block;
 }
+.agdp-metabox-row > textarea.shortcode,
 .agdp-metabox-row > textarea#sql, .agdp-metabox-row > textarea.sql {
 	width: 95%;
 	font-family: "Lucida Console", "Courier New", monospace;
@@ -441,3 +442,14 @@ div.edit-post-layout__metaboxes {
 }
 /*
  *******/
+ 
+ 
+/* SQL Function */
+table.use_example_results {
+	border-spacing: 0px;
+}
+table.use_example_results td {
+	line-height: 1em;
+	padding: 2px;
+	border: solid 1px burlywood;
+}
