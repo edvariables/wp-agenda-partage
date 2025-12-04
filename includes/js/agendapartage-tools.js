@@ -133,13 +133,16 @@ jQuery( function( $ ) {
 			$('ul.wp-block-page-list.toggle')
 				.find('li > a').each(function(){
 					var active = $(this).nextAll('ul:first').length === 0;
-					$(this)
-						.before('<span class="toggle-trigger ' + (active ? 'active' : '') + '"></span>')
-						.next('ul')
-							.addClass('toggle-container')
+					var $this = $(this);
+					if($this.prev('.toggle-trigger').length == 0) {
+						$this
+							.before('<span class="toggle-trigger ' + (active ? 'active' : '') + '"></span>')
+							.next('ul')
+								.addClass('toggle-container')
+								.end()
 							.end()
-						.end()
-					;
+						;
+					}
 				})
 			;
 		});
@@ -179,6 +182,7 @@ jQuery( function( $ ) {
 						_nonce : agdp_ajax.check_nonce
 					}),
 					success : function( response ) {
+						$toggler.removeClass('loading');
 						$spinner.remove();
 						if(response){
 							if(typeof response === 'string' || response instanceof String){
@@ -202,6 +206,7 @@ jQuery( function( $ ) {
 						}
 					},
 					fail : function( response ){
+						$toggler.removeClass('loading');
 						$spinner.remove();
 						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
 							.click(function(){$msg.remove()});

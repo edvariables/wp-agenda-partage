@@ -63,6 +63,9 @@ class Agdp {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Report', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report-variables.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Report_Variables', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Evenement', 'init' ) );

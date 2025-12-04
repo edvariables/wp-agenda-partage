@@ -6,10 +6,8 @@
  * 
  * Définition du Post Type agdpreport
  *
- * Voir aussi Agdp_Admin_Report
+ * Voir aussi Agdp_Admin_Edit_Report
  *
- * Une report dispatche les mails vers des posts ou comments.
- * Agdp_Forum traite les commentaires.
  */
 class Agdp_Report extends Agdp_Post {
 
@@ -19,9 +17,6 @@ class Agdp_Report extends Agdp_Post {
 	const shortcode = 'report';
 		
 	// const user_role = 'author';
-	
-	public static $sql_global_vars;
-	private static $sql_global_vars_init;
 	
 	private static $initiated = false;
 	
@@ -44,33 +39,8 @@ class Agdp_Report extends Agdp_Post {
 	public static function init_constants() {
 			
 		define( 'AGDP_BLOG_PREFIX', '@.'); 
-		define( 'AGDP_VAR_BLOG_ID', '@BLOGID'); 
-		define( 'AGDP_VAR_BLOG_NAME', '@BLOGNAME'); 
-		define( 'AGDP_VAR_BLOG_URL', '@BLOGURL'); 
-		define( 'AGDP_VAR_POST_ID', '@POSTID'); 
-		define( 'AGDP_VAR_PARENT_ID', '@PARENTID'); 
-		define( 'AGDP_VAR_POST_TYPE', '@POSTTYPE'); 
-		define( 'AGDP_VAR_REPORT_ID', '@REPORTID'); 
-		define( 'AGDP_VAR_REPORT_TITLE', '@REPORTTITLE'); 
-		define( 'AGDP_REPORT_VAR_PREFIX', 'rv_');  
-		define( 'AGDP_VAR_DBRESULTS', '@DBRESULTS'); 
-		//dynamics
-		define( 'AGDP_VAR_TAX_TERMS', '@TAX_TERMS'); 
-		define( 'AGDP_VAR_POST_STATUSES', '@POST_STATUSES'); 
 		
 		define( 'MAX_VAR_DBRESULTS_ROWS', 99); 
-		
-		self::$sql_global_vars = [
-			AGDP_VAR_BLOG_ID => null,
-			AGDP_VAR_BLOG_NAME => null,
-			AGDP_VAR_BLOG_URL => null,
-			AGDP_VAR_POST_ID => null,
-			AGDP_VAR_PARENT_ID => null,
-			AGDP_VAR_POST_TYPE => null,
-			AGDP_VAR_REPORT_ID => null,
-			AGDP_VAR_REPORT_TITLE => null,
-		];
-		self::$sql_global_vars_init = false;
 	}
 
 	/**
@@ -128,52 +98,6 @@ class Agdp_Report extends Agdp_Post {
 	}
 
 	/**
-	 * SQL variables
-	 */
- 	public static function normalize_sql_variables( $report, $sql_variables, $options ) {
-		if( ! $options )
-			$options = [];
-		elseif( is_string($options) )
-			$options = [ 'mode' => $options ];
-		$report_id = $report->ID;
-		//valeurs des variables
-		if( ! $sql_variables )
-			$sql_variables = [];
-		elseif( is_string($sql_variables) )
-			$sql_variables = json_decode($sql_variables, true);
-		if( $report_id && ! empty( $options['_default_sql_variables_' . $report_id ] ) )
-			$default_sql_variables = $options['_default_sql_variables_' . $report_id ];
-		else{
-			$default_sql_variables = get_post_meta( $report_id, 'sql_variables', true );
-			$options['_default_sql_variables_' . $report_id ] = $default_sql_variables;//cache
-		}
-		if( $default_sql_variables && is_string($default_sql_variables) ){
-			$default_sql_variables = json_decode($default_sql_variables, true);
-		}
-		else
-			$default_sql_variables = [];
-		if( ! $sql_variables )
-			$sql_variables = $default_sql_variables;
-		else {
-			$sql_variables = array_merge($default_sql_variables, $sql_variables);
-		}
-		//normalize sql_variables
-		foreach($sql_variables as $var=>$value){
-			if( ! is_array($value) ){
-				if( isset($default_sql_variables[$var]) ){
-					$sql_variables[$var] = $default_sql_variables[$var];
-					$sql_variables[$var]['value'] = $value;
-				}
-				else {
-					$sql_variables[$var] = [ 'value' => $value ];
-				}
-			}
-		}
-		
-		return $sql_variables;
-	}
-
-	/**
 	 * SQL
 	 */
  	public static function get_sql( $report = false, $sql = false, $sql_variables = false, &$options = false ) {
@@ -227,7 +151,7 @@ class Agdp_Report extends Agdp_Post {
 		$blog_prefix = $wpdb->get_blog_prefix();
 	    $sql = static::replace_sql_tables_prefix( $sql );
 		
-		$sql_variables = self::normalize_sql_variables( $report, $sql_variables, $options );
+		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, $options );
 		
 		//comments
 		$sql = self::remove_sql_comments( $sql );
@@ -844,127 +768,6 @@ class Agdp_Report extends Agdp_Post {
 		}
 		return $sql;
 	}
-	
-	/**
-	 * replace_sql_tables_prefix
-	 */
- 	public static function replace_sql_tables_prefix( $sql, $check_global_tables = true ) {
-		//@.
-		//TODO preg_replace
-		global $wpdb;
-		$blog_prefix = $wpdb->get_blog_prefix();
-		if( $check_global_tables
-		 && $wpdb->blogid > 1 ){
-			$site_prefix = $wpdb->get_blog_prefix( 1 );
-			$tables =  array_merge( $wpdb->global_tables, $wpdb->ms_global_tables );
-			foreach( $tables as $table )
-				$sql = str_replace( AGDP_BLOG_PREFIX . $table, $site_prefix . $table, $sql);
-		}
-		//$wpdb::$tables
-		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
-		
-		return $sql;
-	}
-
-	/**
-	 * add_table_blog_prefix
-	 */
- 	private static function add_table_blog_prefix( $table ){
-		$wpdb = self::wpdb();
-		if( $wpdb->blogid	> 1 ){
-			if( in_array( $table, $wpdb->global_tables ) 
-			 || in_array( $table, $wpdb->ms_global_tables )
-			){
-				$site_prefix = $wpdb->get_blog_prefix( 1 );
-				if( $site_prefix && substr( $table, 0, strlen($site_prefix ) ) !== $site_prefix )
-					return $site_prefix . $table;
-				else
-					return $table;
-			 }
-		}
-		$blog_prefix = $wpdb->get_blog_prefix();
-		if( $blog_prefix && substr( $table, 0, strlen($blog_prefix ) ) !== $blog_prefix ){
-			//TODO tables user et usermeta doivent être préfixé de @site_prefix (::get_blog_prefix( 1 ))
-			return $blog_prefix . $table;
-		}
-		return $table;
-	}
-	/**
-	 * returns sql_global_vars initiated
-	 */
- 	public static function sql_global_vars( $report, $options = false ) {
-		if( self::$sql_global_vars_init )
-			return static::$sql_global_vars;
-		
-		global $post;
-		if( ! $report ){
-			if( ! empty( $_REQUEST['report_id'] ) ){
-				$report_id = $_REQUEST['report_id'];
-				$report = get_post($report_id);
-			}
-			elseif( $post && $post->post_type === self::post_type ){
-				$report = $post;
-				$report_id = $post->ID;
-			}
-			if( ! empty( $_REQUEST['post_id'] ) ){
-				$post_id = $_REQUEST['post_id'];
-				$post = get_post( $post_id );
-				if( empty($report)
-				&& $post && $post->post_type === self::post_type ){
-					$report = $post;
-					$report_id = $post->ID;
-				}
-			}
-		}
-		else
-			$report_id = $report->ID;
-		
-		self::$sql_global_vars_init = true;
-		static::$sql_global_vars = array_merge( static::$sql_global_vars, [
-			AGDP_VAR_BLOG_ID /* @BLOGID */ => get_current_blog_id(),
-			AGDP_VAR_BLOG_NAME /* @BLOGNAME */ => get_bloginfo('name'),
-			AGDP_VAR_BLOG_URL /* @BLOGURL */ => get_bloginfo('url'),
-			AGDP_VAR_POST_ID => $post ? $post->ID : false,
-			AGDP_VAR_PARENT_ID => $post ? $post->post_parent : false,
-			AGDP_VAR_POST_TYPE => $post ? $post->post_type : false,
-			AGDP_VAR_REPORT_ID => isset($report_id) ? $report_id : false,
-			AGDP_VAR_REPORT_TITLE => isset($report) ? $report->post_title : false,
-		]);
-				
-		return static::$sql_global_vars;
-	}
-
-
-	/**
-	/**
-	 * add_sql_global_vars
-	 */
- 	public static function add_sql_global_vars( $report, $sql, $sql_variables = false, &$options = false ) {
-		if( ! $sql
-		|| ! empty($options['_add_sql_global_vars']) )
-			return self::get_sql_as_array( $sql );
-		
-		$options['_add_sql_global_vars'] = true;
-		
-		$vars = static::sql_global_vars( $report, $options );
-		
-		//get_global_vars_sql
-		$set_vars =  static::get_global_vars_sql( $vars, $sql_variables, $options );
-		
-		// array_shift
-		if( ! is_array($sql) )
-			$sql = [ $set_vars, $sql ];
-		else
-			$sql = array_merge( [ $set_vars ], $sql );
-		
-		//Purge des éléments vides
-		$sql = array_filter( $sql, function( $value ){ return trim($value, " ;\n\r") !== ''; } );
-				
-		return $sql;
-	}
-
-
-
 	/**
 	 * check_dynamic_vars_needed
 	 */
@@ -1069,6 +872,51 @@ class Agdp_Report extends Agdp_Post {
 		
 				
 		return $sql;
+	}
+	
+	/**
+	 * replace_sql_tables_prefix
+	 */
+ 	public static function replace_sql_tables_prefix( $sql, $check_global_tables = true ) {
+		//@.
+		//TODO preg_replace
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		if( $check_global_tables
+		 && $wpdb->blogid > 1 ){
+			$site_prefix = $wpdb->get_blog_prefix( 1 );
+			$tables =  array_merge( $wpdb->global_tables, $wpdb->ms_global_tables );
+			foreach( $tables as $table )
+				$sql = str_replace( AGDP_BLOG_PREFIX . $table, $site_prefix . $table, $sql);
+		}
+		//$wpdb::$tables
+		$sql = str_replace( AGDP_BLOG_PREFIX, $blog_prefix, $sql);
+		
+		return $sql;
+	}
+
+	/**
+	 * add_table_blog_prefix
+	 */
+ 	private static function add_table_blog_prefix( $table ){
+		$wpdb = self::wpdb();
+		if( $wpdb->blogid	> 1 ){
+			if( in_array( $table, $wpdb->global_tables ) 
+			 || in_array( $table, $wpdb->ms_global_tables )
+			){
+				$site_prefix = $wpdb->get_blog_prefix( 1 );
+				if( $site_prefix && substr( $table, 0, strlen($site_prefix ) ) !== $site_prefix )
+					return $site_prefix . $table;
+				else
+					return $table;
+			 }
+		}
+		$blog_prefix = $wpdb->get_blog_prefix();
+		if( $blog_prefix && substr( $table, 0, strlen($blog_prefix ) ) !== $blog_prefix ){
+			//TODO tables user et usermeta doivent être préfixé de @site_prefix (::get_blog_prefix( 1 ))
+			return $blog_prefix . $table;
+		}
+		return $table;
 	}
 	
 	/**
@@ -1391,7 +1239,7 @@ class Agdp_Report extends Agdp_Post {
 		$wpdb = self::wpdb();
 		
 		//global vars : @BLOGID, ...
-		$sql = static::add_sql_global_vars( $report, $sql, $sql_variables, $options );
+		$sql = Agdp_Report_Variables::add_sql_global_vars( $report, $sql, $sql_variables, $options );
 		
 		if( empty($options['_sqls'] ) )
 			$options['_sqls'] = [];
@@ -1537,18 +1385,28 @@ class Agdp_Report extends Agdp_Post {
 		
 		$sql_prepared ='';
 		//report_show_sql
-		if( Agdp::is_admin_referer() && current_user_can('manage_options')){
+		if( current_user_can('manage_options')){
 			$meta_key = 'report_show_sql';
 			if( isset($options[$meta_key]) )
 				$report_show_sql = $options[$meta_key];
 			else
 				$report_show_sql = get_post_meta( $report_id, $meta_key, true );
+			if( $report_show_sql
+			&& ! Agdp::is_admin_referer() ){
+				$meta_key = 'report_show_sql_public';
+				if( isset($options[$meta_key]) )
+					$report_show_sql_public = $options[$meta_key];
+				else
+					$report_show_sql_public = get_post_meta( $report_id, $meta_key, true );
+				if( ! $report_show_sql_public )
+					$report_show_sql = false;
+			}
 			if( $report_show_sql ){
 				$sql_prepared = $options['_sqls'];
 				$meta_key = 'report_show_vars';
 				$report_show_vars = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
 				if( $report_show_vars ){
-					// $sql_prepared = static::add_sql_global_vars( $report, $sql_prepared, $sql_variables, $options );
+					// $sql_prepared = Agdp_Report_Variables::add_sql_global_vars( $report, $sql_prepared, $sql_variables, $options );
 				}
 				else {
 					if( is_array($sql_prepared) )
@@ -1559,9 +1417,8 @@ class Agdp_Report extends Agdp_Post {
 				}
 				if( is_array($sql_prepared) )
 					$sql_prepared = implode( ";\n", $sql_prepared );
-				$sql_prepared = sprintf('<div class="sql_prepared">%s</div>', htmlspecialchars($sql_prepared));
+				$sql_prepared = sprintf('<pre class="sql_prepared">%s</pre>', htmlspecialchars($sql_prepared));
 			}	
-			
 		}
 		
 		if( ! $dbresults )

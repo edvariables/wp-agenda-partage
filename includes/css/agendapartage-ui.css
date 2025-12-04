@@ -133,6 +133,10 @@ div.agdp-tabs .agdp-panel fieldset legend {
 .wp-block-page-list.toggle li > .toggle-trigger {
 	cursor:pointer;
 }
+.toggle-trigger.loading > a, a.toggle-trigger.loading {
+	cursor:progress;
+}
+
 .parent-page {
 	margin-bottom: 1em;
 	display: block;

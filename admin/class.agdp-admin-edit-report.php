@@ -235,6 +235,11 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 						'input' => 'checkbox',
 						'container_class' => 'report_menu_item', //cf admin-report.js
 					],
+					[	'name' => 'report_show_sql_public',
+						'label' => 'Sur le site (en tant qu\'Admin)',
+						'input' => 'checkbox',
+						'container_class' => 'report_menu_item', //cf admin-report.js
+					],
 				],
 			],
 			[	'name' => 'report_show_caption',
@@ -297,7 +302,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			return;
 		
 		$variables = [];
-		$sql_variables = Agdp_Report::normalize_sql_variables( $report, null, 'shortcode' );
+		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, null, 'shortcode' );
 		foreach($sql_variables as $var=>$variable){
 			if( ! is_array($variable) )
 				$value = print_r($variable, true);
