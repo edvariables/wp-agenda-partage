@@ -282,6 +282,7 @@ class Agdp_Report extends Agdp_Post {
 								elseif( $sub_report->ID == $report_id
 								|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
 									$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
+									debug_log_callstack(__FUNCTION__, $error);
 									$variables[$variable] = $error;
 								}
 								if( ! $error ){
@@ -585,8 +586,8 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
-		//Suppression de ; finaux
-		$sql = preg_replace('/([;]\s*)+$/', '', $sql);
+		//Suppression de ; finaux ainsi que des lignes de commentaires en fin
+		$sql = preg_replace('/(([;]\s*)+|(-- [^\n]*\n?))$/', '', $sql);
 		
 		return $sql;
 	}
@@ -959,6 +960,7 @@ class Agdp_Report extends Agdp_Post {
 		|| empty( $table_render['columns'] ) )
 			return $sql;
 		
+		
 		$table_columns = $table_render['columns'];
 		
 		$select = '';
@@ -1013,6 +1015,16 @@ class Agdp_Report extends Agdp_Post {
 		}
 		else
 			$select = $sql;
+		
+		// sql_before_render
+		$sql_before = self::get_sql_before_render( $report, $options );
+		if( $sql_before ){
+			$sql_before = self::get_sql( $report, $sql_before, $sql_variables, $options);
+			if( is_array($sql_before) )
+				$sql_before = implode(";\n", $sql_before);
+			return "-- Sql avant rendu :;\n" . trim($sql_before, "\r\n ;") . ";\n-- --;\n" . $select;
+		}
+		
 		return $select;
 	}
 	
@@ -1279,15 +1291,17 @@ class Agdp_Report extends Agdp_Post {
 				&& ( count($sqls_u) === $sql_uu_index + 1 )){
 					$sql_uu = self::get_render_sql( $report, $sql_uu, $sql_variables, $options, $table_render );
 					if( strpos($sql_uu, ";\n") )
-						$sql_uu = explode(";\n", $sql_uu);
+						$sql_uu = explode(";\n", str_replace( "\r", '', $sql_uu ));
 				}
 				if( ! is_array( $sql_uu ) )
 					$sql_uu = [$sql_uu];
-					
+			
 				foreach( $sql_uu as $sql_uuu ){
+					if( ! $sql_uuu )
+						continue;
 					//$wpdb->get_results
 					$result_u = $wpdb->get_results($sql_uuu);
-					
+				
 					array_push( $options['_sqls'], $sql_uuu );
 					if( $wpdb->last_error ){
 						// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
@@ -1671,6 +1685,22 @@ class Agdp_Report extends Agdp_Post {
 		$css = str_replace( '&gt;', '>', $css);
 	    
 		return $css;
+	}
+	
+	/**
+	 * Retourne le script sql exécuté avant tout si le render est activé
+	 */
+	public static function get_sql_before_render( $report_id, $options = false ) {
+		if( is_array( $options )
+		&& isset( $options['sql_before_render'] ) )
+			return $options['sql_before_render'];
+			
+		if( is_a( $report_id, 'WP_Post') )
+			$report_id = $report_id->ID;
+		
+		$sql = get_post_meta( $report_id, 'sql_before_render', true );
+	    
+		return $sql;
 	}
 	
 	/**

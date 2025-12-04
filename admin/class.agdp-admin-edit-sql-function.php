@@ -156,7 +156,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			return false;
 		$field = "Create Function";
 		$mysql_script = empty($mysql_function[0]->$field) ? false : $mysql_function[0]->$field;
-		//debug_log(__FUNCTION__, $mysql_function, $mysql_script);
+		debug_log(__FUNCTION__, $mysql_function, $mysql_script);
 		
 		return $mysql_script;
 	}

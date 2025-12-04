@@ -61,12 +61,14 @@ jQuery( function( $ ) {
 		//Init variables
 		$('#agdp_report-variables').each(function(e){
 			var $this = $(this);
-			var $sql = $('#agdp_report-inputs').find('textarea#sql');
+			var $inputs = $('#post-body');
+			var $sql = $inputs.find('textarea#sql');
+			var $sql_before_render = $inputs.find('textarea#sql_before_render');
 			var $variables = $this.find('textarea#sql_variables');
 			
 			//Affiche les variables
-			$sql.on('change', refresh_variables)
-				.trigger('change');
+			$inputs.on('change', 'textarea#sql, textarea#sql_before_render', refresh_variables);
+			refresh_variables.call($sql.get(0), e);
 			
 			//Sauvegarde des variables vers le textarea
 			$this.on('change', '.var_value', save_vars_values);
@@ -82,6 +84,8 @@ jQuery( function( $ ) {
 							data['type'] = v;
 						if( v = $value.attr('var_options') )
 							data['options'] = v;
+						if( v = $value.attr('sql_source') )
+							data['sql_source'] = v;
 						
 						if( $value.is('label') )
 							$value = $this.find('.var_value input');
@@ -207,8 +211,11 @@ jQuery( function( $ ) {
 					var $editor = $this.parents('.var_editor:first');
 					var current_variable = $editor.attr('var_name');
 				}
-				
-				var sql = $sql.val();
+				var flag_sql_before_render = "*** flag_sql_before_render ***";
+				var sql = $sql.val()
+				 + "\n"
+				 + flag_sql_before_render + "\n"
+				 + $sql_before_render.val();
 				
 				//comments
 				var pattern = "(\\/\\*[\s\S]+\\*\\/)"; 
@@ -218,6 +225,9 @@ jQuery( function( $ ) {
 				pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/';//"\"([^\"]+)\""; //TODO simple quote
 				sql = sql.replaceAll( new RegExp(pattern, "sg"), '""' );
 				
+				// pos_flag_sql_before_render
+				var pos_flag_sql_before_render = sql.indexOf( flag_sql_before_render );
+				if( pos_flag_sql_before_render === -1 ) pos_flag_sql_before_render = sql.length;
 				
 				//Valeurs actuelles des variables
 				var var_values = get_input_jso.call( $variables );
@@ -249,6 +259,8 @@ jQuery( function( $ ) {
 								variables[variable] = value;
 							if( matches[i][2] )
 								variables[variable]['format'] = matches[i][2];
+							if( pos_flag_sql_before_render < sql.indexOf( ':' + variable ) )
+								variables[variable]['sql_source'] = 'sql_before_render';
 							delete var_values_saved[variable] ;
 						}
 					}
@@ -412,6 +424,9 @@ jQuery( function( $ ) {
 							.attr( 'var_type', type )
 							.attr( 'var_options', options )
 						;
+						if( variables[variable]['sql_source'] )
+							$input.attr( 'sql_source', variables[variable]['sql_source'] );
+							
 						$('<div class="sql_variable"></div>')
 							.append('<label>:' + variable + '</label>')
 							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
@@ -633,13 +648,14 @@ jQuery( function( $ ) {
 		$('#agdp_report-render').each(function(e){
 			$(this)
 				.on('click', '.report_refresh a', refresh_report )
-				.on('change', 'textarea#report_css, .report_css :input', refresh_report)
+				.on('change', '.report_css textarea#report_css', refresh_report)
 				.each(refresh_report_menu)
 				.each(refresh_report_table_designer)
-				// montre le css si il n'est pas vide et que le designer est affiché
+				// montre le css ou sql si il n'est pas vide et que le designer est affiché
 				.find('#report_show_table_designer:checked').each(function(){
 					$(this).parents('.inside:first')
-						.find('.toggle-container.report_css textarea#report_css:not(:empty)')
+						.find( '.toggle-container.report_css textarea#report_css:not(:empty)'
+							 + ', .toggle-container.sql_before_render, textarea#sql_before_render:not(:empty)')
 							.parents('.toggle-container:first')
 								.prevAll('.toggle-trigger:not(.active)')
 									.trigger('toggle-active')
@@ -949,11 +965,11 @@ jQuery( function( $ ) {
 													// var $input_table_render = get_input.call( $table, 'textarea[name="table_render"]');
 													// $input_table_render.text( JSON.stringify( table_render ) );
 													if( remove ){
-														columns.splice(column,1);
+														columns[column] = undefined;
 													} else {
-														set_table_render_option.call( this, 'columns', column, 'label', column);
-														set_table_render_option.call( this, 'columns', column, 'index', 0);
-														set_table_render_option.call( this, 'columns', column, 'visible', true);
+														set_table_render_option.call( $render, 'columns', column, 'label', column);
+														set_table_render_option.call( $render, 'columns', column, 'index', 0);
+														set_table_render_option.call( $render, 'columns', column, 'visible', true);
 													}
 													refresh_report.call($table);
 													e.preventDefault();
@@ -973,9 +989,14 @@ jQuery( function( $ ) {
 													var $this = $(this);
 													var column = $this.parents('li:first').attr('column');
 													var $table = $render.find('.agdpreport > table');
-													$td = $table.find('tr > [column=' + column + ']')
+													var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
+													var index = $th.prevAll('th').length;
+													$table.find('tr').each(function(){
+														$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
 														.toggleClass('hidden');
-													var isHidden = $td.is('.hidden');
+													});														
+													
+													var isHidden = $th.is('.hidden');
 													$this
 														.children('span:first')
 															.toggleClass('dashicons-visibility')
@@ -983,7 +1004,7 @@ jQuery( function( $ ) {
 															.end()
 														.attr('title', isHidden ? 'Rend visible la colonne' : 'Masque la colonne')
 													;
-													save_table_designer();
+													save_table_designer.call( $table );
 													e.preventDefault();
 												})
 											)
@@ -1261,7 +1282,7 @@ jQuery( function( $ ) {
 									$script.nextAll('.input-alert').remove();
 									if( /'.*(?<!\\)"/.exec(this.value) )
 										$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
-											.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\")
+											.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
 											.insertAfter($script)
 										;
 								}).trigger('change');

@@ -157,7 +157,7 @@ class Agdp_Report_Variables {
  	public static function add_sql_global_vars( $report, $sql, $sql_variables = false, &$options = false ) {
 		if( ! $sql
 		|| ! empty($options['_add_sql_global_vars']) )
-			return self::get_sql_as_array( $sql );
+			return Agdp_Report::get_sql_as_array( $sql );
 		
 		$options['_add_sql_global_vars'] = true;
 		

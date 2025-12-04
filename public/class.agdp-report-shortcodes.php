@@ -287,9 +287,9 @@ class Agdp_Report_Shortcodes {
 			$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, 'shortcode' );
 			foreach($sql_variables as $var=>$variable){
 				if( ! is_array($variable) )
-					$value = print_r($variable, true);
+					$value = /* '('.gettype($variable) . ')' . */ print_r($variable, true);
 				elseif( ! isset($variable['value']) )
-					$value = $variable ? print_r($variable, true) : '';
+					$value = '';
 				elseif( is_numeric($variable['value']) )
 					$value = $variable['value'];
 				elseif( is_array($variable['value']) )

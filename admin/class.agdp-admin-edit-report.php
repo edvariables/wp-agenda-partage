@@ -273,10 +273,21 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'type' => 'toggle',
 				'fields' => [ 
 				[	'name' => 'report_css',
-					'class' => '',
+					'class' => 'sql css',
 					'input' => 'textarea',
 					'container_class' => 'toggle-container report_css', //cf admin-report.js
 					'learn-more' => 'Commencez chaque sélecteur par <code>table</code> pour que le css soit uniquement appliqué au tableau.'
+				] ]
+			],
+			[	'name' => '',
+				'label' => 'SQL avant rendu',
+				'type' => 'toggle',
+				'fields' => [ 
+				[	'name' => 'sql_before_render',
+					'class' => 'sql',
+					'input' => 'textarea',
+					'container_class' => 'toggle-container sql_before_render', //cf admin-report.js
+					'learn-more' => ''
 				] ]
 			],
 			[	'name' => 'table_render',
