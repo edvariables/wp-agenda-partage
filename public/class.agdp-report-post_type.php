@@ -46,7 +46,7 @@ class Agdp_Report_Post_type {
 			'supports'              => array( 'title', 'page-attributes' ),
 			'taxonomies'            => array(  ),
 			'hierarchical'          => true,
-			'public'                => true,
+			'public'                => false,
 			'show_ui'               => true,
 			'show_in_menu'          => true,
 			'menu_icon'				=> 'dashicons-media-spreadsheet',

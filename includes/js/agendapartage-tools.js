@@ -157,6 +157,12 @@ jQuery( function( $ ) {
 				.next( ".toggle-container" ).show();
 		}).trigger('toggle-init');
 		$( 'body' ).on('click', ".toggle-trigger", function(event) {
+			
+			if( (event.target.tagName === 'A' || (event.target.parentNode && event.target.parentNode.tagName === 'A' )) ){
+				var $target = $( event.target );
+				if( ! $target.is(".toggle-trigger, .toggle-trigger-label, .toggle-trigger-label > *") )
+					return;
+			}
 			var $toggler = $(this);
 			var isActive = $toggler.is( ".active" );
 			var ajaxData = !isActive && $toggler.is( "[ajax][data]" ) ? $toggler.attr('data') : false;

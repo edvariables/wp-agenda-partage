@@ -152,12 +152,13 @@ div.agdp-tabs .agdp-panel fieldset legend {
 
 /* agdpreport */
 .agdpreport {
-	overflow-x: scroll;
+	overflow-x: auto;
 	width: 100%;
 }
-.agdpreport table {
+.agdpreport > table {
 	border-collapse: collapse;
 	border: 1px solid black;
+	margin-bottom: 0px;
 }
 .agdpreport th, .agdpreport td {
 	border: 1px solid black;

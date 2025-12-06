@@ -191,7 +191,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$label = htmlentities($label);
 			if( $label_toggler || $input_type === 'toggle' ){
 				$label_class .= 'toggle-trigger' . ( $val ? ' active' : '' );
-				$label = sprintf('<a href="#">%s : </a>', $label);
+				$label = sprintf('<a class="toggle-trigger-label">%s : </a>', $label);
 			}
 			else
 				$label .= ': ';

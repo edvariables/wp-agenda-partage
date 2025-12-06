@@ -149,6 +149,8 @@ class Agdp_Report extends Agdp_Post {
 	
 	/**
 	 * Prepare SQL
+	 *
+	 * Aussi utilisé pour le css dans lequel on peut injecter des variables (par exemple, :color%I)
 	 */
  	private static function get_sql_prepare( $report, $sql, $sql_variables, &$options ) {
 		$report_id = $report->ID;
@@ -1040,6 +1042,9 @@ class Agdp_Report extends Agdp_Post {
 			$sql_before = self::get_sql( $report, $sql_before, $sql_variables, $options);
 			if( is_array($sql_before) )
 				$sql_before = implode(";\n", $sql_before);
+			$sql_before = trim($sql_before, "\r\n ;");
+			if( $sql_before === '' )
+				return "-- Sql avant rendu : (vide) --\n" . $select;
 			return "-- Sql avant rendu :;\n" . trim($sql_before, "\r\n ;") . ";\n-- --;\n" . $select;
 		}
 		
@@ -1415,6 +1420,9 @@ class Agdp_Report extends Agdp_Post {
 		
 		$wpdb = self::wpdb( TRUE ); //reset des variables. TODO Quid d'appels imbriqués ?
 		$wpdb->last_error = false;
+		
+		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, $options );
+		
 		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
 		
 		$sql_prepared ='';
@@ -1518,7 +1526,7 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		//thead
-		$content .= '<thead><tr class="report_fields">';
+		$content .= '<thead><tr class="report_columns">';
 		foreach($dbresults as $row){
 			if( $report_show_indexes )
 				$content .= sprintf('<th>#</th>');
@@ -1680,7 +1688,7 @@ class Agdp_Report extends Agdp_Post {
 			$content .= $sql_prepared;
 		
 		if( empty($options['skip_styles']) ) {
-			$content .= sprintf( "\n<style>%s</style>\n", self::get_report_css( $report_id, $tag_id ) );
+			$content .= sprintf( "\n<style>%s</style>\n", self::get_report_css( $report, $tag_id, $sql_variables ) );
 		}
 		
 		$content .= '</div>';
@@ -1689,19 +1697,33 @@ class Agdp_Report extends Agdp_Post {
 
 	/**
 	 * Retourne les styles possibles d'un rapport
+	 *
+	 * Remplace le sélecteur table par #report_{$tag_id}.agdpreport > table
 	 */
-	public static function get_report_css( $report_id, $tag_id ) {
-		$css = get_post_meta( $report_id, 'report_css', true );
-		foreach( self::get_report_styles( $report_id, 'all' ) as $term ){
+	public static function get_report_css( $report, $tag_id, $sql_variables ) {
+		$css = get_post_meta( $report->ID, 'report_css', true );
+		foreach( self::get_report_styles( $report->ID, 'all' ) as $term ){
 			if( $term->description )
 				$css .= "\n" . $term->description;
 		}
-		if( $css && $tag_id ){
-			$css = preg_replace( '/(\s|,\s?)(table(\s|.))/', '$1#' . $tag_id . ' > $2', $css );
+		if( ! $css )
+			return '';
+		
+		if( $tag_id ){
+			//cf regex idem in agendapartage-admin-report.js get_report_css()
+			$css = preg_replace( '/(^|[^:]\s|,\s*)(table(\s|[.{,]))/', '$1#' . $tag_id . ' > $2', $css );
 		}
 		
 		$css = str_replace( '&gt;', '>', $css);
-	    
+		
+		if( preg_match('/\:[a-zA-Z0-9_]+\%\w/', $css) !== false ){
+			
+			$options = 'css';
+			$css = self::get_sql_prepare( $report, $css, $sql_variables, $options );
+			
+			if( is_array( $css ) )
+				$css = implode( "\n", $css );
+		}
 		return $css;
 	}
 	

@@ -576,7 +576,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><code>%KL</code> : Ajoute <code>%</code> à droite de la valeur de la variable pour un LIKE ("commence par").</li>';
 		$html .= '<li><code>%KR</code> : Ajoute <code>%</code> à gauche de la valeur de la variable pour un LIKE ("se termine par").</li>';
 		$html .= '<li>Pour un LIKE, le caractère <code>_</code> doit être précédé de <code>\</code>. ex. : <code>LIKE \'\_%\'</code>. Les formats <code>%K</code> ajoutent cet échappement.</li>';
-		$html .= '<li><code>%I</code> : injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code></li>';
+		$html .= '<li><code>%I</code> : Injection directe. ex. : <code>SHOW COLUMNS FROM `@.:table%I`</code></li>';
 		
 		$html .= '<li><i>cf <a href="https://dev.mysql.com/doc/refman/8.0/en/json-functions.html">https://dev.mysql.com/doc/refman/8.0/en/json-functions.html</a></i></li>';
 		$html .= '<li><code>%J</code> : transforme en objet JSON pour MySQL. ex. : <code>SET @JSON = :json%J</code> qui est remplacé par <code>CAST( [variable] AS JSON )</code></li>';
@@ -588,7 +588,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		$html .= '<li><b>Variables globales</b> affectées par l\'instruction <code>SET <var>@var_name<var> = <var>value<var>;</code></li>';
 		$html .= '<li><label><var>'.AGDP_VAR_DBRESULTS.'</var></label> vous donne accès aux résultats de la requête précédente sous forme JSON. ex. <code>'.AGDP_VAR_DBRESULTS.'.post_id</code>.</li>';
 		$html .= '<li><label><var>&nbsp;</var></label> sous la forme <code>CONCAT('.AGDP_VAR_DBRESULTS.'[2].post_id, "-", '.AGDP_VAR_DBRESULTS.'.post_title)</code> vous noterez que l\'index de ligne (<code>[2]</code>) est implicite si il n\'est pas précisé.</li>';
-		foreach( Agdp_Report::sql_global_vars( $post ) as $var => $value )
+		foreach( Agdp_Report_Variables::sql_global_vars( $post ) as $var => $value )
 			$html .= sprintf('<li><label><var>%s</var></label> = %s</li>', $var, $value);
 		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`post_status`</var> : <var>`name`</var>, ... } </li>', AGDP_VAR_POST_STATUSES );
 		$html .= sprintf('<li><label><var>%s</var></label> = { <var>`taxonomy`</var> : { <var>`slug`</var> : <var>`name`</var>, ... }, ... } </li>', AGDP_VAR_TAX_TERMS );

@@ -30,9 +30,9 @@ jQuery( function( $ ) {
 		'newsletter' : { 'label': 'Lettre-info', 'img': 'Visual' },
 		'report' : { 'label': 'Rapport', 'img': 'Visual' },
 		'report_sql' : { 'label': 'Sous-requête SQL', 'img': 'DataTable' },
-		'field' : { 'label': 'Champ de requête', 'img': 'Link' },
-		'table' : { 'label': 'Table de requête', 'img': 'Link' },
-		'column' : { 'label': 'Colonne de table de requête', 'img': 'Link' },
+		'field' : { 'label': 'Champ de requête', 'img': 'VarName' },
+		'table' : { 'label': 'Table de requête', 'img': 'VarName' },
+		'column' : { 'label': 'Colonne de table de requête', 'img': 'VarName' },
 		'asc_desc' : { 'label': 'Ordre de tri', 'img': 'Selection' },
 	};
 	var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field', 'table'];
@@ -77,43 +77,7 @@ jQuery( function( $ ) {
 			//Sauvegarde des variables vers le textarea
 			$this.on('change', '.var_value', save_vars_values);
 			function save_vars_values(){
-				var var_values = {};
-				$variables.nextAll('.sql_variables_wrap:first')
-					.find('.sql_variable:not(.unused)').each(function(e){
-						var data = {};
-						var $this = $(this);
-						var $value = $this.find('.var_value');
-						var var_name = $value.attr('var_name');
-						for( var i in variable_options ){
-							if( v = $value.attr('var_' + variable_options[i]) )
-								data[variable_options[i]] = v;
-							else if( data[variable_options[i]] !== undefined )
-								data[variable_options[i]] = undefined;
-						}
-						
-						if( $value.is('label') )
-							$value = $this.find('.var_value input');
-						var v;
-						if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
-							v = '';
-							$value.filter(':checked').each(function(){
-								if( v )
-									v += '\n';
-								v += this.value;
-							});
-						}
-						else if( $value.is('input[type="checkbox"]') )
-							v = $value.prop('checked');
-						else if( $value.is('input[type="radio"]') )
-							v = $value.filter(':checked').val();
-						else
-							v = $value.val();
-						if( v )
-							data['value'] = v;
-						
-						var_values[ var_name ] = data;
-					})
-				;
+				var var_values = get_variables_values( $variables );
 				$variables.text( JSON.stringify( var_values ) );
 			}
 		
@@ -153,7 +117,7 @@ jQuery( function( $ ) {
 					var img = input_types[type]['img'];
 					$type.append('<option value="' + type + '"'
 							+ (var_type == type ? ' selected' : '') + '>'
-							+ '<span class="edwp edwp-' + img + '"></span>'//TODO
+							+ '<span class="edwp ed-' + img + '"></span>'//TODO
 							+ label
 						+ '</option>')
 					;
@@ -250,14 +214,13 @@ jQuery( function( $ ) {
 					.dialog( "widget" )
 						.addClass("agdpreport-variable")
 						.find('.ui-dialog-title:first')
-							.prepend( edwpimg( var_type ) )
+							.prepend( edicon( var_type ) )
 				;
 				
 				return false;
 			}
 			$this.on('click', '.var_edit', edit_variable);
-		
-			
+
 			//refresh_variables
 			function refresh_variables(){
 				var $this = $(this);
@@ -341,15 +304,16 @@ jQuery( function( $ ) {
 							case 'table' :
 								if( ! options || options.length === 0 )
 									options = ['posts', 'postmeta', 'comments', 'commentmeta', 'terms', 'termmeta', 'users', 'usermeta', ''];
-							case 'select' :
-								$input = $('<select></select>');
-								$input = add_input_options($input, options, variable, value);
-								break;
 							case 'field' :
+							case 'column' :
 								$input = $('<select></select>');
 								if( ! options || options.length === 0 )
-									options = get_sql_fields;
+									options = get_sql_columns;
 								
+								$input = add_input_options($input, options, variable, value);
+								break;
+							case 'select' :
+								$input = $('<select></select>');
 								$input = add_input_options($input, options, variable, value);
 								break;
 							case 'bool' :
@@ -493,7 +457,7 @@ jQuery( function( $ ) {
 							
 						var $sql_variable = $('<div class="sql_variable"></div>')
 							.append( $('<label>:' + variable + '</label>')
-										.prepend(edwpimg( type )) )
+										.prepend(edicon( type )) )
 							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
 							.append($input)
 							.appendTo( $container )
@@ -715,15 +679,15 @@ jQuery( function( $ ) {
 			//add_input_options
 			///////////////////
 			
-			//get_sql_fields
-			function get_sql_fields(){
-				var fields = {};
-				$('.agdpreport tr.report_fields th[field]').each(function(){
-					var name = this.getAttribute('field');
+			//get_sql_columns
+			function get_sql_columns(){
+				var columns = {};
+				$('.agdpreport tr.report_columns th[column]').each(function(){
+					var name = this.getAttribute('column');
 					if( name )
-						fields[name] = this.textContent ;
+						columns[name] = this.textContent ;
 				});
-				return fields;
+				return columns;
 			}
 		});
 		
@@ -749,11 +713,61 @@ jQuery( function( $ ) {
 			;
 		});
 	});
+	
+	/**
+	 * get_variables_values
+	 */
+	function get_variables_values( $variables ){
+		if( ! $variables ){
+			var $this = $('#agdp_report-variables');
+			$variables = $this.find('textarea#sql_variables');
+		}
+		var var_values = {};
+		$variables.nextAll('.sql_variables_wrap:first')
+			.find('.sql_variable:not(.unused)').each(function(e){
+				var data = {};
+				var $this = $(this);
+				var $value = $this.find('.var_value');
+				var var_name = $value.attr('var_name');
+				for( var i in variable_options ){
+					if( v = $value.attr('var_' + variable_options[i]) )
+						data[variable_options[i]] = v;
+					else if( data[variable_options[i]] !== undefined )
+						data[variable_options[i]] = undefined;
+				}
+				
+				if( $value.is('label') )
+					$value = $this.find('.var_value input');
+				var v;
+				if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
+					v = '';
+					$value.filter(':checked').each(function(){
+						if( v )
+							v += '\n';
+						v += this.value;
+					});
+				}
+				else if( $value.is('input[type="checkbox"]') )
+					v = $value.prop('checked');
+				else if( $value.is('input[type="radio"]') )
+					v = $value.filter(':checked').val();
+				else
+					v = $value.val();
+				if( v )
+					data['value'] = v;
+				
+				var_values[ var_name ] = data;
+			})
+		;
+		return var_values;
+	}
 
 	/**
 	 * get_report_css : compile les styles (textarea + terms)
+	 * 
+	 * Remplace le sélecteur table par #report_{tag_id}.agdpreport > table
 	 */
-	function get_report_css( $form, id ){
+	function get_report_css( $form, tag_id ){
 		var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
 		$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
 			if( css )
@@ -761,10 +775,422 @@ jQuery( function( $ ) {
 			css += '/* report_style_term ' + $(this).text() + ' */\n'
 					+  this.getAttribute('data-report-style');
 		});
-		const regexp = /(\s|,\s?)(table(\s|.))/g;
-		css = css.replaceAll( regexp, '$1#' + id + ' > $2' );
+		const regexp = /(^|[^:]\s|,\s*)(table(\s|[.{,]))/g; ////cf regex idem in php Agdp_Report::get_report_css()
+		css = css.replaceAll( regexp, '$1#' + tag_id + ' > $2' );
 		
-		return css;
+		return replace_variables_in_string( css, get_variables_values() );
+	}
+
+	/**
+	 * replace_variables_in_string
+	 * 
+	 * Remplace les variables par leur valeur dans un texte, sous le format :variable%I
+	 * cf le format des variables dans SQL, valable pour le css aussi.
+	 */
+	function replace_variables_in_string( str_input, variables ){
+		
+		const regex = /\:([a-zA-Z0-9_]+)\%(\w+)/g;
+		const str_output = str_input.replace(regex, (match, var_name, format) => {
+			if( ! format ){
+				console.log( '[replace_variables_in_string() => Incompatible in Wordpress : format is empty in ' + match );
+				return match;
+			}
+			if( variables[var_name] === undefined )
+				return match;
+			var var_type = variables[var_name]['type'];
+			if( var_type === undefined )
+				var_type = false;
+			var value = variables[var_name]['value'];
+			if( value === undefined )
+				value = '';
+			
+			switch( var_type ){
+				default:
+			}
+			
+			switch( format ){
+				case 's' :
+					value = '"' + value.replace('"', '\\"') + '"';
+					break;
+				case 'I' : //Inject
+				default :
+					break;
+			}
+			return value;
+		});
+		
+		return str_output;
+		
+		if( false ){
+		// var used_variables = [];
+		// str_input.match(regex).forEach((element) => {
+		   // var var_name = element[0];
+		  // console.log(element);
+		// });
+		
+		/* if( preg_match_all( pattern, str_input, $matches ) ){
+			$errors = [];
+			$variables = [];
+			$prepare = [];
+			foreach($matches[2] as $index => $variable){
+				//format
+				$src = $matches[0][$index];
+				$var_domain = $matches[1][$index];
+				// :var
+				if( $var_domain === ':' ) {
+					//value
+					if( ! isset( $variables[$variable] )){
+						if( strpos($variable, $strings_prefix ) === 0 ){
+							$value = $sql_strings[$variable];
+						}
+						else {
+							//TODO faire mieux (tableau, json, ...)
+							$request_key = sprintf('%s%s', AGDP_REPORT_VAR_PREFIX, $variable);
+							if( isset($_REQUEST[ $request_key ]) )
+								$value = $_REQUEST[ $request_key ];
+							elseif( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['value']) )
+								$value = $sql_variables[$variable]['value'];
+							else
+								$value = null;
+						}
+						$variables[$variable] = $value;
+					}
+					
+					$format = $matches[3][$index];
+					$format_args = $matches[4][$index];
+					//------------------------
+					
+					$format_IN = $format === '%IN';
+					$format_Inject = $format === '%I';
+					$format_mode = substr( $format, strlen($format_args) + 1, 1 );
+					$format_LIKE = $format_mode  === 'K';
+					$format_JSON = $format_mode  === 'J';
+					
+					$variable_type = $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ? $sql_variables[$variable]['type'] : null;
+					switch($variable_type){
+						case 'range': 
+						case 'numeric':
+						case 'number':
+						case 'integer':
+							if( ! $format )
+								$format = '%d';
+							break;
+						case 'decimal':
+						case 'float':
+							if( ! $format )
+								$format = '%f';
+							break;
+						case 'field':
+							if( ! $format )
+								$format = '%i';
+							break;
+						case 'table':
+							if( ! $format )
+								$format_Inject = $format = '%I';
+							if( ! $variables[$variable] )
+								$variables[$variable] = '';
+							else
+								$variables[$variable] = self::add_table_blog_prefix( $variables[$variable] );
+							break;
+						case 'column':
+							if( ! $format )
+								$format_Inject = $format = '%I';
+							break;
+						case 'checkboxes': 
+							if( $format_IN ){
+								if( $variables[$variable] ){
+									if( is_string( $variables[$variable] ) ){
+										if( $variables[$variable][0] === '|' )
+											$variables[$variable] = explode( '|', substr($variables[$variable], 1, strlen($variables[$variable]) - 2 ));
+										else
+											$variables[$variable] = explode( "\n", $variables[$variable] );
+									}
+									$format = implode(', ', array_fill(0, count($variables[$variable]), '%s'));
+								}
+								else {
+									$format = '%s';
+								}
+							}
+							else {
+								// ( :post_status = '' || :post_status = post.post_status || :post_status LIKE CONCAT('%|', post.post_status, '|%' )
+								if( $variables[$variable] && is_string($variables[$variable]) && $variables[$variable][0] !== '|' ){
+									$variables[$variable] = "|" . str_replace("\n", "|", $variables[$variable]) . "|";
+								}
+							}
+							break;
+						case 'asc_desc': 
+							if( $variables[$variable] === '' )
+								$variables[$variable] = 'ASC';
+							elseif( ! $variables[$variable] )
+								$variables[$variable] = 'DESC';
+							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
+							//skip prepare
+							continue 2;
+							
+						case 'report_sql': 
+							$error = '';
+							if( is_numeric($variables[$variable])
+							 && ( $sub_report = get_post($variables[$variable]) )){
+								if( ! isset($options[__FUNCTION__.':stack']) )
+									$options[__FUNCTION__.':stack'] = [];
+								elseif( $sub_report->ID == $report_id
+								|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
+									$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
+									debug_log_callstack(__FUNCTION__, $error);
+									$variables[$variable] = $error;
+								}
+								if( ! $error ){
+									// if( isset($sql_variables[$variable]['report_sql']) )
+										// $sub_sql = $sql_variables[$variable]['report_sql'];
+									// else {
+										array_push( $options[__FUNCTION__.':stack'], $report_id );
+										// debug_log( __FUNCTION__ . ' sub_report' );
+										$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
+										// debug_log( __FUNCTION__ . ' sub_report DONE' );
+										array_pop( $options[__FUNCTION__.':stack'] );
+										$sql_variables[$variable]['report_sql'] = $sub_sql;
+									// }
+									
+									if( ! $format ) { 
+										//is SQL SET
+										if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
+											// and not SELECT
+											if( preg_match( '/\sSELECT\s/i', $sql ) === 0 )
+												$format = $format_JSON = '%J';
+										}
+									}
+									if( $format === '%d' ){
+										//$variables[$variable] retourne l'id
+									}
+									elseif( ! $format_JSON ) {
+										$sub_sql = self::sanitize_sub_report_sql( $sub_sql );
+										
+										$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
+										//skip prepare
+										continue 2;
+									}
+								}
+							}				 
+							else {
+								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variables[$variable]);
+								$variables[$variable] = $error;
+							}
+							break;
+						default:
+					}
+					
+					//Format
+					if( ! $format )
+						$format = '%s';
+					elseif( $format_LIKE ){
+						$format_LIKE = $format;
+						$format = '%s';
+					}
+					if( $format_JSON ){
+						// debug_log(__FUNCTION__ . ' format', $format, $variable );
+							
+						$format_Inject = true;
+						if( $format_args !== '' ){
+							$format = '%' . substr( $format, strlen($format_args) + 1 );
+						}
+						switch( $format ){
+						case '%J' :
+							
+							$value = $variables[$variable];
+						
+							if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
+								switch($sql_variables[$variable]['type']){
+									case 'report_sql' :
+										//Injecte le résultat de la sous-requête sous forme JSON
+										// if( isset($sql_variables[$variable]['report_json']) ){
+											// $value = $sql_variables[$variable]['report_json'];
+										// }
+										// else {
+											$report_sql = $sql_variables[$variable]['report_sql'];
+											// debug_log( __FUNCTION__ . ' sub_report get_sql_dbresults');
+											// array_push( $options[__FUNCTION__.':stack'], $report_id );
+											$result = static::get_sql_dbresults( $sub_report, $report_sql, $sql_variables, $options );
+											// debug_log( __FUNCTION__ . ' sub_report get_sql_dbresults DONE');
+											// array_pop( $options[__FUNCTION__.':stack'] );
+											if( is_a($result, 'Exception') )
+												$result = [ 
+													'error' => $result->getMessage(),
+													'source' => __FUNCTION__,
+													'sub_report' => $sub_report->ID,
+													'sub_report_title' => $sub_report->post_title,
+												];
+											
+											$value = json_encode($result, JSON_UNESCAPED_UNICODE);
+											// $sql_variables[$variable]['report_json'] = $value;
+											
+										// }
+										break;
+								}
+							}
+							$value = sprintf('CAST( "%s" AS JSON )',
+								str_replace("\n", '', addslashes( $value )),
+							);
+							
+							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
+							continue 2;
+						
+						case '%JKV' ://{key: value, key: value, key: value, ...}
+						case '%JT' : //[{col1: value, col2: value, col3: value}, ...]
+							$rows = '*';
+							$value = $variables[$variable];
+							if( $value && is_string( $value ) ){
+								$value = json_decode( $value, true );
+							}
+							if( ! $value ){
+								$value = '[]';
+								$str_columns = '';
+							}
+							else {
+								if( is_numeric($format_args) )
+									$rows = $format_args;
+								// tableau d'objets ou objet ?
+								$is_object = false;
+								$columns = [];
+								foreach( $value as $index => $item ){
+									if( $index !== 0 ){//tableau brut
+										$is_object = true;
+									}
+									break;
+								}
+								if( $is_object ){
+									if( '%JKV' === $format ){
+										$columns[] = 'key';
+										$columns[] = 'value';
+										$keys_values = [];
+										foreach( $value as $k => $v ){
+											$keys_values[] = [ 'key' => $k, 'value' => $v ];
+										}
+										$value = json_encode( $keys_values, JSON_UNESCAPED_UNICODE );
+									}
+									else {
+										foreach( $value as $key => $item )
+											$columns[] = $key;
+										$value = sprintf('[%s]', json_encode( $value, JSON_UNESCAPED_UNICODE ) );
+									}
+								}
+								else {
+									foreach( $value as $object ){
+										if( ! is_array($object) )
+											continue;
+										foreach( $object as $key => $item )
+											$columns[] = $key;
+										break;
+									}
+									//Tableau de données brutes, sans clé de colonne
+									if( count($columns) === 0 && count($value) > 0 ){
+										if( '%JKV' === $format ){
+											$columns[] = 'key';
+											$columns[] = 'value';
+											$keys_values = [];
+											foreach( $value as $index => $item ){
+												$keys_values[] = [ 'key' => $index . '', 'value' => $item ];
+											}
+											$value = $keys_values;
+										}
+										else {
+											$columns[] = 'item';
+											$values = [];
+											foreach( $value as $index => $item ){
+												$values[] = [ $columns[0] => $item ];
+											}
+											$value = $values;
+										}
+									}
+									$value = json_encode( $value, JSON_UNESCAPED_UNICODE );
+									$value = sprintf('[%s]', substr($value, 1, strlen($value) - 2) );
+								}
+								$str_columns = '';
+								foreach( $columns as $column ){
+									if( $str_columns )
+										$str_columns .= ', ';
+									$str_columns .= sprintf('`%s` TEXT PATH "$.%s"', $column, $column);
+								}
+							}
+							
+							$var_name = sprintf('@_%s_%s', $variable, Agdp::get_secret_code(6));
+							$sql = sprintf("SET %s = CAST(\"%s\" AS JSON);\n%s", 
+								$var_name,
+								str_replace("\n", '', addslashes( $value )),
+								$sql,
+							);
+							
+							$value = sprintf('JSON_TABLE( %s , "$[%s]" COLUMNS( %s ) )'
+								, $var_name//addslashes( $value )
+								, $rows
+								, $str_columns
+							);
+							
+							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
+							continue 2;
+						}
+					}
+					if( $format_Inject ){
+						if( ($value = $variables[$variable]) === null )
+							$value = '';
+						$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
+						continue;
+					}
+					//----------
+					//Remplacement de la variable par %format
+					$sql = preg_replace( '/(?<!\\\\)' . preg_quote($src) . '(?!%)/', $format, $sql );
+					
+					//Ajoute la valeur à $prepare[]
+					if( is_array($variables[$variable]) ){
+						if( $format_IN ) {
+							foreach($variables[$variable] as $opt){
+								$prepare[] = $opt;
+							}
+						}
+						else {
+							$value = '';
+							foreach($variables[$variable] as $opt){
+								$value .= '|' . $opt;
+							}
+							if( $value )
+								$value = $value . '|';
+							$prepare[] = $value;
+						}
+					}
+					elseif( $variables[$variable] === null )
+						$prepare[] = '';
+					elseif( $format_LIKE ){
+						if( strpos( $variables[$variable], '_' ) !== false )
+							$variables[$variable] = str_replace('_', '\_', $variables[$variable]);
+						switch($format_LIKE){ //sic : switch fails when $format_LIKE===true
+							case '%KL' :
+								$prepare[] = $variables[$variable].'%';
+								break;
+							case '%KR' :
+								$prepare[] = '%'.$variables[$variable];
+								break;
+							default :
+								$prepare[] = '%'.$variables[$variable].'%';
+								break;
+						}
+					}
+					else {
+						if( is_string($variables[$variable]) ){
+							// $variables[$variable] = str_replace("\n", '',  str_replace("\r", '', $variables[$variable]));
+							if( strpos($variables[$variable], '"') ){
+								//debug_log(__FUNCTION__, 'Contient double-quote', $variables[$variable] );
+								//TODO est-ce bien raisonnable ? NON en json
+								// $variables[$variable] = str_replace('"', '&quot;', $variables[$variable]);
+						}}
+						
+						$prepare[] = $variables[$variable];
+					}
+				}
+				elseif( $var_domain === '@' ){
+				}
+			}
+			
+		}*/
+		}
 	}
 
 	/**
@@ -1515,14 +1941,14 @@ jQuery( function( $ ) {
 	}
 	
 	/**
-	 * edwpimg
+	 * edicon
 	 **/
-	function edwpimg( var_type ){
+	function edicon( var_type ){
 		if( input_types[var_type] && input_types[var_type]['img'] )
 			var_type_img = input_types[var_type]['img'];
 		else
 			var_type_img = 'Text';		
-		return '<span class="edwpimg edwp-' + var_type_img + '"></span>';
+		return '<span class="edicon ed-' + var_type_img + '"></span>';
 	}
 });
 

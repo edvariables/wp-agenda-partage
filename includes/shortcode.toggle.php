@@ -80,7 +80,7 @@ function toggle_shortcode_cb( $atts, $content = null ) {
 	else
 		$tag = 'h3';
 	
-	return sprintf('<%s class="toggle-trigger %s" %s%s><a href="#">%s</a></%s><div class="toggle-container">%s</div>'
+	return sprintf('<%s class="toggle-trigger %s" %s%s><a class="toggle-trigger-label">%s</a></%s><div class="toggle-container">%s</div>'
 			, $tag
 			, $class
 			, $ajax //TODO check %s%s

@@ -149,14 +149,19 @@ body.colors-dark .entry-content .agdp-covoiturage-description,
 
 /*toggle shortcode*/
 .toggle-trigger {
+	cursor: pointer;
 	margin: 0px !important;
 	font-size: 18px;
-	padding: 10px;
+	/* padding: 10px; */
 	padding-left: 30px;
 	background-color: transparent; /*#F5F5F5;*/
 	background-image: url('../images/toggle-plus.png');
 	background-position: 10px center;
 	background-repeat: no-repeat;
+}
+h3.toggle-trigger {
+	padding-top: 10px;
+	padding-bottom: 10px;
 }
 body.colors-dark .toggle-trigger {
 	background-color: #252525;
@@ -165,7 +170,8 @@ body.colors-dark .toggle-trigger {
 .toggle-trigger a {
 	color: #333;
 	text-decoration: none;
-	display: block;
+	/* display: block; */
+	box-shadow: none;
 }
 body.colors-dark .toggle-trigger a {
 	color: #CCC;
@@ -192,7 +198,7 @@ body.colors-dark .toggle-trigger a:hover {
 	/* display: none; TODO hide on load before jQuery */
 	display: none;
 	overflow: hidden;
-	padding: 20px 10px;
+	padding: 2px 10px;
 }
 .toggle-trigger.active + .toggle-container {
 	display: block;

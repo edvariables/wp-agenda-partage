@@ -214,7 +214,8 @@ body.colors-dark .toggle-trigger {
 .toggle-trigger a {
 	color: #333;
 	text-decoration: none;
-	display: block;
+	/* display: block; */
+	box-shadow: none;
 }
 body.colors-dark .toggle-trigger a {
 	color: #CCC;
@@ -242,7 +243,7 @@ body.colors-dark .toggle-trigger a:hover {
 .toggle-container {
 	display: none;
 	overflow: hidden;
-	padding: 10px 10px;
+	padding: 2px 10px;
 	padding-left: 1.5em;
 }
 textarea.toggle-container {
