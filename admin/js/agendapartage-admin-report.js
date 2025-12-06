@@ -67,15 +67,22 @@ jQuery( function( $ ) {
 			var $this = $(this);
 			var $inputs = $('#post-body');
 			var $sql = $inputs.find('textarea#sql');
+			var $report_css = $inputs.find('textarea#report_css');
 			var $sql_before_render = $inputs.find('textarea#sql_before_render');
 			var $variables = $this.find('textarea#sql_variables');
 			
+			//on change des sql et css, recalcule les variables
+			$inputs.on('change'
+				, 'textarea#sql, textarea#sql_before_render, textarea#report_css'
+				, refresh_variables);
+			
 			//Affiche les variables
-			$inputs.on('change', 'textarea#sql, textarea#sql_before_render', refresh_variables);
 			refresh_variables.call($sql.get(0), e);
 			
 			//Sauvegarde des variables vers le textarea
-			$this.on('change', '.var_value', save_vars_values);
+			$this.on('change'
+				, '.var_value', save_vars_values);
+				
 			function save_vars_values(){
 				var var_values = get_variables_values( $variables );
 				$variables.text( JSON.stringify( var_values ) );
@@ -180,15 +187,20 @@ jQuery( function( $ ) {
 				// }
 				//Variable privée
 				option_name = 'is_private';
-				var option_value = $input.attr('var_' + option_name);
 				var option_label = 'Variable privée';
+				var option_default_value = 0;
+				var option_value = $input.attr('var_' + option_name);
+				if( option_value === undefined )
+					option_value = option_default_value;
+				else if( option_value === '0' )
+					option_value = 0;
 				var $label = $('<label>' + option_label + '</label>')
 					.attr('title', "La valeur de cette variable ne peut pas être affectée en paramètre du rapport (shortcode ou url).")
 					.appendTo( $div_options );
 				var $option = $('<input type="checkbox">')
 					.attr('option_name', option_name)
 					.prependTo( $label )
-					.prop( "checked", ! ! option_value)
+					.prop( "checked", !! option_value)
 					.on('change', function(e){
 						var option_name = this.getAttribute('option_name');
 						var $this = $(this);
@@ -228,11 +240,18 @@ jQuery( function( $ ) {
 					var $editor = $this.parents('.var_editor:first');
 					var current_variable = $editor.attr('var_name');
 				}
-				var flag_sql_before_render = "*** flag_sql_before_render ***";
+				var var_source_flags = {
+					'report_css': "[* ** flag_report_css * **]",
+					'sql_before_render': "[* ** flag_sql_before_render * **]",
+				};
 				var sql = $sql.val()
 				 + "\n"
-				 + flag_sql_before_render + "\n"
-				 + $sql_before_render.val();
+				 + var_source_flags['report_css'] + "\n"
+				 + $report_css.val()
+				 + "\n"
+				 + var_source_flags['sql_before_render'] + "\n"
+				 + $sql_before_render.val()
+				 ;
 				
 				//comments
 				var pattern = "(\\/\\*[\s\S]+\\*\\/)"; 
@@ -242,9 +261,12 @@ jQuery( function( $ ) {
 				pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/';//"\"([^\"]+)\""; //TODO simple quote
 				sql = sql.replaceAll( new RegExp(pattern, "sg"), '""' );
 				
-				// pos_flag_sql_before_render
-				var pos_flag_sql_before_render = sql.indexOf( flag_sql_before_render );
-				if( pos_flag_sql_before_render === -1 ) pos_flag_sql_before_render = sql.length;
+				// position des flags
+				var var_source_flag_pos = [];
+				for(var var_source in var_source_flags){
+					var_source_flag_pos[var_source] = sql.indexOf( var_source_flags[var_source] );
+					if( var_source_flag_pos[var_source] === -1 ) var_source_flag_pos[var_source] = sql.length;
+				}
 				
 				//Valeurs actuelles des variables
 				var var_values = get_input_jso.call( $variables );
@@ -276,10 +298,16 @@ jQuery( function( $ ) {
 								variables[variable] = value;
 							if( matches[i][2] )
 								variables[variable]['format'] = matches[i][2];
-							if( pos_flag_sql_before_render < sql.indexOf( ':' + variable ) ){
-								variables[variable]['sql_source'] = 'sql_before_render';
-								variables[variable]['is_private'] = 1;
+							
+							//sql_source en fonction de la position
+							for(var var_source in var_source_flags){
+								if( var_source_flag_pos[var_source] < sql.indexOf( ':' + variable ) ){
+									variables[variable]['sql_source'] = var_source;
+									variables[variable]['is_private'] = 1;
+									break;
+								}
 							}
+							
 							delete var_values_saved[variable] ;
 						}
 					}
@@ -454,10 +482,20 @@ jQuery( function( $ ) {
 							.attr( 'var_type', type )
 							.attr( 'var_options', options )
 						;
-							
+						
+						var is_private;
+						if( variables[variable]['is_private'] == 1 )
+							is_private = { icon : 'Password'
+									, title : "Variable privée" };
+						else
+							is_private = { icon : 'blank'
+									, title : "Variable publique" };
+						
 						var $sql_variable = $('<div class="sql_variable"></div>')
 							.append( $('<label>:' + variable + '</label>')
-										.prepend(edicon( type )) )
+										.prepend(edicon( type ))
+										.prepend(edicon( '', is_private['icon'], is_private['title'] ))
+								   )
 							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
 							.append($input)
 							.appendTo( $container )
@@ -474,11 +512,6 @@ jQuery( function( $ ) {
 								$sql_variable.attr( 'var_' + option_name, option_value );
 							}
 						}
-						// var sql_source = variables[variable]['sql_source'];
-						// if( sql_source ){
-							// $input.attr( 'var_sql_source', sql_source );
-							// $sql_variable.attr( 'var_sql_source', sql_source );
-						// }
 						
 						$input.trigger('change');
 					}
@@ -1943,12 +1976,18 @@ jQuery( function( $ ) {
 	/**
 	 * edicon
 	 **/
-	function edicon( var_type ){
-		if( input_types[var_type] && input_types[var_type]['img'] )
-			var_type_img = input_types[var_type]['img'];
+	function edicon( var_type, icon = false, title = false ){
+		if( var_type ){
+			if( input_types[var_type] && input_types[var_type]['img'] )
+				var_type_img = input_types[var_type]['img'];
+			else
+				var_type_img = 'Text';
+		}
 		else
-			var_type_img = 'Text';		
-		return '<span class="edicon ed-' + var_type_img + '"></span>';
+			var_type_img = icon;
+		return '<span class="edicon ed-' + var_type_img + '"'
+			+ (title ? ' title="' + title + '"' : '')
+			+ '></span>';
 	}
 });
 

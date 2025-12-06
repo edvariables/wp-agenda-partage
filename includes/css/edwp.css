@@ -4,6 +4,7 @@
 	background-repeat: no-repeat;
     padding-left: 19px;
 }
+.ed-blank.edicon { background-image: none; }
 
 .ed-Var.edicon, .ed-Var .edicon
 , .ed-App.ed-App, .ed-App .edicon { background-position: -0px 1px; }

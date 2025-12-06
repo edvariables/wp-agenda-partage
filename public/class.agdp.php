@@ -342,6 +342,8 @@ class Agdp {
 	 * Registers stylesheets.
 	 */
 	public static function register_plugin_styles() {
+		if(!is_admin())
+			wp_enqueue_style('dashicons');
 	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/public/css/agendapartage.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG);
 	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION, false );
@@ -351,8 +353,8 @@ class Agdp {
 		wp_register_style( AGDP_TAG . '_cov', plugins_url( 'agenda-partage/public/css/agendapartage.covoiturage.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '_cov');
 		
-		if(!is_admin())
-			wp_enqueue_style('dashicons');
+	    wp_register_style( AGDP_TAG . '_edwp', plugins_url( 'agenda-partage/includes/css/edwp.css' ), array(), AGDP_VERSION, false );
+	    wp_enqueue_style( AGDP_TAG . '_edwp');
 	}
 
 	/**

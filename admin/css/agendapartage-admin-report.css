@@ -46,12 +46,12 @@
 #agdp_report-variables .sql_variable textarea {
 	width: 95%;
 }
-#agdp_report-variables .sql_variable[var_sql_source="sql_before_render"] {
+#agdp_report-variables .sql_variable[var_sql_source] {
 	margin-top: 0em;
 	border-top: solid 1px burlywood;
 	padding-top: 1em;
 }
-#agdp_report-variables .sql_variable[var_sql_source="sql_before_render"] ~ .sql_variable {
+#agdp_report-variables .sql_variable[var_sql_source] ~ .sql_variable {
 	margin-top: 0.6em;
 	border-top: none;
 	padding-top: 0px;
