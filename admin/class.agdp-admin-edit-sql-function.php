@@ -22,6 +22,9 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		
 		$post_type = Agdp_Report::post_type;
 		$taxonomy = Agdp_Report::taxonomy_sql_function;
+
+		add_filter( $taxonomy . '_row_actions', array( __CLASS__, 'on_taxonomy_row_actions' ), 10, 2 );
+
 		add_action( 'saved_' . $taxonomy , array(__CLASS__, 'saved_term_cb'), 10, 4 );//appends after 'saved_term')
 
 		add_action( $taxonomy . '_add_form_fields', array( __CLASS__, 'on_add_form_fields' ), 10, 1 ); //edit
@@ -30,6 +33,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		//add custom columns for list view
 		add_filter( 'manage_edit-' . $taxonomy . '_columns', array( __CLASS__, 'manage_columns' ) );
 		add_filter( 'manage_' . $taxonomy . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
+		
 		
 	}
 	/****************/
@@ -182,10 +186,45 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	}
 	
 	/**
+	 * Actions pour chaque terme dans la liste
+	 */
+	public static function on_taxonomy_row_actions( $actions, $tag ){
+		// debug_log(__FUNCTION__, $actions, $tag);
+		
+		//Action Dupliquer
+		$uri = sprintf('/wp-admin/edit-tags.php?taxonomy=%s&post_type=%s',
+					$tag->taxonomy, Agdp_Report::post_type );
+		$actions['duplicate'] = sprintf(
+			'<a href="%s" aria-label="%s">%s</a>',
+			esc_url(
+				add_query_arg(
+					'source_tag', $tag->term_id,
+				add_query_arg(
+					'action', 'duplicate',
+					$uri
+				))
+			),
+			/* translators: %s: Taxonomy term name. */
+			esc_attr( sprintf( 'Dupliquer &#8220;%s&#8221;', $tag->name ) ),
+			__( 'Dupliquer' )
+		);
+
+		
+		return $actions;
+	}
+
+	
+	/**
 	 * Register Meta Boxes (boite en édition du term)
 	 */
 	public static function on_add_form_fields( string $taxonomy ){
-		self::on_edit_form_fields(null, $taxonomy);
+		if( ! empty($_REQUEST['action']) && $_REQUEST['action'] === 'duplicate' 
+		 && ! empty($_REQUEST['source_tag']) ){
+			$tag = get_term( $_REQUEST['source_tag'] );
+		}
+		else
+			$tag = null;
+		self::on_edit_form_fields($tag, $taxonomy);
 	}
 
 	/**
@@ -275,9 +314,6 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	 * Register Meta Boxes (boite en édition du term)
 	 */
 	public static function on_edit_form_fields( $tag, string $taxonomy ){
-	// debug_log(__FUNCTION__, $tag->name, $taxonomy );
-	if( $tag )
-		self::compare_current_mysql_function_body( $tag );
 	
 	$meta_name = 'parameters';
     ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
