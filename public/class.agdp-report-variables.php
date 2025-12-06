@@ -61,12 +61,16 @@ class Agdp_Report_Variables {
 	/**
 	 * SQL variables
 	 */
- 	public static function normalize_sql_variables( $report, $sql_variables, $options ) {
+ 	public static function normalize_sql_variables( $report, $sql_variables, &$options ) {
+		$report_id = $report->ID;
+		
 		if( ! $options )
 			$options = [];
 		elseif( is_string($options) )
 			$options = [ 'mode' => $options ];
-		$report_id = $report->ID;
+		elseif( ! empty($options['_normalize_sql_variables_done_' . $report_id ]) )
+			return $options['_normalize_sql_variables_done_' . $report_id ];
+			
 		//valeurs des variables
 		if( ! $sql_variables )
 			$sql_variables = [];
@@ -100,7 +104,7 @@ class Agdp_Report_Variables {
 				}
 			}
 		}
-		
+		$options['_normalize_sql_variables_done_' . $report_id ] = $sql_variables;
 		return $sql_variables;
 	}
 	

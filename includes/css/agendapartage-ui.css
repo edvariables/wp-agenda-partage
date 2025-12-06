@@ -10,6 +10,9 @@ a:active, a:focus {
 	outline: none;
 	box-shadow: none;
 }
+a {
+	cursor: pointer;
+}
 
 /*
  * Tabs
@@ -198,12 +201,12 @@ body.colors-dark .agdpreport th {
 .ui-dialog {
   box-shadow: 1px 3px 6px 2px rgb(0, 0, 0) !important;
 }
-.ui-dialog-content a {
-	cursor: pointer;
-}
 .ui-dialog-content a[disabled] {
 	pointer-events: none;
 	opacity: 70%;
+}
+.ui-dialog-titlebar {
+  background-color: #ebcf98;
 }
 /*
  *******/

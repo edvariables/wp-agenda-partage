@@ -120,11 +120,13 @@ class Agdp_Admin {
 	 * Registers a stylesheet.
 	 */
 	public static function register_plugin_styles() {
+		wp_enqueue_style (  'wp-jquery-ui-dialog');
 	    wp_register_style( AGDP_TAG, plugins_url( 'agenda-partage/admin/css/agendapartage-admin.css' ), array(), AGDP_VERSION, false  );
 	    wp_enqueue_style( AGDP_TAG);
 	    wp_register_style( AGDP_TAG . '_ui', plugins_url( 'agenda-partage/includes/css/agendapartage-ui.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '_ui');
-		wp_enqueue_style (  'wp-jquery-ui-dialog');
+	    wp_register_style( AGDP_TAG . '_edwp', plugins_url( 'agenda-partage/includes/css/edwp.css' ), array(), AGDP_VERSION, false );
+	    wp_enqueue_style( AGDP_TAG . '_edwp');
 	}
 
 	/**

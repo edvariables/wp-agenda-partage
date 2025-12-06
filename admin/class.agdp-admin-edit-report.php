@@ -120,8 +120,9 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				break;
 			
 			case 'agdp_report-render':
+				echo '<div class="hide_during_loading loading">';
 				parent::metabox_html( self::get_metabox_render_fields(), $post, $metabox );
-				
+				echo '</div>';
 				echo Agdp_Report::get_report_html();
 				break;
 			
@@ -275,6 +276,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				[	'name' => 'report_css',
 					'class' => 'sql css',
 					'input' => 'textarea',
+					'input_attributes' => 'rows="4" spellcheck="false"',
 					'container_class' => 'toggle-container report_css', //cf admin-report.js
 					'learn-more' => 'Commencez chaque sélecteur par <code>table</code> pour que le css soit uniquement appliqué au tableau.'
 				] ]
@@ -286,6 +288,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				[	'name' => 'sql_before_render',
 					'class' => 'sql',
 					'input' => 'textarea',
+					'input_attributes' => 'rows="4" spellcheck="false"',
 					'container_class' => 'toggle-container sql_before_render', //cf admin-report.js
 					'learn-more' => ''
 				] ]

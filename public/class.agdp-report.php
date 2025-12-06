@@ -107,7 +107,7 @@ class Agdp_Report extends Agdp_Post {
 		
 		if( ! is_array($options) )
 			$options = [];
-		// debug_log( __FUNCTION__, 'sql IN',$sql);
+		
 		//sql
 		if( ! $sql )
 			$sql = get_post_meta( $report_id, 'sql', true );
@@ -141,6 +141,17 @@ class Agdp_Report extends Agdp_Post {
 		
 		if( ! empty( $options['_skip_sql_prepare'] ) )
 			return $sql;
+		
+		$sql = self::get_sql_prepare( $report, $sql, $sql_variables, $options );
+		
+		return $sql;
+	}
+	
+	/**
+	 * Prepare SQL
+	 */
+ 	private static function get_sql_prepare( $report, $sql, $sql_variables, &$options ) {
+		$report_id = $report->ID;
 		
 		// debug_log( __FUNCTION__ 
 			// . ( empty($options[__FUNCTION__.':stack']) ? '' : '  >> ' . count($options[__FUNCTION__.':stack']) )
@@ -273,7 +284,7 @@ class Agdp_Report extends Agdp_Post {
 							//skip prepare
 							continue 2;
 							
-						case 'report': 
+						case 'report_sql': 
 							$error = '';
 							if( is_numeric($variables[$variable])
 							 && ( $sub_report = get_post($variables[$variable]) )){
@@ -346,7 +357,7 @@ class Agdp_Report extends Agdp_Post {
 						
 							if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 								switch($sql_variables[$variable]['type']){
-									case 'report' :
+									case 'report_sql' :
 										//Injecte le résultat de la sous-requête sous forme JSON
 										// if( isset($sql_variables[$variable]['report_json']) ){
 											// $value = $sql_variables[$variable]['report_json'];
@@ -605,9 +616,9 @@ class Agdp_Report extends Agdp_Post {
 		if( is_array($sql) ){
 			$sql = implode(";\n", $sql);
 		}
-		$sql = self::remove_sql_comments( $sql );
+		$sql = self::remove_sql_comments( $sql, true );
 		
-		$sqls = preg_split( '/[;]\s*\n/', $sql );
+		$sqls = preg_split( '/[;]\s*\n/', $sql, -1, PREG_SPLIT_NO_EMPTY );
 		
 		return $sqls;
 	}
@@ -615,10 +626,17 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * Clear comments in SQL
 	 */
- 	private static function remove_sql_comments( $sql ) {
+ 	private static function remove_sql_comments( $sql, $remove_single_line_comments = false ) {
 		
 		$pattern = "/\\/\\*(.*?)\\*\\//us"; 
-		return preg_replace( $pattern, '', $sql );
+		$sql = preg_replace( $pattern, '', $sql );
+		
+		if( $remove_single_line_comments ){
+			$pattern = "/(^|;\s*\n)\s*--\s[^\n]*\n/u"; 
+			$sql = preg_replace( $pattern, '$1', $sql );
+		}
+		
+		return trim( $sql, " \r\n" );
 	}
 
 	/**

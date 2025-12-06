@@ -1,13 +1,11 @@
 <?php
 
 /**
- * AgendaPartage Admin -> Edit -> Evenement/Covoiturage -> localisation
+ * AgendaPartage Admin -> Edit -> Rapport -> Fonction MySQL
  * Custom taxonomy term for WordPress in Admin UI.
  * 
- * Edition d'une localisation
- * Définition des metaboxes et des champs personnalisés des localisations
- *
- * TODO default_location est abusif car une seule localisation devrait être "par défaut". Ce devrait être une sélection dans les options de l'Agenda
+ * Edition d'une function mysql
+ * Définition des metaboxes et des champs personnalisés des fonctions
  *
  */
 class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
@@ -45,7 +43,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			default:
 				if( $value = get_term_meta( $term_id, $column_name, true ) )
 					echo $value;
-		}
+		};
 		return $content;
 	}
 	

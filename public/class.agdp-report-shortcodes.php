@@ -284,18 +284,27 @@ class Agdp_Report_Shortcodes {
 			$variables = $sql_variables; 
 		}
 		else {
-			$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, 'shortcode' );
+			$options = 'shortcode';
+			$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, $options );
 			foreach($sql_variables as $var=>$variable){
 				if( ! is_array($variable) )
 					$value = /* '('.gettype($variable) . ')' . */ print_r($variable, true);
-				elseif( ! isset($variable['value']) )
-					$value = '';
-				elseif( is_numeric($variable['value']) )
-					$value = $variable['value'];
-				elseif( is_array($variable['value']) )
-					$value = $variable['value'] ? implode( '|', $variable['value'] ) : '';
-				else
-					$value = '"'. str_replace("\n", '|',$variable['value']) . '"';
+				else {
+					if( isset($variable['is_private'])
+					&& $variable['is_private']
+					&& $variable['is_private'] !== '0'
+					)
+						continue;
+					
+					if( ! isset($variable['value']) )
+						$value = '';
+					elseif( is_numeric($variable['value']) )
+						$value = $variable['value'];
+					elseif( is_array($variable['value']) )
+						$value = $variable['value'] ? implode( '|', $variable['value'] ) : '';
+					else
+						$value = '"'. str_replace("\n", '|',$variable['value']) . '"';
+				}
 				$variables[$var] = ':' . $var . '='. $value;
 			}
 			$variables = implode( ' ', $variables );

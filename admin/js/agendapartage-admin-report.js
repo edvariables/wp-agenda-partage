@@ -6,39 +6,41 @@ jQuery( function( $ ) {
 	 * agdpreport-edit 
 	 * 
 	 */
+		
+	var input_types = {
+		'text' : { 'label': 'Texte', 'img': 'Text' },
+		'bool' : { 'label': 'Case à cocher', 'img': 'Bool' },
+		'integer' : { 'label': 'Nombre entier', 'img': 'Num' },
+		'float' : { 'label': 'Nombre réel', 'img': 'Num' },
+		'range' : { 'label': 'Entier dans interval', 'img': 'Num' },
+		'date' : { 'label': 'Date', 'img': 'DateTime' },
+		'time' : { 'label': 'Heure', 'img': 'DateTime' },
+		'datetime' : { 'label': 'Date et heure', 'img': 'DateTime' },
+		'select' : { 'label': 'Sélection', 'img': 'Select' },
+		'radio' : { 'label': 'Cases d\'options', 'img': 'Select' },
+		'checkboxes' : { 'label': 'Options multiples', 'img': 'Bool' }, 
+		'password' : { 'label': 'Mot de passe', 'img': 'Password' },
+		'email' : { 'label': 'E-mail', 'img': 'Text' },
+		'longtext' : { 'label': 'Texte long', 'img': 'Text' },
+		'color' : { 'label': 'Couleur', 'img': 'Color' },
+		'tel' : { 'label': 'Téléphone', 'img': 'Text' },
+		'post' : { 'label': 'Article', 'img': 'Visual' },
+		'page' : { 'label': 'Page', 'img': 'Visual' },
+		'forum' : { 'label': 'Forum', 'img': 'Visual' },
+		'newsletter' : { 'label': 'Lettre-info', 'img': 'Visual' },
+		'report' : { 'label': 'Rapport', 'img': 'Visual' },
+		'report_sql' : { 'label': 'Sous-requête SQL', 'img': 'DataTable' },
+		'field' : { 'label': 'Champ de requête', 'img': 'Link' },
+		'table' : { 'label': 'Table de requête', 'img': 'Link' },
+		'column' : { 'label': 'Colonne de table de requête', 'img': 'Link' },
+		'asc_desc' : { 'label': 'Ordre de tri', 'img': 'Selection' },
+	};
+	var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field', 'table'];
+	
+	var variable_options = ['type', 'options', 'is_private', 'sql_source'];
+	
 	$( document ).ready(function() {
-		
-		
-		var input_types = {
-			'text' : 'Texte',
-			'bool' : 'Case à cocher',
-			'integer' : 'Nombre entier',
-			'float' : 'Nombre réel',
-			'range' : 'Entier dans interval',
-			'date' : 'Date',
-			'time' : 'Heure',
-			'datetime' : 'Date et heure',
-			'select' : 'Sélection',
-			'radio' : 'Cases d\'options',
-			'checkboxes' : 'Options multiples', 
-			'password' : 'Mot de passe',
-			'email' : 'E-mail',
-			// 'month' : 'Mois',
-			// 'week' : 'Semaine',
-			// 'search' : 'Recherche',
-			'longtext' : 'Texte long',
-			'color' : 'Couleur',
-			'tel' : 'Téléphone',
-			'forum' : 'Forum',
-			'newsletter' : 'Lettre-info',
-			'report' : 'Sous-requête',
-			'field' : 'Champ de requête',
-			'table' : 'Table de requête',
-			'column' : 'Colonne de table de requête',
-			'asc_desc' : 'Ordre de tri',
-		};
-		var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field', 'table'];
-		
+						
 		//Init inputs
 		$('#agdp_report-inputs').each(function(e){
 			var $this = $(this);
@@ -58,7 +60,9 @@ jQuery( function( $ ) {
 			
 		});
 		
-		//Init variables
+		/********
+		 * variables
+		 **/
 		$('#agdp_report-variables').each(function(e){
 			var $this = $(this);
 			var $inputs = $('#post-body');
@@ -80,12 +84,12 @@ jQuery( function( $ ) {
 						var $this = $(this);
 						var $value = $this.find('.var_value');
 						var var_name = $value.attr('var_name');
-						if( v = $value.attr('var_type') )
-							data['type'] = v;
-						if( v = $value.attr('var_options') )
-							data['options'] = v;
-						if( v = $value.attr('sql_source') )
-							data['sql_source'] = v;
+						for( var i in variable_options ){
+							if( v = $value.attr('var_' + variable_options[i]) )
+								data[variable_options[i]] = v;
+							else if( data[variable_options[i]] !== undefined )
+								data[variable_options[i]] = undefined;
+						}
 						
 						if( $value.is('label') )
 							$value = $this.find('.var_value input');
@@ -114,30 +118,22 @@ jQuery( function( $ ) {
 			}
 		
 			//Editeur d'une variable
-			$this.on('click', '.var_edit', function(e){
+			function edit_variable(e){
 				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
 				var variable = $input.attr('var_name');
 				var var_type = $input.attr('var_type');
 				var var_options = $input.attr('var_options');
-				var $wrap = $(this).parents('.sql_variables_wrap:first');
-				var $editor = $wrap.find('.var_editor:first');
+				var $editor = $('.var_editor[var_name="' + variable + '"]:first');
 				if( $editor.length === 0 ){
 					$editor = $('<div class="var_editor"></div>')
-						.appendTo( $wrap )
+						.attr('var_name', variable)
 					;
 				}
-				else if( $editor.is(':visible[var_name="' + variable + '"]')){
-					$editor.hide();
-					return false;
+				else {
+					$editor.empty();
 				}
-				$editor
-					.attr('var_name', variable)
-					.html($('<div class="var_editor_header">' + variable + '</div>')
-						.append($('<a class="close-box" href=""><span class="dashicons-before dashicons-no"></span></a>')
-							.on('click', function(){ $editor.remove(); return false; })
-						)
-					).show();
 				
+				// Selecteur de type
 				var $type = $('<select/>')
 					.appendTo(
 						$('<div class="var_type"><label>Type</label></div>')
@@ -153,13 +149,18 @@ jQuery( function( $ ) {
 					})
 				;
 				for( var type in input_types){
+					var label = input_types[type]['label'];
+					var img = input_types[type]['img'];
 					$type.append('<option value="' + type + '"'
 							+ (var_type == type ? ' selected' : '') + '>'
-							+ input_types[type]
+							+ '<span class="edwp edwp-' + img + '"></span>'//TODO
+							+ label
 						+ '</option>')
 					;
 				}
 				
+				// Options selon le type
+				var option_name = 'options';
 				var helper;
 				var rows = 3;
 				switch( var_type ){
@@ -169,7 +170,7 @@ jQuery( function( $ ) {
 							+ '<br>2nde ligne : maxi'
 							+ '<br>ou une seule ligne : le maxi';
 					break;
-				case 'report' :
+				case 'report_sql' :
 					helper = 'Pour une inclusion dans un IN,'
 						+ '<br>ajoutez le format %IN à la variable.';
 					break;
@@ -182,26 +183,79 @@ jQuery( function( $ ) {
 								+ '<br>Séparez les valeurs des labels par <code>:</code>';
 					}
 				}
-				var $options = $('<textarea rows="' + rows + '" spellcheck="false"></textarea>')
-					.appendTo(
-						$('<div class="var_options"><label>Options</label></div>')
+				
+				// Options
+				var $div_options = $('<div class="var_options"><label>Options</label></div>')
 							.appendTo($editor)
-							.toggle( input_options_types.includes(var_type) )
-					)
+							.toggle( input_options_types.includes(var_type) );
+				var $options = $('<textarea rows="' + rows + '" spellcheck="false""></textarea>')
+					.attr('option_name', option_name)
+					.appendTo( $div_options )
 					.text(var_options)
 					.on('change', function(e){
+						var option_name = this.getAttribute('option_name');
 						$input
-							.attr('var_options', this.value)
+							.attr('var_' + option_name, this.value)
 							.trigger('change')
 						;
 						refresh_variables.call( this );
 					})
 				;
 				if( helper )
-					$editor.append('<div class="learn-more">' + helper + '</div>')
+					$editor.append('<div class="learn-more">' + helper + '</div>');
+				
+				// Options de variables
+				$div_options = $('<div></div>')
+							.appendTo($editor);
+				
+				// for( var i in variable_options ){
+					// if( v = $value.attr('var_' + variable_options[i]) )
+						// data[variable_options[i]] = v;
+					// else if( data[variable_options[i]] !== undefined )
+						// data[variable_options[i]] = undefined;
+				// }
+				//Variable privée
+				option_name = 'is_private';
+				var option_value = $input.attr('var_' + option_name);
+				var option_label = 'Variable privée';
+				var $label = $('<label>' + option_label + '</label>')
+					.attr('title', "La valeur de cette variable ne peut pas être affectée en paramètre du rapport (shortcode ou url).")
+					.appendTo( $div_options );
+				var $option = $('<input type="checkbox">')
+					.attr('option_name', option_name)
+					.prependTo( $label )
+					.prop( "checked", ! ! option_value)
+					.on('change', function(e){
+						var option_name = this.getAttribute('option_name');
+						var $this = $(this);
+						var value;
+						if( $this.is('[type="checkbox"]') )
+							value = this.checked ? 1 : 0;
+						else
+							value = $this.val();
+						if( value === undefined )
+							value = false;
+						$input
+							.attr('var_' + option_name, value)
+							.trigger('change')
+						;
+						refresh_variables.call( this );
+					})
+				;
+				
+				$editor.dialog({
+					'title': ':' + variable,
+					'close': function(e){ $editor.remove(); },
+				})
+					.dialog( "widget" )
+						.addClass("agdpreport-variable")
+						.find('.ui-dialog-title:first')
+							.prepend( edwpimg( var_type ) )
+				;
 				
 				return false;
-			});
+			}
+			$this.on('click', '.var_edit', edit_variable);
 		
 			
 			//refresh_variables
@@ -259,8 +313,10 @@ jQuery( function( $ ) {
 								variables[variable] = value;
 							if( matches[i][2] )
 								variables[variable]['format'] = matches[i][2];
-							if( pos_flag_sql_before_render < sql.indexOf( ':' + variable ) )
+							if( pos_flag_sql_before_render < sql.indexOf( ':' + variable ) ){
 								variables[variable]['sql_source'] = 'sql_before_render';
+								variables[variable]['is_private'] = 1;
+							}
 							delete var_values_saved[variable] ;
 						}
 					}
@@ -352,13 +408,20 @@ jQuery( function( $ ) {
 								$input = $('<input type="time">')
 									.val( value );
 								break;
+							case 'post' :
+							case 'page' :
 							case 'forum' :
 							case 'newsletter' :
 							case 'report' :
+							case 'report_sql' :
 								var options = {};
 								var post_type;
 								
 								switch(type){
+									case 'post' :
+										post_type = 'post';
+										break;
+									case 'page' :
 									case 'forum' :
 										post_type = 'page';
 										break;
@@ -366,6 +429,7 @@ jQuery( function( $ ) {
 										post_type = 'agdpnl';
 										break;
 									case 'report' :
+									case 'report_sql' :
 										post_type = 'agdpreport';
 										break;
 								}
@@ -405,6 +469,8 @@ jQuery( function( $ ) {
 							
 								break;
 							default:
+								if( type === undefined )
+									type = '';
 								$input = $('<input type="' + type + '"/>')
 									.val( value );
 						}
@@ -424,15 +490,32 @@ jQuery( function( $ ) {
 							.attr( 'var_type', type )
 							.attr( 'var_options', options )
 						;
-						if( variables[variable]['sql_source'] )
-							$input.attr( 'sql_source', variables[variable]['sql_source'] );
 							
-						$('<div class="sql_variable"></div>')
-							.append('<label>:' + variable + '</label>')
+						var $sql_variable = $('<div class="sql_variable"></div>')
+							.append( $('<label>:' + variable + '</label>')
+										.prepend(edwpimg( type )) )
 							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
 							.append($input)
 							.appendTo( $container )
 						;
+						
+						// Options de variable
+						for( var i in variable_options ){
+							var option_name = variable_options[i];
+							if( option_name === 'type' )
+								continue;
+							var option_value = variables[variable][option_name];
+							if( option_value ){
+								$input.attr( 'var_' + option_name, option_value );
+								$sql_variable.attr( 'var_' + option_name, option_value );
+							}
+						}
+						// var sql_source = variables[variable]['sql_source'];
+						// if( sql_source ){
+							// $input.attr( 'var_sql_source', sql_source );
+							// $sql_variable.attr( 'var_sql_source', sql_source );
+						// }
+						
 						$input.trigger('change');
 					}
 					
@@ -644,7 +727,9 @@ jQuery( function( $ ) {
 			}
 		});
 		
-		//Rendu
+		/********
+		 * Rendu
+		 **/
 		$('#agdp_report-render').each(function(e){
 			$(this)
 				.on('click', '.report_refresh a', refresh_report )
@@ -827,6 +912,9 @@ jQuery( function( $ ) {
 						refresh_report.call($render);
 					})
 				)
+				.parent('.hide_during_loading.loading')
+					.removeClass('loading')
+					.end()
 			;
 			/* Masque le menu si le click est hors menu */
 			function hide_report_menu(event) {
@@ -1424,6 +1512,17 @@ jQuery( function( $ ) {
 			}
 		}
 		return {};
+	}
+	
+	/**
+	 * edwpimg
+	 **/
+	function edwpimg( var_type ){
+		if( input_types[var_type] && input_types[var_type]['img'] )
+			var_type_img = input_types[var_type]['img'];
+		else
+			var_type_img = 'Text';		
+		return '<span class="edwpimg edwp-' + var_type_img + '"></span>';
 	}
 });
 
