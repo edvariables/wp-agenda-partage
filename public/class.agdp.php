@@ -504,7 +504,7 @@ class Agdp {
 	 * Cf Agdp_Admin_Menu
 	 */
 	public static function update_option( $name, $value, $save_to_db = true ) {
-		$options = get_option( AGDP_TAG );
+		$options = self::get_options();
 		$options = ( false === $options ) ? array() : (array) $options;
 		if( $value === null){
 			if( isset($options[$name]))

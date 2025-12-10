@@ -320,6 +320,22 @@ class Agdp_Admin_Options {
 					'input_type' => 'checkbox'
 				]
 			);
+			
+			// 
+			$field_id = 'add_content_in_' . Agdp_Evenement::post_type;
+			add_settings_field(
+				$field_id, 
+				'Complément dans les pages d\'évènements',
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				'agdp_section_agdpevents',
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'input_type' => 'textarea',
+					'rows' => '4',
+				]
+			);
 
 			// 
 			$field_id = 'agdpevent_ev_diffusion';
@@ -853,6 +869,14 @@ class Agdp_Admin_Options {
 				, $value ? 'checked' : ''
 				, $args['label']
 			);
+		} elseif($input_type === 'textarea'){
+			echo sprintf('<textarea id="%s" name="%s[%s]" class="%s" rows="%s">%s</textarea>'
+				, esc_attr( $option_id )
+				, AGDP_TAG, esc_attr( $option_id )
+				, esc_attr( $args['class'] )
+				, empty($args['rows']) ? '' : $args['rows']
+				, $value
+			);
 		} elseif($input_type === 'ajax_action'){
 			if( $sub_args_index > 0 )
 				echo '<br>';
@@ -1029,8 +1053,13 @@ class Agdp_Admin_Options {
 		
 		if( ! empty($_POST[AGDP_TAG]) ){
 			
-			foreach($_POST[AGDP_TAG] as $option=>$value)
-				Agdp::update_option( $option, $value/* //TODO , false*/);
+			debug_log(__FUNCTION__, $_POST[AGDP_TAG] );
+		
+			foreach($_POST[AGDP_TAG] as $option=>$value){
+				if( strpos($value, '"') !== false )
+					$value = str_replace('\\"', '"', $value );
+				Agdp::update_option( $option, $value, false);
+			}
 			Agdp::save_options();
 		}
 		?>
@@ -1182,10 +1211,14 @@ class Agdp_Admin_Options {
 		
 	}
 	
-	/**
+	/***********************
 	* top level menu:
 	* callback functions
 	*/
+	
+	/**
+	 * Update du plugin via GIT
+	 */
 	public static function agdp_git_update_page_html() {
 		
 		if ( ! current_user_can( 'manage_network_plugins' ) ) 
@@ -1207,6 +1240,20 @@ class Agdp_Admin_Options {
 		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
 			. '<input type="submit" name="action" value="Mettre à jour"/>'
 			. '</form>';
+	}
+	
+	/**
+	 * Generate packages
+	 */
+	public static function agdp_packages_page_html() {
+		if( ! class_exists('Agdp_Admin_Packages') ){
+			require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-packages.php");
+			Agdp_Admin_Packages::init();
+		}
+		
+		echo sprintf('<h1>Génération des packages</h1>' );
+		
+		echo Agdp_Admin_Packages::generate_form();
 	}
 	
 	/**

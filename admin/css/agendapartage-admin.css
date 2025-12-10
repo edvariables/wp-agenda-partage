@@ -26,7 +26,6 @@ body.colors-dark .color-red {
 .color-green {
 	color: green !important;
 }
-
 .agdp-metabox-row > label {
 	min-width: 12em;
 	display: inline-block;
@@ -41,6 +40,7 @@ body.colors-dark .color-red {
 	width: 25em;
 	display: inline-block;
 }
+textarea.agdp_row,
 .agdp-metabox-row > textarea.shortcode,
 .agdp-metabox-row > textarea#sql, .agdp-metabox-row > textarea.sql {
 	width: 95%;
@@ -349,6 +349,14 @@ div.edit-post-layout__metaboxes {
 	display: inline-block;
 }
 
+#titlediv .agdp_wpcf7_usage.inside {
+	padding: 6px;
+}
+#titlediv .agdp_wpcf7_usage.inside label {
+	cursor: pointer;
+	margin-right: 1em;
+}
+
 .agdp-import-posts.confirmation {
 	margin-bottom: 3em;
 }
@@ -453,4 +461,11 @@ table.use_example_results td {
 	line-height: 1em;
 	padding: 2px;
 	border: solid 1px burlywood;
+}
+
+/* Packages */
+form#agdppackages .agdppackages-post_type {
+	display: inline-block;
+	vertical-align: top;
+	padding-left: 2em;
 }

@@ -47,9 +47,10 @@ class Agdp_Admin_Posts_Import {
 			
 			$data_str = stripslashes($_POST['action-data']);
 			$data_str = htmlspecialchars_decode($data_str, ENT_QUOTES);
-			$data = json_decode($data_str, true);
+			$data = maybe_unserialize($data_str);
+			if( is_string($data) )
+				$data = json_decode($data, true);
 			if( $data ){
-				
 				if( $confirm_action ){
 					$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post_id ) );
 					//FORM

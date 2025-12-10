@@ -171,11 +171,14 @@ body.colors-dark .toggle-trigger {
 	color: #333;
 	text-decoration: none;
 	/* display: block; */
-	box-shadow: none;
 }
 body.colors-dark .toggle-trigger a {
 	color: #CCC;
 }
+.agdpreport .toggle-trigger a {
+	box-shadow: none;
+}
+
 
 .toggle-trigger a:hover {
 	color: #0489B7;

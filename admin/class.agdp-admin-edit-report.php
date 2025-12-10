@@ -14,7 +14,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	const post_type = Agdp_Report::post_type;
 	
 	static $can_duplicate = true;
-
+	
 	public static function init() {
 		parent::init();
 
@@ -29,6 +29,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_styles'), 10, 1);
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_scripts'), 10, 1);
+			add_action( 'page_attributes_misc_attributes', array(__CLASS__, 'on_page_attributes_misc_attributes'), 10, 1);
 		}
 		add_action( 'wp_ajax_'.AGDP_TAG.'_admin_edit_report_action', array(__CLASS__, 'on_ajax_action') );
 	}
@@ -51,6 +52,18 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function on_admin_enqueue_styles() {
 	    wp_register_style( AGDP_TAG . '-report', plugins_url( 'agenda-partage/admin/css/agendapartage-admin-report.css' ), array(), AGDP_VERSION, false );
 	    wp_enqueue_style( AGDP_TAG . '-report');
+	}
+
+	/**
+	 * Ajoute des attributs
+	 */
+	public static function on_page_attributes_misc_attributes($post) {
+	    $meta_key = 'is_package_root';
+		if( get_post_meta( $post->ID, $meta_key, true ) )
+		echo sprintf( '<p class="post-attributes-label-wrapper menu-order-label-wrapper">'
+			. '<label class="post-attributes-label" for="%s">Racine de package</label></p>'
+			, $meta_key
+		);
 	}
 
 		
@@ -139,11 +152,16 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * get_metabox_all_fields
 	 */
 	public static function get_metabox_all_fields(){
+		
+	    $meta_key = 'is_package_root';
+		$package_fields = [ $meta_key ];
+		
 		return array_merge(
 			self::get_metabox_inputs_fields(),
 			self::get_metabox_variables_fields(),
 			self::get_metabox_render_fields(),
 			self::get_metabox_shortcode_fields(),
+			$package_fields,
 		);
 	}
 	

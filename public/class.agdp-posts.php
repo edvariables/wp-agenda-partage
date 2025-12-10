@@ -342,7 +342,6 @@ abstract class Agdp_Posts {
 		wp_die();
 	}
 	
-
 	/**
 	 * Requête Ajax de récupération de liste de posts
 	 */
@@ -374,4 +373,75 @@ abstract class Agdp_Posts {
 		}
 		return $posts;
 	}
+	
+	/**
+	 * Retourne tous les posts à partir de parents.
+	 */
+	public static function get_posts_and_descendants( $post_type, $post_statuses, $post_ids = false, $parent_post_ids = false, $max_deep = 32 ) {
+		if( $max_deep < 0 )
+			return [];
+			
+		global $wpdb;
+		if( $post_ids && is_array($post_ids) )
+			$str_post_ids = implode(', ', $post_ids);
+		else {
+			if( $parent_post_ids === false )
+				throw new Exception(__CLASS__.'::'.__FUNCTION__ . '($post_type, $post_ids, $parent_post_ids) : un des deux arguments ids doit être fourni.');
+			if( $post_ids ){
+				$str_post_ids = $post_ids;
+				$post_ids = [ $post_ids ];
+			}
+		}
+		if( $parent_post_ids !== false ){
+			if( is_array($parent_post_ids) )
+				$str_parent_post_ids = implode(', ', $parent_post_ids);
+			else{
+				$str_parent_post_ids = $parent_post_ids;
+				$parent_post_ids = [ $parent_post_ids ];
+			}
+		}
+		if( ! is_array($post_statuses) )
+			$post_statuses = [ $post_statuses ];
+		$str_post_statuses = '"' . implode('", "', $post_statuses) . '"';
+		
+		if( $post_ids )
+			$sql = "SELECT post.`ID`
+				FROM $wpdb->posts `post`
+				WHERE post.post_type = '$post_type'
+				AND post.post_status IN ( $str_post_statuses )
+				AND ( post.ID IN ( $str_post_ids )
+				  OR post.post_parent IN ( $str_post_ids ) )"
+			;
+		else
+			$sql = "SELECT post.`ID`
+				FROM $wpdb->posts `post`
+				WHERE post.post_type = '$post_type'
+				AND post.post_status IN ( $str_post_statuses )
+				AND post.post_parent IN (" . $str_parent_post_ids . ")";
+		
+		$dbresult = $wpdb->get_results( $sql );
+		
+		if( is_wp_error($dbresult) )
+			throw $dbresult;
+		
+		$ids = [];
+		$parent_ids = [];
+		foreach( $dbresult as $dbrow ){
+			$post_id = $dbrow->ID;
+			$ids[] = $post_id * 1;
+			// $ids[$post_id] = '[' . $deep . ']' . $dbrow->post_name;
+			if( ! $post_ids
+			|| ! in_array( $post_id, $post_ids ) ){
+				$parent_ids[] = $post_id;
+			}
+		}
+		if( $max_deep > 0
+		 && count($parent_ids) )
+			$ids = array_merge( $ids, self::get_posts_and_descendants( $post_type, $post_statuses, false, $parent_ids, $max_deep - 1));
+		
+		return $ids;
+	}
+	
+	
+	
 }

@@ -1343,6 +1343,18 @@ class Agdp_Mailbox {
 					// && count($forums) )
 						// return self::import_wpcf7_to_post_type($mailbox_id, $post, $post->post_type);
 					
+					//TODO
+					$properties = $contact_form->get_properties();
+					$mail_properties = $properties['mail'];
+					$email_to = strtolower($mail_properties['recipient']);
+					if( $email_to === 'commentaire@evenement.agdp'
+					 || $email_to === 'comment@agdpevent.agdp'
+					 || $email_to === 'commentaire@covoiturage.agdp'
+					 || $email_to === 'comment@covoiturage.agdp'
+					){
+						return self::import_wpcf7_to_comment($contact_form, $abort, $submission, false, false, $post);
+					}
+						
 					break;
 				case Agdp_Forum::post_type:
 					$meta_key = AGDP_PAGE_META_MAILBOX;
@@ -1375,10 +1387,20 @@ class Agdp_Mailbox {
 				$posted_data['is-public'] = $posted_data['is-public'][0];
 			$posted_data['is-public'] = ! in_array( strtolower($posted_data['is-public']), ['non', '0', 'false']);
 		}
-		$emails = self::get_emails_dispatch();
-		if( ! isset($emails[$email_to]) )
-			return;
-		// debug_log(__FUNCTION__, '$emails[$email]', $emails[$email_to]);
+		
+		//TODO
+		if( $email_to === 'commentaire@evenement.agdp'
+		 || $email_to === 'comment@agdpevent.agdp'
+		 || $email_to === 'commentaire@covoiturage.agdp'
+		 || $email_to === 'comment@covoiturage.agdp'
+		){
+		}
+		else {		
+			$emails = self::get_emails_dispatch();
+			if( ! isset($emails[$email_to]) )
+				return;
+		}
+		debug_log(__FUNCTION__, $email_to);
 		
 		//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
 		$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));

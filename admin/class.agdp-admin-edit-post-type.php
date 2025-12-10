@@ -23,7 +23,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		'import', 
 		'export'
 	];
-	private static $actions = [
+	protected static $actions = [
 		'duplicate' => 'Dupliquer',
 		'export' => 'Exporter'
 	];
@@ -465,6 +465,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$fields = $parent_field['fields'];
 		// debug_log(__FUNCTION__, $_POST, '', $fields );
 		foreach ($fields as $field) {
+			if( is_string($field) )
+				$field = [ 'name' => $field ];
 			if( ! isset($field['type'] ) || $field['type'] !== 'label'){
 				$name = $field['name'];
 				if($parent_field !== null && isset($parent_field['name']))
@@ -666,8 +668,10 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	
 	/**
 	 * Export posts
+	 *
+	 * //TODO $all_terms
 	 */
-	public static function get_posts_export( $posts ) {
+	public static function get_posts_export( $posts, $all_terms = false ) {
 		$action = 'export';
 		
 		$data = [];

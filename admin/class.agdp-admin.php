@@ -88,6 +88,9 @@ class Agdp_Admin {
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-maillog.php' );
 			add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Maillog', 'init' ) );
 		}
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-wpcf7.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_WPCF7', 'init' ) );
 	}
 
 	public static function init_hooks() {
@@ -101,17 +104,6 @@ class Agdp_Admin {
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'register_plugin_js') ); 
 
         add_action( 'admin_notices', array(__CLASS__,'show_admin_notices') );
-		
-		if(class_exists('WPCF7_ContactForm')){
-			add_action( 'wpcf7_admin_notices', array( __CLASS__, 'wpcf7_admin_notices' ), 10, 3 ); //edit
-			add_action( 'wpcf7_save_contact_form', array( __CLASS__, 'on_wpcf7_save_contact_form' ), 10, 3 ); //update
-			
-			foreach( Agdp_Post::get_taxonomies() as $tax_name => $taxonomy){
-				//'saved_term' appends before 'saved_<taxonomy>' and it's not good : see class.agdp-admin-edit-location.php
-				add_action( 'saved_'.$tax_name, array( __CLASS__, 'on_saved_term_linked_to_wpcf7' ), 20, 5 ); //update
-			}
-			add_action( 'deleted_term_taxonomy', array( __CLASS__, 'on_deleted_term_linked_to_wpcf7' ), 10, 1 ); //update
-		}
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_admin_action', array(__CLASS__, 'on_wp_ajax_admin_action_cb') );
 	}
@@ -249,27 +241,6 @@ class Agdp_Admin {
 		self::show_admin_notices();
 	}
 	
-	public static function wpcf7_admin_notices($tag, $action, $contact_form){
-		if( ! is_a($contact_form, 'WPCF7_ContactForm')){
-			return;
-		}
-		foreach(['agdpevent_edit_form_id'
-				, 'admin_message_contact_form_id'
-				, 'agdpevent_message_contact_form_id'
-				, 'contact_form_id'
-				, 'newsletter_subscribe_form_id'
-				, 'agdpforum_subscribe_form_id'
-			] as $option){
-			if($contact_form->id() == Agdp::get_option($option)){
-				$label = Agdp::get_option_label($option);
-				break;
-			}
-		}
-		if(isset($label) && $label){
-			?><br><div class="notice notice-info dashicons-before dashicons-warning">&nbsp;Ce formulaire est utilisé par l'Agenda partagé pour son paramètre "<?=$label?>".</div><?php
-		}
-	}
-	
 	/**
 	* Logs
 	*/
@@ -370,84 +341,5 @@ class Agdp_Admin {
 		// Don't forget to stop execution afterward.
 		wp_die();
 	}
-	
-	/*********************
-	 * init_wpcf7_form_html
-	 */
-	/**
-	 * Filtre le html avant enregistrement d'un formulaire wpcf7.
-	 */
-	public static function on_wpcf7_save_contact_form( $contact_form, $args, $context ){
-		$html = false;
-		switch($args['id']){
-			case Agdp::get_option('newsletter_subscribe_form_id'):
-			case Agdp::get_option('agdpforum_subscribe_form_id'):
-				$html = Agdp_Newsletter::init_wpcf7_form_html( $args['form'] );
-				break;
-			case Agdp::get_option('agdpevent_edit_form_id'):
-				$html = Agdp_Evenement::init_wpcf7_form_html( $args['form'] );
-				break;
-			case Agdp::get_option('covoiturage_edit_form_id'):
-				$html = Agdp_Covoiturage::init_wpcf7_form_html( $args['form'] );
-				break;
-		}
-		if( $html )
-			$contact_form->set_properties( ['form' => $html] );
-	}
-	/**
-	 * Met à jour le html d'un formulaire wpcf7 suite à l'ajout d'un terme.
-	 */
-	public static function on_saved_term_linked_to_wpcf7( $term_id, $tt_id, $update, $args ){
-		if( $args && ! empty($args['post_type']) )
-			$post_type = $args['post_type'];
-		elseif( $args && ! empty($args['taxonomy']) ){
-			if( ! ($taxonomy = get_taxonomy( $args['taxonomy'] )))
-				return;
-			$post_type = $taxonomy->object_type;
-		}
-		else
-			throw new Exception('tax inconnue');
-		self::init_wpcf7_form_html( $post_type );
-	}
-	/**
-	 * Met à jour le html d'un formulaire wpcf7 suite à la suppression d'un terme.
-	 */
-	public static function on_deleted_term_linked_to_wpcf7( $tt_id ){
-		if( ! ($term = get_term( $tt_id ) )) return;
-		if( ! ($taxonomy = get_taxonomy( $term->taxonomy ))) return;
-		self::init_wpcf7_form_html( $taxonomy->object_type );
-	}
-	/**
-	 * Met à jour le html d'un formulaire wpcf7.
-	 */
-	public static function init_wpcf7_form_html( $post_type ){
-		if( is_array($post_type) )
-			$post_type = $post_type[0];
-		switch( $post_type ){
-			//TODO what's up with agdpforum_subscribe_form_id ?
-			
-			case Agdp_Newsletter::post_type :
-				$option_form_id = 'newsletter_subscribe_form_id';
-				$function = 'Agdp_Newsletter::init_wpcf7_form_html';
-				break;
-			case Agdp_Evenement::post_type :
-				$option_form_id = 'agdpevent_edit_form_id';
-				$function = 'Agdp_Evenement::init_wpcf7_form_html';
-				break;
-			case Agdp_Covoiturage::post_type :
-				$option_form_id = 'covoiturage_edit_form_id';
-				$function = 'Agdp_Covoiturage::init_wpcf7_form_html';
-				break;
-			default:
-				return;
-		}
-		
-		$form_id = Agdp::get_option($option_form_id);
-		$html = get_post_meta($form_id, '_form', true);
-		$html = $function( $html );
-		if( $html )
-			update_post_meta($form_id, '_form', $html);
-	}
-	/*********************/
 }
 ?>

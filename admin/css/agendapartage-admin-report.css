@@ -223,6 +223,21 @@
 	border: solid 1px;
 	border-color: inherit;
 }
+#agdp_report-render .agdpreport > table > tbody > tr.report_table_designer > * {
+	background-color: #d4ce74;
+}
+
+#agdp_report-render .agdpreport > table > tbody
+, #agdp_report-render .agdpreport > table > caption
+, #agdp_report-render .agdpreport > table > thead
+, #agdp_report-render .agdpreport > table > tfoot  {
+  border-width: 2px;
+  border-style: dashed;
+}
+#agdp_report-render .agdpreport > table > caption  {
+  border-bottom: none;
+}
+
 #agdp_report-render .agdpreport tr:not(.report_table_designer) > * {
 	padding-right: 1em;
 }
@@ -252,6 +267,9 @@
 }
 #agdp_report-render .agdpreport > table.error > tbody > tr.report_table_designer > td {
 	background-color: red;
+}
+#agdp_report-render .agdpreport > table > tfoot > tr.report_table_designer {
+  text-align: left;
 }
 #agdp_report-render .report_table_designer input.column_class{
 	max-width: 60%;

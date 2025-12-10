@@ -89,6 +89,12 @@ class Agdp_Evenement extends Agdp_Post {
 		if( Agdp_Evenement_Post_type::is_diffusion_managed() )
 			$html .='[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
 		
+		
+		$field_id = 'add_content_in_' . Agdp_Evenement::post_type;
+		$add_content = Agdp::get_option($field_id);
+		if( $add_content ){
+			$html .= $add_content;
+		}
 
 		$html .= sprintf('[agdpevent-covoiturage no-ajax post_id="%d" %s]'
 			, $agdpevent->ID
@@ -169,7 +175,7 @@ class Agdp_Evenement extends Agdp_Post {
 					$html = $info . $html;
 				}
 				break;
-		}			
+		}
 		
 		switch($post->post_status){
 			case 'pending':
@@ -188,7 +194,6 @@ class Agdp_Evenement extends Agdp_Post {
 				}
 				break;
 		}
-	
 		
 			
 		if(is_user_logged_in()){

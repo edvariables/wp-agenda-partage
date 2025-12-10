@@ -1632,10 +1632,11 @@ class Agdp_Report extends Agdp_Post {
 		
 		//tfoot
 		if( $report_show_footer ){
+			$block_var_prefix = 'tfoot_';
 			$content .= '<tfoot><tr>';
 			foreach($dbresults as $row){
 				if( $report_show_indexes )
-					$content .= sprintf('<th>#</th>');
+					$content .= sprintf('<th>&nbsp;</th>');
 				$column_class = '';
 				foreach($row as $column_name => $column_value){
 					if( substr($column_name, 0, 2) === '__' ){
@@ -1659,8 +1660,8 @@ class Agdp_Report extends Agdp_Post {
 						if( is_array($table_column) ){
 							$column_label = empty($table_column[ 'label' ]) ? $column_name : $table_column[ 'label' ];
 							$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
-							if( ! empty($table_column[ 'class' ]) ){
-								$value = $table_column[ 'class' ];
+							if( ! empty($table_column[ $block_var_prefix . 'class' ]) ){
+								$value = $table_column[ $block_var_prefix . 'class' ];
 								if( ! self::is_a_class_script( $value )  )
 									$class .= ' ' . $value;
 							}
@@ -1671,10 +1672,11 @@ class Agdp_Report extends Agdp_Post {
 					}
 					if( ! $column_visible )
 						$class .= ' hidden';
+					$column_value = '&nbsp;';
 					$content .= sprintf('<th %s column="%s">%s</th>'
 						, $class ? 'class="' . trim($class) . '"' : ''
 						, $column_name
-						, $column_label
+						, $column_value
 					);
 				}
 				break;
@@ -1719,7 +1721,7 @@ class Agdp_Report extends Agdp_Post {
 		if( preg_match('/\:[a-zA-Z0-9_]+\%\w/', $css) !== false ){
 			
 			$options = 'css';
-			$css = self::get_sql_prepare( $report, $css, $sql_variables, $options );
+			$css = self::get_sql_prepare( $report, $css, $sql_variables, $options ); 
 			
 			if( is_array( $css ) )
 				$css = implode( "\n", $css );

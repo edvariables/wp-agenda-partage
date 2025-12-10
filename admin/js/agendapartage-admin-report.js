@@ -454,7 +454,7 @@ jQuery( function( $ ) {
 							case 'asc_desc' :
 								$input = $('<select></select>');
 								$input = add_input_options($input, {ASC: 'Croissant', DESC: 'Décroissant'}, variable, value);
-							
+								break;
 							case 'longtext' :
 								$input = $('<textarea spellcheck="false"></textarea>')
 									.val( value );
@@ -745,1233 +745,981 @@ jQuery( function( $ ) {
 				}).end()
 			;
 		});
-	});
 	
-	/**
-	 * get_variables_values
-	 */
-	function get_variables_values( $variables ){
-		if( ! $variables ){
-			var $this = $('#agdp_report-variables');
-			$variables = $this.find('textarea#sql_variables');
-		}
-		var var_values = {};
-		$variables.nextAll('.sql_variables_wrap:first')
-			.find('.sql_variable:not(.unused)').each(function(e){
-				var data = {};
-				var $this = $(this);
-				var $value = $this.find('.var_value');
-				var var_name = $value.attr('var_name');
-				for( var i in variable_options ){
-					if( v = $value.attr('var_' + variable_options[i]) )
-						data[variable_options[i]] = v;
-					else if( data[variable_options[i]] !== undefined )
-						data[variable_options[i]] = undefined;
-				}
-				
-				if( $value.is('label') )
-					$value = $this.find('.var_value input');
-				var v;
-				if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
-					v = '';
-					$value.filter(':checked').each(function(){
-						if( v )
-							v += '\n';
-						v += this.value;
-					});
-				}
-				else if( $value.is('input[type="checkbox"]') )
-					v = $value.prop('checked');
-				else if( $value.is('input[type="radio"]') )
-					v = $value.filter(':checked').val();
-				else
-					v = $value.val();
-				if( v )
-					data['value'] = v;
-				
-				var_values[ var_name ] = data;
-			})
-		;
-		return var_values;
-	}
-
-	/**
-	 * get_report_css : compile les styles (textarea + terms)
-	 * 
-	 * Remplace le sélecteur table par #report_{tag_id}.agdpreport > table
-	 */
-	function get_report_css( $form, tag_id ){
-		var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
-		$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
-			if( css )
-				css += '\n';
-			css += '/* report_style_term ' + $(this).text() + ' */\n'
-					+  this.getAttribute('data-report-style');
-		});
-		const regexp = /(^|[^:]\s|,\s*)(table(\s|[.{,]))/g; ////cf regex idem in php Agdp_Report::get_report_css()
-		css = css.replaceAll( regexp, '$1#' + tag_id + ' > $2' );
-		
-		return replace_variables_in_string( css, get_variables_values() );
-	}
-
-	/**
-	 * replace_variables_in_string
-	 * 
-	 * Remplace les variables par leur valeur dans un texte, sous le format :variable%I
-	 * cf le format des variables dans SQL, valable pour le css aussi.
-	 */
-	function replace_variables_in_string( str_input, variables ){
-		
-		const regex = /\:([a-zA-Z0-9_]+)\%(\w+)/g;
-		const str_output = str_input.replace(regex, (match, var_name, format) => {
-			if( ! format ){
-				console.log( '[replace_variables_in_string() => Incompatible in Wordpress : format is empty in ' + match );
-				return match;
-			}
-			if( variables[var_name] === undefined )
-				return match;
-			var var_type = variables[var_name]['type'];
-			if( var_type === undefined )
-				var_type = false;
-			var value = variables[var_name]['value'];
-			if( value === undefined )
-				value = '';
-			
-			switch( var_type ){
-				default:
-			}
-			
-			switch( format ){
-				case 's' :
-					value = '"' + value.replace('"', '\\"') + '"';
-					break;
-				case 'I' : //Inject
-				default :
-					break;
-			}
-			return value;
-		});
-		
-		return str_output;
-		
-		if( false ){
-		// var used_variables = [];
-		// str_input.match(regex).forEach((element) => {
-		   // var var_name = element[0];
-		  // console.log(element);
-		// });
-		
-		/* if( preg_match_all( pattern, str_input, $matches ) ){
-			$errors = [];
-			$variables = [];
-			$prepare = [];
-			foreach($matches[2] as $index => $variable){
-				//format
-				$src = $matches[0][$index];
-				$var_domain = $matches[1][$index];
-				// :var
-				if( $var_domain === ':' ) {
-					//value
-					if( ! isset( $variables[$variable] )){
-						if( strpos($variable, $strings_prefix ) === 0 ){
-							$value = $sql_strings[$variable];
-						}
-						else {
-							//TODO faire mieux (tableau, json, ...)
-							$request_key = sprintf('%s%s', AGDP_REPORT_VAR_PREFIX, $variable);
-							if( isset($_REQUEST[ $request_key ]) )
-								$value = $_REQUEST[ $request_key ];
-							elseif( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['value']) )
-								$value = $sql_variables[$variable]['value'];
-							else
-								$value = null;
-						}
-						$variables[$variable] = $value;
-					}
-					
-					$format = $matches[3][$index];
-					$format_args = $matches[4][$index];
-					//------------------------
-					
-					$format_IN = $format === '%IN';
-					$format_Inject = $format === '%I';
-					$format_mode = substr( $format, strlen($format_args) + 1, 1 );
-					$format_LIKE = $format_mode  === 'K';
-					$format_JSON = $format_mode  === 'J';
-					
-					$variable_type = $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ? $sql_variables[$variable]['type'] : null;
-					switch($variable_type){
-						case 'range': 
-						case 'numeric':
-						case 'number':
-						case 'integer':
-							if( ! $format )
-								$format = '%d';
-							break;
-						case 'decimal':
-						case 'float':
-							if( ! $format )
-								$format = '%f';
-							break;
-						case 'field':
-							if( ! $format )
-								$format = '%i';
-							break;
-						case 'table':
-							if( ! $format )
-								$format_Inject = $format = '%I';
-							if( ! $variables[$variable] )
-								$variables[$variable] = '';
-							else
-								$variables[$variable] = self::add_table_blog_prefix( $variables[$variable] );
-							break;
-						case 'column':
-							if( ! $format )
-								$format_Inject = $format = '%I';
-							break;
-						case 'checkboxes': 
-							if( $format_IN ){
-								if( $variables[$variable] ){
-									if( is_string( $variables[$variable] ) ){
-										if( $variables[$variable][0] === '|' )
-											$variables[$variable] = explode( '|', substr($variables[$variable], 1, strlen($variables[$variable]) - 2 ));
-										else
-											$variables[$variable] = explode( "\n", $variables[$variable] );
-									}
-									$format = implode(', ', array_fill(0, count($variables[$variable]), '%s'));
-								}
-								else {
-									$format = '%s';
-								}
-							}
-							else {
-								// ( :post_status = '' || :post_status = post.post_status || :post_status LIKE CONCAT('%|', post.post_status, '|%' )
-								if( $variables[$variable] && is_string($variables[$variable]) && $variables[$variable][0] !== '|' ){
-									$variables[$variable] = "|" . str_replace("\n", "|", $variables[$variable]) . "|";
-								}
-							}
-							break;
-						case 'asc_desc': 
-							if( $variables[$variable] === '' )
-								$variables[$variable] = 'ASC';
-							elseif( ! $variables[$variable] )
-								$variables[$variable] = 'DESC';
-							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
-							//skip prepare
-							continue 2;
-							
-						case 'report_sql': 
-							$error = '';
-							if( is_numeric($variables[$variable])
-							 && ( $sub_report = get_post($variables[$variable]) )){
-								if( ! isset($options[__FUNCTION__.':stack']) )
-									$options[__FUNCTION__.':stack'] = [];
-								elseif( $sub_report->ID == $report_id
-								|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
-									$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
-									debug_log_callstack(__FUNCTION__, $error);
-									$variables[$variable] = $error;
-								}
-								if( ! $error ){
-									// if( isset($sql_variables[$variable]['report_sql']) )
-										// $sub_sql = $sql_variables[$variable]['report_sql'];
-									// else {
-										array_push( $options[__FUNCTION__.':stack'], $report_id );
-										// debug_log( __FUNCTION__ . ' sub_report' );
-										$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
-										// debug_log( __FUNCTION__ . ' sub_report DONE' );
-										array_pop( $options[__FUNCTION__.':stack'] );
-										$sql_variables[$variable]['report_sql'] = $sub_sql;
-									// }
-									
-									if( ! $format ) { 
-										//is SQL SET
-										if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
-											// and not SELECT
-											if( preg_match( '/\sSELECT\s/i', $sql ) === 0 )
-												$format = $format_JSON = '%J';
-										}
-									}
-									if( $format === '%d' ){
-										//$variables[$variable] retourne l'id
-									}
-									elseif( ! $format_JSON ) {
-										$sub_sql = self::sanitize_sub_report_sql( $sub_sql );
-										
-										$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
-										//skip prepare
-										continue 2;
-									}
-								}
-							}				 
-							else {
-								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variables[$variable]);
-								$variables[$variable] = $error;
-							}
-							break;
-						default:
-					}
-					
-					//Format
-					if( ! $format )
-						$format = '%s';
-					elseif( $format_LIKE ){
-						$format_LIKE = $format;
-						$format = '%s';
-					}
-					if( $format_JSON ){
-						// debug_log(__FUNCTION__ . ' format', $format, $variable );
-							
-						$format_Inject = true;
-						if( $format_args !== '' ){
-							$format = '%' . substr( $format, strlen($format_args) + 1 );
-						}
-						switch( $format ){
-						case '%J' :
-							
-							$value = $variables[$variable];
-						
-							if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
-								switch($sql_variables[$variable]['type']){
-									case 'report_sql' :
-										//Injecte le résultat de la sous-requête sous forme JSON
-										// if( isset($sql_variables[$variable]['report_json']) ){
-											// $value = $sql_variables[$variable]['report_json'];
-										// }
-										// else {
-											$report_sql = $sql_variables[$variable]['report_sql'];
-											// debug_log( __FUNCTION__ . ' sub_report get_sql_dbresults');
-											// array_push( $options[__FUNCTION__.':stack'], $report_id );
-											$result = static::get_sql_dbresults( $sub_report, $report_sql, $sql_variables, $options );
-											// debug_log( __FUNCTION__ . ' sub_report get_sql_dbresults DONE');
-											// array_pop( $options[__FUNCTION__.':stack'] );
-											if( is_a($result, 'Exception') )
-												$result = [ 
-													'error' => $result->getMessage(),
-													'source' => __FUNCTION__,
-													'sub_report' => $sub_report->ID,
-													'sub_report_title' => $sub_report->post_title,
-												];
-											
-											$value = json_encode($result, JSON_UNESCAPED_UNICODE);
-											// $sql_variables[$variable]['report_json'] = $value;
-											
-										// }
-										break;
-								}
-							}
-							$value = sprintf('CAST( "%s" AS JSON )',
-								str_replace("\n", '', addslashes( $value )),
-							);
-							
-							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-							continue 2;
-						
-						case '%JKV' ://{key: value, key: value, key: value, ...}
-						case '%JT' : //[{col1: value, col2: value, col3: value}, ...]
-							$rows = '*';
-							$value = $variables[$variable];
-							if( $value && is_string( $value ) ){
-								$value = json_decode( $value, true );
-							}
-							if( ! $value ){
-								$value = '[]';
-								$str_columns = '';
-							}
-							else {
-								if( is_numeric($format_args) )
-									$rows = $format_args;
-								// tableau d'objets ou objet ?
-								$is_object = false;
-								$columns = [];
-								foreach( $value as $index => $item ){
-									if( $index !== 0 ){//tableau brut
-										$is_object = true;
-									}
-									break;
-								}
-								if( $is_object ){
-									if( '%JKV' === $format ){
-										$columns[] = 'key';
-										$columns[] = 'value';
-										$keys_values = [];
-										foreach( $value as $k => $v ){
-											$keys_values[] = [ 'key' => $k, 'value' => $v ];
-										}
-										$value = json_encode( $keys_values, JSON_UNESCAPED_UNICODE );
-									}
-									else {
-										foreach( $value as $key => $item )
-											$columns[] = $key;
-										$value = sprintf('[%s]', json_encode( $value, JSON_UNESCAPED_UNICODE ) );
-									}
-								}
-								else {
-									foreach( $value as $object ){
-										if( ! is_array($object) )
-											continue;
-										foreach( $object as $key => $item )
-											$columns[] = $key;
-										break;
-									}
-									//Tableau de données brutes, sans clé de colonne
-									if( count($columns) === 0 && count($value) > 0 ){
-										if( '%JKV' === $format ){
-											$columns[] = 'key';
-											$columns[] = 'value';
-											$keys_values = [];
-											foreach( $value as $index => $item ){
-												$keys_values[] = [ 'key' => $index . '', 'value' => $item ];
-											}
-											$value = $keys_values;
-										}
-										else {
-											$columns[] = 'item';
-											$values = [];
-											foreach( $value as $index => $item ){
-												$values[] = [ $columns[0] => $item ];
-											}
-											$value = $values;
-										}
-									}
-									$value = json_encode( $value, JSON_UNESCAPED_UNICODE );
-									$value = sprintf('[%s]', substr($value, 1, strlen($value) - 2) );
-								}
-								$str_columns = '';
-								foreach( $columns as $column ){
-									if( $str_columns )
-										$str_columns .= ', ';
-									$str_columns .= sprintf('`%s` TEXT PATH "$.%s"', $column, $column);
-								}
-							}
-							
-							$var_name = sprintf('@_%s_%s', $variable, Agdp::get_secret_code(6));
-							$sql = sprintf("SET %s = CAST(\"%s\" AS JSON);\n%s", 
-								$var_name,
-								str_replace("\n", '', addslashes( $value )),
-								$sql,
-							);
-							
-							$value = sprintf('JSON_TABLE( %s , "$[%s]" COLUMNS( %s ) )'
-								, $var_name//addslashes( $value )
-								, $rows
-								, $str_columns
-							);
-							
-							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-							continue 2;
-						}
-					}
-					if( $format_Inject ){
-						if( ($value = $variables[$variable]) === null )
-							$value = '';
-						$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-						continue;
-					}
-					//----------
-					//Remplacement de la variable par %format
-					$sql = preg_replace( '/(?<!\\\\)' . preg_quote($src) . '(?!%)/', $format, $sql );
-					
-					//Ajoute la valeur à $prepare[]
-					if( is_array($variables[$variable]) ){
-						if( $format_IN ) {
-							foreach($variables[$variable] as $opt){
-								$prepare[] = $opt;
-							}
-						}
-						else {
-							$value = '';
-							foreach($variables[$variable] as $opt){
-								$value .= '|' . $opt;
-							}
-							if( $value )
-								$value = $value . '|';
-							$prepare[] = $value;
-						}
-					}
-					elseif( $variables[$variable] === null )
-						$prepare[] = '';
-					elseif( $format_LIKE ){
-						if( strpos( $variables[$variable], '_' ) !== false )
-							$variables[$variable] = str_replace('_', '\_', $variables[$variable]);
-						switch($format_LIKE){ //sic : switch fails when $format_LIKE===true
-							case '%KL' :
-								$prepare[] = $variables[$variable].'%';
-								break;
-							case '%KR' :
-								$prepare[] = '%'.$variables[$variable];
-								break;
-							default :
-								$prepare[] = '%'.$variables[$variable].'%';
-								break;
-						}
-					}
-					else {
-						if( is_string($variables[$variable]) ){
-							// $variables[$variable] = str_replace("\n", '',  str_replace("\r", '', $variables[$variable]));
-							if( strpos($variables[$variable], '"') ){
-								//debug_log(__FUNCTION__, 'Contient double-quote', $variables[$variable] );
-								//TODO est-ce bien raisonnable ? NON en json
-								// $variables[$variable] = str_replace('"', '&quot;', $variables[$variable]);
-						}}
-						
-						$prepare[] = $variables[$variable];
-					}
-				}
-				elseif( $var_domain === '@' ){
-				}
-			}
-			
-		}*/
-		}
-	}
-
-	/**
-	 * refresh_report : get data + designer
-	 */
-	function ajax_report_action( method, success_callback ){
-		var $actionElnt = $(this);
-		var $form = $actionElnt.parents('form:first');
-		var post_id = $form.find('#post_ID').val();
-		var sql = $form.find('#sql').val();
-		var sql_variables = get_input_jso.call( $form, '#sql_variables' );
-		var table_render = get_input_jso.call( $form, '#table_render');
-		var report_options = {};
-		$form.find('#agdp_report-render :input[name]').each(function(){
-			var val;
-			if( this.getAttribute('type') === 'checkbox' )
-				val = $(this).prop('checked');
-			else
-				val = this.value;
-			report_options[ this.getAttribute('name') ] = val;
-		});
-		var $destination = $form.find('.agdpreport');
-		if( $destination.length === 0 ){
-			var $dest_container = $form.find('#agdp_report-render .inside:first');
-			$destination = $('wpbody-content .agdpreport');
-			if( $destination.length === 0 )
-				$destination = $('<div class="agdpreport"></div>');
-			$dest_container.append( $destination );
-		}
-		report_options = Object.assign({}, report_options, {
-			sql : sql,
-			sql_variables : sql_variables,
-			table_render : table_render,
-			report_id : post_id,
-			skip_styles : true, /* later use of get_report_css() */
-		});
-		var data = {
-			action : "agendapartage_report_action",
-			method : method,
-			post_id : post_id,
-			contentType: "application/json; charset=utf-8",
-			data: JSON.stringify(report_options /* //needs stripslashes() at server side */)
-		};
-		var report_id = $actionElnt;
-		jQuery.ajax({
-			url : agdp_ajax.ajax_url,
-			method : 'POST',
-			data : Object.assign(data, {
-				_nonce : agdp_ajax.check_nonce
-			}),
-			success : function( response ) {
-				success_callback.call($actionElnt, response);
-				$spinner.remove();
-			},
-			fail : function( response ){
-				$spinner.remove();
-				var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
-					.click(function(){$msg.remove()});
-				$actionElnt.after($msg);
-				// $msg.get(0).scrollIntoView();
-			}
-		});
-		var $spinner = $actionElnt.next('.wpcf7-spinner');
-		if($spinner.length == 0)
-				$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
-		event.preventDefault();  
-		return false;
-	}
-
-	/**
-	 * refresh_report : get data + designer
-	 */
-	function refresh_report(){
-		var $actionElnt = $(this);
-		ajax_report_action.call(this, "report_html", function( response ) {
-			var $form = $actionElnt.parents('form:first');
-			if(response){
-				if(typeof response === 'string' || response instanceof String){
-					if(response.endsWith('null'))
-						response = substr(response, 0, response.length-4);
-					var $response = $(response);
-					var id;
-					if( ! (id = $response.attr('id') ) ){
-						id = 'report_' + uniqid(6);
-						$response.attr('id', id);
-					}
-					var css = get_report_css( $form, id );
-					if( css )
-						$response.append( '<style>' + css + '</style>' );
-					$form.find('.agdpreport:eq(0)')
-						.nextAll('.agdpreport')
-							.remove()
-							.end()
-						.replaceWith($response);
-					$('#wpbody-content > .wrap > .agdpreport.error').remove();
-					//masque le menu
-					$form.find('#agdp_report-render-menu.active > a.toggler').trigger('click');
-					$response.each(refresh_report_table_designer);
-				}
-			}
-			else
-				$form.find('.agdpreport').html('!');
-		});
-	}
-
-	/**
-	 * get_report_all_columns
-	 */
-	function get_report_all_columns( callback ){
-		var $actionElnt = $(this);
-		ajax_report_action.call(this, "get_report_columns", function( response ) {
-			callback.call(this, response);
-		});
-	}
-
-	/**
-	 * refresh_report_menu 
-	 */
-	function refresh_report_menu(){
-		var $this = $(this);
-		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
-		var $menu_items = $render.find('.report_menu_item');
-		var $menu = $menu_items.parent('#agdp_report-render-menu');
-		if( $menu.length === 0 ){
-			$menu = $('<div id="agdp_report-render-menu"></div>')
-				.html( $('<a class="toggler dashicons-before dashicons-menu"></a>')
-					.on('click', function(){
-						if( $menu.is('.active') )
-							hide_report_menu( true );
-						else {
-							$menu.addClass('active');
-							$(document.body).on('click', '*', hide_report_menu );
-						}
-					})
-				)
-				.insertBefore( $menu_items.first() )
-				.append( $menu_items )
-				
-				//reset all inputs
-				.append( $('<a class="report_menu_item reset-designer dashicons-before dashicons-trash">Réinitialiser</a>')
-					.on('click', function(){ 
-						if( ! confirm("Êtes vous sûr de vouloir tout réinitialiser ?") )
-							return;
-						$render.find('textarea[name="table_render"]').text('');
-						refresh_report.call($render);
-					})
-				)
-				.parent('.hide_during_loading.loading')
-					.removeClass('loading')
-					.end()
-			;
-			/* Masque le menu si le click est hors menu */
-			function hide_report_menu(event) {
-				if( event !== true ){
-					if( hide_report_menu.previous_target === event.target ) //optimise because repeated test
-						return;
-					if( $menu.is('.active')
-					&& $menu.get(0).contains( event.target ) ){
-						hide_report_menu.previous_target = event.target; //cache
-						return; //is inside, keep open
-					}
-				}
-				$menu.removeClass('active');
-				$(document.body).off('click', '*', hide_report_menu );
-			}
-		}
-		
-		/*****************
-		 * hidden_columns
+		/**
+		 * get_variables_values
 		 */
-		var table_render = get_input_jso.call($render, 'textarea[name="table_render"]');
-		var table_columns = table_render["columns"] ? table_render["columns"] : {};
-		var $hidden_columns = $menu.find('.hidden_columns:first');
-		$hidden_columns.find('option:gt(0)').remove();
-		for( table_column in table_columns ){
-			if( table_columns[table_column]['visible'] === undefined
-			|| table_columns[table_column]['visible'] )
-				continue;
-			if( $hidden_columns.length === 0 ){
-				$hidden_columns
-					= $('<select class="hidden_columns"><option value=""></option></select>')
-						.on('change', function(){
-							var column = $hidden_columns.val();
-							if( ! column ) return;
-							set_table_render_option.call( this, 'columns', column, 'visible', true);
-							$hidden_columns.children('option[value="' + column + '"]').remove();
-							
-							var $options = $hidden_columns.children('option');
-							if( $options.length <= 1 ){
-								$hidden_columns.hide();
-								$menu.toggleClass('active');
+		function get_variables_values( $variables ){
+			if( ! $variables ){
+				var $this = $('#agdp_report-variables');
+				$variables = $this.find('textarea#sql_variables');
+			}
+			var var_values = {};
+			$variables.nextAll('.sql_variables_wrap:first')
+				.find('.sql_variable:not(.unused)').each(function(e){
+					var data = {};
+					var $this = $(this);
+					var $value = $this.find('.var_value');
+					var var_name = $value.attr('var_name');
+					for( var i in variable_options ){
+						if( v = $value.attr('var_' + variable_options[i]) )
+							data[variable_options[i]] = v;
+						else if( data[variable_options[i]] !== undefined )
+							data[variable_options[i]] = undefined;
+					}
+					
+					if( $value.is('label') )
+						$value = $this.find('.var_value input');
+					var v;
+					if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
+						v = '';
+						$value.filter(':checked').each(function(){
+							if( v )
+								v += '\n';
+							v += this.value;
+						});
+					}
+					else if( $value.is('input[type="checkbox"]') )
+						v = $value.prop('checked');
+					else if( $value.is('input[type="radio"]') )
+						v = $value.filter(':checked').val();
+					else
+						v = $value.val();
+					if( v )
+						data['value'] = v;
+					
+					var_values[ var_name ] = data;
+				})
+			;
+			return var_values;
+		}
 
-							} else if( $options.length === 2 )
-								$options.filter(':first').text('1 colonne cachée');
-							else
-								$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
-							
-							var $table = $render.find('.agdpreport > table');
-							var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
-							var index = $th.prevAll('th').length;
-							$table.find('tr').each(function(){
-								$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
-									.show();
-							});
+		/**
+		 * get_report_css : compile les styles (textarea + terms)
+		 * 
+		 * Remplace le sélecteur table par #report_{tag_id}.agdpreport > table
+		 */
+		function get_report_css( $form, tag_id ){
+			var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
+			$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
+				if( css )
+					css += '\n';
+				css += '/* report_style_term ' + $(this).text() + ' */\n'
+						+  this.getAttribute('data-report-style');
+			});
+			const regexp = /(^|[^:]\s|,\s*)(table(\s|[.{,]))/g; ////cf regex idem in php Agdp_Report::get_report_css()
+			css = css.replaceAll( regexp, '$1#' + tag_id + ' > $2' );
+			
+			return replace_variables_in_string( css, get_variables_values() );
+		}
+
+		/**
+		 * replace_variables_in_string
+		 * 
+		 * Remplace les variables par leur valeur dans un texte, sous le format :variable%I
+		 * cf le format des variables dans SQL, valable pour le css aussi.
+		 * 
+		 * Utilisé en design pour le css qui contient des variables et qui n'est pas traité par php lors d'un rafraichissement.
+		 *
+		 * cf Agdp_Report::get_sql_prepare() qui fait le travail, en mieux.
+		 */
+		function replace_variables_in_string( str_input, variables ){
+			
+			const regex = /\:([a-zA-Z0-9_]+)\%(\w+)/g;
+			const str_output = str_input.replace(regex, (match, var_name, format) => {
+				if( ! format ){
+					console.log( '[replace_variables_in_string() => Incompatible in Wordpress : format is empty in ' + match );
+					return match;
+				}
+				if( variables[var_name] === undefined )
+					return match;
+				var var_type = variables[var_name]['type'];
+				if( var_type === undefined )
+					var_type = false;
+				var value = variables[var_name]['value'];
+				if( value === undefined )
+					value = '';
+				
+				switch( var_type ){
+					default:
+				}
+				
+				switch( format ){
+					case 's' :
+						value = '"' + value.replace('"', '\\"') + '"';
+						break;
+					case 'I' : //Inject
+					default :
+						break;
+				}
+				return value;
+			});
+			
+			return str_output;
+		}
+
+		/**
+		 * refresh_report : get data + designer
+		 */
+		function ajax_report_action( method, success_callback ){
+			var $actionElnt = $(this);
+			var $form = $actionElnt.parents('form:first');
+			var post_id = $form.find('#post_ID').val();
+			var sql = $form.find('#sql').val();
+			var sql_variables = get_input_jso.call( $form, '#sql_variables' );
+			var table_render = get_input_jso.call( $form, '#table_render');
+			var report_options = {};
+			$form.find('#agdp_report-render :input[name]').each(function(){
+				var val;
+				if( this.getAttribute('type') === 'checkbox' )
+					val = $(this).prop('checked');
+				else
+					val = this.value;
+				report_options[ this.getAttribute('name') ] = val;
+			});
+			var $destination = $form.find('.agdpreport');
+			if( $destination.length === 0 ){
+				var $dest_container = $form.find('#agdp_report-render .inside:first');
+				$destination = $('wpbody-content .agdpreport');
+				if( $destination.length === 0 )
+					$destination = $('<div class="agdpreport"></div>');
+				$dest_container.append( $destination );
+			}
+			report_options = Object.assign({}, report_options, {
+				sql : sql,
+				sql_variables : sql_variables,
+				table_render : table_render,
+				report_id : post_id,
+				skip_styles : true, /* later use of get_report_css() */
+			});
+			var data = {
+				action : "agendapartage_report_action",
+				method : method,
+				post_id : post_id,
+				contentType: "application/json; charset=utf-8",
+				data: JSON.stringify(report_options /* //needs stripslashes() at server side */)
+			};
+			var report_id = $actionElnt;
+			jQuery.ajax({
+				url : agdp_ajax.ajax_url,
+				method : 'POST',
+				data : Object.assign(data, {
+					_nonce : agdp_ajax.check_nonce
+				}),
+				success : function( response ) {
+					success_callback.call($actionElnt, response);
+					$spinner.remove();
+				},
+				fail : function( response ){
+					$spinner.remove();
+					var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+						.click(function(){$msg.remove()});
+					$actionElnt.after($msg);
+					// $msg.get(0).scrollIntoView();
+				}
+			});
+			var $spinner = $actionElnt.next('.wpcf7-spinner');
+			if($spinner.length == 0)
+					$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
+			event.preventDefault();  
+			return false;
+		}
+
+		/**
+		 * refresh_report : get data + designer
+		 */
+		function refresh_report(){
+			var $actionElnt = $(this);
+			ajax_report_action.call(this, "report_html", function( response ) {
+				var $form = $actionElnt.parents('form:first');
+				if(response){
+					if(typeof response === 'string' || response instanceof String){
+						if(response.endsWith('null'))
+							response = substr(response, 0, response.length-4);
+						var $response = $(response);
+						var id;
+						if( ! (id = $response.attr('id') ) ){
+							id = 'report_' + uniqid(6);
+							$response.attr('id', id);
+						}
+						var css = get_report_css( $form, id );
+						if( css )
+							$response.append( '<style>' + css + '</style>' );
+						$form.find('.agdpreport:eq(0)')
+							.nextAll('.agdpreport')
+								.remove()
+								.end()
+							.replaceWith($response);
+						$('#wpbody-content > .wrap > .agdpreport.error').remove();
+						//masque le menu
+						$form.find('#agdp_report-render-menu.active > a.toggler').trigger('click');
+						$response.each(refresh_report_table_designer);
+					}
+				}
+				else
+					$form.find('.agdpreport').html('!');
+			});
+		}
+
+		/**
+		 * get_report_all_columns
+		 */
+		function get_report_all_columns( callback ){
+			var $actionElnt = $(this);
+			ajax_report_action.call(this, "get_report_columns", function( response ) {
+				callback.call(this, response);
+			});
+		}
+
+		/**
+		 * refresh_report_menu 
+		 */
+		function refresh_report_menu(){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $menu_items = $render.find('.report_menu_item');
+			var $menu = $menu_items.parent('#agdp_report-render-menu');
+			if( $menu.length === 0 ){
+				$menu = $('<div id="agdp_report-render-menu"></div>')
+					.html( $('<a class="toggler dashicons-before dashicons-menu"></a>')
+						.on('click', function(){
+							if( $menu.is('.active') )
+								hide_report_menu( true );
+							else {
+								$menu.addClass('active');
+								$(document.body).on('click', '*', hide_report_menu );
+							}
 						})
+					)
+					.insertBefore( $menu_items.first() )
+					.append( $menu_items )
+					
+					//reset all inputs
+					.append( $('<a class="report_menu_item reset-designer dashicons-before dashicons-trash">Réinitialiser</a>')
+						.on('click', function(){ 
+							if( ! confirm("Êtes vous sûr de vouloir tout réinitialiser ?") )
+								return;
+							$render.find('textarea[name="table_render"]').text('');
+							refresh_report.call($render);
+						})
+					)
+					.parent('.hide_during_loading.loading')
+						.removeClass('loading')
+						.end()
+				;
+				/* Masque le menu si le click est hors menu */
+				function hide_report_menu(event) {
+					if( event !== true ){
+						if( hide_report_menu.previous_target === event.target ) //optimise because repeated test
+							return;
+						if( $menu.is('.active')
+						&& $menu.get(0).contains( event.target ) ){
+							hide_report_menu.previous_target = event.target; //cache
+							return; //is inside, keep open
+						}
+					}
+					$menu.removeClass('active');
+					$(document.body).off('click', '*', hide_report_menu );
+				}
+			}
+			
+			/*****************
+			 * hidden_columns
+			 */
+			var table_render = get_input_jso.call($render, 'textarea[name="table_render"]');
+			var table_columns = table_render["columns"] ? table_render["columns"] : {};
+			var $hidden_columns = $menu.find('.hidden_columns:first');
+			$hidden_columns.find('option:gt(0)').remove();
+			for( table_column in table_columns ){
+				if( table_columns[table_column]['visible'] === undefined
+				|| table_columns[table_column]['visible'] )
+					continue;
+				if( $hidden_columns.length === 0 ){
+					$hidden_columns
+						= $('<select class="hidden_columns"><option value=""></option></select>')
+							.on('change', function(){
+								var column = $hidden_columns.val();
+								if( ! column ) return;
+								set_table_render_option.call( this, 'columns', column, 'visible', true);
+								$hidden_columns.children('option[value="' + column + '"]').remove();
+								
+								var $options = $hidden_columns.children('option');
+								if( $options.length <= 1 ){
+									$hidden_columns.hide();
+									$menu.toggleClass('active');
+
+								} else if( $options.length === 2 )
+									$options.filter(':first').text('1 colonne cachée');
+								else
+									$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
+								
+								var $table = $render.find('.agdpreport > table');
+								var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
+								var index = $th.prevAll('th').length;
+								$table.find('tr').each(function(){
+									$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+										.show();
+								});
+							})
+							.appendTo(
+								$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+									.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+							)
+					;
+				}
+				var label = typeof table_columns[table_column] === 'object' 
+							? (table_columns[table_column]['label'] ? table_columns[table_column]['label'] : table_column)
+							: table_columns[table_column]
+				$hidden_columns.append('<option value="' + table_column + '">' + label + '</option>');
+			}
+			var $options = $hidden_columns.children('option');
+			if( $options.length <= 1 )
+				$hidden_columns.hide();
+			else {
+				if( $options.length === 2 )
+					$options.filter(':first').text('1 colonne cachée');
+				else
+					$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
+				$hidden_columns.show();
+			}
+			/* hidden_columns
+			 ****************/
+			
+			/*****************
+			 * Check columns
+			 */
+			var $ckeck_columns_menu = $menu.find('.ckeck_columns:first');
+			if( $ckeck_columns_menu.length === 0 ){
+				$ckeck_columns_menu = $('<a class="ckeck_columns dashicons-before dashicons-editor-help">Contrôler les colonnes</a>')
+					.on('click', function(e){
+						get_report_all_columns.call( this, function( response ){
+							if(typeof response === 'string' || response instanceof String){
+								alert(response);
+								return;
+							}
+							var $msg = $('<ul></ul>');
+							columns = response;
+							for( var c in columns ){
+								switch( columns[c]['render'] ){
+									case false:
+										$msg.append(
+											$('<li><code>`' + c + '`</code> : <b>ABSENT !</b>&nbsp;</li>')
+												.attr('column', c)
+												.append($('<a></a>')
+													.attr('title', 'Ajoute la colonne')
+													.addClass('float-right')
+													.append('<span class=" dashicons-before dashicons-table-col-after"></span>')
+													.on('click', function(e){
+														var $this = $(this);
+														var column = $this.parents('li:first').attr('column');
+														var $table = $render.find('.agdpreport > table');
+														$td = $table.find('tr > [column=' + column + ']');
+														var remove = $td.length;
+														if( remove ){
+															$td.remove();
+														} else {
+															//TODO prepend ne va pas avec Afficher colonne d'index
+															$table.find('> thead > tr')
+																.prepend('<th column="' + column + '">' + column + '</th>');
+															$table.find('> tbody > tr')
+																.prepend('<td column="' + column + '">' + column + '</td>');
+															$table.find('> tfoot > tr')
+																.prepend('<th column="' +column + '">' + column + '</th>');
+														}
+														$this
+															.children('span:first')
+																.toggleClass('dashicons-table-col-after')
+																.toggleClass('dashicons-table-col-delete')
+																.end()
+															.attr('title', remove ? 'Ajoute la colonne' : 'Masque la colonne')
+														;
+														// save_table_designer();
+														// var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
+														// var columns = table_render["columns"] ? table_render["columns"] : {};
+														// if( remove )
+															// columns[column] = undefined;
+														// else
+															// columns[column] = column;
+														// table_render["columns"] = columns;
+														// var $input_table_render = get_input.call( $table, 'textarea[name="table_render"]');
+														// $input_table_render.text( JSON.stringify( table_render ) );
+														if( remove ){
+															columns[column] = undefined;
+														} else {
+															set_table_render_option.call( $render, 'columns', column, 'label', column);
+															set_table_render_option.call( $render, 'columns', column, 'index', 0);
+															set_table_render_option.call( $render, 'columns', column, 'visible', true);
+														}
+														refresh_report.call($table);
+														e.preventDefault();
+													})
+												)
+										);
+										break;
+									case 'hidden':
+										$msg.append(
+											$('<li><code>`' + c + '`</code> : <b>masquée</b>&nbsp;</li>')
+												.attr('column', c)
+												.append($('<a></a>')
+													.attr('title', 'Rend visible la colonne')
+													.addClass('float-right')
+													.append('<span class=" dashicons-before dashicons-visibility"></span>')
+													.on('click', function(e){
+														var $this = $(this);
+														var column = $this.parents('li:first').attr('column');
+														var $table = $render.find('.agdpreport > table');
+														var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
+														var index = $th.prevAll('th').length;
+														$table.find('tr').each(function(){
+															$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+															.toggleClass('hidden');
+														});														
+														
+														var isHidden = $th.is('.hidden');
+														$this
+															.children('span:first')
+																.toggleClass('dashicons-visibility')
+																.toggleClass('dashicons-hidden')
+																.end()
+															.attr('title', isHidden ? 'Rend visible la colonne' : 'Masque la colonne')
+														;
+														save_table_designer.call( $table );
+														e.preventDefault();
+													})
+												)
+										);
+										break;
+								}
+								if( columns[c]['info'] )
+									$msg.append($('<li><code>`' + c + '`</code> : <b>' + columns[c]['info'] + '</b></li>')
+										.attr('column', c)
+									);
+							}
+							if( $msg.children().length === 0 )
+								$msg.text('Rien à déclarer, tout va bien.');
+							
+							$msg.dialog({                   
+								'dialogClass'   : 'wp-dialog',           
+								'modal'         : true,
+								'closeOnEscape' : true,      
+								'buttons'       : { "Fermer": function() { $(this).dialog('close'); } },
+								'title'			: "Contrôle des colonnes",
+							});
+							
+							$menu.toggleClass('active');
+						});
+						e.preventDefault();
+					})
+					.appendTo( $('<label></label>')
 						.appendTo(
 							$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
 								.insertBefore( $menu.find('.report_menu_item.reset-designer') )
 						)
+					)
+				;
+			}		
+			/* Check columns
+			 ****************/
+			 
+			
+			/*****************
+			 * Refresh
+			 */
+			var $refresh_report_menu = $menu.find('.refresh_report:first');
+			if( $refresh_report_menu.length === 0 ){
+				$refresh_report_menu = $('<a class="refresh_report dashicons-before dashicons-update">Rafraîchir</a>')
+					.on('click', refresh_report)
+					.appendTo( $('<label></label>')
+						.appendTo(
+							$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+								.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+						)
+					)
 				;
 			}
-			var label = typeof table_columns[table_column] === 'object' 
-						? (table_columns[table_column]['label'] ? table_columns[table_column]['label'] : table_column)
-						: table_columns[table_column]
-			$hidden_columns.append('<option value="' + table_column + '">' + label + '</option>');
+			/* Refresh
+			 ****************/
+			 
+			return true;
 		}
-		var $options = $hidden_columns.children('option');
-		if( $options.length <= 1 )
-			$hidden_columns.hide();
-		else {
-			if( $options.length === 2 )
-				$options.filter(':first').text('1 colonne cachée');
-			else
-				$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
-			$hidden_columns.show();
-		}
-		/* hidden_columns
-		 ****************/
-		
-		/*****************
-		 * Check columns
-		 */
-		var $ckeck_columns_menu = $menu.find('.ckeck_columns:first');
-		if( $ckeck_columns_menu.length === 0 ){
-			$ckeck_columns_menu = $('<a class="ckeck_columns dashicons-before dashicons-editor-help">Contrôler les colonnes</a>')
-				.on('click', function(e){
-					get_report_all_columns.call( this, function( response ){
-						if(typeof response === 'string' || response instanceof String){
-							alert(response);
-							return;
-						}
-						var $msg = $('<ul></ul>');
-						columns = response;
-						for( var c in columns ){
-							switch( columns[c]['render'] ){
-								case false:
-									$msg.append(
-										$('<li><code>`' + c + '`</code> : <b>ABSENT !</b>&nbsp;</li>')
-											.attr('column', c)
-											.append($('<a></a>')
-												.attr('title', 'Ajoute la colonne')
-												.addClass('float-right')
-												.append('<span class=" dashicons-before dashicons-table-col-after"></span>')
-												.on('click', function(e){
-													var $this = $(this);
-													var column = $this.parents('li:first').attr('column');
-													var $table = $render.find('.agdpreport > table');
-													$td = $table.find('tr > [column=' + column + ']');
-													var remove = $td.length;
-													if( remove ){
-														$td.remove();
-													} else {
-														//TODO prepend ne va pas avec Afficher colonne d'index
-														$table.find('> thead > tr')
-															.prepend('<th column="' + column + '">' + column + '</th>');
-														$table.find('> tbody > tr')
-															.prepend('<td column="' + column + '">' + column + '</td>');
-														$table.find('> tfoot > tr')
-															.prepend('<th column="' +column + '">' + column + '</th>');
-													}
-													$this
-														.children('span:first')
-															.toggleClass('dashicons-table-col-after')
-															.toggleClass('dashicons-table-col-delete')
-															.end()
-														.attr('title', remove ? 'Ajoute la colonne' : 'Masque la colonne')
-													;
-													// save_table_designer();
-													// var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
-													// var columns = table_render["columns"] ? table_render["columns"] : {};
-													// if( remove )
-														// columns[column] = undefined;
-													// else
-														// columns[column] = column;
-													// table_render["columns"] = columns;
-													// var $input_table_render = get_input.call( $table, 'textarea[name="table_render"]');
-													// $input_table_render.text( JSON.stringify( table_render ) );
-													if( remove ){
-														columns[column] = undefined;
-													} else {
-														set_table_render_option.call( $render, 'columns', column, 'label', column);
-														set_table_render_option.call( $render, 'columns', column, 'index', 0);
-														set_table_render_option.call( $render, 'columns', column, 'visible', true);
-													}
-													refresh_report.call($table);
-													e.preventDefault();
-												})
-											)
-									);
-									break;
-								case 'hidden':
-									$msg.append(
-										$('<li><code>`' + c + '`</code> : <b>masquée</b>&nbsp;</li>')
-											.attr('column', c)
-											.append($('<a></a>')
-												.attr('title', 'Rend visible la colonne')
-												.addClass('float-right')
-												.append('<span class=" dashicons-before dashicons-visibility"></span>')
-												.on('click', function(e){
-													var $this = $(this);
-													var column = $this.parents('li:first').attr('column');
-													var $table = $render.find('.agdpreport > table');
-													var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
-													var index = $th.prevAll('th').length;
-													$table.find('tr').each(function(){
-														$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
-														.toggleClass('hidden');
-													});														
-													
-													var isHidden = $th.is('.hidden');
-													$this
-														.children('span:first')
-															.toggleClass('dashicons-visibility')
-															.toggleClass('dashicons-hidden')
-															.end()
-														.attr('title', isHidden ? 'Rend visible la colonne' : 'Masque la colonne')
-													;
-													save_table_designer.call( $table );
-													e.preventDefault();
-												})
-											)
-									);
-									break;
-							}
-							if( columns[c]['info'] )
-								$msg.append($('<li><code>`' + c + '`</code> : <b>' + columns[c]['info'] + '</b></li>')
-									.attr('column', c)
-								);
-						}
-						if( $msg.children().length === 0 )
-							$msg.text('Rien à déclarer, tout va bien.');
-						
-						$msg.dialog({                   
-							'dialogClass'   : 'wp-dialog',           
-							'modal'         : true,
-							'closeOnEscape' : true,      
-							'buttons'       : { "Fermer": function() { $(this).dialog('close'); } },
-							'title'			: "Contrôle des colonnes",
-						});
-						
-						$menu.toggleClass('active');
-					});
-					e.preventDefault();
-				})
-				.appendTo( $('<label></label>')
-					.appendTo(
-						$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
-							.insertBefore( $menu.find('.report_menu_item.reset-designer') )
-					)
-				)
-			;
-		}		
-		/* Check columns
-		 ****************/
-		 
-		
-		/*****************
-		 * Refresh
-		 */
-		var $refresh_report_menu = $menu.find('.refresh_report:first');
-		if( $refresh_report_menu.length === 0 ){
-			$refresh_report_menu = $('<a class="refresh_report dashicons-before dashicons-update">Rafraîchir</a>')
-				.on('click', refresh_report)
-				.appendTo( $('<label></label>')
-					.appendTo(
-						$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
-							.insertBefore( $menu.find('.report_menu_item.reset-designer') )
-					)
-				)
-			;
-		}
-		/* Refresh
-		 ****************/
-		 
-		return true;
-	}
 
-	/*************************
-	 *
-	 * report table designer *
-	 *
-	 *************************
-	 */
-	/**
-	 * refresh_report_designer()
-	 */
-	function refresh_report_table_designer(){
-		var $this = $(this);
-		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
-		var $table = $render.find('.agdpreport > table');
-		if( $table.length === 0 )
-			return false;
-		var show_table_designer = $render.find('input[name="report_show_table_designer"]:checked').length;
-		if( ! show_table_designer ){
-			if( $table.is('.report_table_designer') )
-				$table
-					.removeClass('report_table_designer')
-					.find('.report_table_designer')
-						.remove();
-			return false;
-		}
-		if( $table.length === 0
-		|| $table.is('.report_table_designer') )
-			return false;
-		
-		var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
-		var columns = table_render["columns"] ? table_render["columns"] : {};
-		$table
-			.addClass('report_table_designer')
-			//Caption
-			.children('caption').each(function(){
-				var column = 'caption';
-				var script = table_render[ column ] && table_render[ column ][ 'script' ] 
-					? table_render[ column ][ 'script' ] : '@REPORTTITLE';
-				var caption_class = table_render[ column ] && table_render[ column ][ 'class' ] 
-					? table_render[ column ][ 'class' ] : '';
-							
-				$(this)
-					.append( $('<div class="report_table_designer"></div>' )
-						.attr( 'column', column )
-						.append( 'Classe: ' )
-						.append( $('<textarea rows="1" cols="15" class="caption_class" title="Classe"></textarea>')
-							.attr('title', "Classe de la cellule Caption.\nPar exemple, CONCAT(\'percent-\', ROUND(COUNT(`ID`)/100))")
-							.val(caption_class)
-							.on('change', save_table_designer)
+		/*************************
+		 *
+		 * report table designer *
+		 *
+		 *************************
+		 */
+		/**
+		 * refresh_report_designer()
+		 */
+		function refresh_report_table_designer(){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $table = $render.find('.agdpreport > table');
+			if( $table.length === 0 )
+				return false;
+			var show_table_designer = $render.find('input[name="report_show_table_designer"]:checked').length;
+			if( ! show_table_designer ){
+				if( $table.is('.report_table_designer') )
+					$table
+						.removeClass('report_table_designer')
+						.find('.report_table_designer')
+							.remove();
+				return false;
+			}
+			if( $table.length === 0
+			|| $table.is('.report_table_designer') )
+				return false;
+			
+			var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
+			var columns = table_render["columns"] ? table_render["columns"] : {};
+			$table
+				.addClass('report_table_designer')
+				//Caption
+				.children('caption').each(function(){
+					var column = 'caption';
+					var script = table_render[ column ] && table_render[ column ][ 'script' ] 
+						? table_render[ column ][ 'script' ] : '@REPORTTITLE';
+					var caption_class = table_render[ column ] && table_render[ column ][ 'class' ] 
+						? table_render[ column ][ 'class' ] : '';
+								
+					$(this)
+						.append( $('<div class="report_table_designer"></div>' )
+							.attr( 'column', column )
+							.append( 'Classe: ' )
+							.append( $('<textarea rows="1" cols="15" class="caption_class" title="Classe"></textarea>')
+								.attr('title', "Classe de la cellule Caption.\nPar exemple, CONCAT(\'percent-\', ROUND(COUNT(`ID`)/100))")
+								.val(caption_class)
+								.on('change', save_table_designer)
+							)
+							.append( '&nbsp;&nbsp;Script: ' )
+							.append( $('<textarea rows="1" cols="40" class="caption_script"></textarea>')
+								.attr('title', "Script SQL du contenu de la cellule Caption.\nLa valeur par défault est @REPORTTITLE.\nPar exemple, CONCAT(@REPORTTITLE, ' - ', NOW())")
+								.val(script)
+								.on('change', save_table_designer)
+							)
 						)
-						.append( '&nbsp;&nbsp;Script: ' )
-						.append( $('<textarea rows="1" cols="40" class="caption_script"></textarea>')
-							.attr('title', "Script SQL du contenu de la cellule Caption.\nLa valeur par défault est @REPORTTITLE.\nPar exemple, CONCAT(@REPORTTITLE, ' - ', NOW())")
-							.val(script)
-							.on('change', save_table_designer)
-						)
-					)
-				;
-			}).end()
-			//Columns
-			.find('thead > tr').each(function(){
-				var column_index = 0;
-				$(this)
-					.children('th[column]')
-						.each(function(){
-							this.innerHTML += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne.&#013;Pour supprimer définitivement, appuyer sur la touche Ctrl."></a>';
-							var column = this.getAttribute('column');
-							this.setAttribute( 'title', column );
-							
-							$table.find('tbody > tr:first > td:eq(' + column_index + ')')
-									.attr('column', column);
-									
-							if( ! columns[ column ] || ! columns[ column ][ 'label' ] )
-								this.innerHTML += '<a class="is_new_column column-action dashicons-before dashicons-info-outline" title="Cette colonne est nouvelle"></a>';
-							this.innerHTML += '<a class="move_column move_column_right column-action dashicons-before dashicons-arrow-right" title="Décaler la colonne à gauche"></a>';
-							this.innerHTML += '<a class="move_column move_column_left column-action dashicons-before dashicons-arrow-left" title="Décaler la colonne à gauche"></a>';
-							
-							column_index++;
-						})
-						//hide_column
-						.on('click', '.hide_column', function(e){
-							var trash_column = e.ctrlKey;
-							var $th = $(this).parents('th:first');
-							var column = $th.attr('column');
-							if( ! trash_column )
-								set_table_render_option.call( this, 'columns', column, 'visible', false );
-							var index = $th.prevAll('th').length;
-							var $table = $th.parents('table:first');
-							$table
-								.find('tr').each(function(){
-									var $cell = $(this).find('th:eq(' + index + '), td:eq(' + index + ')');
-									if( trash_column )
-										$cell.remove();
-									else
-										$cell.hide();
-								})
-							;
-							refresh_report_menu.call( $table );
-							if( trash_column )
-								save_table_designer.call( $table );
-						})
-						//move_column
-						.on('click', '.move_column', function(){
-							var $this = $(this);
-							var $th = $this.parents('th:first');
-							var column = $th.attr('column');
-							var index = $th.prevAll('th').length;
-							var direction = $this.is('.move_column_left') ? -1 : +1;
-							set_table_render_option.call( this, 'columns', column, 'index', index + direction );
-							
-							var column_swap;
-							if( direction === -1 )
-								column_swap = $th.prev('th').attr('column');
-							else
-								column_swap = $th.next('th').attr('column');
-							set_table_render_option.call( this, 'columns', column_swap, 'index', index - direction );
-							
-							$th.parents('table:first')
-								.find('tr').each(function(){
-									//TODO colspan
-									$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
-										.each(function(){
-											var $cell = $(this);
-											if( direction === -1 )
-												$cell.insertBefore( $cell.prev( this.tagName ) );
-											else
-												$cell.insertAfter( $cell.next( this.tagName ) );
-										})
-									;
-								})
-							;
-						})
-						.end()
-					.clone()
-						.addClass('report_table_designer')
-						.insertAfter(this)
+					;
+				}).end()
+				//Columns
+				.find('thead > tr').each(function(){
+					var column_index = 0;
+					$(this)
 						.children('th[column]')
-							.attr('class', '')
 							.each(function(){
+								this.innerHTML += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne.&#013;Pour supprimer définitivement, appuyer sur la touche Ctrl."></a>';
 								var column = this.getAttribute('column');
-								var label = $(this).clone().children().remove().end().text();
-								if( columns[ column ] === undefined )
-									columns[ column ] = {};
-								else if( columns[ column ][ 'visible' ] === false )
-									$(this).addClass('hidden');
-								columns[ column ][ 'label' ] = label;
-								this.innerHTML = '<input class="column_label" value="' + label + '">';
+								this.setAttribute( 'title', column );
+								
+								$table.find('tbody > tr:first > td:eq(' + column_index + ')')
+										.attr('column', column);
+										
+								if( ! columns[ column ] || ! columns[ column ][ 'label' ] )
+									this.innerHTML += '<a class="is_new_column column-action dashicons-before dashicons-info-outline" title="Cette colonne est nouvelle"></a>';
+								this.innerHTML += '<a class="move_column move_column_right column-action dashicons-before dashicons-arrow-right" title="Décaler la colonne à gauche"></a>';
+								this.innerHTML += '<a class="move_column move_column_left column-action dashicons-before dashicons-arrow-left" title="Décaler la colonne à gauche"></a>';
+								
+								column_index++;
 							})
-							.on('change', ':input', save_table_designer)
-				;
-			}).end()
-			//Rows
-			.find('tbody > tr:first').each(function(){
-				//TODO ajouter une colonne de th avec le label "Classe" ou "Cellule"
-				$(this)
-					//Init attributes
-					.children('td[column]')
-						.each(function(){
-							var column = this.getAttribute('column');
-							//title="script"
-							var script = columns[ column ]['script'];
-							if( ! script )
-								script = '';
-							this.setAttribute( 'title', script );
-						})
-						.on('click', '.is_new_column', function(){
-						})
-						.end()
-					//Ligne de Classe class
-					.clone()
-						.addClass('report_table_designer')
-						.insertBefore(this)
-						.children('td[column]')
-							.attr('class', '')
-							.each(function(){
-								var column = this.getAttribute('column');
-								if( ! column )
-									return;
-								var attr_class = columns[ column ]['class'];
-								if( ! attr_class )
-									attr_class = '';
-								if( columns[ column ][ 'visible' ] === false )
-									$(this).addClass('hidden');
-								var $class = $('<div><div>Classe: <div></div>').append(
-									$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
-										.attr('title', "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)")
-										.val( attr_class )
-									)
+							//hide_column
+							.on('click', '.hide_column', function(e){
+								var trash_column = e.ctrlKey;
+								var $th = $(this).parents('th:first');
+								var column = $th.attr('column');
+								if( ! trash_column )
+									set_table_render_option.call( this, 'columns', column, 'visible', false );
+								var index = $th.prevAll('th').length;
+								var $table = $th.parents('table:first');
+								$table
+									.find('tr').each(function(){
+										var $cell = $(this).find('th:eq(' + index + '), td:eq(' + index + ')');
+										if( trash_column )
+											$cell.remove();
+										else
+											$cell.hide();
+									})
 								;
-								$(this)
-									.html($class)
+								refresh_report_menu.call( $table );
+								if( trash_column )
+									save_table_designer.call( $table );
+							})
+							//move_column
+							.on('click', '.move_column', function(){
+								var $this = $(this);
+								var $th = $this.parents('th:first');
+								var column = $th.attr('column');
+								var index = $th.prevAll('th').length;
+								var direction = $this.is('.move_column_left') ? -1 : +1;
+								set_table_render_option.call( this, 'columns', column, 'index', index + direction );
+								
+								var column_swap;
+								if( direction === -1 )
+									column_swap = $th.prev('th').attr('column');
+								else
+									column_swap = $th.next('th').attr('column');
+								set_table_render_option.call( this, 'columns', column_swap, 'index', index - direction );
+								
+								$th.parents('table:first')
+									.find('tr').each(function(){
+										//TODO colspan
+										$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+											.each(function(){
+												var $cell = $(this);
+												if( direction === -1 )
+													$cell.insertBefore( $cell.prev( this.tagName ) );
+												else
+													$cell.insertAfter( $cell.next( this.tagName ) );
+											})
+										;
+									})
 								;
 							})
-							.on('change', ':input', save_table_designer)
 							.end()
-						.end()
-					//Ligne de Script script
-					.clone()
-						.addClass('report_table_designer')
-						.insertBefore(this)
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each(function(){
+									var column = this.getAttribute('column');
+									var label = $(this).clone().children().remove().end().text();
+									if( columns[ column ] === undefined )
+										columns[ column ] = {};
+									else if( columns[ column ][ 'visible' ] === false )
+										$(this).addClass('hidden');
+									columns[ column ][ 'label' ] = label;
+									this.innerHTML = '<input class="column_label" value="' + label + '">';
+								})
+								.on('change', ':input', save_table_designer)
+					;
+				}).end()
+				//Rows
+				.find('tbody > tr:first').each(function(){
+					//TODO ajouter une colonne de th avec le label "Classe" ou "Cellule"
+					$(this)
+						//Init attributes
 						.children('td[column]')
-							.attr('class', '')
 							.each(function(){
 								var column = this.getAttribute('column');
-								if( ! column )
-									return;
+								//title="script"
 								var script = columns[ column ]['script'];
 								if( ! script )
-									script = '`' + column + '`';
-								var $script = $('<textarea class="column_script" spellcheck="false"></textarea>').val( script );
-								if( columns[ column ][ 'visible' ] === false )
-									$(this).addClass('hidden');
-								$(this)
-									.html($script)
-								;
-								$script.on('change', function(){
-									$script.nextAll('.input-alert').remove();
-									if( /'.*(?<!\\)"/.exec(this.value) )
-										$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
-											.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
-											.insertAfter($script)
-										;
-								}).trigger('change');
+									script = '';
+								this.setAttribute( 'title', script );
 							})
-							.on('change', ':input', save_table_designer)
+							.on('click', '.is_new_column', function(){
+							})
 							.end()
-						.end()
-				;
-			}).end()
-		;
-			
-	}
-	
-	/**
-	 * set_table_render_option (from textarea[name="table_render"] to textarea[name="table_render"])
-	 **/
-	function set_table_render_option( domain, column, option, value){
-		var $this = $(this);
-		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
-		var $table = $render.find('.agdpreport > table');
-		var $input = $render.find(':input[name="table_render"]');
-		var jso = $input.val();
-		if( ! jso )
-			jso = save_table_designer.call( this );
-		else
-			jso = get_input_jso.call( $input );
-		if( domain ){
-			if( ! jso[domain] )
-				jso[domain] = {};
-			if( ! jso[domain][column] )
-				jso[domain][column] = {};
-			if( ! option )
-				jso[domain][column] = value;
+						//Ligne de Classe class
+						.clone()
+							.addClass('report_table_designer')
+							.insertBefore(this)
+							.children('td[column]')
+								.attr('class', '')
+								.each(function(){
+									var column = this.getAttribute('column');
+									if( ! column )
+										return;
+									var attr_class = columns[ column ]['class'];
+									if( ! attr_class )
+										attr_class = '';
+									if( columns[ column ][ 'visible' ] === false )
+										$(this).addClass('hidden');
+									var $class = $('<div><div>Classe: <div></div>').append(
+										$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
+											.attr('title', "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)")
+											.val( attr_class )
+										)
+									;
+									$(this)
+										.html($class)
+									;
+								})
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+						//Ligne de Script script
+						.clone()
+							.addClass('report_table_designer')
+							.insertBefore(this)
+							.children('td[column]')
+								.attr('class', '')
+								.each(function(){
+									var column = this.getAttribute('column');
+									if( ! column )
+										return;
+									var script = columns[ column ]['script'];
+									if( ! script )
+										script = '`' + column + '`';
+									var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
+										.attr('title', "Script SQL pour la valeur des cellules de la colonne")
+										.val( script );
+									if( columns[ column ][ 'visible' ] === false )
+										$(this).addClass('hidden');
+									$(this)
+										.html($script)
+									;
+									$script.on('change', function(){
+										$script.nextAll('.input-alert').remove();
+										if( /'.*(?<!\\)"/.exec(this.value) )
+											$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
+												.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
+												.insertAfter($script)
+											;
+									}).trigger('change');
+								})
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+					;
+				}).end()
+				//Footer columns
+				.find('tfoot > tr').each(function(){
+					var column_index = 0;
+					$(this)
+						.children('th[column]')
+							.each(function(){
+								var column = this.getAttribute('column');
+								this.setAttribute( 'title', column );
+								
+								$table.find('tfoot > tr:first > th:eq(' + column_index + ')')
+										.attr('column', column);
+										
+								column_index++;
+							})
+							.end()
+						// .clone()
+							// .addClass('report_table_designer')
+							// .insertAfter(this)
+							// .children('th[column]')
+								// .attr('class', '')
+								// .each(function(){
+									// var column = this.getAttribute('column');
+									// var label = $(this).clone().children().remove().end().text();
+									// if( columns[ column ] === undefined )
+										// columns[ column ] = {};
+									// else if( columns[ column ][ 'visible' ] === false )
+										// $(this).addClass('hidden');
+									// columns[ column ][ 'label' ] = label;
+									// this.innerHTML = '<input class="column_label" value="' + label + '">';
+								// })
+								// .on('change', ':input', save_table_designer)
+						//Ligne de Script script
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each(function(){
+									var column = this.getAttribute('column');
+									if( ! column )
+										return;
+									var script = columns[ column ]['tfoot_script'];
+									if( ! script )
+										script = '`' + column + '`';
+									var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
+										.attr('title', "Script SQL pour la valeur des cellules de la colonne")
+										.val( script );
+									if( columns[ column ][ 'visible' ] === false )
+										$(this).addClass('hidden');
+									$(this)
+										.html($script)
+									;
+									$script.on('change', function(){
+										$script.nextAll('.input-alert').remove();
+										if( /'.*(?<!\\)"/.exec(this.value) )
+											$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
+												.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
+												.insertAfter($script)
+											;
+									}).trigger('change');
+								})
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+						//Ligne de Classe class
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each(function(){
+									var column = this.getAttribute('column');
+									if( ! column )
+										return;
+									var attr_class = columns[ column ]['tfoot_class'];
+									if( ! attr_class )
+										attr_class = '';
+									if( columns[ column ][ 'visible' ] === false )
+										$(this).addClass('hidden');
+									var $class = $('<div><div>Classe: <div></div>').append(
+										$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
+											.attr('title', "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)")
+											.val( attr_class )
+										)
+									;
+									$(this)
+										.html($class)
+									;
+								})
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+					;
+				}).end()
+				
+			;
+				
+		}
+		
+		/**
+		 * set_table_render_option (from textarea[name="table_render"] to textarea[name="table_render"])
+		 **/
+		function set_table_render_option( domain, column, option, value){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $table = $render.find('.agdpreport > table');
+			var $input = $render.find(':input[name="table_render"]');
+			var jso = $input.val();
+			if( ! jso )
+				jso = save_table_designer.call( this );
 			else
-				jso[domain][column][option] = value;
+				jso = get_input_jso.call( $input );
+			if( domain ){
+				if( ! jso[domain] )
+					jso[domain] = {};
+				if( ! jso[domain][column] )
+					jso[domain][column] = {};
+				if( ! option )
+					jso[domain][column] = value;
+				else
+					jso[domain][column][option] = value;
+			}
+			else {
+				if( ! jso[column] )
+					jso[column] = {};
+				if( ! option )
+					jso[column] = value;
+				else
+					jso[column][option] = value;
+			}
+			$input.text( JSON.stringify( jso ) );
 		}
-		else {
-			if( ! jso[column] )
-				jso[column] = {};
-			if( ! option )
-				jso[column] = value;
-			else
-				jso[column][option] = value;
+		
+		/**
+		 * save_table_designer
+		 **/
+		function save_table_designer(){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $table = $render.find('.agdpreport > table');
+			var $input_table_render = get_input.call( this, 'textarea[name="table_render"]');
+			var table_render = {};
+			var columns = {};
+			var column_index = 0;
+			$table
+				.find('> caption :input.caption_script, > caption :input.caption_class')
+					.each(function(){
+						if( ! this.value )
+							return;
+						var $this = $(this);
+						var $caption = $this.parent();
+						var column = $caption.attr('column');
+						var option = $this.is('.caption_script') ? 'script'
+									: ($this.is('.caption_class') ? 'class'
+									: false);
+						if( table_render[ column ] === undefined )
+							table_render[ column ] = {};
+						table_render[ column ][ option ] = this.value;
+					})
+					.end()
+				.find('> thead > tr.report_table_designer > th :input.column_label')
+					.each(function(){
+						var $th = $(this.parentNode);
+						var column = $th.attr('column');
+						var label = this.value;
+						var visible = $th.is(':visible') && ! $th.is('.hidden');
+						columns[ column ] = {
+							label: label,
+							visible: visible,
+							index: column_index++,
+						};
+					})
+					.end()
+				.find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class')
+					.each(function(){
+						if( ! this.value )
+							return;
+						var $this = $(this);
+						var column = $this.parents('[column]:first').attr('column');
+						var option_name = $this.is('.column_script') ? 'script'
+									: ($this.is('.column_class') ? 'class'
+									: false);
+						if( columns[ column ] === undefined )
+							columns[ column ] = {};
+						columns[ column ][ option_name ] = this.value;
+					})
+					.end()
+				.find('> tfoot > tr.report_table_designer > th :input.column_script, > tfoot > tr.report_table_designer > th :input.column_class')
+					.each(function(){
+						if( ! this.value )
+							return;
+						var block_var_prefix = 'tfoot_';
+						var $this = $(this);
+						var column = $this.parents('[column]:first').attr('column');
+						var option_name = $this.is('.column_script') ? block_var_prefix + 'script'
+									: ($this.is('.column_class') ? block_var_prefix + 'class'
+									: false);
+						if( columns[ column ] === undefined )
+							columns[ column ] = {};
+						if( option_name )
+							columns[ column ][ option_name ] = this.value;
+					})
+					.end()
+			;
+			if( Object.keys(columns).length )
+				table_render['columns'] = columns;
+			$input_table_render.text( JSON.stringify( table_render ) );
+			return columns;
 		}
-		$input.text( JSON.stringify( jso ) );
-	}
-	
-	/**
-	 * save_table_designer
-	 **/
-	function save_table_designer(){
-		var $this = $(this);
-		var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
-		var $table = $render.find('.agdpreport > table');
-		var $input_table_render = get_input.call( this, 'textarea[name="table_render"]');
-		var table_render = {};
-		var columns = {};
-		var column_index = 0;
-		$table
-			.find('> caption :input.caption_script, > caption :input.caption_class')
-				.each(function(){
-					if( ! this.value )
-						return;
-					var $this = $(this);
-					var $caption = $this.parent();
-					var column = $caption.attr('column');
-					var option = $this.is('.caption_script') ? 'script'
-								: ($this.is('.caption_class') ? 'class'
-								: false);
-					if( table_render[ column ] === undefined )
-						table_render[ column ] = {};
-					table_render[ column ][ option ] = this.value;
-				})
-				.end()
-			.find('> thead > tr.report_table_designer > th input.column_label')
-				.each(function(){
-					var $th = $(this.parentNode);
-					var column = $th.attr('column');
-					var label = this.value;
-					var visible = $th.is(':visible') && ! $th.is('.hidden');
-					columns[ column ] = {
-						label: label,
-						visible: visible,
-						index: column_index++,
-					};
-				})
-				.end()
-			.find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class')
-				.each(function(){
-					if( ! this.value )
-						return;
-					var $this = $(this);
-					var column = $this.parents('[column]:first').attr('column');
-					var option = $this.is('.column_script') ? 'script'
-								: ($this.is('.column_class') ? 'class'
-								: false);
-					if( columns[ column ] === undefined )
-						columns[ column ] = {};
-					columns[ column ][ option ] = this.value;
-				})
-		;
-		if( Object.keys(columns).length )
-			table_render['columns'] = columns;
-		$input_table_render.text( JSON.stringify( table_render ) );
-		return columns;
-	}
-	
-	/**
-	 * get_input
-	 **/
-	function get_input( path = '' ){
-		var $this = $(this);
-		if( ( path === '' && $this.is(':input') )
-		|| $this.is( path ) )
-			return $this;
-		var $form = $this.is('form') ? $this : $this.parents('form:first');
-		if( $form.length === 0 )
-			$form = $('form');
-		return $form.find( path );
-	}
-	
-	/**
-	 * get_input_jso
-	 **/
-	function get_input_jso( path = '' ){
-		var $input = get_input.call( this, path );
-		var value = $input.val();
-		if( ! value )
-			return {};
-		try{
-			return JSON.parse(value);
+		
+		/**
+		 * get_input
+		 **/
+		function get_input( path = '' ){
+			var $this = $(this);
+			if( ( path === '' && $this.is(':input') )
+			|| $this.is( path ) )
+				return $this;
+			var $form = $this.is('form') ? $this : $this.parents('form:first');
+			if( $form.length === 0 )
+				$form = $('form');
+			return $form.find( path );
 		}
-		catch(ex){
+		
+		/**
+		 * get_input_jso
+		 **/
+		function get_input_jso( path = '' ){
+			var $input = get_input.call( this, path );
+			var value = $input.val();
+			if( ! value )
+				return {};
 			try{
-				return JSON.parse(value.replaceAll('{','{\n ').replaceAll('}','}\n'));//plus lisible avec un n° de ligne
+				return JSON.parse(value);
 			}
 			catch(ex){
-				alert("Erreur de format dans '" + path + "'.val() : " + value + "\n" + ex);
+				try{
+					return JSON.parse(value.replaceAll('{','{\n ').replaceAll('}','}\n'));//plus lisible avec un n° de ligne
+				}
+				catch(ex){
+					alert("Erreur de format dans '" + path + "'.val() : " + value + "\n" + ex);
+				}
 			}
+			return {};
 		}
-		return {};
-	}
+			
+	});
 	
 	/**
 	 * edicon
