@@ -464,8 +464,10 @@ table.use_example_results td {
 }
 
 /* Packages */
-form#agdppackages .agdppackages-post_type {
-	display: inline-block;
+.agdppackages-post_type {
 	vertical-align: top;
 	padding-left: 2em;
+}
+form#agdppackages .agdppackages-post_type {
+	display: inline-block;
 }

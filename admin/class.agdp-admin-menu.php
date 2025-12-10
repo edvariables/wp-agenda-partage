@@ -128,7 +128,7 @@ class Agdp_Admin_Menu {
 		
 			$parent_slug = AGDP_TAG;
 			if ( current_user_can( 'manage_network_plugins' ) ) {
-				$page_title =  'Mise à jour';
+				$page_title =  'Mise à jour de l\'extension';
 				$menu_slug = $parent_slug . '-git-update';
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
 					array('Agdp_Admin_Options', 'agdp_git_update_page_html'), null);

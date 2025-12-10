@@ -28,8 +28,15 @@ class Agdp_Admin_Packages {
 	/**
 	 * get_packages_path
 	 */
-	public static function get_packages_path() {
-		return AGDP_PLUGIN_DIR . '/packages';
+	public static function get_packages_path( $mkdir_if_needed = false ) {
+		
+		$dir = AGDP_PLUGIN_DIR . '/packages';
+		
+		if( $mkdir_if_needed
+		&& ! file_exists($dir) ){
+			mkdir($dir,644);
+		}
+		return $dir;
 	}
 	
 	/**
@@ -45,6 +52,24 @@ class Agdp_Admin_Packages {
 	}
 	
 	/**
+	 * get_existing_post_type_package_file
+	 */
+	public static function get_existing_post_type_package_file( $post_type ) {
+		$mask = self::get_post_type_package_file( $post_type, '?*' );
+		$dir = dirname($mask);
+		$mask = basename($mask);
+		$cdir = scandir($dir);
+		foreach ($cdir as $key => $value){
+			if ( fnmatch( $mask, $value ) ){
+				if ( ! is_dir($dir . DIRECTORY_SEPARATOR . $value)){
+					return $dir . DIRECTORY_SEPARATOR . $value;
+				} 
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * get_packageable_post_types
 	 */
 	public static function get_packageable_post_types() {
@@ -54,15 +79,19 @@ class Agdp_Admin_Packages {
 	/**
 	 * generate_form
 	 */
-	 public static function generate_form( $post_type = false ) {
+	 public static function generate_form() {
+		if( ! empty($_POST['import-agdppackage']) ){
+			Agdp_Admin_Options::agdp_import_page_html();
+			return;
+		}
+		 
+		 
 		if( ! empty($_POST['packages_form_submit']) ){
 			self::submit_packages_form();
 		}
 		self::generate_packages( );
 		
-		echo sprintf('<form id="agdppackages" method="POST">'
-			, $post_type
-		);
+		echo sprintf('<form id="agdppackages" method="POST">');
 		
 		foreach( self::get_packageable_post_types() as $post_type ){
 			self::generate_form_post_type( $post_type );
@@ -159,18 +188,13 @@ class Agdp_Admin_Packages {
 	 * delete_packages
 	 */
 	private static function delete_packages( ) {
-		
-		$file_name = self::get_post_type_package_file( '*', '*');
-		$dir = dirname( $file_name );
-		if( ! file_exists($dir) ){
-			mkdir($dir,644);
-			return;
-		}
+		$mask = basename(self::get_post_type_package_file( '?*', '?*' ));
+		$dir = self::get_packages_path(true);
 		$cdir = scandir($dir);
 		foreach ($cdir as $key => $value){
-			if ( ! in_array($value,array(".",".."))){
+			if ( fnmatch( $mask, $value ) ){
 				if ( ! is_dir($dir . DIRECTORY_SEPARATOR . $value)){
-					unlink( $value );
+					unlink( $dir . DIRECTORY_SEPARATOR . $value );
 				} 
 			}
 		}
@@ -181,11 +205,6 @@ class Agdp_Admin_Packages {
 	 */
 	private static function generate_post_type_package( $post_type ) {
 		
-		echo sprintf('<div class="agdppackages-post_type" post_type="%s"><h3>%s</h3><ul>'
-			, $post_type
-			, $post_type
-		);
-		
 		$meta_key = 'is_package_root';
 		//posts existants avec is_package_root
 		$root_posts = get_posts([ 
@@ -194,7 +213,14 @@ class Agdp_Admin_Packages {
 			'meta_value' => '1',
 			'fields' => 'ids',
 		]);
+		if( ! $root_posts )
+			return;
 		
+		echo sprintf('<div class="agdppackages-post_type" post_type="%s"><h3>%s</h3><ul>'
+			, $post_type
+			, $post_type
+		);
+
 		$post_ids = Agdp_Posts::get_posts_and_descendants( $post_type, 'publish', $root_posts);
 		$posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
 		$max_update = '';
@@ -211,15 +237,31 @@ class Agdp_Admin_Packages {
 		}
 		$file_name = self::get_post_type_package_file( $post_type, $max_update );
 		
+		echo sprintf('<h4>%s</h4>', $file_name);
+		
 		$data = Agdp_Admin_Edit_Post_Type::get_posts_export( $posts );
 		if( $data ){
-			$data = json_encode($data);
+			$data = json_encode($data, JSON_OBJECT_AS_ARRAY & JSON_UNESCAPED_SLASHES);
+			// $data = serialize( json_decode($data) );//remove object reference
+			// $data = serialize( $data );//remove object reference
 			if( file_exists($file_name) )
 				unlink($file_name);
 			file_put_contents( $file_name, $data );
 		}
 		
-		echo sprintf('<h4>%s</h4>', $file_name);
+		$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import', Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0) );
+		// $nonce_name = Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0 );
+		echo sprintf('<form action="%s" method="POST">'
+			// . '<input type="hidden" name="%s" value="%s">'
+			. '<input type="hidden" name="import-agdppackage" value="1">'
+			. '<input type="hidden" name="agdppackage-post_type" value="%s">'
+			. '<button type="send"><span class="dashicons-before dashicons-database-import"></span>Importer le package</button>'
+			. '</form>'
+			, $url
+			// , $$nonce_name
+			, $post_type
+		);
+		
 		echo sprintf('<textarea style="width: 100%%;" rows="2">%s</textarea>', $data );
 
 		echo '</ul></div>';

@@ -232,7 +232,7 @@
 , #agdp_report-render .agdpreport > table > thead
 , #agdp_report-render .agdpreport > table > tfoot  {
   border-width: 2px;
-  border-style: dashed;
+  border-style: dotted;
 }
 #agdp_report-render .agdpreport > table > caption  {
   border-bottom: none;

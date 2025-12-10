@@ -5,6 +5,8 @@
  */
 class Agdp_Admin_Posts_Import {
 
+	const import_package_tag = 'agdppackage';
+
 	static $initialized = false;
 
 	public static function init() {
@@ -26,31 +28,65 @@ class Agdp_Admin_Posts_Import {
 	 */
 	public static function agdp_import_page_html() {
 		$action = 'import';
-
-		if( ! empty($_POST['action-data']) ){
+		
+		$import_package = empty($_REQUEST['import-'.self::import_package_tag]) ? false : $_REQUEST['import-'.self::import_package_tag];
+		if( $import_package ){
+			$data_source = self::import_package_tag;
+			if( ! class_exists('Agdp_Admin_Packages') ){
+				require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-packages.php");
+				Agdp_Admin_Packages::init();
+			}
+			$post_type = empty($_REQUEST[self::import_package_tag . '-post_type']) ? false : $_REQUEST[self::import_package_tag . '-post_type'];
+		
+			$file_name = Agdp_Admin_Packages::get_existing_post_type_package_file( $post_type );
+			if( $file_name && file_exists( $file_name ) ){
+				$action_data = file_get_contents( $file_name );
+				// $action_data = ($action_data);
+				// $action_data = htmlspecialchars_decode($action_data, ENT_QUOTES);
+				
+				$is_confirmed_action = false;
+				$confirm_action = true;
+				$add_title_suffix = false;
+				$title_suffix = '';
+				$create_news = true;
+				$update_existing = true;
+				$import_terms = true;
+			}			
+		}
+		else
+			$data_source = empty($_REQUEST['data_source']) ? false : $_REQUEST['data_source'];
+		
+		if( empty($action_data) ){
+			$action_data = empty($_POST['action-data']) ? false : $_POST['action-data'];
+			if( $action_data ){
+				$action_data = stripslashes($action_data);
+				$action_data = htmlspecialchars_decode($action_data, ENT_QUOTES);
 			
-			$is_confirmed_action = ! isset($_REQUEST['is_confirmed_action']) ? false : $_REQUEST['is_confirmed_action'];
-			if( $is_confirmed_action )
-				$confirm_action = false;
-			else
-				$confirm_action = ! isset($_REQUEST['confirm_action']) ? false : $_REQUEST['confirm_action'];
-			$add_title_suffix = empty($_REQUEST['add_title_suffix']) ? false : $_REQUEST['add_title_suffix'];
-			$title_suffix = empty($_REQUEST['title_suffix']) ? ' (importé)' : $_REQUEST['title_suffix'];
-			$create_news = empty($_REQUEST['create_news']) ? false : $_REQUEST['create_news'];
-			$update_existing = empty($_REQUEST['update_existing']) ? false : $_REQUEST['update_existing'];
-			$import_terms = empty($_REQUEST['import_terms']) ? false : $_REQUEST['import_terms'];
+				$is_confirmed_action = ! isset($_REQUEST['is_confirmed_action']) ? false : $_REQUEST['is_confirmed_action'];
+				if( $is_confirmed_action )
+					$confirm_action = false;
+				else
+					$confirm_action = ! isset($_REQUEST['confirm_action']) ? false : $_REQUEST['confirm_action'];
+				$add_title_suffix = empty($_REQUEST['add_title_suffix']) ? false : $_REQUEST['add_title_suffix'];
+				$title_suffix = empty($_REQUEST['title_suffix']) ? ' (importé)' : $_REQUEST['title_suffix'];
+				$create_news = empty($_REQUEST['create_news']) ? false : $_REQUEST['create_news'];
+				$update_existing = empty($_REQUEST['update_existing']) ? false : $_REQUEST['update_existing'];
+				$import_terms = empty($_REQUEST['import_terms']) ? false : $_REQUEST['import_terms'];
+			}
+		}
+		
+		if( $action_data ){
 			
 			$post_id = empty($_REQUEST['post']) ? false : $_REQUEST['post'];
 			$post_referer = $post_id ? get_post( $post_id ) : 0;
 
 			Agdp_Admin_Edit_Post_Type::check_rights( $action, $post_referer );
 			
-			$data_str = stripslashes($_POST['action-data']);
-			$data_str = htmlspecialchars_decode($data_str, ENT_QUOTES);
-			$data = maybe_unserialize($data_str);
-			if( is_string($data) )
-				$data = json_decode($data, true);
-			if( $data ){
+			$data_str = $action_data;
+			$action_data = maybe_unserialize($action_data); //TODO
+			if( is_string($action_data) )
+				$action_data = json_decode($action_data, true);
+			if( $action_data ){
 				if( $confirm_action ){
 					$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post_id ) );
 					//FORM
@@ -58,8 +94,9 @@ class Agdp_Admin_Posts_Import {
 						<div class="hidden">
 							<textarea name="action-data"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
 							<input type="hidden" name="is_confirmed_action" value="1">
+							<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
 						</div>
-						<div><h3>Importation en attente de confirmation</h3>
+						<div><h3>Importation<?php echo $data_source ? ' du package ' . $data_source : ''?> en attente de confirmation</h3>
 							<label><input type="checkbox" name="update_existing"<?php if( $update_existing ) echo ' checked';?>> Mettre à jour les enregistrements pré-existants (sur la base du titre) </label>
 							<br><label><input type="checkbox" name="create_news"<?php if( $create_news ) echo ' checked';?>> Créer de nouveaux enregistrements</label>
 							<br>&nbsp;&nbsp;<label><input type="checkbox" name="add_title_suffix"<?php if( $add_title_suffix ) echo ' checked';?>> Ajouter un suffixe aux titres </label>
@@ -73,19 +110,32 @@ class Agdp_Admin_Posts_Import {
 					
 				}
 				else
-					echo "<h3>Importation</h3>";
+					echo sprintf("<h3>Importation%s</h3>"
+						, $data_source ? ' du package ' . $data_source : ''
+					);
 				
-				$posts = self::agdp_import_posts( $data, $_REQUEST );
+				$options = array_merge( $_REQUEST, [
+					'data_source' => $data_source,
+					'confirm_action' => $confirm_action,
+					'is_confirmed_action' => $is_confirmed_action,
+					'add_title_suffix' => $add_title_suffix,
+					'title_suffix' => $title_suffix,
+					'create_news' => $create_news,
+					'update_existing' => $update_existing,
+					'import_terms' => $import_terms,
+				]);
+				$posts = self::agdp_import_posts( $action_data, $options );
 				if( $posts === false ) {
 					echo sprintf('<div class="error"><label>%s</label><pre>%s</pre></div>'
 						, 'Impossible de reconnaitre les données à importer'
-						, json_encode( $data )
+						, json_encode( $action_data )
 					);
 				}
 				elseif( is_array($posts) ){
 					if( ! $confirm_action )
-						echo sprintf('<div class="info"><label>%d importation%s</label>'
+						echo sprintf('<div class="info"><label>%d importation%s ou mise%s à jour</label>'
 							, count($posts)
+							, count($posts) > 1 ? 's' : ''
 							, count($posts) > 1 ? 's' : ''
 						);
 					elseif( count($posts) )
@@ -107,7 +157,7 @@ class Agdp_Admin_Posts_Import {
 			}
 			else {
 				echo "Aucune donnée importable.";
-				var_dump(($_POST['action-data']));
+				echo '<pre>'; var_dump($action_data, $_POST);echo '</pre>'; 
 			}
 			
 			if( $is_confirmed_action )
@@ -122,6 +172,7 @@ class Agdp_Admin_Posts_Import {
 			$import_terms = empty($_REQUEST['import_terms']) ? false : $_REQUEST['import_terms'];
 		}
 		
+		
 		$post_type = empty($_REQUEST['post_type']) ? false : $_REQUEST['post_type'];
 		if( ! $post_type ){
 			$post_id = empty($_REQUEST['post']) ? false : $_REQUEST['post'];
@@ -132,6 +183,7 @@ class Agdp_Admin_Posts_Import {
 		$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post ? $post->ID : 0) );
 		//FORM
 		?><form class="agdp-import-posts" action="<?php echo $url;?>" method="post">
+			<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
 			<div><h3>Coller ici les données à importer</h3>
 				<textarea name="action-data" rows="5" cols="100"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
 			</div>
@@ -160,6 +212,9 @@ class Agdp_Admin_Posts_Import {
 	private  static function agdp_import_posts( $data, &$options = false ) {
 		if( ! is_array($options) )
 			$options = [];
+		/**********
+		 * $data is an array of posts
+		 **/
 		if( empty($data['post']) ){
 			$new_posts = [];
 			$options['original_ids'] = [];
@@ -190,6 +245,11 @@ class Agdp_Admin_Posts_Import {
 				}
 			return $new_posts;
 		}
+		/***********/
+		
+		/*************
+		 * Single post
+		 **/
 		$confirm_action 		= isset($options['confirm_action']) && $options['confirm_action'];
 		$is_confirmed_action 	= isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
 		$add_title_suffix 		= isset($options['add_title_suffix']) && $options['add_title_suffix'];
@@ -212,18 +272,19 @@ class Agdp_Admin_Posts_Import {
 				);
 			return false;
 		}
-		
+				
 		$original_id = $data['post']['ID'];
 		
+		$data['_source_post'] = $data['post'];
 		foreach([ 'ID',
 			'post_password', 
 			'guid', 
 			'post_modified', 
 			'post_modified_gmt', 
 			'post_name'
-		 ] as $key)
+		 ] as $key){
 			unset($data['post'][$key]);
-		
+		 }
 		//post_parent 
 		if( ! empty($data['post']['post_parent']) ){
 			//TODO il y a un bug avec des mises à jour avec parent foireux
@@ -267,7 +328,7 @@ class Agdp_Admin_Posts_Import {
 			$existing = get_posts([
 				'post_type' => $data['post']['post_type'],
 				'post_status' => ['publish', 'pending', 'draft', 'private', 'future', $data['post']['post_status']],
-				'title' => $data['post']['post_title'],
+				'title' => wp_slash( $data['post']['post_title'] ),
 				'numberposts' => 2
 			]);
 			if( $existing ){
@@ -290,9 +351,13 @@ class Agdp_Admin_Posts_Import {
 			elseif( ! $create_news ){
 				return false;
 			}
-			else
+			else {
 				$update_existing = false;
+			}
 		}
+		
+		// \ problem in post_title
+		$data['post']['post_title'] = wp_slash($data['post']['post_title']);
 		
 		// update_existing
 		if( $update_existing ) {
@@ -305,13 +370,18 @@ class Agdp_Admin_Posts_Import {
 					, $original_id
 				);
 			}
+			
+			$same_import_package_key = self::compare_import_package_key( $update_existing->ID, $data, $options );
+			
 			if( $confirm_action ) {
-				echo sprintf( '<div><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a></div>'
+				
+				echo sprintf( '<div><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a>%s</div>'
 					, $confirm_key
-					, 'checked'
+					, $same_import_package_key ? '' : 'checked'
 					, Agdp::icon('update')
 					, get_edit_post_link( $update_existing->ID )
-					, htmlspecialchars( $data['post']['post_title'] )
+					, htmlspecialchars( stripslashes($data['post']['post_title']) )
+					, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
 				);
 				return $original_id;
 			}
@@ -322,11 +392,17 @@ class Agdp_Admin_Posts_Import {
 					// , Agdp::icon('no-alt')
 					// , htmlspecialchars( $data['post']['post_title'] )
 				// );
-				return $update_existing->ID; // pour original_ids
+				$options['original_ids'][$original_id.''] = $update_existing->ID;
+				return false;
 			}
 			
-			// wp_update_post
-			$new_post_id = wp_update_post( $data['post'], true );
+			if( $same_import_package_key ){
+				//skip db update
+				$new_post_id = $update_existing->ID;
+			}
+			else
+				// wp_update_post
+				$new_post_id = wp_update_post( $data['post'], true );
 		}
 		// create_news
 		elseif( $create_news ){
@@ -345,7 +421,7 @@ class Agdp_Admin_Posts_Import {
 					, $confirm_key
 					, 'checked'
 					, Agdp::icon('plus')
-					, htmlspecialchars( $data['post']['post_title'] )
+					, htmlspecialchars( stripslashes( $data['post']['post_title'] ) )
 					, $data['post']['post_type']
 				);
 				return $original_id;
@@ -367,8 +443,11 @@ class Agdp_Admin_Posts_Import {
 			$new_post_id = 0;
 		
 		if( $new_post_id ){
+			//Store import_package_key
+			self::update_import_package_key( $new_post_id, $data, $options );
+			
+			//Taxonomies
 			if( $import_terms ){
-				//Taxonomies
 				if( ! empty($post_terms) ) {
 					foreach($post_terms as $tax_name => $tax_inputs){
 						$result = wp_set_post_terms($new_post_id, $tax_inputs, $tax_name, false);
@@ -390,7 +469,7 @@ class Agdp_Admin_Posts_Import {
 			echo sprintf( '<div><a href="%s">%s %s</a></div>'
 				, get_edit_post_link( $new_post_id )
 				, Agdp::icon($icon)
-				, htmlspecialchars( $data['post']['post_title'] )
+				, htmlspecialchars( stripslashes( $data['post']['post_title'] ) )
 			);
 		}
 		return $new_post_id;
@@ -499,6 +578,66 @@ class Agdp_Admin_Posts_Import {
 			);
 		}
 		return $new_term_id;
+	}
+	
+	/**
+	 * get_import_package_key
+	 */
+	 public static function get_import_package_key( $post_id, $data ){
+
+		$post = get_post( $post_id );
+		$import_package_key = 
+		str_replace( '-', '',
+		str_replace( ':', '',
+			sprintf('%s|%s'
+				, $data['_source_post']['post_modified_gmt']
+				, $post->post_modified_gmt
+			)
+		));
+		return $import_package_key;
+	}
+	
+	/**
+	 * update_import_package_key
+	 */
+	 public static function update_import_package_key( $post_id, $data, $options ){
+		$data_source = empty($options['data_source']) ? false : $options['data_source'];
+		if( $data_source !== self::import_package_tag )
+			return false;
+
+		$import_package_key = self::get_import_package_key( $post_id, $data );
+		
+		$meta_key = '_' . self::import_package_tag . '_key';
+		
+		return update_post_meta( $post_id, $meta_key, $import_package_key );
+	}
+	
+	/**
+	 * delete_import_package_key
+	 */
+	 public static function delete_import_package_key( $post_id, $data ){
+		$meta_key = '_' . self::import_package_tag . '_key';
+		
+		return delete_post_meta( $post_id, $meta_key );
+	}
+	
+	/**
+	 * compare_import_package_key
+	 */
+	 public static function compare_import_package_key( $post_id, $data, $options ){
+		$data_source = empty($options['data_source']) ? false : $options['data_source'];
+		if( $data_source !== self::import_package_tag )
+			return false;
+		
+		$import_package_key = self::get_import_package_key( $post_id, $data );
+		
+		$meta_key = '_' . self::import_package_tag . '_key';
+		
+		$current_value = get_post_meta( $post_id, $meta_key, true );
+		
+		debug_log( __FUNCTION__, $import_package_key, $current_value , strcmp( $import_package_key, $current_value ) === 0);
+		
+		return strcmp( $import_package_key, $current_value ) === 0;
 	}
 }
 
