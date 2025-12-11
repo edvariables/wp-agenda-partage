@@ -58,6 +58,8 @@ class Agdp_Evenement extends Agdp_Post {
 			global $post;
 			$agdpevent = $post;
 		}
+		if( ! is_object($agdpevent) )
+			return '<span title="'.__CLASS__.'::'.__FUNCTION__.'()">?</span>';
 		
 		$post_title = isset( $agdpevent->post_title ) ? $agdpevent->post_title : '';
 		$separator = $no_html ? ', ' : '<br>';
