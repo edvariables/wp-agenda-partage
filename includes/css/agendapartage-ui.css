@@ -1,9 +1,40 @@
+/**
+ * ED20200326
+ * Feuille de styles pour Agenda partagé
+ */
 
-.float-right {
-	float: right;
+.alert, .alerte {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
+	border-radius: 2px;
+}
+.info {
+	border-style: solid;
+	border-color:green;
+	padding: 5px;
+	border-radius: 2px;
+}
+
+.align-right {
+	text-align: right;
 }
 .text-align-left {
 	text-align: left;
+}
+
+.text-green {
+	color: green !important;
+}
+.color-red {
+	color: darkred !important;
+}
+body.colors-dark .color-red {
+	color: lightsalmon !important;
+}
+
+.float-right {
+	float: right;
 }
  
 a:active, a:focus {

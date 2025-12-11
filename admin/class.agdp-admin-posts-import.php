@@ -60,7 +60,7 @@ class Agdp_Admin_Posts_Import {
 			$action_data = empty($_POST['action-data']) ? false : $_POST['action-data'];
 			if( $action_data ){
 				$action_data = stripslashes($action_data);
-				$action_data = htmlspecialchars_decode($action_data, ENT_QUOTES);
+				$action_data = htmlspecialchars_decode($action_data, ENT_NOQUOTES);
 			
 				$is_confirmed_action = ! isset($_REQUEST['is_confirmed_action']) ? false : $_REQUEST['is_confirmed_action'];
 				if( $is_confirmed_action )
@@ -84,19 +84,23 @@ class Agdp_Admin_Posts_Import {
 			
 			$data_str = $action_data;
 			$action_data = maybe_unserialize($action_data); //TODO
-			if( is_string($action_data) )
+			if( is_string($action_data) ){
 				$action_data = json_decode($action_data, true);
+				if( ! $action_data ){
+					debug_log(__CLASS__.'::'.__FUNCTION__, 'json_decode last error', json_last_error_msg(), $data_str);
+				}
+			}
 			if( $action_data ){
 				if( $confirm_action ){
 					$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import'/* $_SERVER['REQUEST_URI'] */, Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post_id ) );
 					//FORM
 					?><form class="agdp-import-posts confirmation" action="<?php echo $url;?>" method="post">
 						<div class="hidden">
-							<textarea name="action-data"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
+							<textarea name="action-data"><?php echo isset($data_str) ? htmlspecialchars( $data_str ) : '' ?></textarea>
 							<input type="hidden" name="is_confirmed_action" value="1">
 							<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
 						</div>
-						<div><h3>Importation<?php echo $data_source ? ' du package ' . $data_source : ''?> en attente de confirmation</h3>
+						<div><h1>Importation<?php echo $data_source ? ' du package ' . $data_source : ''?> en attente de confirmation</h1>
 							<label><input type="checkbox" name="update_existing"<?php if( $update_existing ) echo ' checked';?>> Mettre à jour les enregistrements pré-existants (sur la base du titre) </label>
 							<br><label><input type="checkbox" name="create_news"<?php if( $create_news ) echo ' checked';?>> Créer de nouveaux enregistrements</label>
 							<br>&nbsp;&nbsp;<label><input type="checkbox" name="add_title_suffix"<?php if( $add_title_suffix ) echo ' checked';?>> Ajouter un suffixe aux titres </label>
@@ -104,16 +108,18 @@ class Agdp_Admin_Posts_Import {
 							<br><label><input type="checkbox" name="import_terms"<?php if( $import_terms ) echo ' checked';?>> Importer les taxonomies</label>
 							
 						</div>
-						<div class="confirm_action_posts"><div class="info"><label>Veuillez confirmer les mises à jours et importations.</div>
-						
+						<ul id="confirm_action_posts" class="confirm_action_posts">
+							<h3>Veuillez confirmer les mises à jours et importations.</h3>
 					<?php
 					
 				}
-				else
-					echo sprintf("<h3>Importation%s</h3>"
+				else {
+					echo sprintf("<h1>Importation%s</h1>"
 						, $data_source ? ' du package ' . $data_source : ''
 					);
+				}
 				
+				//Import ou Cases à cocher de confirmation
 				$options = array_merge( $_REQUEST, [
 					'data_source' => $data_source,
 					'confirm_action' => $confirm_action,
@@ -133,7 +139,7 @@ class Agdp_Admin_Posts_Import {
 				}
 				elseif( is_array($posts) ){
 					if( ! $confirm_action )
-						echo sprintf('<div class="info"><label>%d importation%s ou mise%s à jour</label>'
+						echo sprintf('<div class="info">%d importation%s ou mise%s à jour</div>'
 							, count($posts)
 							, count($posts) > 1 ? 's' : ''
 							, count($posts) > 1 ? 's' : ''
@@ -141,13 +147,34 @@ class Agdp_Admin_Posts_Import {
 					elseif( count($posts) )
 						echo '';
 					else
-						echo '<div>rien à faire</div>';
+						echo '<div class="info">rien à faire</div>';
 					
 				}
 				
 				if( $confirm_action ){
 					?>
-					</div>
+					</ul>
+					<script>var $ = jQuery;
+					var $inputs = $('#confirm_action_posts li input[type="checkbox"][name^="confirm_update_agdpreport_"]');
+					if( $inputs.length > 0 ){
+						$('<div></div>')
+							.css('position', 'relative')
+							.css('top', '-5px')
+							.append( $('<a class="check-all dashicons-before dashicons-yes-alt">toutes</a>')
+								.click(function(e){
+									$inputs.prop('checked', 'checked');
+								})
+							)
+							.append('&nbsp;')
+							.append( $('<a class="check-none dashicons-before dashicons-editor-removeformatting">aucune</a>')
+								.click(function(e){
+									$inputs.removeAttr('checked');
+								})
+							)
+							.insertBefore( $inputs.first().parents('li:first') )
+						;
+					}
+					</script>
 					<button type="send" class="button button-primary button-large">
 						<span class="dashicons-before dashicons-database-import"></span><?php echo "Confirmer l'importation"?>
 					</button>
@@ -188,7 +215,7 @@ class Agdp_Admin_Posts_Import {
 		?><form class="agdp-import-posts" action="<?php echo $url;?>" method="post">
 			<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
 			<div><h3>Coller ici les données à importer</h3>
-				<textarea name="action-data" rows="5" cols="100"><?php echo isset($data_str) ? $data_str : '' ?></textarea>
+				<textarea name="action-data" rows="5" cols="100"><?php echo isset($data_str) ? htmlspecialchars( $data_str ) : '' ?></textarea>
 			</div>
 			<label><input type="checkbox" name="confirm_action"<?php if( $confirm_action ) echo ' checked';?>> Confirmer chaque importation</label>
 			<div>
@@ -212,7 +239,7 @@ class Agdp_Admin_Posts_Import {
 		
 	}
 	/**
-	 * Import post
+	 * Imports post or add a confirmation checkbox
 	 * $data['post'], $data['metas']
 	 */
 	private  static function agdp_import_posts( $data, &$options = false ) {
@@ -380,8 +407,8 @@ class Agdp_Admin_Posts_Import {
 			$same_import_package_key = self::compare_import_package_key( $update_existing->ID, $data, $options );
 			
 			if( $confirm_action ) {
-				
-				echo sprintf( '<div><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a>%s</div>'
+				//checkbox
+				echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a>%s</li>'
 					, $confirm_key
 					, $same_import_package_key ? '' : 'checked'
 					, Agdp::icon('update')
@@ -423,7 +450,7 @@ class Agdp_Admin_Posts_Import {
 				);
 			}
 			if( $confirm_action ) {
-				echo sprintf( '<div><label><input type="checkbox" name="%s" %s>%s Création de %s [%s]</div>'
+				echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Création de %s [%s]</li>'
 					, $confirm_key
 					, 'checked'
 					, Agdp::icon('plus')
@@ -435,7 +462,7 @@ class Agdp_Admin_Posts_Import {
 			
 			if( $is_confirmed_action
 			&& empty( $options[ $confirm_key ] ) ){
-				// echo sprintf( '<div>%s Ignore %s</div>'
+				// echo sprintf( '<li>%s Ignore %s</li>'
 					// , Agdp::icon('no-alt')
 					// , htmlspecialchars( $data['post']['post_title'] )
 				// );

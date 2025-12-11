@@ -3,33 +3,6 @@
  * Feuille de styles pour Agenda partagé
  */
 
-.alert, .alerte {
-	border-style: solid;
-	border-color:orange;
-	padding: 5px;
-	border-radius: 2px;
-}
-.info {
-	border-style: solid;
-	border-color:green;
-	padding: 5px;
-	border-radius: 2px;
-}
-
-.align-right {
-	text-align: right;
-}
-
-.text-green {
-	color: green !important;
-}
-.color-red {
-	color: darkred !important;
-}
-body.colors-dark .color-red {
-	color: lightsalmon !important;
-}
-
 /* ED200318 "Fièrement propulsé par Word Press" */
 .site-info > a
 , .masquer

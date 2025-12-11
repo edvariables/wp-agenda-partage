@@ -733,7 +733,6 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			
 			$data[] = $post_data;
 		}
-		// echo json_encode( $data );
 		
 		if( $used_terms ){
 			$data['terms'] = static::get_terms_export( $used_terms );
@@ -875,6 +874,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 				foreach ($post_meta_infos as $meta_info) {
 					$meta_key = $meta_info->meta_key;
 					if ( substr($meta_key, 0, strlen('_wp_old') ) === '_wp_old' )
+						continue;
+					if( $meta_info->meta_value === null )
 						continue;
 					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
 					$meta_value = addslashes($meta_info->meta_value);

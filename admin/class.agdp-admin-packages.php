@@ -286,6 +286,8 @@ class Agdp_Admin_Packages {
 				unlink($file_name);
 			file_put_contents( $file_name, $data );
 		}
+		else
+			$data = '';
 		
 		$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import', Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0) );
 		// $nonce_name = Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0 );
