@@ -88,7 +88,7 @@ class Agdp_Admin_Posts_Import {
 				$action_data = json_decode($action_data, true);
 			if( $action_data ){
 				if( $confirm_action ){
-					$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post_id ) );
+					$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import'/* $_SERVER['REQUEST_URI'] */, Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post_id ) );
 					//FORM
 					?><form class="agdp-import-posts confirmation" action="<?php echo $url;?>" method="post">
 						<div class="hidden">
@@ -148,7 +148,10 @@ class Agdp_Admin_Posts_Import {
 				if( $confirm_action ){
 					?>
 					</div>
-					<input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Confirmer l'importation">
+					<button type="send" class="button button-primary button-large"><span class="dashicons-before dashicons-database-import"></span>Confirmer l'importation</button>
+			
+					<!-- input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Confirmer l'importation"--!>
+						<input type="hidden" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="1">
 						<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
 					</form>
 					<?php
@@ -180,7 +183,7 @@ class Agdp_Admin_Posts_Import {
 			$post_type = $post ? $post->post_type : false;
 		}
 		
-		$url = wp_nonce_url( $_SERVER['REQUEST_URI'], Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post ? $post->ID : 0) );
+		$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import' /* $_SERVER['REQUEST_URI'] */, Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post ? $post->ID : 0) );
 		//FORM
 		?><form class="agdp-import-posts" action="<?php echo $url;?>" method="post">
 			<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
@@ -198,7 +201,8 @@ class Agdp_Admin_Posts_Import {
 			</div>
 			<br>
 			<br>
-			<input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Importer">
+			<button type="send" class="button button-primary button-large"><span class="dashicons-before dashicons-database-view"></span>Préparer l'importation</button>
+			<input type="hidden" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="1">
 			<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
 		</form>
 		<?php
@@ -635,7 +639,7 @@ class Agdp_Admin_Posts_Import {
 		
 		$current_value = get_post_meta( $post_id, $meta_key, true );
 		
-		debug_log( __FUNCTION__, $import_package_key, $current_value , strcmp( $import_package_key, $current_value ) === 0);
+		// debug_log( __FUNCTION__, $import_package_key, $current_value , strcmp( $import_package_key, $current_value ) === 0);
 		
 		return strcmp( $import_package_key, $current_value ) === 0;
 	}

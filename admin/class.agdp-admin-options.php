@@ -325,7 +325,7 @@ class Agdp_Admin_Options {
 			$field_id = 'add_content_in_' . Agdp_Evenement::post_type;
 			add_settings_field(
 				$field_id, 
-				'Complément dans les pages d\'évènements',
+				'Complément Html dans les pages d\'évènements',
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
 				'agdp_section_agdpevents',

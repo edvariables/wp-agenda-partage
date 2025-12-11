@@ -455,6 +455,12 @@ class Agdp {
 	 * Cf Agdp_Admin_Menu
 	 */
 	public static function get_options( ) {
+		// global $wpdb;
+		// $row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", AGDP_TAG ) );
+		// $value = $row->option_value;
+		// debug_log( __FUNCTION__, $value);
+		// debug_log( __FUNCTION__, unserialize($value));
+		// die();
 		if( self::$options_cache )
 			return self::$options_cache;
 		return self::$options_cache = get_option( AGDP_TAG );

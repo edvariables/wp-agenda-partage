@@ -43,10 +43,10 @@ class Agdp_Admin_Packages {
 	 * get_post_type_package_file
 	 */
 	public static function get_post_type_package_file( $post_type, $last_update ) {
-		return sprintf('%s/%s_%s.pack.%s' 
+		return sprintf('%s/%s.pack.%s' 
 			, self::get_packages_path()
 			, $post_type
-			, str_replace(':', '', str_replace('-', '', str_replace(' ', '_', $last_update )))
+			// , str_replace(':', '', str_replace('-', '', str_replace(' ', '_', $last_update )))
 			, AGDP_TAG
 		);
 	}
@@ -77,19 +77,41 @@ class Agdp_Admin_Packages {
 	}
 	
 	/**
+	 * import_form
+	 */
+	 public static function import_form() {
+		 
+		if( ! empty($_POST['packages_form_submit']) ){
+			self::submit_packages_form();
+			self::generate_packages();
+		}
+		
+		echo sprintf('<form id="agdppackages" method="POST">');
+		
+		foreach( self::get_packageable_post_types() as $post_type ){
+			self::generate_form_post_type( $post_type );
+		}
+		
+		
+		echo sprintf('<div><input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large"></div>'
+			, 'Générer');
+		echo '</form>';
+	}
+	
+	/**
 	 * generate_form
 	 */
 	 public static function generate_form() {
-		if( ! empty($_POST['import-agdppackage']) ){
-			Agdp_Admin_Options::agdp_import_page_html();
-			return;
-		}
+		// if( ! empty($_POST['import-agdppackage']) ){
+			// Agdp_Admin_Options::agdp_import_page_html();
+			// return;
+		// }
 		 
 		 
 		if( ! empty($_POST['packages_form_submit']) ){
 			self::submit_packages_form();
+			self::generate_packages();
 		}
-		self::generate_packages( );
 		
 		echo sprintf('<form id="agdppackages" method="POST">');
 		
@@ -111,6 +133,22 @@ class Agdp_Admin_Packages {
 		echo sprintf('<div class="agdppackages-post_type"><h3>%s</h3><ul>'
 			, $post_type
 		);
+		
+		$file = self::get_existing_post_type_package_file( $post_type );
+		if( $file ){
+			$date = wp_date("d/m/Y H:i:s", filectime($file));
+			$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import', Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0) );
+			$url = add_query_arg( 'import-agdppackage', 1, $url );
+			$url = add_query_arg( 'agdppackage-post_type', $post_type, $url );
+			// . '<input type="hidden" name="import-agdppackage" value="1">'
+			// . '<input type="hidden" name="agdppackage-post_type" value="%s">'
+			echo sprintf('<div class="import-file">'
+					. '<a href="%s"><span class="dashicons-before dashicons-database-import"></span>Importer le package<br>du %s</a>'
+					. '</div>'
+				, $url
+				, $date//substr( $file, strlen( self::get_packages_path() ) + 1 )
+			);
+		}
 		
 		$root_posts = [0];
 		$post_ids = Agdp_Posts::get_posts_and_descendants( $post_type, 'publish', false, $root_posts, 0);

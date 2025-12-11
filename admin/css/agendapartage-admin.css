@@ -471,3 +471,14 @@ table.use_example_results td {
 form#agdppackages .agdppackages-post_type {
 	display: inline-block;
 }
+.agdppackages-post_type .import-file {
+	border: solid #2271b1 2px;
+	padding: 6px;
+	margin-bottom: 1em;
+}
+
+.wp-core-ui .button.button-large > .dashicons-before {
+	position: relative;
+	top: 5px;
+	left: -3px;
+}
