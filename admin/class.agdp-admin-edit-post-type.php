@@ -669,10 +669,14 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	/**
 	 * Export posts
 	 *
-	 * //TODO $all_terms
+	 * $options['include_terms'] as ids Array
 	 */
-	public static function get_posts_export( $posts, $all_terms = false ) {
+	public static function get_posts_export( $posts, $options = false ) {
 		$action = 'export';
+		
+		if( ! is_array($options) )
+			$options = [];
+		$include_terms = isset($options['include_terms']) ? $options['include_terms'] : false;
 		
 		$data = [];
 		$post_type_taxonomies = [];
@@ -734,22 +738,30 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			$data[] = $post_data;
 		}
 		
-		if( $used_terms ){
-			$data['terms'] = static::get_terms_export( $used_terms );
-			if( $data['terms'] ){
-				$data['taxonomies'] = [];
-				foreach($used_terms as $term)
-					if( ! isset($data['taxonomies'][$term->taxonomy]) ){
-						$taxonomies[$term->taxonomy] = json_decode(json_encode($taxonomies[$term->taxonomy]), true);
-						foreach( ['name_field_description', 
-							'slug_field_description', 
-							'parent_field_description', 
-							'desc_field_description',
-						 ] as $field )
-							unset($taxonomies[$term->taxonomy]['labels'][$field]);
-							
-						$data['taxonomies'][$term->taxonomy] = $taxonomies[$term->taxonomy];
-					}
+		if( $used_terms || $include_terms ){
+			$include_terms = array_merge( array_keys($used_terms), $include_terms);
+			$in_terms = get_terms([ 
+				'taxonomy' => array_keys($taxonomies),
+				'include' => $include_terms,
+				'fields' => 'all',
+			]);
+			if( count($in_terms) >= 0 ){
+				$data['terms'] = static::get_terms_export( $in_terms );
+				if( $data['terms'] ){
+					$data['taxonomies'] = [];
+					foreach($in_terms as $term)
+						if( ! isset($data['taxonomies'][$term->taxonomy]) ){
+							// $taxonomies[$term->taxonomy] = json_decode(json_encode($taxonomies[$term->taxonomy]), true);
+							// foreach( ['name_field_description', 
+								// 'slug_field_description', 
+								// 'parent_field_description', 
+								// 'desc_field_description',
+							 // ] as $field )
+								// unset($taxonomies[$term->taxonomy]['labels'][$field]);
+								
+							$data['taxonomies'][$term->taxonomy] = $term->taxonomy; //$taxonomies[$term->taxonomy];
+						}
+				}
 			}
 		}
 		
@@ -762,7 +774,6 @@ abstract class Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function get_terms_export( $terms ) {
 		$action = 'export';
-		
 		$data = [];
 		foreach( $terms as $term_id ){
 			if( is_a($term_id, 'WP_Term') ){

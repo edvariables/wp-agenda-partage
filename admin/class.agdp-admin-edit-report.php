@@ -58,7 +58,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * Ajoute des attributs
 	 */
 	public static function on_page_attributes_misc_attributes($post) {
-	    $meta_key = 'is_package_root';
+	    $meta_key = '_is_package_root';
 		if( get_post_meta( $post->ID, $meta_key, true ) )
 		echo sprintf( '<p class="post-attributes-label-wrapper menu-order-label-wrapper">'
 			. '<label class="post-attributes-label" for="%s">Racine de package</label></p>'
@@ -153,7 +153,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function get_metabox_all_fields(){
 		
-	    $meta_key = 'is_package_root';
+	    $meta_key = '_is_package_root';
 		$package_fields = [ $meta_key ];
 		
 		return array_merge(

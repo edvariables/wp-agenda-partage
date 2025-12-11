@@ -130,7 +130,7 @@ class Agdp_Admin_Packages {
 	 */
 	private static function generate_form_post_type( $post_type ) {
 		
-		echo sprintf('<div class="agdppackages-post_type"><h3>%s</h3><ul>'
+		echo sprintf('<div class="agdppackages-post_type"><h3>%s</h3><ul class="in_package">'
 			, $post_type
 		);
 		
@@ -154,8 +154,10 @@ class Agdp_Admin_Packages {
 		$post_ids = Agdp_Posts::get_posts_and_descendants( $post_type, 'publish', false, $root_posts, 0);
 		$posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
 		foreach($posts as $post){
-			$is_package_root = get_post_meta( $post->ID, 'is_package_root', true );
-			echo sprintf('<li><label><input type="checkbox" name="is_package_root[]" value="%d" %s>%s</label></li>'
+			$meta_key = '_is_package_root';
+			$is_package_root = get_post_meta( $post->ID, $meta_key, true );
+			echo sprintf('<li><label><input type="checkbox" name="%s[]" value="%d" %s>%s</label></li>'
+				, $meta_key
 				, $post->ID
 				, $is_package_root ? 'checked="checked"' : ''
 				, sprintf('<a href="%s" target="_blank">%s</a>'
@@ -165,7 +167,55 @@ class Agdp_Admin_Packages {
 			);
 		}
 		
+		self::generate_form_post_type_taxonomies( $post_type );
+		
 		echo '</ul></div>';
+	}
+	
+	
+	/**
+	 * generate_form_post_type_taxonomies
+	 */
+	private static function generate_form_post_type_taxonomies( $post_type ) {
+		
+		$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'objects');
+		if( count($post_taxonomies) ){
+			echo '<label>Taxonomies</label>';
+			foreach($post_taxonomies as $taxonomy){
+				$tax_terms = get_terms(array(
+					'taxonomy'   => $taxonomy->name,
+					'hide_empty' => false,
+				));
+				if( ! $tax_terms || count($tax_terms) === 0 )
+					continue;
+				
+				$meta_key = '_tax_in_package';
+				echo sprintf('<li><label><input disabled type="checkbox" name="%s[]" value="%d" %s>%s</label>'
+					, $meta_key
+					, $taxonomy->name
+					, 'checked=1'
+					, sprintf('<a href="%s" target="_blank">%s</a>'
+						, "/wp-admin/edit-tags.php?taxonomy=$taxonomy->name&post_type=$post_type"
+						, htmlentities($taxonomy->label)
+					)
+				);
+				echo '<ul>';
+				foreach( $tax_terms as $term ){
+					$meta_key = '_term_in_package';
+					$is_package_root = get_term_meta( $term->term_id, $meta_key, true );
+					echo sprintf('<li><label><input type="checkbox" name="%s[]" value="%d" %s>%s</label></li>'
+						, $meta_key
+						, $term->term_id
+						, $is_package_root ? 'checked="checked"' : ''
+						, sprintf('<a href="%s" target="_blank">%s</a>'
+							, "/wp-admin/term.php?taxonomy=$taxonomy->name&tag_ID=$term->term_id&post_type=$post_type"
+							, htmlentities($term->name)
+						)
+					);
+				}
+				echo '</ul></li>';
+			}
+		}
 	}
 	
 	/**
@@ -179,8 +229,8 @@ class Agdp_Admin_Packages {
 		
 		$post_types = self::get_packageable_post_types();
 		
-		$meta_key = 'is_package_root';
-		//posts existants avec is_package_root
+		$meta_key = '_is_package_root';
+		//posts existants avec _is_package_root
 		$posts = get_posts([ 
 			'post_type' => $post_types,
 			'meta_key' => $meta_key,
@@ -205,6 +255,44 @@ class Agdp_Admin_Packages {
 					update_post_meta( $post_id, $meta_key, '1' ); 
 			}
 		
+		/**
+		 * Taxonomies
+		 */
+		$meta_key = '_term_in_package';
+		foreach($post_types as $post_type){
+			$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'names');
+			if( ! $post_taxonomies || count($post_taxonomies) === 0 )
+				continue;
+			//terms existants avec _term_in_package
+			$terms = get_terms([ 
+				'taxonomy' => $post_taxonomies,
+				'hide_empty' => false,
+				'meta_key' => $meta_key,
+				'meta_value' => '1',
+				'fields' => 'ids',
+			]);
+			if( is_wp_error($terms) ){
+				var_dump($terms);
+				continue;
+			}
+			
+			$checked_ids = [];
+			foreach($terms as $term_id){
+				if( ! in_array( $term_id, $_POST[$meta_key])){
+					// debug_log(__FUNCTION__, 'delete_term_meta', $term_id, $meta_key ); 
+					delete_term_meta( $term_id, $meta_key );
+				}
+				else {
+					$checked_ids[] = $term_id;
+				}
+			}
+			
+			if( ! empty($_POST[$meta_key]) )
+				foreach( $_POST[$meta_key] as $term_id){
+					if( ! in_array( $term_id, $checked_ids ) )
+						update_term_meta( $term_id, $meta_key, '1' ); 
+				}
+		}
 	}
 	
 	/**
@@ -243,8 +331,8 @@ class Agdp_Admin_Packages {
 	 */
 	private static function generate_post_type_package( $post_type ) {
 		
-		$meta_key = 'is_package_root';
-		//posts existants avec is_package_root
+		$meta_key = '_is_package_root';
+		//posts existants avec _is_package_root
 		$root_posts = get_posts([ 
 			'post_type' => $post_type,
 			'meta_key' => $meta_key,
@@ -253,6 +341,19 @@ class Agdp_Admin_Packages {
 		]);
 		if( ! $root_posts )
 			return;
+		
+		$meta_key = '_term_in_package';
+		//terms existants avec _term_in_package
+		$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'names');
+		//terms existants avec _term_in_package
+		$terms = get_terms([ 
+			'taxonomy' => $post_taxonomies,
+			'hide_empty' => false,
+			'meta_key' => $meta_key,
+			'meta_value' => '1',
+			'fields' => 'ids',
+		]);
+		
 		
 		echo sprintf('<div class="agdppackages-post_type" post_type="%s"><h3>%s</h3><ul>'
 			, $post_type
@@ -263,13 +364,6 @@ class Agdp_Admin_Packages {
 		$posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
 		$max_update = '';
 		foreach($posts as $post){
-			// echo sprintf('<li><label>[%d] %s</label></li>'
-				// , $post->ID
-				// , sprintf('<a href="%s" target="_blank">%s</a>'
-					// , $post->guid
-					// , htmlentities($post->post_title)
-				// )
-			// );
 			if( $max_update < $post->post_modified_gmt )
 				$max_update = $post->post_modified_gmt;
 		}
@@ -277,7 +371,8 @@ class Agdp_Admin_Packages {
 		
 		echo sprintf('<h4>%s</h4>', $file_name);
 		
-		$data = Agdp_Admin_Edit_Post_Type::get_posts_export( $posts );
+		$options = [ 'include_terms' => $terms ];
+		$data = Agdp_Admin_Edit_Post_Type::get_posts_export( $posts, $options );
 		if( $data ){
 			$data = json_encode($data, JSON_OBJECT_AS_ARRAY & JSON_UNESCAPED_SLASHES);
 			// $data = serialize( json_decode($data) );//remove object reference

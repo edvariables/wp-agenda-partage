@@ -476,6 +476,9 @@ form#agdppackages .agdppackages-post_type {
 	padding: 6px;
 	margin-bottom: 1em;
 }
+.agdppackages-post_type .in_package li > ul > li {
+	margin-left: 1.5em;
+}
 
 .wp-core-ui .button.button-large > .dashicons-before {
 	position: relative;

@@ -195,21 +195,20 @@ class Agdp_WPCF7 {
 		
 		if( $is_newsletter_subscription ){
 			Agdp_Newsletter::submit_subscription_form($contact_form, $abort, $submission);
+			return;
 		}
-		else {
-			switch($form_id){
-				case Agdp::get_option('admin_message_contact_form_id') :
-					Agdp_Evenement::change_email_recipient($contact_form);
-					Agdp_Covoiturage::change_email_recipient($contact_form);
-					break;
-				case Agdp::get_option('agdpevent_edit_form_id') :
-					Agdp_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
-					break;
-				case Agdp::get_option('covoiturage_edit_form_id') :
-					Agdp_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
-					break;
-			}
-		}		
+		switch($form_id){
+			case Agdp::get_option('admin_message_contact_form_id') :
+				Agdp_Evenement::change_email_recipient($contact_form);
+				Agdp_Covoiturage::change_email_recipient($contact_form);
+				return;
+			case Agdp::get_option('agdpevent_edit_form_id') :
+				Agdp_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
+				return;
+			case Agdp::get_option('covoiturage_edit_form_id') :
+				Agdp_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
+				return;
+		}
 
 		return;
 	}
