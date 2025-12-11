@@ -576,7 +576,6 @@ class Agdp_Admin_Posts_Import {
 		
 		$taxonomy = $data['term']['taxonomy'];
 		
-		$update_existing = false;
 		$create_new = false;
 		$same_import_package_key = false;
 		
@@ -643,11 +642,10 @@ class Agdp_Admin_Posts_Import {
 				return $existing_term->term_id;
 			}
 			//checkbox
-			echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Création de <a href="%s">%s</a>%s</li>'
+			echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Création de %s%s</li>'
 				, $confirm_key
 				, $same_import_package_key ? '' : 'checked'
 				, Agdp::icon('plus')
-				, get_edit_term_link( $existing_term->term_id )
 				, htmlspecialchars( stripslashes($data['term']['name']) )
 				, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
 			);
