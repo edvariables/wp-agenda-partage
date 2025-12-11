@@ -476,7 +476,8 @@ form#agdppackages .agdppackages-post_type {
 	padding: 6px;
 	margin-bottom: 1em;
 }
-.agdppackages-post_type .in_package li > ul > li {
+.agdppackages-post_type .in_package li > ul > li,
+#confirm_action_posts li > ul > li {
 	margin-left: 1.5em;
 }
 

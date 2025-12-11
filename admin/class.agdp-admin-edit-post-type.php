@@ -740,16 +740,21 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		
 		if( $used_terms || $include_terms ){
 			$include_terms = array_merge( array_keys($used_terms), $include_terms);
+			//get_terms
 			$in_terms = get_terms([ 
 				'taxonomy' => array_keys($taxonomies),
 				'include' => $include_terms,
+				'hide_empty' => false, 
 				'fields' => 'all',
 			]);
+			
 			if( count($in_terms) >= 0 ){
+				//get_terms_export
 				$data['terms'] = static::get_terms_export( $in_terms );
 				if( $data['terms'] ){
+					//taxonomies
 					$data['taxonomies'] = [];
-					foreach($in_terms as $term)
+					foreach($in_terms as $term){
 						if( ! isset($data['taxonomies'][$term->taxonomy]) ){
 							// $taxonomies[$term->taxonomy] = json_decode(json_encode($taxonomies[$term->taxonomy]), true);
 							// foreach( ['name_field_description', 
@@ -761,6 +766,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 								
 							$data['taxonomies'][$term->taxonomy] = $term->taxonomy; //$taxonomies[$term->taxonomy];
 						}
+					}
 				}
 			}
 		}

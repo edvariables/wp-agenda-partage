@@ -109,7 +109,7 @@ class Agdp_Admin_Posts_Import {
 							
 						</div>
 						<ul id="confirm_action_posts" class="confirm_action_posts">
-							<h3>Veuillez confirmer les mises à jours et importations.</h3>
+							<h3 class="confirm_action_posts-title">Veuillez confirmer les mises à jours et importations.</h3>
 					<?php
 					
 				}
@@ -171,7 +171,7 @@ class Agdp_Admin_Posts_Import {
 									$inputs.removeAttr('checked');
 								})
 							)
-							.insertBefore( $inputs.first().parents('li:first') )
+							.insertAfter( $('#confirm_action_posts .confirm_action_posts-title') )
 						;
 					}
 					</script>
@@ -515,26 +515,53 @@ class Agdp_Admin_Posts_Import {
 	private  static function agdp_import_terms( $data, &$options = false ) {
 		if( ! is_array($options) )
 			$options = [];
+		/***********
+		 * foreach */
 		if( empty($data['term']) ){
 			$new_terms = [];
 			
 			$options['original_term_ids'] = [];
 			if( ! empty($data['terms']) ){
-				foreach( $data['terms'] as $term_data )
+				$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
+				if( $confirm_action ){
+					$taxonomies = [];
+				}
+				foreach( $data['terms'] as $term_data ){
 					if( ! empty($term_data['term']) ){
 						$original_id = $term_data['term']['term_id'];
+						
+						if( $confirm_action
+						&& ! in_array( $term_data['term']['taxonomy'], $taxonomies ) ){
+							if( count($taxonomies) > 0 ){
+								echo '</ul></li>';
+							}
+							$taxonomies[] = $term_data['term']['taxonomy'];
+							echo sprintf('<li><label>%s</label><ul>'
+								, $term_data['term']['taxonomy']
+							);
+						}
+						
 						$new_id = static::agdp_import_terms( $term_data, $options );
 						if( $new_id ){
 							$options['original_term_ids'][$original_id.''] = $new_id;
 							$new_terms[] = $new_id;
 						}
 					}
+				}
+				if( $confirm_action
+				&& count($taxonomies) > 0 ){
+					echo '</ul></li>';
+				}
 			}
 			return $new_terms;
 		}
-		$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
-		$add_title_suffix = false;//isset($options['add_title_suffix']) && $options['add_title_suffix'];
-		$title_suffix = '';//empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
+		
+		/***********
+		 * WP_Term */
+		$confirm_action 		= isset($options['confirm_action']) && $options['confirm_action'];
+		$is_confirmed_action 	= isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
+		$add_title_suffix 		= false;//isset($options['add_title_suffix']) && $options['add_title_suffix'];
+		$title_suffix 			= '';//empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
 		
 		if( empty($data['term'])
 		 || empty($data['term']['slug'])
@@ -544,17 +571,28 @@ class Agdp_Admin_Posts_Import {
 				// );
 			return false;
 		}
+		$original_id = $data['term']['term_id'];
+		$data['_source_post'] = $data['term']; //backup
+		
 		$taxonomy = $data['term']['taxonomy'];
 		
+		$update_existing = false;
+		$create_new = false;
+		$same_import_package_key = false;
+		
 		if( $existing_term = get_term_by( 'slug', $data['term']['slug'], $taxonomy, OBJECT ) ){
+			
+			$same_import_package_key = self::compare_import_package_key( $existing_term, $data, $options );
+			
 			// echo sprintf( '<div><a href="%s">Le terme %s -> %s existe déjà</a></div>'
 				// , get_edit_term_link( $existing_term->term_id )
 				// , $taxonomy
 				// , htmlspecialchars( $data['term']['name'] )
 			// );
 			// TODO update ?
-			return $existing_term->term_id;
 		}
+		else
+			$create_new = true;
 		
 		//term_parent 
 		if( ! empty($data['term']['parent']) ){
@@ -582,33 +620,72 @@ class Agdp_Admin_Posts_Import {
 		// var_dump($data);
 		// debug_log(__FUNCTION__, $data);
 		
-		// wp_insert_term
-		$new_term_id = wp_insert_term( $data['term']['name'], $taxonomy, $data['term'] );
-		
-		if( is_a( $new_term_id, 'WP_Error' ) ){
-			echo sprintf( '<div>%sEchec de création du terme %s -> %s : %s</a></div>'
-				, Agdp::icon('error')
-				, $taxonomy
-				, htmlspecialchars( $data['term']['name'] )
-				, $new_term_id->get_error_message()
+		if( $confirm_action || $is_confirmed_action ) {
+			$confirm_key = sprintf('confirm_%s_%s_%s'
+				, $existing_term ? 'update' : 'create'
+				, $data['term']['name']
+				, $original_id
 			);
-			return false;
 		}
-		if( $new_term_id ){
-			if( is_array($new_term_id) )
-				$new_term_id = $new_term_id['term_id'];
+		
+		// wp_insert_term
+		if( $confirm_action ){
+			if( $existing_term ){
+				//checkbox
+				echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a>%s</li>'
+					, $confirm_key
+					, $same_import_package_key ? '' : 'checked'
+					, Agdp::icon('update')
+					, get_edit_post_link( $existing_term->term_id )
+					, htmlspecialchars( stripslashes($data['term']['name']) )
+					, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
+				);
+				return $existing_term->term_id;
+			}
+			//checkbox
+			echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Création de <a href="%s">%s</a>%s</li>'
+				, $confirm_key
+				, $same_import_package_key ? '' : 'checked'
+				, Agdp::icon('plus')
+				, get_edit_term_link( $existing_term->term_id )
+				, htmlspecialchars( stripslashes($data['term']['name']) )
+				, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
+			);
+			return -1;
+		}
+		if( $is_confirmed_action ){
+			if( $existing_term ){
+				$new_term_id = $existing_term->term_id;
+			}
+			else{
+				$new_term_id = wp_insert_term( $data['term']['name'], $taxonomy, $data['term'] );
 			
-			if( isset($data['metas']) ){
-				foreach($data['metas'] as $meta_key => $meta_value){
-					update_term_meta( $new_term_id, $meta_key, $meta_value );
+				if( is_a( $new_term_id, 'WP_Error' ) ){
+					echo sprintf( '<div>%sEchec de création du terme %s -> %s : %s</a></div>'
+						, Agdp::icon('error')
+						, $taxonomy
+						, htmlspecialchars( $data['term']['name'] )
+						, $new_term_id->get_error_message()
+					);
+					return false;
 				}
 			}
-			echo sprintf( '<div><a href="%s">%s Création du terme %s -> %s</a></div>'
-				, get_edit_term_link( $new_term_id )
-				, Agdp::icon('plus')
-				, $taxonomy
-				, htmlspecialchars( $data['term']['name'] )
-			);
+			if( $new_term_id ){
+				if( is_array($new_term_id) )
+					$new_term_id = $new_term_id['term_id'];
+				
+				if( isset($data['metas']) ){
+					foreach($data['metas'] as $meta_key => $meta_value){
+						update_term_meta( $new_term_id, $meta_key, $meta_value );
+					}
+				}
+				echo sprintf( '<div><a href="%s">%s Création du terme %s -> %s</a></div>'
+					, get_edit_term_link( $new_term_id )
+					, Agdp::icon('plus')
+					, $taxonomy
+					, htmlspecialchars( $data['term']['name'] )
+				);
+			}
 		}
 		return $new_term_id;
 	}
@@ -617,6 +694,18 @@ class Agdp_Admin_Posts_Import {
 	 * get_import_package_key
 	 */
 	 public static function get_import_package_key( $post_id, $data ){
+		 if( is_a($post_id, 'WP_Term') ){
+			$term = $post_id;
+			$import_package_key = uniqid('TODO');
+			// str_replace( '-', '',
+			// str_replace( ':', '',
+				// sprintf('%s|%s'
+					// , $data['_source_post']['post_modified_gmt']
+					// , $term->post_modified_gmt
+				// )
+			// ));
+			return $import_package_key;
+		 }
 
 		$post = get_post( $post_id );
 		$import_package_key = 
@@ -651,6 +740,10 @@ class Agdp_Admin_Posts_Import {
 	 public static function delete_import_package_key( $post_id, $data ){
 		$meta_key = '_' . self::import_package_tag . '_key';
 		
+		if( is_a($post_id, 'WP_Term') ){
+			$term = $post_id;
+			return delete_term_meta( $term->term_id, $meta_key );
+		}
 		return delete_post_meta( $post_id, $meta_key );
 	}
 	
