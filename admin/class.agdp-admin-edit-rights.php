@@ -229,12 +229,14 @@ class Agdp_Admin_Edit_Rights {
 				if( isset($mailboxes[$dispatch['mailbox'].'']) )
 					$message .= 'ou ';
 				$email = $dispatch['email'];
-				$message .= sprintf('par l\'e-mail <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $mailbox->ID, $email);
-				
-				if( $mailbox->post_status != 'publish' )
-					$message .= ' (non publié)';
-				$mailboxes[$dispatch['mailbox'].''] = $mailbox;
-				
+				if( $mailbox ){
+					$message .= sprintf('par l\'e-mail <a href="/wp-admin/post.php?post=%s&action=edit">%s</a>', $mailbox->ID, $email);
+					if( $mailbox->post_status != 'publish' )
+						$message .= ' (non publié)';
+					$mailboxes[$dispatch['mailbox'].''] = $mailbox;
+				}
+				else
+					$message .= sprintf('par l\'e-mail interne <code>%s</code>', $email);
 			}
 		}
 		

@@ -148,11 +148,11 @@ class Agdp_Admin_Posts_Import {
 				if( $confirm_action ){
 					?>
 					</div>
-					<button type="send" class="button button-primary button-large"><span class="dashicons-before dashicons-database-import"></span>Confirmer l'importation</button>
-			
-					<!-- input type="submit" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="Confirmer l'importation"--!>
-						<input type="hidden" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="1">
-						<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
+					<button type="send" class="button button-primary button-large">
+						<span class="dashicons-before dashicons-database-import"></span><?php echo "Confirmer l'importation"?>
+					</button>
+					<input type="hidden" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="1">
+					<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
 					</form>
 					<?php
 					
@@ -201,7 +201,9 @@ class Agdp_Admin_Posts_Import {
 			</div>
 			<br>
 			<br>
-			<button type="send" class="button button-primary button-large"><span class="dashicons-before dashicons-database-view"></span>Préparer l'importation</button>
+			<button type="send" class="button button-primary button-large">
+				<span class="dashicons-before dashicons-database-view"></span><?php echo "Préparer l'importation"?>
+			</button>
 			<input type="hidden" name="action_<?php echo Agdp_Admin_Edit_Post_Type::get_action_name($action);?>" value="1">
 			<input type="hidden" name="post_referer" value="<?php echo $post_id;?>">
 		</form>
