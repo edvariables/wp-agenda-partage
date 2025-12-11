@@ -155,7 +155,7 @@ class Agdp_Admin_Posts_Import {
 					?>
 					</ul>
 					<script>var $ = jQuery;
-					var $inputs = $('#confirm_action_posts li input[type="checkbox"][name^="confirm_update_agdpreport_"]');
+					var $inputs = $('#confirm_action_posts li input[type="checkbox"][name^="confirm_"]');
 					if( $inputs.length > 0 ){
 						$('<div></div>')
 							.css('position', 'relative')
