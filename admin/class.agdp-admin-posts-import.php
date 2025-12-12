@@ -273,6 +273,7 @@ class Agdp_Admin_Posts_Import {
 				$original_id = $post_data['post']['ID'];
 				$new_id = static::agdp_import_post( $post_data, $options );
 				if( $new_id ){
+					$data[$index] = $post_data;
 					$options['original_ids'][$original_id.''] = $new_id;
 					$new_posts[] = $new_id;
 				}
@@ -280,21 +281,19 @@ class Agdp_Admin_Posts_Import {
 			
 		// set parent
 		$is_confirmed_action = isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
-		debug_log(__FUNCTION__, "'is_confirmed_action'", $is_confirmed_action);
-		debug_log(__FUNCTION__, "'original_ids'",$options['original_ids']);
 		if( $is_confirmed_action ){
 			foreach( $data as $index => $post_data ){
 				if( is_numeric($index)
 				&& ! empty($post_data['post']) ){
 					//post_parent 
-					if( ! isset($data['post']['post_parent'])
-					&& isset($data['_source_post']['post_parent'])){
-						debug_log(__FUNCTION__, "'_source_post']['post_parent'",$data['_source_post']['post_parent']);
-						debug_log(__FUNCTION__, "'original_ids']['post_parent'",$options['original_ids'][$data['_source_post']['post_parent'].'']);
+					if( isset($post_data['_source_post']['post_parent'])
+					&& ( ! isset($post_data['post']['post_parent'])
+						|| $post_data['post']['post_parent'] == $post_data['_source_post']['post_parent'] )
+					){
 						if( isset($options['original_ids'])
-						 && isset($options['original_ids'][$data['_source_post']['post_parent'].'']) ){
-							$data['post']['post_parent'] = $options['original_ids'][$data['_source_post']['post_parent'].''];
-							wp_update_post( $data['post'], true );
+						 && isset($options['original_ids'][$post_data['_source_post']['post_parent'].'']) ){
+							$post_data['post']['post_parent'] = $options['original_ids'][$post_data['_source_post']['post_parent'].''];
+							wp_update_post( $post_data['post'], true );
 						 }
 					}
 				}
@@ -559,7 +558,7 @@ class Agdp_Admin_Posts_Import {
 			if( $confirm_action ){
 				$taxonomies = [];
 			}
-			foreach( $data['terms'] as $term_data ){
+			foreach( $data['terms'] as $index => $term_data ){
 				if( ! empty($term_data['term']) ){
 					$original_id = $term_data['term']['term_id'];
 					
@@ -576,6 +575,7 @@ class Agdp_Admin_Posts_Import {
 					
 					$new_id = static::agdp_import_term( $term_data, $options );
 					if( $new_id ){
+						$data['terms'][$index] = $term_data;
 						$options['original_term_ids'][$original_id.''] = $new_id;
 						$new_terms[] = $new_id;
 					}
@@ -593,7 +593,7 @@ class Agdp_Admin_Posts_Import {
 	 * Import term
 	 * $data['term'], $data['metas']
 	 */
-	private  static function agdp_import_term( $data, &$options = false ) {
+	private  static function agdp_import_term( &$data, &$options = false ) {
 	
 		/***********
 		 * WP_Term */
