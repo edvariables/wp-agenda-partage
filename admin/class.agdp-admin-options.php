@@ -1228,8 +1228,9 @@ class Agdp_Admin_Options {
 		
 		$discard_changes = empty($_REQUEST['discard_changes']) ? false : $_REQUEST['discard_changes'];
 		if( $discard_changes ){
+			$discard_changes = AGDP_PLUGIN_DIR . $discard_changes;
 			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_changes);
-			echo sprintf('<h2>Discard changes</h2>' );
+			echo sprintf('<h2>Annulation des changements</h2>' );
 			echo sprintf('<label>%s</label>', $cmd );
 			$result = shell_exec( $cmd );
 			echo sprintf('<pre>%s</pre>', $result);
@@ -1246,8 +1247,12 @@ class Agdp_Admin_Options {
 		$result = shell_exec( $cmd );
 		echo sprintf('<pre>%s</pre>', $result);
 		
-		if( $is_status ){
-			
+		if( $is_status
+		&& strpos($result, 'modified') !== false ){
+			$modified_file = '<TODO>';
+			$discard_inputs = sprintf('<label><input type="checkbox" name="%s">%s</label>',
+				$modified_file, $modified_file
+			);
 			$discard_inputs = '';//TODO from $result
 		}
 		
