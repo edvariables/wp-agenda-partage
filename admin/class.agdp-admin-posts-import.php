@@ -632,7 +632,7 @@ class Agdp_Admin_Posts_Import {
 		if( $existing_term = get_term_by( 'slug', $data['term']['slug'], $taxonomy, OBJECT ) ){
 			
 			$same_import_package_key = self::compare_import_package_key( $existing_term, $data, $options );
-			
+					
 			// echo sprintf( '<div><a href="%s">Le terme %s -> %s existe déjà</a></div>'
 				// , get_edit_term_link( $existing_term->term_id )
 				// , $taxonomy
@@ -707,10 +707,19 @@ class Agdp_Admin_Posts_Import {
 			return -1;
 		}
 		if( $is_confirmed_action ){
+			// Confirmation not checked
+			if( $is_confirmed_action
+			&& empty( $options[ $confirm_key ] ) ){
+				if( $existing_term ){
+					return $existing_term->term_id;
+				}
+				return false;
+			}
 			if( $existing_term ){
 				$new_term_id = $existing_term->term_id;
 			}
-			else{
+			else {
+				/* wp_insert_term */
 				$new_term_id = wp_insert_term( $data['term']['name'], $taxonomy, $data['term'] );
 			
 				if( is_a( $new_term_id, 'WP_Error' ) ){
@@ -727,6 +736,7 @@ class Agdp_Admin_Posts_Import {
 				if( is_array($new_term_id) )
 					$new_term_id = $new_term_id['term_id'];
 				
+				/* update_term_meta */
 				if( isset($data['metas']) ){
 					foreach($data['metas'] as $meta_key => $meta_value){
 						update_term_meta( $new_term_id, $meta_key, $meta_value );

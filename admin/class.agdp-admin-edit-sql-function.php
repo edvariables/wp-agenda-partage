@@ -167,7 +167,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			return false;
 		$field = "Create Function";
 		$mysql_script = empty($mysql_function[0]->$field) ? false : $mysql_function[0]->$field;
-		debug_log(__FUNCTION__, $mysql_function, $mysql_script);
+		// debug_log(__FUNCTION__, $mysql_function, $mysql_script);
 		
 		return $mysql_script;
 	}
@@ -185,11 +185,11 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			$sql_function_name = $tag['name'];
 		}
 		$mysql_script = self::get_current_mysql_function_body( $sql_function_name );
+		// debug_log(__FUNCTION__, $sql_function_name, $mysql_script);
 		if( ! $mysql_script )
-			return true;
+			return false;
 		$sql_function_body = get_term_meta( $term_id, 'body', true );
-		if( strpos( $mysql_script, $sql_function_body ) !== false
-		)
+		if( strpos( $mysql_script, $sql_function_body ) !== false )
 			return true;
 			
 		if( $silently )
@@ -248,7 +248,6 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		}
 		if( ! self::compare_current_mysql_function_body( $term, true ) ){
 			$msg = self::create_sql_function_in_db( $term_id, $term_name, 'return' );
-			debug_log(__FUNCTION__, 'create_sql_function_in_db()', $taxonomy, $term_id, $msg );
 		}
 	}
 	
