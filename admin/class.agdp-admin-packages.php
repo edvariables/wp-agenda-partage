@@ -372,6 +372,7 @@ class Agdp_Admin_Packages {
 		echo sprintf('<h4>%s</h4>', $file_name);
 		
 		$options = [ 'include_terms' => $terms ];
+		// $posts = array_reverse( $posts );
 		$data = Agdp_Admin_Edit_Post_Type::get_posts_export( $posts, $options );
 		if( $data ){
 			$data = json_encode($data, JSON_OBJECT_AS_ARRAY & JSON_UNESCAPED_SLASHES);

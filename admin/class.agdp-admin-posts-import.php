@@ -239,50 +239,77 @@ class Agdp_Admin_Posts_Import {
 		
 	}
 	/**
-	 * Imports post or add a confirmation checkbox
-	 * $data['post'], $data['metas']
+	 * Imports posts or add a confirmation checkbox
+	 * $data[]['post']
 	 */
 	private  static function agdp_import_posts( $data, &$options = false ) {
 		if( ! is_array($options) )
 			$options = [];
-		/**********
-		 * $data is an array of posts
-		 **/
-		if( empty($data['post']) ){
-			$new_posts = [];
-			$options['original_ids'] = [];
-			foreach( $data as $post_data )
-				if( ! empty($post_data['post']) )
-					$options['original_ids'][$post_data['post']['ID'].''] = $post_data['post']['ID'];
-			
-			if( ! empty($data['taxonomies']) ){
-				$options['taxonomies'] = $data['taxonomies'];
+		
+		if( ! empty($data['post']) ){
+			return static::agdp_import_post( $post_data, $options );
+		}
+	
+		$new_posts = [];
+		$options['original_ids'] = [];
+		foreach( $data as $post_data )
+			if( ! empty($post_data['post']) )
+				$options['original_ids'][$post_data['post']['ID'].''] = $post_data['post']['ID'];
+		
+		if( ! empty($data['taxonomies']) ){
+			$options['taxonomies'] = $data['taxonomies'];
+		}
+		
+		if( ! empty($data['terms']) ){
+			$import_terms = empty($options['import_terms']) ? false : $options['import_terms'];
+			if( $import_terms )
+				$new_ids = static::agdp_import_terms( $data, $options );
+		}
+		
+		// agdp_import_posts callback
+		foreach( $data as $index => $post_data )
+			if( is_numeric($index)
+			&& ! empty($post_data['post']) ){
+				$original_id = $post_data['post']['ID'];
+				$new_id = static::agdp_import_post( $post_data, $options );
+				if( $new_id ){
+					$options['original_ids'][$original_id.''] = $new_id;
+					$new_posts[] = $new_id;
+				}
 			}
 			
-			if( ! empty($data['terms']) ){
-				$import_terms = empty($options['import_terms']) ? false : $options['import_terms'];
-				if( $import_terms )
-					$new_ids = static::agdp_import_terms( $data, $options );
-			}
-			
-			// agdp_import_posts callback
-			foreach( $data as $index => $post_data )
+		// set parent
+		$is_confirmed_action = isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
+		debug_log(__FUNCTION__, "'is_confirmed_action'", $is_confirmed_action);
+		debug_log(__FUNCTION__, "'original_ids'",$options['original_ids']);
+		if( $is_confirmed_action ){
+			foreach( $data as $index => $post_data ){
 				if( is_numeric($index)
 				&& ! empty($post_data['post']) ){
-					$original_id = $post_data['post']['ID'];
-					$new_id = static::agdp_import_posts( $post_data, $options );
-					if( $new_id ){
-						$options['original_ids'][$original_id.''] = $new_id;
-						$new_posts[] = $new_id;
+					//post_parent 
+					if( ! isset($data['post']['post_parent'])
+					&& isset($data['_source_post']['post_parent'])){
+						debug_log(__FUNCTION__, "'_source_post']['post_parent'",$data['_source_post']['post_parent']);
+						debug_log(__FUNCTION__, "'original_ids']['post_parent'",$options['original_ids'][$data['_source_post']['post_parent'].'']);
+						if( isset($options['original_ids'])
+						 && isset($options['original_ids'][$data['_source_post']['post_parent'].'']) ){
+							$data['post']['post_parent'] = $options['original_ids'][$data['_source_post']['post_parent'].''];
+							wp_update_post( $data['post'], true );
+						 }
 					}
 				}
-			return $new_posts;
+			}
 		}
-		/***********/
 		
-		/*************
-		 * Single post
-		 **/
+		return $new_posts;
+	}
+
+	/**
+	 * Imports post or add a confirmation checkbox
+	 * $data['post'], $data['metas']
+	 */
+	private static function agdp_import_post( &$data, &$options = false ) {
+		
 		$confirm_action 		= isset($options['confirm_action']) && $options['confirm_action'];
 		$is_confirmed_action 	= isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
 		$add_title_suffix 		= isset($options['add_title_suffix']) && $options['add_title_suffix'];
@@ -471,11 +498,15 @@ class Agdp_Admin_Posts_Import {
 			
 			// wp_insert_post
 			$new_post_id = wp_insert_post( $data['post'], true );
+			if( $new_post_id )
+				$data['post']['ID'] = $new_post_id;
 		}
 		else
 			$new_post_id = 0;
 		
-		if( $new_post_id ){
+		if( $new_post_id
+		 && $is_confirmed_action ){
+			
 			//Store import_package_key
 			self::update_import_package_key( $new_post_id, $data, $options );
 			
@@ -510,52 +541,60 @@ class Agdp_Admin_Posts_Import {
 	
 	/**
 	 * Import terms
-	 * $data['term'], $data['metas']
+	 * $data[]['term']
 	 */
 	private  static function agdp_import_terms( $data, &$options = false ) {
 		if( ! is_array($options) )
 			$options = [];
-		/***********
-		 * foreach */
-		if( empty($data['term']) ){
-			$new_terms = [];
-			
-			$options['original_term_ids'] = [];
-			if( ! empty($data['terms']) ){
-				$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
-				if( $confirm_action ){
-					$taxonomies = [];
-				}
-				foreach( $data['terms'] as $term_data ){
-					if( ! empty($term_data['term']) ){
-						$original_id = $term_data['term']['term_id'];
-						
-						if( $confirm_action
-						&& ! in_array( $term_data['term']['taxonomy'], $taxonomies ) ){
-							if( count($taxonomies) > 0 ){
-								echo '</ul></li>';
-							}
-							$taxonomies[] = $term_data['term']['taxonomy'];
-							echo sprintf('<li><label>%s</label><ul>'
-								, $term_data['term']['taxonomy']
-							);
-						}
-						
-						$new_id = static::agdp_import_terms( $term_data, $options );
-						if( $new_id ){
-							$options['original_term_ids'][$original_id.''] = $new_id;
-							$new_terms[] = $new_id;
-						}
-					}
-				}
-				if( $confirm_action
-				&& count($taxonomies) > 0 ){
-					echo '</ul></li>';
-				}
-			}
-			return $new_terms;
+		
+		if( ! empty($data['term']) ){
+			return static::agdp_import_term( $term_data, $options );
 		}
 		
+		$new_terms = [];
+		
+		$options['original_term_ids'] = [];
+		if( ! empty($data['terms']) ){
+			$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
+			if( $confirm_action ){
+				$taxonomies = [];
+			}
+			foreach( $data['terms'] as $term_data ){
+				if( ! empty($term_data['term']) ){
+					$original_id = $term_data['term']['term_id'];
+					
+					if( $confirm_action
+					&& ! in_array( $term_data['term']['taxonomy'], $taxonomies ) ){
+						if( count($taxonomies) > 0 ){
+							echo '</ul></li>';
+						}
+						$taxonomies[] = $term_data['term']['taxonomy'];
+						echo sprintf('<li><label>%s</label><ul>'
+							, $term_data['term']['taxonomy']
+						);
+					}
+					
+					$new_id = static::agdp_import_term( $term_data, $options );
+					if( $new_id ){
+						$options['original_term_ids'][$original_id.''] = $new_id;
+						$new_terms[] = $new_id;
+					}
+				}
+			}
+			if( $confirm_action
+			&& count($taxonomies) > 0 ){
+				echo '</ul></li>';
+			}
+		}
+		return $new_terms;
+	}
+	
+	/**
+	 * Import term
+	 * $data['term'], $data['metas']
+	 */
+	private  static function agdp_import_term( $data, &$options = false ) {
+	
 		/***********
 		 * WP_Term */
 		$confirm_action 		= isset($options['confirm_action']) && $options['confirm_action'];
