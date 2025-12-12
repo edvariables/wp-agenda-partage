@@ -91,6 +91,9 @@ class Agdp_Admin_Posts_Import {
 				}
 			}
 			if( $action_data ){
+				if( empty($action_data['terms']) )
+					$import_terms = false;
+				
 				if( $confirm_action ){
 					$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import'/* $_SERVER['REQUEST_URI'] */, Agdp_Admin_Edit_Post_Type::get_nonce_name( $action, $post_id ) );
 					//FORM
@@ -286,13 +289,13 @@ class Agdp_Admin_Posts_Import {
 				if( is_numeric($index)
 				&& ! empty($post_data['post']) ){
 					//post_parent 
-					if( isset($post_data['_source_post']['post_parent'])
+					if( isset($post_data['_original_data']['post_parent'])
 					&& ( ! isset($post_data['post']['post_parent'])
-						|| $post_data['post']['post_parent'] == $post_data['_source_post']['post_parent'] )
+						|| $post_data['post']['post_parent'] == $post_data['_original_data']['post_parent'] )
 					){
 						if( isset($options['original_ids'])
-						 && isset($options['original_ids'][$post_data['_source_post']['post_parent'].'']) ){
-							$post_data['post']['post_parent'] = $options['original_ids'][$post_data['_source_post']['post_parent'].''];
+						 && isset($options['original_ids'][$post_data['_original_data']['post_parent'].'']) ){
+							$post_data['post']['post_parent'] = $options['original_ids'][$post_data['_original_data']['post_parent'].''];
 							wp_update_post( $post_data['post'], true );
 						 }
 					}
@@ -334,7 +337,7 @@ class Agdp_Admin_Posts_Import {
 				
 		$original_id = $data['post']['ID'];
 		
-		$data['_source_post'] = $data['post'];
+		$data['_original_data'] = $data['post'];
 		foreach([ 'ID',
 			'post_password', 
 			'guid', 
@@ -558,6 +561,11 @@ class Agdp_Admin_Posts_Import {
 			if( $confirm_action ){
 				$taxonomies = [];
 			}
+			usort( $data['terms'], function( $t1, $t2 ){
+				if( empty( $t1['term']['taxonomy'] ) || empty( $t2['term']['taxonomy'] ) )
+					return 0;
+				return strcmp( $t1['term']['taxonomy'], $t2['term']['taxonomy'] );
+			});
 			foreach( $data['terms'] as $index => $term_data ){
 				if( ! empty($term_data['term']) ){
 					$original_id = $term_data['term']['term_id'];
@@ -611,7 +619,7 @@ class Agdp_Admin_Posts_Import {
 			return false;
 		}
 		$original_id = $data['term']['term_id'];
-		$data['_source_post'] = $data['term']; //backup
+		$data['_original_data'] = $data['term']; //backup
 		
 		$taxonomy = $data['term']['taxonomy'];
 		
@@ -716,12 +724,15 @@ class Agdp_Admin_Posts_Import {
 						update_term_meta( $new_term_id, $meta_key, $meta_value );
 					}
 				}
-				echo sprintf( '<div><a href="%s">%s Création du terme %s -> %s</a></div>'
+				echo sprintf( '<div><a href="%s">%s %s du terme %s -> %s</a></div>'
 					, get_edit_term_link( $new_term_id )
-					, Agdp::icon('plus')
+					, Agdp::icon( $existing_term ? 'update' : 'plus' )
+					, $existing_term ? 'Mise à jour' : 'Création'
 					, $taxonomy
 					, htmlspecialchars( $data['term']['name'] )
 				);
+				
+				do_action( AGDP_TAG . '_' . $taxonomy . '_term_imported', $taxonomy, $data );
 			}
 		}
 		return $new_term_id;
@@ -737,7 +748,7 @@ class Agdp_Admin_Posts_Import {
 			// str_replace( '-', '',
 			// str_replace( ':', '',
 				// sprintf('%s|%s'
-					// , $data['_source_post']['post_modified_gmt']
+					// , $data['_original_data']['post_modified_gmt']
 					// , $term->post_modified_gmt
 				// )
 			// ));
@@ -749,7 +760,7 @@ class Agdp_Admin_Posts_Import {
 		str_replace( '-', '',
 		str_replace( ':', '',
 			sprintf('%s|%s'
-				, $data['_source_post']['post_modified_gmt']
+				, $data['_original_data']['post_modified_gmt']
 				, $post->post_modified_gmt
 			)
 		));

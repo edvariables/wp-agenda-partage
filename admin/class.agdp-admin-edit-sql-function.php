@@ -34,6 +34,8 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		add_filter( 'manage_edit-' . $taxonomy . '_columns', array( __CLASS__, 'manage_columns' ) );
 		add_filter( 'manage_' . $taxonomy . '_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 3 );
 		
+		add_action( AGDP_TAG . '_' . $taxonomy . '_term_imported', array( __CLASS__, 'on_term_imported' ), 10, 2); //edit
+		
 		
 	}
 	/****************/
@@ -79,7 +81,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	/**
 	 * create_sql_function_in_db
 	 */
-	public static function create_sql_function_in_db( int $term_id, string $term_name ){
+	public static function create_sql_function_in_db( int $term_id, string $term_name, $_return_results = 'admin_notice' ){
 		$term_metas = get_term_meta($term_id, false, true);
 		global $wpdb;
 		$sql = sprintf('DROP FUNCTION IF EXISTS `%s`', $term_name);
@@ -124,12 +126,19 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 				$msg = $wpdb->last_error;
 			$sql = htmlentities($sql);
 			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction MySQL n'existe pas ou plus.";
-			Agdp_Admin::add_admin_notice( $msg, 'error', true);
+			if( $_return_results === 'admin_notice' )
+				Agdp_Admin::add_admin_notice( $msg, 'error', true);
+			elseif( $_return_results === 'return' )
+				return $msg;
 		}
 		else {
 			$msg = "La fonction MySQL a été créée ou mise à jour.";
-			Agdp_Admin::add_admin_notice( $msg, 'info', true);
+			if( $_return_results === 'admin_notice' )
+				Agdp_Admin::add_admin_notice( $msg, 'info', true);
+			elseif( $_return_results === 'return' )
+				return $msg;
 		}
+		return true;
 	}
 	
 	/**
@@ -166,15 +175,25 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	/**
 	 * compare_current_mysql_function_body
 	 */
-	public static function compare_current_mysql_function_body( $tag ){
-		$sql_function_name = $tag->name;
+	public static function compare_current_mysql_function_body( $tag, $silently = false ){
+		if( is_object($tag) ){
+			$term_id = $tag->term_id;
+			$sql_function_name = $tag->name;
+		}
+		else {
+			$term_id = $tag['term_id'];
+			$sql_function_name = $tag['name'];
+		}
 		$mysql_script = self::get_current_mysql_function_body( $sql_function_name );
 		if( ! $mysql_script )
 			return true;
-		$sql_function_body = get_term_meta( $tag->term_id, 'body', true );
+		$sql_function_body = get_term_meta( $term_id, 'body', true );
 		if( strpos( $mysql_script, $sql_function_body ) !== false
 		)
 			return true;
+			
+		if( $silently )
+			return false;
 		
 		$msg = sprintf('Attention, la fonction %s est différente dans la base MySQL et dans cet écran.'
 				. '<br><textarea style="width: 95%%;" rows=8 readonly=1>%s</textarea></pre>'
@@ -213,6 +232,25 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		return $actions;
 	}
 
+	
+	/**
+	 * Hook de l'import d'un term
+	 */
+	public static function on_term_imported( string $taxonomy, $term ){
+		if( is_array($term) ){
+			$term_id = $term['term']['term_id'];
+			$term_name = $term['term']['name'];
+		}
+		else {
+			$term_id = $term;
+			$term = get_term( $term_id, $taxonomy );
+			$term_name = $term->name;
+		}
+		if( ! self::compare_current_mysql_function_body( $term, true ) ){
+			$msg = self::create_sql_function_in_db( $term_id, $term_name, 'return' );
+			debug_log(__FUNCTION__, 'create_sql_function_in_db()', $taxonomy, $term_id, $msg );
+		}
+	}
 	
 	/**
 	 * Register Meta Boxes (boite en édition du term)

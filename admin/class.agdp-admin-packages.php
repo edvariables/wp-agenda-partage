@@ -345,15 +345,17 @@ class Agdp_Admin_Packages {
 		$meta_key = '_term_in_package';
 		//terms existants avec _term_in_package
 		$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'names');
-		//terms existants avec _term_in_package
-		$terms = get_terms([ 
-			'taxonomy' => $post_taxonomies,
-			'hide_empty' => false,
-			'meta_key' => $meta_key,
-			'meta_value' => '1',
-			'fields' => 'ids',
-		]);
-		
+		if( $post_taxonomies ){
+			//terms existants avec _term_in_package
+			$terms = get_terms([ 
+				'taxonomy' => $post_taxonomies,
+				'hide_empty' => false,
+				'meta_key' => $meta_key,
+				'meta_value' => '1',
+				'fields' => 'ids',
+			]);
+		} else 
+			$terms = false;
 		
 		echo sprintf('<div class="agdppackages-post_type" post_type="%s"><h3>%s</h3><ul>'
 			, $post_type
@@ -371,8 +373,10 @@ class Agdp_Admin_Packages {
 		
 		echo sprintf('<h4>%s</h4>', $file_name);
 		
-		$options = [ 'include_terms' => $terms ];
-		// $posts = array_reverse( $posts );
+		$options = [];
+		if( $terms )
+			$options[ 'include_terms' ] = $terms;
+		
 		$data = Agdp_Admin_Edit_Post_Type::get_posts_export( $posts, $options );
 		if( $data ){
 			$data = json_encode($data, JSON_OBJECT_AS_ARRAY & JSON_UNESCAPED_SLASHES);
