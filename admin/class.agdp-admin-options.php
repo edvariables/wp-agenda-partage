@@ -1226,7 +1226,16 @@ class Agdp_Admin_Options {
 		
 		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
 		
-		if( empty($_REQUEST['action']) ){
+		$discard_changes = empty($_REQUEST['discard_changes']) ? false : $_REQUEST['discard_changes'];
+		if( $discard_changes ){
+			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_changes);
+			echo sprintf('<h2>Discard changes</h2>' );
+			echo sprintf('<label>%s</label>', $cmd );
+			$result = shell_exec( $cmd );
+			echo sprintf('<pre>%s</pre>', $result);
+		}
+		
+		if( $is_status = empty($_REQUEST['action']) ){
 			echo sprintf('<h2>Etat courant</h2>' );
 			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
 		} else {
@@ -1237,7 +1246,13 @@ class Agdp_Admin_Options {
 		$result = shell_exec( $cmd );
 		echo sprintf('<pre>%s</pre>', $result);
 		
+		if( $is_status ){
+			
+			$discard_inputs = '';//TODO from $result
+		}
+		
 		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
+			. $discard_inputs
 			. '<input type="submit" name="action" value="Mettre à jour"/>'
 			. '</form>';
 	}
