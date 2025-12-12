@@ -238,8 +238,8 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function on_term_imported( string $taxonomy, $term ){
 		if( is_array($term) ){
-			$term_id = $term['term']['term_id'];
-			$term_name = $term['term']['name'];
+			$term_id = $term['term_id'];
+			$term_name = $term['name'];
 		}
 		else {
 			$term_id = $term;

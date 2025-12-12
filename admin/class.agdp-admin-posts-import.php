@@ -555,12 +555,13 @@ class Agdp_Admin_Posts_Import {
 		
 		$new_terms = [];
 		
-		$options['original_term_ids'] = [];
 		if( ! empty($data['terms']) ){
+			$options['original_term_ids'] = [];
 			$confirm_action = isset($options['confirm_action']) && $options['confirm_action'];
 			if( $confirm_action ){
 				$taxonomies = [];
 			}
+			//Tri par taxonomy
 			usort( $data['terms'], function( $t1, $t2 ){
 				if( empty( $t1['term']['taxonomy'] ) || empty( $t2['term']['taxonomy'] ) )
 					return 0;
@@ -580,7 +581,7 @@ class Agdp_Admin_Posts_Import {
 							, $term_data['term']['taxonomy']
 						);
 					}
-					
+					//Import ou case à cocher de confirmation
 					$new_id = static::agdp_import_term( $term_data, $options );
 					if( $new_id ){
 						$data['terms'][$index] = $term_data;
@@ -605,10 +606,6 @@ class Agdp_Admin_Posts_Import {
 	
 		/***********
 		 * WP_Term */
-		$confirm_action 		= isset($options['confirm_action']) && $options['confirm_action'];
-		$is_confirmed_action 	= isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
-		$add_title_suffix 		= false;//isset($options['add_title_suffix']) && $options['add_title_suffix'];
-		$title_suffix 			= '';//empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
 		
 		if( empty($data['term'])
 		 || empty($data['term']['slug'])
@@ -618,6 +615,12 @@ class Agdp_Admin_Posts_Import {
 				// );
 			return false;
 		}
+		$confirm_action 		= isset($options['confirm_action']) && $options['confirm_action'];
+		$is_confirmed_action 	= isset($options['is_confirmed_action']) && $options['is_confirmed_action'];
+		$add_title_suffix 		= false;//isset($options['add_title_suffix']) && $options['add_title_suffix'];
+		$title_suffix 			= '';//empty($options['title_suffix']) ? ' (importé)' : $options['title_suffix'];
+		$import_terms 			= empty($options['import_terms']) ? false : $options['import_terms'];
+		
 		$original_id = $data['term']['term_id'];
 		$data['_original_data'] = $data['term']; //backup
 		
@@ -648,6 +651,11 @@ class Agdp_Admin_Posts_Import {
 			else
 				unset($data['term']['parent']);
 		}
+		
+		if( ! $import_terms ){
+			return;
+		}
+		
 		// metas
 		if( ! empty($data['metas']) ){
 			foreach($data['metas'] as $meta_key => $meta_value){
@@ -732,7 +740,8 @@ class Agdp_Admin_Posts_Import {
 					, htmlspecialchars( $data['term']['name'] )
 				);
 				
-				do_action( AGDP_TAG . '_' . $taxonomy . '_term_imported', $taxonomy, $data );
+				$data['term']['term_id'] = $new_term_id;
+				do_action( AGDP_TAG . '_' . $taxonomy . '_term_imported', $taxonomy, $data['term'] );
 			}
 		}
 		return $new_term_id;
