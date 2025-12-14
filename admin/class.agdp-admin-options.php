@@ -1232,7 +1232,10 @@ class Agdp_Admin_Options {
 			echo sprintf('<h2>Annulation des changements du fichier %s</h2>', $discard_file );
 			echo sprintf('<label>%s</label>', $cmd );
 			$result = shell_exec( $cmd );
-			echo sprintf('<pre>%s</pre>', $result);
+			if( $result === null )
+				$result = '';
+			else
+				echo sprintf('<pre>%s</pre>', $result);
 		}
 		
 		if( $is_status = empty($_REQUEST['action']) ){
