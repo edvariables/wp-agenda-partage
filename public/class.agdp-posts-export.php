@@ -751,9 +751,14 @@ abstract class Agdp_Posts_Export {
 		}
 	}
 
-
+	
+	/************************
+	 * Export posts and terms
+	 *
+	 * used for packages
+	 */
 	/**
-	 * Export posts
+	 * Export posts as an objects array
 	 *
 	 * $options['include_terms'] as ids Array
 	 */
@@ -836,20 +841,12 @@ abstract class Agdp_Posts_Export {
 			
 			if( count($in_terms) >= 0 ){
 				//get_terms_export
-				$data['terms'] = self::export_terms_object( $in_terms );
+				$data['terms'] = static::export_terms_object( $in_terms );
 				if( $data['terms'] ){
 					//taxonomies
 					$data['taxonomies'] = [];
 					foreach($in_terms as $term){
 						if( ! isset($data['taxonomies'][$term->taxonomy]) ){
-							// $taxonomies[$term->taxonomy] = json_decode(json_encode($taxonomies[$term->taxonomy]), true);
-							// foreach( ['name_field_description', 
-								// 'slug_field_description', 
-								// 'parent_field_description', 
-								// 'desc_field_description',
-							 // ] as $field )
-								// unset($taxonomies[$term->taxonomy]['labels'][$field]);
-								
 							$data['taxonomies'][$term->taxonomy] = $term->taxonomy; //$taxonomies[$term->taxonomy];
 						}
 					}
