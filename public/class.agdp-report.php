@@ -15,6 +15,9 @@ class Agdp_Report extends Agdp_Post {
 	const taxonomy_report_style = 'report_style';
 	const taxonomy_sql_function = 'sql_function';
 	const shortcode = 'report';
+	
+	const css_pseudo_classes = ['active', 'any-link', 'auto-fill', 'checked', 'default', 'defined', 'dir', 'disabled', 'empty', 'enabled', 'first', 'first-child', 'first-of-type', 'focus', 'focus-visible', 'focus-within', 'fullscreen', 'has', 'hover', 'in-range', 'indeterminate', 'invalid', 'is', 'lang', 'last-child', 'last-of-type', 'left', 'link', 'modal', 'not', 'nth-child', 'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-child', 'only-of-type', 'optional', 'out-of-range', 'placeholder-shown', 'popover-open', 'read-only', 'read-write', 'required', 'right', 'root', 'scope', 'state', 'target', 'user-invalid', 'user-valid', 'valid', 'visited', 'where'];
+
 		
 	// const user_role = 'author';
 	
@@ -203,6 +206,10 @@ class Agdp_Report extends Agdp_Post {
 							$value = $sql_strings[$variable];
 						}
 						else {
+							if( in_array( $variable, self::css_pseudo_classes ) ){
+								continue;
+							}
+							
 							//TODO faire mieux (tableau, json, ...)
 							$request_key = sprintf('%s%s', AGDP_REPORT_VAR_PREFIX, $variable);
 							if( isset($_REQUEST[ $request_key ]) )
