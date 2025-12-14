@@ -96,6 +96,9 @@ jQuery( function( $ ) {
 						else if(response.startsWith('js:')){
 							var script = response.substring('js:'.length);
 							if(script){
+								var result = eval(script);
+								if( ! result )
+									result = '&nbsp;'
 								event.detail.apiResponse['message'] = eval(script);
 							}
 						}
@@ -268,38 +271,6 @@ jQuery( function( $ ) {
 			
 			//Forum comments
 			$("article.use-agdpforum").each( function(){
-				function show_new_comment(id, nonce){
-					var $comment_list = $('#comments .comment-list');
-					if( $comment_list.length === 0)
-						return;
-					data = { 
-						'action' : 'agendapartage_comment_action',
-						'method' : 'get',
-						'data' : { 'comment_id' : id, 'nonce' : nonce },
-					};
-					jQuery.ajax({
-						url : agdp_ajax.ajax_url,
-						type : 'post', 
-						data : Object.assign(data, {
-							_nonce : agdp_ajax.check_nonce
-						}),
-						success : function( response ) {
-							if(response){
-								if(typeof response === 'string' || response instanceof String){
-									if( $comment_list.find( '#comment-' + id ).length )
-										$comment_list.find( '#comment-' + id ).replaceWith( response );
-									else
-										$comment_list.prepend( response );
-								}
-							}
-						},
-						fail : function( response ){
-							var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
-								.click(function(){$msg.remove()});
-							$actionElnt.after($msg);
-						}
-					});
-				}
 				/** En réponse d'enregistremement, le message mail_sent_ok contient une fonction **/
 				document.addEventListener( 'wpcf7mailsent', function( event ) {
 					var post_url = event.detail.apiResponse['message'];
@@ -322,6 +293,40 @@ jQuery( function( $ ) {
 			
 			//input time
 			$('form.wpcf7-form input.input-time').prop('type', 'time');
+			
+			
+			function show_new_comment(id, nonce){
+				var $comment_list = $('#comments .comment-list');
+				if( $comment_list.length === 0)
+					return;
+				data = { 
+					'action' : 'agendapartage_comment_action',
+					'method' : 'get',
+					'data' : { 'comment_id' : id, 'nonce' : nonce },
+				};
+				jQuery.ajax({
+					url : agdp_ajax.ajax_url,
+					type : 'post', 
+					data : Object.assign(data, {
+						_nonce : agdp_ajax.check_nonce
+					}),
+					success : function( response ) {
+						if(response){
+							if(typeof response === 'string' || response instanceof String){
+								if( $comment_list.find( '#comment-' + id ).length )
+									$comment_list.find( '#comment-' + id ).replaceWith( response );
+								else
+									$comment_list.prepend( response );
+							}
+						}
+					},
+					fail : function( response ){
+						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+							.click(function(){$msg.remove()});
+						$actionElnt.after($msg);
+					}
+				});
+			}
 			
 		}).trigger('wpcf7_form_fields-init');
 		

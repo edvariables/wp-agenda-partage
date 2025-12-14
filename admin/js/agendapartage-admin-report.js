@@ -39,6 +39,8 @@ jQuery( function( $ ) {
 	
 	var variable_options = ['type', 'options', 'is_private', 'sql_source'];
 	
+	var css_pseudo_classes = ['active', 'any-link', 'auto-fill', 'checked', 'default', 'defined', 'dir', 'disabled', 'empty', 'enabled', 'first', 'first-child', 'first-of-type', 'focus', 'focus-visible', 'focus-within', 'fullscreen', 'has', 'hover', 'in-range', 'indeterminate', 'invalid', 'is', 'lang', 'last-child', 'last-of-type', 'left', 'link', 'modal', 'not', 'nth-child', 'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-child', 'only-of-type', 'optional', 'out-of-range', 'placeholder-shown', 'popover-open', 'read-only', 'read-write', 'required', 'right', 'root', 'scope', 'state', 'target', 'user-invalid', 'user-valid', 'valid', 'visited', 'where'];
+	
 	$( document ).ready(function() {
 						
 		//Init inputs
@@ -307,6 +309,10 @@ jQuery( function( $ ) {
 									break;
 								}
 							}
+							if( variables[variable]['sql_source'] === 'report_css'
+							&& css_pseudo_classes.indexOf( variable ) >= 0 ){
+								variables[variable] = undefined;
+							}
 							
 							delete var_values_saved[variable] ;
 						}
@@ -314,6 +320,8 @@ jQuery( function( $ ) {
 					
 					//Affichage des variables
 					for(var variable in variables){
+						if( variables[variable] === undefined )
+							continue;
 						var value, type, options;
 						if( variables[variable] ){
 							value = variables[variable]['value'];
