@@ -233,9 +233,10 @@ class Agdp_Evenement extends Agdp_Post {
 		]);
 		$html = sprintf('<ul class="agdp-covoiturages-list">');
 		//Ajouter
-		$new_link = sprintf('<a href="%s&%s=%d">Cliquez ici pour créer un %s covoiturage associé</a>'
-			, get_permalink(Agdp::get_option('new_covoiturage_page_id'))
-			, AGDP_ARG_EVENTID, $agdpevent->ID
+		$new_link = sprintf('<a href="%s">Cliquez ici pour créer un %s covoiturage associé</a>'
+			,  add_query_arg( 
+				AGDP_ARG_EVENTID, $agdpevent->ID
+				, get_permalink(Agdp::get_option('new_covoiturage_page_id')))
 			, count($covoiturages) ? 'autre' : 'nouveau'
 		);
 		if( count($covoiturages) ){

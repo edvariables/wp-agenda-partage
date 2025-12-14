@@ -1252,21 +1252,7 @@ class Agdp_Admin_Options {
 		else
 			echo sprintf('<pre>%s</pre>', $result);
 		
-		/* $result = 'On branch master
-Your branch is up to date with \'origin/master\'.
-
-Changes not staged for commit:
-  (use "git add/rm ..." to update what will be committed)
-  (use "git checkout -- ..." to discard changes in working directory)
-
-	modified:   packages/agdpreport.pack.agendapartage
-	deleted:    packages/page.pack.agendapartage
-
-no changes added to commit (use "git add" and/or "git commit -a")
-
-'; */
-		
-		
+		//discard_changes from status
 		$discard_inputs = '';
 		if( $is_status ){
 			$matches = [];
