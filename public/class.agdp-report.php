@@ -312,7 +312,7 @@ class Agdp_Report extends Agdp_Post {
 										array_push( $options[__FUNCTION__.':stack'], $report_id );
 										// debug_log( __FUNCTION__ . ' sub_report' );
 										$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
-										// debug_log( __FUNCTION__ . ' sub_report DONE' );
+										// debug_log( __FUNCTION__ . ' sub_report DONE', $sub_sql );
 										array_pop( $options[__FUNCTION__.':stack'] );
 										$sql_variables[$variable]['report_sql'] = $sub_sql;
 									// }
@@ -329,9 +329,12 @@ class Agdp_Report extends Agdp_Post {
 										//$variables[$variable] retourne l'id
 									}
 									elseif( ! $format_JSON ) {
-										$sub_sql = self::sanitize_sub_report_sql( $sub_sql );
+										// debug_log(__FUNCTION__, '$sql AVANT', $sql);
+										// debug_log(__FUNCTION__, '$sub_sql AVANT', $sub_sql);
+										$sql = self::replace_sub_report_sql( $sql, $sub_sql, '/' . preg_quote($src) . '(?!%)/' );
+										// debug_log(__FUNCTION__, '$sub_sql APRES', $sql);
 										
-										$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
+										// $sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
 										//skip prepare
 										continue 2;
 									}
@@ -764,7 +767,7 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
-		// SELECT to JSON
+		/* // SELECT to JSON
 		// SET @SLUGS = SELECT slug, name FROM :termes t;
 		if( strpos($sql, 'SET ') !== false && strpos($sql, ' SELECT ') ){
 			$matches = [];
@@ -791,7 +794,7 @@ class Agdp_Report extends Agdp_Post {
 				$sql = new Exception( sprintf('Erreur dans le format <code>SET @var = SELECT `key`, `value` FROM table t;</code><br> %s',
 					$sql));
 			}
-		}
+		} */
 		
 		if( $used_variables ){
 			$sql = self::check_dynamic_vars_needed( $sql, $used_variables, $options );
@@ -1241,18 +1244,36 @@ class Agdp_Report extends Agdp_Post {
 	}
 
 	/**
-	 * sanitize_sub_report_sql
+	 * replace_sub_report_sql
 	 */
- 	public static function sanitize_sub_report_sql( $sql = false ) {
-		if( is_array($sql) ){
-			// foreach( $sql as $index => $sql_u )
-				// $sql[$index] = self::sanitize_sub_report_sql( $sql_u );
-			// return $sql;
-			$sql = $sql[ count($sql) - 1 ];
+ 	private static function replace_sub_report_sql( $main_sql, $sub_sql, $replace_pattern ) {
+		if( is_array($sub_sql) ){
+			$pre_sqls = [];
+			foreach( $sub_sql as $index => $sql_u ){
+				$sql_u = trim( $sql_u, ";\r\n \t");
+				if( ! $sql_u )
+					continue;
+				$sql_u = str_replace( "\n", "\n\t", $sql_u );
+				if( $index < count($sub_sql) - 1
+				 && $sql_u )
+					$pre_sqls[] = $sql_u;
+			}
+			if( count($pre_sqls) ){
+				$pre_sqls = implode(";\n\t", $pre_sqls);
+				$main_sql = $pre_sqls . ";\n" . $main_sql;
+			}
+			
+			$sub_sql = '( ' . $sub_sql[ count($sub_sql) - 1 ] . ' )';
+
+			$main_sql = preg_replace( $replace_pattern, $sub_sql, $main_sql );
+			return $main_sql;
 		}
-		/* //Sub query does not support LIMIT clause
+		/* SIC //Sub query does not support LIMIT clause
 		$sql = preg_replace('/\sLIMIT\s.*(\n|$)/i', '', $sql); */
 		
+		$sql = trim( $sql, ";\r\n \t");
+		if( ! $sql )
+			return '';
 		$sql = str_replace( "\n", "\n\t", $sql );
 		return "( $sql )";
 	}
