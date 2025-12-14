@@ -830,7 +830,10 @@ abstract class Agdp_Posts_Export {
 		}
 		
 		if( $used_terms || $include_terms ){
-			$include_terms = array_merge( array_keys($used_terms), $include_terms);
+			if( $include_terms ) 
+				$include_terms = array_merge( array_keys($used_terms), $include_terms);
+			else
+				$include_terms = array_keys($used_terms);
 			//get_terms
 			$in_terms = get_terms([ 
 				'taxonomy' => array_keys($taxonomies),

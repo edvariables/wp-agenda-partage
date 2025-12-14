@@ -1226,11 +1226,10 @@ class Agdp_Admin_Options {
 		
 		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
 		
-		$discard_changes = empty($_REQUEST['discard_changes']) ? false : $_REQUEST['discard_changes'];
-		if( $discard_changes ){
-			$discard_changes = AGDP_PLUGIN_DIR . $discard_changes;
-			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_changes);
-			echo sprintf('<h2>Annulation des changements</h2>' );
+		$discard_changes = empty($_REQUEST['discard_changes']) ? [] : $_REQUEST['discard_changes'];
+		foreach( $discard_changes as $discard_file ){
+			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_file);
+			echo sprintf('<h2>Annulation des changements du fichier %s</h2>', $discard_file );
 			echo sprintf('<label>%s</label>', $cmd );
 			$result = shell_exec( $cmd );
 			echo sprintf('<pre>%s</pre>', $result);
@@ -1245,20 +1244,45 @@ class Agdp_Admin_Options {
 		}
 		echo sprintf('<label>%s</label>', $cmd );
 		$result = shell_exec( $cmd );
-		echo sprintf('<pre>%s</pre>', $result);
+		if( $result === null )
+			$result = '';
+		else
+			echo sprintf('<pre>%s</pre>', $result);
 		
-		if( $is_status
-		&& strpos($result, 'modified') !== false ){
-			$modified_file = '<TODO>';
-			$discard_inputs = sprintf('<label><input type="checkbox" name="%s">%s</label>',
-				$modified_file, $modified_file
-			);
-			$discard_inputs = '';//TODO from $result
+		/* $result = 'On branch master
+Your branch is up to date with \'origin/master\'.
+
+Changes not staged for commit:
+  (use "git add/rm ..." to update what will be committed)
+  (use "git checkout -- ..." to discard changes in working directory)
+
+	modified:   packages/agdpreport.pack.agendapartage
+	deleted:    packages/page.pack.agendapartage
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+'; */
+		
+		
+		$discard_inputs = '';
+		if( $is_status ){
+			$matches = [];
+			if( preg_match_all('/\t(modified|deleted)\:\s+([^\r\n]*)[\r\n]/', $result, $matches ) ){
+				foreach($matches[1] as $i => $file_status){
+					$modified_file = $matches[2][$i];
+					$discard_inputs .= sprintf('<li><label><input type="checkbox" name="discard_changes[]" value="%s">%s (%s)</label></li>',
+						$modified_file, $modified_file, $file_status
+					);
+				}
+				if( $discard_inputs ){
+					$discard_inputs = sprintf('<ul class=""><h4>Abandon des modifications en cours</h4>%s</ul></br></br>', $discard_inputs);
+				}
+			}
 		}
 		
 		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
 			. $discard_inputs
-			. '<input type="submit" name="action" value="Mettre à jour"/>'
+			. '<input type="submit" name="action" value="Mettre à jour" class="button button-primary button-large"/>'
 			. '</form>';
 	}
 	
