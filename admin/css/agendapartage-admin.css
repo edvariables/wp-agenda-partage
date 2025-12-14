@@ -358,7 +358,9 @@ div.edit-post-layout__metaboxes {
 }
 
 .agdp-import-posts.confirmation {
-	margin-bottom: 3em;
+	margin-bottom: 2em;
+	border-bottom: solid #2271b1 1px;
+	padding-bottom: 1em;
 }
 .agdp-import-posts .confirm_action_posts {
 	margin-top: 1em;
@@ -471,10 +473,19 @@ table.use_example_results td {
 form#agdppackages .agdppackages-post_type {
 	display: inline-block;
 }
+form#agdppackages .agdppackages-post_type input[type="submit"] {
+	margin-top: 1em;
+}
 .agdppackages-post_type .import-file {
+	/* display: inline-block;
 	border: solid #2271b1 2px;
+	border-radius: 5px; */
 	padding: 6px;
 	margin-bottom: 1em;
+}
+.agdppackages-post_type .import-file > a {
+	text-align: center;
+	padding: 4px 6px;
 }
 .agdppackages-post_type .in_package li > ul > li,
 #confirm_action_posts li > ul > li {

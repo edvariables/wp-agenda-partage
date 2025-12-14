@@ -126,17 +126,23 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 				$msg = $wpdb->last_error;
 			$sql = htmlentities($sql);
 			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction MySQL n'existe pas ou plus.";
-			if( $_return_results === 'admin_notice' )
-				Agdp_Admin::add_admin_notice( $msg, 'error', true);
-			elseif( $_return_results === 'return' )
-				return $msg;
+			switch( $_return_results ){
+				case 'admin_notice' : 
+					Agdp_Admin::add_admin_notice( $msg, 'error', true);
+					break;
+				case 'return' :
+					return $msg;
+			}
 		}
 		else {
 			$msg = "La fonction MySQL a été créée ou mise à jour.";
-			if( $_return_results === 'admin_notice' )
-				Agdp_Admin::add_admin_notice( $msg, 'info', true);
-			elseif( $_return_results === 'return' )
-				return $msg;
+			switch( $_return_results ){
+				case 'admin_notice' : 
+					Agdp_Admin::add_admin_notice( $msg, 'info', true);
+					break;
+				case 'return' :
+					return $msg;
+			}
 		}
 		return true;
 	}
@@ -174,25 +180,40 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	
 	/**
 	 * compare_current_mysql_function_body
+	 * 
+	 * $term : StdClass | Array $term['term_id'], $term['metas'], ...
+	 * 
+	 * Returns True si la fonction dans MySQL contient les mêmes éléments que dans le term wp
+	 * 
 	 */
-	public static function compare_current_mysql_function_body( $tag, $silently = false ){
-		if( is_object($tag) ){
-			$term_id = $tag->term_id;
-			$sql_function_name = $tag->name;
+	public static function compare_current_mysql_function_body( $term, $_return_results = 'admin_notice_now' ){
+		if( is_object($term) ){
+			$term_id = $term->term_id;
+			$sql_function_name = $term->name;
 		}
 		else {
-			$term_id = $tag['term_id'];
-			$sql_function_name = $tag['name'];
+			$term_id = $term['term_id'];
+			$sql_function_name = $term['name'];
 		}
 		$mysql_script = self::get_current_mysql_function_body( $sql_function_name );
 		// debug_log(__FUNCTION__, $sql_function_name, $mysql_script);
 		if( ! $mysql_script )
 			return false;
-		$sql_function_body = get_term_meta( $term_id, 'body', true );
-		if( strpos( $mysql_script, $sql_function_body ) !== false )
+		
+		// Each function part should be in current mysql_script
+		$has_changed = false;
+		foreach([ 'body', 'parameters', 'return_type' ] as $meta_name){
+			$meta_value = get_term_meta( $term_id, $meta_name, true );
+			if( $meta_value
+			&& strpos( $mysql_script, $meta_value ) === false ){
+				$has_changed = true;
+				break;
+			}
+		}
+		if( ! $has_changed )
 			return true;
-			
-		if( $silently )
+		
+		if( ! $_return_results )
 			return false;
 		
 		$msg = sprintf('Attention, la fonction %s est différente dans la base MySQL et dans cet écran.'
@@ -201,7 +222,13 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 				, $mysql_script
 			);
 		
-		Agdp_Admin::add_admin_notice_now( $msg, 'error', true);
+		switch( $_return_results ){
+			case 'admin_notice_now' : 
+				Agdp_Admin::add_admin_notice_now( $msg, 'error', true);
+				break;
+			case 'return' :
+				return $msg;
+		}
 	}
 	
 	/**

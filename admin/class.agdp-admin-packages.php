@@ -9,6 +9,8 @@
 class Agdp_Admin_Packages {
 
 	static $initialized = false;
+	
+	static $current_user_can = null;
 
 	public static function init() {
 		if(self::$initialized)
@@ -92,10 +94,46 @@ class Agdp_Admin_Packages {
 			self::generate_form_post_type( $post_type );
 		}
 		
-		
 		echo sprintf('<div><input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large"></div>'
-			, 'Générer');
+			, 'Générer le package');
+			
 		echo '</form>';
+	}
+	
+	/**
+	 * current_user_can
+	 */
+	 public static function current_user_can( $action ) {
+		if( self::$current_user_can
+		&& isset(self::$current_user_can[$action])
+		&& self::$current_user_can[$action] !== null )
+			 return self::$current_user_can[$action];
+		
+		if( ! is_array(self::$current_user_can) )
+			self::$current_user_can = [];
+		
+		$current_user_can = false;
+		switch($action){
+			case 'generate':
+			case 'import':
+			default:
+				$current_user_can = current_user_can('manage_options');
+		}
+		self::$current_user_can[$action] = $current_user_can;
+		
+		return self::$current_user_can[$action];
+	}
+	/**
+	 * current_user_can_generate
+	 */
+	 public static function current_user_can_generate() {
+		 return self::current_user_can('generate');
+	}
+	/**
+	 * current_user_can_import
+	 */
+	 public static function current_user_can_import() {
+		 return self::current_user_can('import');
 	}
 	
 	/**
@@ -107,7 +145,7 @@ class Agdp_Admin_Packages {
 			// return;
 		// }
 		 
-		 
+		
 		if( ! empty($_POST['packages_form_submit']) ){
 			self::submit_packages_form();
 			self::generate_packages();
@@ -115,14 +153,49 @@ class Agdp_Admin_Packages {
 		
 		echo sprintf('<form id="agdppackages" method="POST">');
 		
+		if( self::current_user_can_generate() ){
+			echo sprintf('<ul><li class="agdppackages-post_type">'
+					. '<input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large">'
+					. '</li>'
+				, 'Générer');
+		}
+		
 		foreach( self::get_packageable_post_types() as $post_type ){
 			self::generate_form_post_type( $post_type );
 		}
 		
+		echo '</ul></form>';
+	}
+	
+	/**
+	 * get_import_link
+	 */
+	private static function get_import_link( $post_type ) {
 		
-		echo sprintf('<div><input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large"></div>'
-			, 'Générer');
-		echo '</form>';
+		$file = self::get_existing_post_type_package_file( $post_type );
+		if( $file ){
+			$file_time = filemtime($file);
+			$date = wp_date("d/m/Y à H:i:s", $file_time);
+			if( ! self::current_user_can_import() ){
+				echo sprintf('<div class="import-file">'
+						. '<span class="dashicons-before dashicons-database-import"></span>Package<br>du %s'
+						. '</div>'
+					, $date//substr( $file, strlen( self::get_packages_path() ) + 1 )
+				);
+			}
+			else {
+				$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import', Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0) );
+				$url = add_query_arg( 'import-agdppackage', 1, $url );
+				$url = add_query_arg( 'agdppackage-post_type', $post_type, $url );
+				echo sprintf('<div class="import-file">'
+						. '<a class="button-primary button-large" href="%s"><span class="dashicons-before dashicons-database-import"></span>'
+						. 'Package existant<br>du %s</a>'
+						. '</div>'
+					, $url
+					, $date//substr( $file, strlen( self::get_packages_path() ) + 1 )
+				);
+			}
+		}
 	}
 	
 	/**
@@ -130,46 +203,50 @@ class Agdp_Admin_Packages {
 	 */
 	private static function generate_form_post_type( $post_type ) {
 		
-		echo sprintf('<div class="agdppackages-post_type"><h3>%s</h3><ul class="in_package">'
+		echo sprintf('<li class="agdppackages-post_type"><h3>%s</h3><ul class="in_package">'
 			, $post_type
 		);
 		
-		$file = self::get_existing_post_type_package_file( $post_type );
-		if( $file ){
-			$date = wp_date("d/m/Y H:i:s", filectime($file));
-			$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import', Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0) );
-			$url = add_query_arg( 'import-agdppackage', 1, $url );
-			$url = add_query_arg( 'agdppackage-post_type', $post_type, $url );
-			// . '<input type="hidden" name="import-agdppackage" value="1">'
-			// . '<input type="hidden" name="agdppackage-post_type" value="%s">'
-			echo sprintf('<div class="import-file">'
-					. '<a href="%s"><span class="dashicons-before dashicons-database-import"></span>Importer le package<br>du %s</a>'
-					. '</div>'
-				, $url
-				, $date//substr( $file, strlen( self::get_packages_path() ) + 1 )
-			);
+		self::get_import_link( $post_type );
+		
+		if( self::current_user_can_generate() ){
+			$file = self::get_existing_post_type_package_file( $post_type );
+			if( $file ){
+				$file_time = filemtime($file);
+				$file_time = strtotime(wp_date('Y-m-d H:i:s', $file_time));
+			}
+			else
+				$file_time = false;
+			
+			$root_posts = [0];
+			$post_ids = Agdp_Posts::get_posts_and_descendants( $post_type, 'publish', false, $root_posts, 0);
+			$posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
+			foreach($posts as $post){
+				$meta_key = '_is_package_root';
+				$is_package_root = get_post_meta( $post->ID, $meta_key, true );
+				
+				$post_time = strtotime( $post->post_modified );
+				$is_newer = $file_time && $file_time < $post_time;
+				
+				echo sprintf('<li><label><input type="checkbox" name="%s[]" value="%d" %s>%s%s</label></li>'
+					, $meta_key
+					, $post->ID
+					, $is_package_root ? 'checked="checked"' : ''
+					, sprintf('<a href="%s" target="_blank">%s</a>'
+						, $post->guid
+						, htmlentities($post->post_title)
+					)
+					, ! $is_newer ? '' 
+						: sprintf('<span class="dashicons-before dashicons-plus" title="Plus récent (%s > %s)"></span>'
+							, date('d/m/Y H:i:s', $post_time)
+							, date('d/m/Y H:i:s', $file_time)
+						)
+				);
+			}
+			
+			self::generate_form_post_type_taxonomies( $post_type );
 		}
-		
-		$root_posts = [0];
-		$post_ids = Agdp_Posts::get_posts_and_descendants( $post_type, 'publish', false, $root_posts, 0);
-		$posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
-		foreach($posts as $post){
-			$meta_key = '_is_package_root';
-			$is_package_root = get_post_meta( $post->ID, $meta_key, true );
-			echo sprintf('<li><label><input type="checkbox" name="%s[]" value="%d" %s>%s</label></li>'
-				, $meta_key
-				, $post->ID
-				, $is_package_root ? 'checked="checked"' : ''
-				, sprintf('<a href="%s" target="_blank">%s</a>'
-					, $post->guid
-					, htmlentities($post->post_title)
-				)
-			);
-		}
-		
-		self::generate_form_post_type_taxonomies( $post_type );
-		
-		echo '</ul></div>';
+		echo '</ul></li>';
 	}
 	
 	
@@ -377,7 +454,7 @@ class Agdp_Admin_Packages {
 		if( $terms )
 			$options[ 'include_terms' ] = $terms;
 		
-		$data = Agdp_Admin_Edit_Post_Type::get_posts_export( $posts, $options );
+		$data = Agdp_Posts_Export::export_posts_object( $posts, $options );
 		if( $data ){
 			$data = json_encode($data, JSON_OBJECT_AS_ARRAY & JSON_UNESCAPED_SLASHES);
 			// $data = serialize( json_decode($data) );//remove object reference

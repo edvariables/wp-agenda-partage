@@ -387,6 +387,7 @@ class Agdp_Admin_Posts_Import {
 		
 		//update_existing, search
 		if( $update_existing ){
+			//TODO search with parent slug path
 			$existing = get_posts([
 				'post_type' => $data['post']['post_type'],
 				'post_status' => ['publish', 'pending', 'draft', 'private', 'future', $data['post']['post_status']],
@@ -436,14 +437,24 @@ class Agdp_Admin_Posts_Import {
 			$same_import_package_key = self::compare_import_package_key( $update_existing->ID, $data, $options );
 			
 			if( $confirm_action ) {
+				
+				$post_time = strtotime( $update_existing->post_modified );
+				$import_time = strtotime( $data['_original_data']['post_modified'] );
+				$is_newer = $import_time < $post_time;
+				
 				//checkbox
-				echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a>%s</li>'
+				echo sprintf( '<li><label><input type="checkbox" name="%s" %s>%s Mise à jour de <a href="%s">%s</a>%s%s</li>'
 					, $confirm_key
-					, $same_import_package_key ? '' : 'checked'
+					, $same_import_package_key ? '' : 'checked' //TODO $is_newer ?
 					, Agdp::icon('update')
 					, get_edit_post_link( $update_existing->ID )
 					, htmlspecialchars( stripslashes($data['post']['post_title']) )
 					, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
+					, ! $is_newer ? '' 
+						: sprintf('&nbsp;<span class="dashicons-before dashicons-info-outline" title="Plus récent ici que dans l\'import (%s > %s)"></span>'
+							, date('d/m/Y H:i:s', $post_time)
+							, date('d/m/Y H:i:s', $import_time)
+						)
 				);
 				return $original_id;
 			}
@@ -629,6 +640,8 @@ class Agdp_Admin_Posts_Import {
 		$create_new = false;
 		$same_import_package_key = false;
 		
+		/** existing_term **/
+		//TODO search with parent slug path
 		if( $existing_term = get_term_by( 'slug', $data['term']['slug'], $taxonomy, OBJECT ) ){
 			
 			$same_import_package_key = self::compare_import_package_key( $existing_term, $data, $options );
@@ -716,6 +729,9 @@ class Agdp_Admin_Posts_Import {
 				return false;
 			}
 			if( $existing_term ){
+				//$existing_term has been found from slug comparaison
+				//TODO update term
+				
 				$new_term_id = $existing_term->term_id;
 			}
 			else {

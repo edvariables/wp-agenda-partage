@@ -28,6 +28,7 @@ class Agdp_Admin {
 		}
 		
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-post-type.php' );
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts-export.php');
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-mailbox.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Mailbox', 'init' ) );

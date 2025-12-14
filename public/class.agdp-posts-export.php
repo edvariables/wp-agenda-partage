@@ -2,7 +2,7 @@
 
 /**
  * AgendaPartage -> Posts abstract -> Export
- * Export de posts
+ * Export de posts suivant différents formats
  */
 abstract class Agdp_Posts_Export {
 	
@@ -77,6 +77,10 @@ abstract class Agdp_Posts_Export {
 				return static::export_posts_docx($posts, $filters, $return);
 			case 'openagenda':
 				$export_data = static::export_posts_openagenda($posts, $filters);
+				$return = 'data';
+				break;
+			case 'json':
+				$export_data = json_encode( self::export_posts_object($posts, $filters) );
 				$return = 'data';
 				break;
 				
@@ -745,5 +749,149 @@ abstract class Agdp_Posts_Export {
 				}
 			}
 		}
+	}
+
+
+	/**
+	 * Export posts
+	 *
+	 * $options['include_terms'] as ids Array
+	 */
+	public static function export_posts_object( $posts, $options = false ) {
+		$action = 'export';
+		
+		if( ! is_array($options) )
+			$options = [];
+		$include_terms = isset($options['include_terms']) ? $options['include_terms'] : false;
+		
+		$data = [];
+		$post_type_taxonomies = [];
+		$taxonomies = [];
+		$used_terms = [];
+		foreach( $posts as $post_id ){
+			if( is_a($post_id, 'WP_Post') ){
+				$post = $post_id;
+				$post_id = $post->ID;
+			}
+			else
+				$post = get_post( $post_id );
+			
+			$meta_input = get_post_meta($post->ID, '', true);//TODO ! true
+			$metas = [];
+			if( ! isset($meta_input['error'])){
+				foreach($meta_input as $meta_name => $meta_value){
+					if( $meta_name[0] === '_' )
+						continue;
+					
+					// $meta_value = implode("\r\n", $meta_value);
+					// if(is_serialized($meta_value))
+						// $meta_value = var_export(unserialize($meta_value), true);
+					if( is_array($meta_value) && count($meta_value) === 1 )
+						$meta_value = $meta_value[0];
+					$metas[ $meta_name ] = $meta_value;
+				}
+			}
+			$post->post_password = null;
+			$post_data = [
+				'post' => $post,
+				'metas' => $metas,
+			];
+			
+			$post_type = $post->post_type;
+			if( isset( $post_type_taxonomies[$post_type] ) )
+				$post_taxonomies = $post_type_taxonomies[$post_type];
+			else {
+				$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'objects');
+				$post_type_taxonomies[$post_type] = $post_taxonomies;
+				$taxonomies = array_merge( $taxonomies, $post_taxonomies );
+			}
+			$post_terms = [];
+			foreach( $post_taxonomies as $tax_name => $taxonomy ){
+				$tax_terms = wp_get_post_terms($post_id, $tax_name);;
+				foreach( $tax_terms as $term ){
+					if( ! isset( $used_terms[ $term->term_id.'' ] ) )
+						$used_terms[ $term->term_id.'' ] = $term;
+					
+					if( ! isset( $post_terms[$tax_name] ) )
+						$post_terms[$tax_name] = [];
+					if( ! isset( $post_terms[$tax_name][$term->term_id.''] ) )
+						$post_terms[$tax_name][ $term->term_id.'' ] = $term->slug;
+				}
+			}
+			if( $post_terms )
+				$post_data['terms'] = $post_terms;
+			
+			$data[] = $post_data;
+		}
+		
+		if( $used_terms || $include_terms ){
+			$include_terms = array_merge( array_keys($used_terms), $include_terms);
+			//get_terms
+			$in_terms = get_terms([ 
+				'taxonomy' => array_keys($taxonomies),
+				'include' => $include_terms,
+				'hide_empty' => false, 
+				'fields' => 'all',
+			]);
+			
+			if( count($in_terms) >= 0 ){
+				//get_terms_export
+				$data['terms'] = self::export_terms_object( $in_terms );
+				if( $data['terms'] ){
+					//taxonomies
+					$data['taxonomies'] = [];
+					foreach($in_terms as $term){
+						if( ! isset($data['taxonomies'][$term->taxonomy]) ){
+							// $taxonomies[$term->taxonomy] = json_decode(json_encode($taxonomies[$term->taxonomy]), true);
+							// foreach( ['name_field_description', 
+								// 'slug_field_description', 
+								// 'parent_field_description', 
+								// 'desc_field_description',
+							 // ] as $field )
+								// unset($taxonomies[$term->taxonomy]['labels'][$field]);
+								
+							$data['taxonomies'][$term->taxonomy] = $term->taxonomy; //$taxonomies[$term->taxonomy];
+						}
+					}
+				}
+			}
+		}
+		
+		return $data;
+		
+	}
+	
+	/**
+	 * Export taxonomies
+	 */
+	public static function export_terms_object( $terms ) {
+		$action = 'export';
+		$data = [];
+		foreach( $terms as $term_id ){
+			if( is_a($term_id, 'WP_Term') ){
+				$term = $term_id;
+				$term_id = $term->term_id;
+			}
+			else
+				$term = get_term( $term_id );
+			
+			$meta_input = get_term_meta($term->term_id, '', true);//TODO ! true
+			$metas = [];
+			if( ! isset($meta_input['error'])){
+				foreach($meta_input as $meta_name => $meta_value){
+					if( $meta_name[0] === '_' )
+						continue;
+					if( is_array($meta_value) && count($meta_value) === 1 )
+						$meta_value = $meta_value[0];
+					$metas[ $meta_name ] = $meta_value;
+				}
+			}
+			$data[] = [
+				'term' => $term,
+				'metas' => $metas,
+			];
+		}
+		
+		return $data;
 	}
 }
