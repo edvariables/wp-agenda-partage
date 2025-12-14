@@ -1250,10 +1250,8 @@ class Agdp_Report extends Agdp_Post {
 			// return $sql;
 			$sql = $sql[ count($sql) - 1 ];
 		}
-		//Sub query does not support LIMIT clause
-		$sql = preg_replace('/\sLIMIT\s.*(\n|$)/i', '', $sql);
-		//TODO or not TODO
-		//$sql = preg_replace('/\sORDER BY\s.*(\n|$)/i', '', $sql);
+		/* //Sub query does not support LIMIT clause
+		$sql = preg_replace('/\sLIMIT\s.*(\n|$)/i', '', $sql); */
 		
 		$sql = str_replace( "\n", "\n\t", $sql );
 		return "( $sql )";
