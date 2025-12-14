@@ -172,6 +172,10 @@ class Agdp_Admin_Edit_WPCF7 {
 		
 		$usages = str_replace('"', '\"', json_encode( $usages ));
 		
+		$comments = [
+			'agdpevent_comment' => [ 'email' => 'commentaire@evenement.agdp' ]
+		];
+		
 		?><script> if( $ === undefined ) var $ = jQuery;
 		$("form#wpcf7-admin-form-element").ready(function(e){
 			var $form = $(this);
@@ -215,7 +219,7 @@ class Agdp_Admin_Edit_WPCF7 {
 						$('#wpcf7-mail-recipient')
 							.after('<div class="agdp-message agdp_wpcf7_usage">'
 								+ '<label class="dashicons-before dashicons-welcome-learn-more">'
-									+ 'Utilisez commentaire@evenement.agdp</label>');
+									+ 'Utilisez <code><?php echo $comments['agdpevent_comment']['email'];?></code></label>');
 						break;
 				}
 			});

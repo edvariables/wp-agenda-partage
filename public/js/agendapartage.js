@@ -84,12 +84,20 @@ jQuery( function( $ ) {
 				
 				/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
 				document.addEventListener( 'wpcf7mailsent', function( event ) {
-					var post_url = event.detail.apiResponse['message'];
-					if(post_url && post_url.startsWith('redir:')){
-						post_url = post_url.substring('redir:'.length);
-						if(post_url){
-							event.detail.apiResponse['message'] = 'La page va être rechargée. Merci de patienter.';
-							document.location = post_url;
+					var response = event.detail.apiResponse['message'];
+					if(response){
+						if(response.startsWith('redir:')){
+							var post_url = response.substring('redir:'.length);
+							if(post_url){
+								event.detail.apiResponse['message'] = 'La page va être rechargée. Merci de patienter.';
+								document.location = post_url;
+							}
+						}
+						else if(response.startsWith('js:')){
+							var script = response.substring('js:'.length);
+							if(script){
+								event.detail.apiResponse['message'] = eval(script);
+							}
 						}
 					}
 				}, false );
