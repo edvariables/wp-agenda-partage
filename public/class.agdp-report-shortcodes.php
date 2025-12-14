@@ -235,6 +235,17 @@ class Agdp_Report_Shortcodes {
 					case 'results' :
 						$val = Agdp_Report::get_report_html( $report_id, false, $sql_variables );
 						break;
+						
+					case 'cell' :
+					case 'cellule' :
+						$options = [];
+						$dbResults = Agdp_Report::get_report_results( $report_id, false, $sql_variables, $options );
+						$val = null;
+						if( is_array($dbResults) ){
+							foreach( $dbResults[0] as $val )
+								break;
+						}
+						break;
 				}
 				if($val === false)
 					$val = get_post_meta( $report_id, $meta_name, true, false);

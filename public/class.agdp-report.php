@@ -1389,9 +1389,9 @@ class Agdp_Report extends Agdp_Post {
 	}
 
 	/**
-	 * SQL results as html table
+	 * SQL results 
 	 */
- 	public static function get_report_html( $report = false, $sql = false, $sql_variables = false, $options = false ) {
+ 	public static function get_report_results( &$report = false, $sql = false, &$sql_variables = false, &$options = false ) {
 		if( ! $report ){
 			global $post;
 			if( ! $post || $post->post_type !== self::post_type)
@@ -1412,7 +1412,7 @@ class Agdp_Report extends Agdp_Post {
 		$meta_key = 'table_render';
 		$table_render = isset($options[$meta_key]) ? $options[$meta_key] : get_post_meta( $report_id, $meta_key, true );
 		if( $table_render && is_string($table_render) ){
-			$table_render = json_decode($table_render, true);
+			$options[$meta_key] = $table_render = json_decode($table_render, true);
 		}
 		
 		//table_columns
@@ -1431,6 +1431,20 @@ class Agdp_Report extends Agdp_Post {
 		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, $options );
 		
 		$dbresults = static::get_sql_dbresults( $report, $sql, $sql_variables, $options, $table_render );
+		
+		return $dbresults;
+	}
+	
+	/**
+	 * SQL results as html table
+	 */
+ 	public static function get_report_html( $report = false, $sql = false, $sql_variables = false, $options = false ) {
+		
+		$dbresults = self::get_report_results( $report, $sql, $sql_variables, $options );
+		
+		$report_id = $report->ID;
+		$table_render = isset($options['table_render']) ? $options['table_render'] : false;
+		$table_columns = isset($table_render['columns']) ? $table_render['columns'] : [];
 		
 		$sql_prepared ='';
 		//report_show_sql
@@ -1481,6 +1495,7 @@ class Agdp_Report extends Agdp_Post {
 				, $dbresults->getMessage()
 				, $sql_prepared
 			);
+			
 			$content .= sprintf('<div class="agdpreport" agdp_report="%d">%s</div>'
 				, $report_id
 				, static::get_default_table( $report, $sql, $table_render, $sql_variables, $options )
