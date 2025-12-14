@@ -1263,19 +1263,19 @@ class Agdp_Report extends Agdp_Post {
 				$main_sql = $pre_sqls . ";\n" . $main_sql;
 			}
 			
-			$sub_sql = '( ' . $sub_sql[ count($sub_sql) - 1 ] . ' )';
-
-			$main_sql = preg_replace( $replace_pattern, $sub_sql, $main_sql );
-			return $main_sql;
+			$sub_sql = $sub_sql[ count($sub_sql) - 1 ];
 		}
-		/* SIC //Sub query does not support LIMIT clause
-		$sql = preg_replace('/\sLIMIT\s.*(\n|$)/i', '', $sql); */
-		
-		$sql = trim( $sql, ";\r\n \t");
-		if( ! $sql )
-			return '';
-		$sql = str_replace( "\n", "\n\t", $sql );
-		return "( $sql )";
+		else {
+			$sub_sql = trim( $sub_sql, ";\r\n \t");
+			if( ! $sub_sql )
+				return $main_sql;
+			$sub_sql = str_replace( "\n", "\n\t", $sub_sql );
+		}
+			
+		$sub_sql = '( ' . $sub_sql . ' )';
+
+		$main_sql = preg_replace( $replace_pattern, $sub_sql, $main_sql );
+		return $main_sql;
 	}
 
 	/**
