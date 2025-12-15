@@ -16,7 +16,13 @@ class Agdp_Report extends Agdp_Post {
 	const taxonomy_sql_function = 'sql_function';
 	const shortcode = 'report';
 	
-	const css_pseudo_classes = ['active', 'any-link', 'auto-fill', 'checked', 'default', 'defined', 'dir', 'disabled', 'empty', 'enabled', 'first', 'first-child', 'first-of-type', 'focus', 'focus-visible', 'focus-within', 'fullscreen', 'has', 'hover', 'in-range', 'indeterminate', 'invalid', 'is', 'lang', 'last-child', 'last-of-type', 'left', 'link', 'modal', 'not', 'nth-child', 'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-child', 'only-of-type', 'optional', 'out-of-range', 'placeholder-shown', 'popover-open', 'read-only', 'read-write', 'required', 'right', 'root', 'scope', 'state', 'target', 'user-invalid', 'user-valid', 'valid', 'visited', 'where'];
+	const css_pseudo_classes = ['active', 'any-link', 'auto-fill', 'checked', 'default', 'defined', 'dir', 'disabled'
+		, 'empty', 'enabled', 'first', 'first-child', 'first-of-type', 'focus', 'focus-visible'
+		, 'focus-within', 'fullscreen', 'has', 'hover', 'in-range', 'indeterminate', 'invalid'
+		, 'is', 'lang', 'last-child', 'last-of-type', 'left', 'link', 'modal', 'not', 'nth-child'
+		, 'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-child', 'only-of-type', 'optional'
+		, 'out-of-range', 'placeholder-shown', 'popover-open', 'read-only', 'read-write', 'required'
+		, 'right', 'root', 'scope', 'state', 'target', 'user-invalid', 'user-valid', 'valid', 'visited', 'where'];
 
 		
 	// const user_role = 'author';
@@ -151,6 +157,35 @@ class Agdp_Report extends Agdp_Post {
 	}
 	
 	/**
+	 * Normalize options and variables at the beginning of get_sql_prepare()
+	 */
+ 	private static function get_sql_prepare_options( $report, &$sql_variables, &$options ) {
+		$report_id = $report->ID;
+		
+		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, $options );
+		
+		return $options;
+	}
+	
+	/**
+	 * Normalize options and variables at the beginning of get_sql_prepare()
+	 */
+ 	private static function quoted_strings_in_sql( &$sql, $strings_prefix ) {
+		//BUGG !!! si CONCAT('<a class="dbquote" href="', `url`, '">')
+		$matches = [];
+		$pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/s';
+		$sql_strings = [];
+		while( preg_match( $pattern, $sql, $matches ) ){
+			$string = $matches[1];
+			$string = str_replace('\"', '"', $string);
+			$variable = sprintf('%s_%d_', $strings_prefix, count($sql_strings));//suffixe important
+			$sql_strings[$variable] = $string;
+			$sql = str_replace( $matches[0], ':' . $variable, $sql );
+		}
+		return $sql_strings;
+	}
+	
+	/**
 	 * Prepare SQL
 	 *
 	 * Aussi utilisé pour le css dans lequel on peut injecter des variables (par exemple, :color%I)
@@ -167,24 +202,14 @@ class Agdp_Report extends Agdp_Post {
 		$blog_prefix = $wpdb->get_blog_prefix();
 	    $sql = static::replace_sql_tables_prefix( $sql );
 		
-		$sql_variables = Agdp_Report_Variables::normalize_sql_variables( $report, $sql_variables, $options );
+		$options = static::get_sql_prepare_options( $report, $sql_variables, $options );
 		
 		//comments
 		$sql = self::remove_sql_comments( $sql );
 				
 		//strings ""
-		//BUGG !!! si CONCAT('<a class="dbquote" href="', `url`, '">')
-		$matches = [];
-		$pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/s';
 		$strings_prefix = uniqid('__sqlstr_');
-		$sql_strings = [];
-		while( preg_match( $pattern, $sql, $matches ) ){
-			$string = $matches[1];
-			$string = str_replace('\"', '"', $string);
-			$variable = sprintf('%s_%d_', $strings_prefix, count($sql_strings));//suffixe important
-			$sql_strings[$variable] = $string;
-			$sql = str_replace( $matches[0], ':' . $variable, $sql );
-		}
+		$sql_strings = self::quoted_strings_in_sql( $sql, $strings_prefix );
 		
 		//Variables
 		$matches = [];
@@ -196,18 +221,20 @@ class Agdp_Report extends Agdp_Post {
 			$prepare = [];
 			foreach($matches[2] as $index => $variable){
 				//format
-				$src = $matches[0][$index];
+				$str_source = $matches[0][$index];
 				// $var_domain
 				$var_domain = $matches[1][$index];
 				switch( $var_domain ){
-					case ':' :
+				case ':' :
 					//$variable_value
 					if( ! isset( $variables[$variable] )){
 						if( strpos($variable, $strings_prefix ) === 0 ){
 							$variable_value = $sql_strings[$variable];
 						}
 						else {
-							if( in_array( $variable, self::css_pseudo_classes ) ){
+							//css_pseudo_classes
+							if( $options['mode'] === 'css'
+							&& in_array( $variable, self::css_pseudo_classes ) ){
 								continue 2;
 							}
 							
@@ -235,6 +262,7 @@ class Agdp_Report extends Agdp_Post {
 					$format_LIKE = $format_mode  === 'K';
 					$format_JSON = $format_mode  === 'J';
 					
+					// variable_type
 					$variable_type = $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ? $sql_variables[$variable]['type'] : null;
 					switch($variable_type){
 						case 'range': 
@@ -256,10 +284,10 @@ class Agdp_Report extends Agdp_Post {
 						case 'table':
 							if( ! $format )
 								$format_Inject = $format = '%I';
-							if( ! $variables[$variable] )
-								$variables[$variable] = '';
+							if( ! $variable_value )
+								$variable_value = '';
 							else
-								$variables[$variable] = self::add_table_blog_prefix( $variables[$variable] );
+								$variable_value = self::add_table_blog_prefix( $variable_value );
 							break;
 						case 'column':
 							if( ! $format )
@@ -267,14 +295,14 @@ class Agdp_Report extends Agdp_Post {
 							break;
 						case 'checkboxes': 
 							if( $format_IN ){
-								if( $variables[$variable] ){
-									if( is_string( $variables[$variable] ) ){
-										if( $variables[$variable][0] === '|' )
-											$variables[$variable] = explode( '|', substr($variables[$variable], 1, strlen($variables[$variable]) - 2 ));
+								if( $variable_value ){
+									if( is_string( $variable_value ) ){
+										if( $variable_value[0] === '|' )
+											$variable_value = explode( '|', substr($variable_value, 1, strlen($variable_value) - 2 ));
 										else
-											$variables[$variable] = explode( "\n", $variables[$variable] );
+											$variable_value = explode( "\n", $variable_value );
 									}
-									$format = implode(', ', array_fill(0, count($variables[$variable]), '%s'));
+									$format = implode(', ', array_fill(0, count($variable_value), '%s'));
 								}
 								else {
 									$format = '%s';
@@ -282,92 +310,96 @@ class Agdp_Report extends Agdp_Post {
 							}
 							else {
 								// ( :post_status = '' || :post_status = post.post_status || :post_status LIKE CONCAT('%|', post.post_status, '|%' )
-								if( $variables[$variable] && is_string($variables[$variable]) && $variables[$variable][0] !== '|' ){
-									$variables[$variable] = "|" . str_replace("\n", "|", $variables[$variable]) . "|";
+								if( $variable_value && is_string($variable_value) && $variable_value[0] !== '|' ){
+									$variable_value = "|" . str_replace("\n", "|", $variable_value) . "|";
 								}
 							}
 							break;
 						case 'asc_desc': 
-							if( $variables[$variable] === '' )
-								$variables[$variable] = 'ASC';
-							elseif( ! $variables[$variable] )
-								$variables[$variable] = 'DESC';
-							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
+							if( $variable_value === '' )
+								$variable_value = 'ASC';
+							elseif( ! $variable_value )
+								$variable_value = 'DESC';
 							//skip prepare
-							continue 3;
-							
+							$format_Inject = true;
+							break;
+						
+						//Sub-report
 						case 'report_sql': 
 							$error = '';
-							if( is_numeric($variables[$variable])
-							 && ( $sub_report = get_post($variables[$variable]) )){
+							if( is_numeric($variable_value)
+							 && ( $sub_report = get_post($variable_value) )){
 								 if( $format === '%d' ){
-									//$variables[$variable] returns ID
-									 break;
+									//$variable_value returns ID
+									break;
 								 }
-								//Check stack
-								if( ! isset($options[__FUNCTION__.':stack']) )
-									$options[__FUNCTION__.':stack'] = [];
-								elseif( $sub_report->ID == $report_id
-								|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
-									$errors[] = $error = sprintf('Le rapport "%d" provoque un appel récursif infini.', $variables[$variable]);
-									debug_log_callstack(__FUNCTION__, $error);
-									$variables[$variable] = $error;
-								}
-								if( ! $error ){
-									// if( isset($sql_variables[$variable]['report_sql']) )
-										// $sub_sql = $sql_variables[$variable]['report_sql'];
-									// else {
-										array_push( $options[__FUNCTION__.':stack'], $report_id );
-										// debug_log( __FUNCTION__ . ' sub_report' );
-										$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
-										// debug_log( __FUNCTION__ . ' sub_report DONE', $sub_sql );
-										array_pop( $options[__FUNCTION__.':stack'] );
-										$sql_variables[$variable]['report_sql'] = $sub_sql;
-									// }
-									
-									if( ! $format ) { 
-										//is SQL SET
-										if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
-											// and not SELECT
-											if( preg_match( '/\sSELECT\s/i', $sql ) === 0 ){
-												$format = $format_JSON = '%J';
-											}
-										}
-									}
-									if( ! $format_JSON ) {
-										// debug_log(__FUNCTION__, '$sql AVANT', $sql);
-										// debug_log(__FUNCTION__, '$sub_sql AVANT', $sub_sql);
-										$sql = self::replace_sub_report_sql( $sql, $sub_sql, '/' . preg_quote($src) . '(?!%)/' );
-										// debug_log(__FUNCTION__, 'replace_sub_report_sql $sub_sql APRES', $sql);
-										
-										// $sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
+								 elseif( $format === '%s' ){
+									$variable_value = $sub_report->post_title;
+									break;
+								 }
+								if( ! isset( $sql_variables[$variable]['report_sql'] ) ){
+									//Check stack
+									if( ! isset($options[__FUNCTION__.':stack']) )
+										$options[__FUNCTION__.':stack'] = [];
+									elseif( $sub_report->ID == $report_id
+									|| in_array( $report_id, $options[__FUNCTION__.':stack'] ) ){
+										$errors[] = $error = sprintf('Le rapport "%s #%d" provoque un appel récursif infini.', $sub_report->post_name, $sub_report->ID );
+										debug_log_callstack(__FUNCTION__, $error);
+										$variable_value = $error;
 										//skip prepare
-										continue 3;
+										$format_Inject = true;
+										break;
 									}
-									else{
-										switch( $format ){
-										case '%J' :
-										case '%JT' :
-										case '%JKV' :
-											$report_sql = $sql_variables[$variable]['report_sql'];
-											$result = static::get_sql_dbresults( $sub_report, $report_sql, $sql_variables, $options );
-											if( is_a($result, 'Exception') )
-												$result = [ 
-													'error' => $result->getMessage(),
-													'source' => __FUNCTION__,
-													'sub_report' => $sub_report->ID,
-													'sub_report_title' => $sub_report->post_title,
-												];
-											
-											$value = json_encode($result, JSON_UNESCAPED_UNICODE);
-											$variables[$variable] = $value;
+									array_push( $options[__FUNCTION__.':stack'], $report_id );
+									// debug_log( __FUNCTION__ . ' sub_report' );
+									$sub_sql = self::get_sql( $sub_report, false, $sql_variables, $options );
+									// debug_log( __FUNCTION__ . ' sub_report DONE', $sub_sql );
+									array_pop( $options[__FUNCTION__.':stack'] );
+									
+									$sql_variables[$variable]['report_sql'] = $sub_sql;
+								}
+								
+								if( ! $format ) { 
+									//is SQL SET
+									if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
+										// and not SELECT
+										if( preg_match( '/\sSELECT\s/i', $sql ) === 0 ){
+											$format = $format_JSON = '%J';
 										}
 									}
+								}
+								if( ! $format_JSON ) {
+									
+									//Inject "( $sub_sql )" string
+									$sql = self::replace_sub_report_sql( $sql, $sub_sql, '/' . preg_quote($str_source) . '(?!%)/' );
+									
+									//skip prepare
+									continue 3;
+								}
+								
+								//Format JSON : Sub-report results
+								switch( $format ){
+								case '%J' :
+								case '%JT' :
+								case '%JKV' :
+									$report_sql = $sql_variables[$variable]['report_sql'];
+									$result = static::get_sql_dbresults( $sub_report, $report_sql, $sql_variables, $options );
+									if( is_a($result, 'Exception') ){
+										$result = [ 
+											'error' => $result->getMessage(),
+											'source' => __FUNCTION__,
+											'sub_report' => $sub_report->ID,
+											'sub_report_title' => $sub_report->post_title,
+										];
+										$format = '%s';
+										$format_JSON = false;
+									}
+									$variable_value = json_encode($result, JSON_UNESCAPED_UNICODE);
 								}
 							}				 
 							else {
-								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variables[$variable]);
-								$variables[$variable] = $error;
+								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variable_value);
+								$variable_value = $error;
 							}
 							break;
 						default:
@@ -390,53 +422,22 @@ class Agdp_Report extends Agdp_Post {
 						switch( $format ){
 						case '%J' :
 							
-							$value = $variables[$variable];
-						
-							/* if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
-								switch($sql_variables[$variable]['type']){
-									case 'report_sql' :
-										//Injecte le résultat de la sous-requête sous forme JSON
-										// if( isset($sql_variables[$variable]['report_json']) ){
-											// $value = $sql_variables[$variable]['report_json'];
-										// }
-										// else {
-											$report_sql = $sql_variables[$variable]['report_sql'];
-											// debug_log( __FUNCTION__ . ' sub_report get_sql_dbresults');
-											// array_push( $options[__FUNCTION__.':stack'], $report_id );
-											$result = static::get_sql_dbresults( $sub_report, $report_sql, $sql_variables, $options );
-											// debug_log( __FUNCTION__ . ' sub_report get_sql_dbresults DONE');
-											// array_pop( $options[__FUNCTION__.':stack'] );
-											if( is_a($result, 'Exception') )
-												$result = [ 
-													'error' => $result->getMessage(),
-													'source' => __FUNCTION__,
-													'sub_report' => $sub_report->ID,
-													'sub_report_title' => $sub_report->post_title,
-												];
-											
-											$value = json_encode($result, JSON_UNESCAPED_UNICODE);
-											// $sql_variables[$variable]['report_json'] = $value;
-											
-										// }
-										break;
-								}
-							} */
-							$value = sprintf('CAST( "%s" AS JSON )',
-								str_replace("\n", '', addslashes( $value )),
+							$variable_value = sprintf('CAST( "%s" AS JSON )',
+								str_replace("\n", '', addslashes( $variable_value )),
 							);
 							
-							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-							continue 3;
+							//skip prepare
+							$format_Inject = true;
+							break;
 						
 						case '%JKV' ://{key: value, key: value, key: value, ...}
 						case '%JT' : //[{col1: value, col2: value, col3: value}, ...]
 							$rows = '*';
-							$value = $variables[$variable];
-							if( $value && is_string( $value ) ){
-								$value = json_decode( $value, true );
+							if( $variable_value && is_string( $variable_value ) ){
+								$variable_value = json_decode( $variable_value, true );
 							}
-							if( ! $value ){
-								$value = '[]';
+							if( ! $variable_value ){
+								$variable_value = '[]';
 								$str_columns = '';
 							}
 							else {
@@ -445,7 +446,7 @@ class Agdp_Report extends Agdp_Post {
 								// tableau d'objets ou objet ?
 								$is_object = false;
 								$columns = [];
-								foreach( $value as $index => $item ){
+								foreach( $variable_value as $index => $item ){
 									if( $index !== 0 ){//tableau brut
 										$is_object = true;
 									}
@@ -456,19 +457,19 @@ class Agdp_Report extends Agdp_Post {
 										$columns[] = 'key';
 										$columns[] = 'value';
 										$keys_values = [];
-										foreach( $value as $k => $v ){
+										foreach( $variable_value as $k => $v ){
 											$keys_values[] = [ 'key' => $k, 'value' => $v ];
 										}
-										$value = json_encode( $keys_values, JSON_UNESCAPED_UNICODE );
+										$variable_value = json_encode( $keys_values, JSON_UNESCAPED_UNICODE );
 									}
 									else {
-										foreach( $value as $key => $item )
+										foreach( $variable_value as $key => $item )
 											$columns[] = $key;
-										$value = sprintf('[%s]', json_encode( $value, JSON_UNESCAPED_UNICODE ) );
+										$variable_value = sprintf('[%s]', json_encode( $variable_value, JSON_UNESCAPED_UNICODE ) );
 									}
 								}
 								else {
-									foreach( $value as $object ){
+									foreach( $variable_value as $object ){
 										if( ! is_array($object) )
 											continue;
 										foreach( $object as $key => $item )
@@ -476,27 +477,27 @@ class Agdp_Report extends Agdp_Post {
 										break;
 									}
 									//Tableau de données brutes, sans clé de colonne
-									if( count($columns) === 0 && count($value) > 0 ){
+									if( count($columns) === 0 && count($variable_value) > 0 ){
 										if( '%JKV' === $format ){
 											$columns[] = 'key';
 											$columns[] = 'value';
 											$keys_values = [];
-											foreach( $value as $index => $item ){
+											foreach( $variable_value as $index => $item ){
 												$keys_values[] = [ 'key' => $index . '', 'value' => $item ];
 											}
-											$value = $keys_values;
+											$variable_value = $keys_values;
 										}
 										else {
 											$columns[] = 'item';
 											$values = [];
-											foreach( $value as $index => $item ){
+											foreach( $variable_value as $index => $item ){
 												$values[] = [ $columns[0] => $item ];
 											}
-											$value = $values;
+											$variable_value = $values;
 										}
 									}
-									$value = json_encode( $value, JSON_UNESCAPED_UNICODE );
-									$value = sprintf('[%s]', substr($value, 1, strlen($value) - 2) );
+									$variable_value = json_encode( $variable_value, JSON_UNESCAPED_UNICODE );
+									$variable_value = sprintf('[%s]', substr($variable_value, 1, strlen($variable_value) - 2) );
 								}
 								$str_columns = '';
 								foreach( $columns as $column ){
@@ -509,75 +510,77 @@ class Agdp_Report extends Agdp_Post {
 							$var_name = sprintf('@_%s_%s', $variable, Agdp::get_secret_code(6));
 							$sql = sprintf("SET %s = CAST(\"%s\" AS JSON);\n%s", 
 								$var_name,
-								str_replace("\n", '', addslashes( $value )),
+								str_replace("\n", '', addslashes( $variable_value )),
 								$sql,
 							);
 							
-							$value = sprintf('JSON_TABLE( %s , "$[%s]" COLUMNS( %s ) )'
-								, $var_name//addslashes( $value )
+							$variable_value = sprintf('JSON_TABLE( %s , "$[%s]" COLUMNS( %s ) )'
+								, $var_name//addslashes( $variable_value )
 								, $rows
 								, $str_columns
 							);
 							
-							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-							continue 3;
+							//skip prepare
+							$format_Inject = true;
+							break;
 						}
 					}
 					if( $format_Inject ){
-						if( ($value = $variables[$variable]) === null )
-							$value = '';
-						$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
+						if( $variable_value === null )
+							$variable_value = '';
+						//preg_replace str_source in sql
+						$sql = preg_replace( '/' . preg_quote($str_source) . '(?!%)/',  $variable_value, $sql );
 						//skip prepare
 						continue 2;
 					}
 					//----------
 					//Remplacement de la variable par %format
-					$sql = preg_replace( '/(?<!\\\\)' . preg_quote($src) . '(?!%)/', $format, $sql );
+					$sql = preg_replace( '/(?<!\\\\)' . preg_quote($str_source) . '(?!%)/', $format, $sql );
 					
 					//Ajoute la valeur à $prepare[]
-					if( is_array($variables[$variable]) ){
+					if( is_array($variable_value) ){
 						if( $format_IN ) {
-							foreach($variables[$variable] as $opt){
+							foreach($variable_value as $opt){
 								$prepare[] = $opt;
 							}
 						}
 						else {
 							$value = '';
-							foreach($variables[$variable] as $opt){
+							foreach($variable_value as $opt){
 								$value .= '|' . $opt;
 							}
 							if( $value )
 								$value = $value . '|';
-							$prepare[] = $value;
+							$prepare[] = $variable_value = $value;
 						}
 					}
-					elseif( $variables[$variable] === null )
+					elseif( $variable_value === null )
 						$prepare[] = '';
 					elseif( $format_LIKE ){
-						if( strpos( $variables[$variable], '_' ) !== false )
-							$variables[$variable] = str_replace('_', '\_', $variables[$variable]);
+						if( strpos( $variable_value, '_' ) !== false )
+							$variable_value = str_replace('_', '\_', $variable_value);
 						switch($format_LIKE){ //sic : switch fails when $format_LIKE===true
 							case '%KL' :
-								$prepare[] = $variables[$variable].'%';
+								$prepare[] = $variable_value.'%';
 								break;
 							case '%KR' :
-								$prepare[] = '%'.$variables[$variable];
+								$prepare[] = '%'.$variable_value;
 								break;
 							default :
-								$prepare[] = '%'.$variables[$variable].'%';
+								$prepare[] = '%'.$variable_value.'%';
 								break;
 						}
 					}
 					else {
-						if( is_string($variables[$variable]) ){
-							// $variables[$variable] = str_replace("\n", '',  str_replace("\r", '', $variables[$variable]));
-							if( strpos($variables[$variable], '"') ){
-								//debug_log(__FUNCTION__, 'Contient double-quote', $variables[$variable] );
+						if( is_string($variable_value) ){
+							// $variable_value = str_replace("\n", '',  str_replace("\r", '', $variable_value));
+							if( strpos($variable_value, '"') ){
+								//debug_log(__FUNCTION__, 'Contient double-quote', $variable_value );
 								//TODO est-ce bien raisonnable ? NON en json
-								// $variables[$variable] = str_replace('"', '&quot;', $variables[$variable]);
+								// $variable_value = str_replace('"', '&quot;', $variable_value);
 						}}
 						
-						$prepare[] = $variables[$variable];
+						$prepare[] = $variable_value;
 					}
 					break;
 				case '@' :
@@ -707,11 +710,11 @@ class Agdp_Report extends Agdp_Post {
 			$previous_row = [];
 			foreach($matches[1] as $index => $variable){
 				
-				$src = $matches[0][$index];
+				$str_source = $matches[0][$index];
 				$row = $matches[2][$index];
 				$col = $matches[3][$index];
 				
-				$used_variables[ $variable ] = $src;
+				$used_variables[ $variable ] = $str_source;
 				
 				if( $row === '' && $col === '' )
 					continue;
@@ -797,9 +800,9 @@ class Agdp_Report extends Agdp_Post {
 						)
 					);
 				}
-					// debug_log( __FUNCTION__ . ' sql', $sql, $src);
+					// debug_log( __FUNCTION__ . ' sql', $sql, $str_source);
 					// debug_log( __FUNCTION__ . ' extract', $extract);
-				$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $extract, $sql );
+				$sql = preg_replace( '/' . preg_quote($str_source) . '(?!%)/', $extract, $sql );
 					// debug_log( __FUNCTION__ . ' sql', $sql);
 				$previous_row[$variable] = $row;
 			}
@@ -809,10 +812,9 @@ class Agdp_Report extends Agdp_Post {
 		// SET @SLUGS = SELECT slug, name FROM :termes t;
 		if( strpos($sql, 'SET ') !== false && strpos($sql, ' SELECT ') ){
 			$matches = [];
-			$pattern = '/(?:^SET\s+)(\@+[a-zA-Z_][a-zA-Z0-9_]*)\s*\:\=\s*SELECT\s+(`?[a-zA-Z_][a-zA-Z0-9_]*`?)(?:\s*,\s*)(`?[a-zA-Z_][a-zA-Z0-9_]*`?)/i';
+			$pattern = '/(?:^SET\s+)(\@+[a-zA-Z_][a-zA-Z0-9_]*)\s*\:?\=\s*SELECT\s+(`?[a-zA-Z_][a-zA-Z0-9_]*`?)(?:\s*,\s*)(`?[a-zA-Z_][a-zA-Z0-9_]*`?)/i';
 			if( preg_match( $pattern, $sql, $matches ) ){
 				$variable = $matches[1];
-				$src = $matches[0];
 				$key_field = $matches[2];
 				$value_field = $matches[3];
 				$sub_sql = trim(substr( $sql, strpos($sql, '=') + 1 ), ' ;');
@@ -829,7 +831,7 @@ class Agdp_Report extends Agdp_Post {
 				$used_variables[ $variable ] = $matches;
 			}
 			else {
-				$sql = new Exception( sprintf('Erreur dans le format <code>SET @var = SELECT `key`, `value` FROM table t;</code><br> %s',
+				$sql = new Exception( sprintf('Erreur dans le format <code>SET @... = SELECT ...;</code><br> %s',
 					$sql));
 			}
 		}
@@ -839,6 +841,7 @@ class Agdp_Report extends Agdp_Post {
 		}
 		return $sql;
 	}
+	
 	/**
 	 * check_dynamic_vars_needed
 	 */
@@ -1420,7 +1423,7 @@ class Agdp_Report extends Agdp_Post {
 				if( ! $wpdb->last_error
 					&& ! $is_last_sql
 				)
-					self::set_previous_results_variable( $result_u );
+					self::set_previous_results_variable( $result_u, $sql_command );
 			}
 			
 			if( ! empty($stop_requiered) )
@@ -1443,7 +1446,7 @@ class Agdp_Report extends Agdp_Post {
 	 * set_previous_results_variable
 	 * SET @DBRESULTS = CAST( $results AS JSON )
 	 */
- 	private static function set_previous_results_variable( $results ) {
+ 	private static function set_previous_results_variable( $results, $sql ) {
 		$wpdb = self::wpdb();
 		$max_results_in_previous = MAX_VAR_DBRESULTS_ROWS;
 		if( count( $results ) > $max_results_in_previous )
@@ -1497,7 +1500,6 @@ class Agdp_Report extends Agdp_Post {
 			if( $report_admin_no_render )
 				$options['_no_table_columns'] = true;			
 		}
-		$options_copy = $options;
 		
 		$wpdb = self::wpdb( TRUE ); //reset des variables. TODO Quid d'appels imbriqués ?
 		$wpdb->last_error = false;

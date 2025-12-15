@@ -70,6 +70,9 @@ class Agdp_Report_Variables {
 			$options = [ 'mode' => $options ];
 		elseif( ! empty($options['_normalize_sql_variables_done_' . $report_id ]) )
 			return $options['_normalize_sql_variables_done_' . $report_id ];
+		
+		if( ! isset($options['mode']) )
+			$options['mode'] = '';
 			
 		//valeurs des variables
 		if( ! $sql_variables )

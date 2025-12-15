@@ -742,15 +742,16 @@ jQuery( function( $ ) {
 				.each(refresh_report_menu)
 				.each(refresh_report_table_designer)
 				// montre le css ou sql si il n'est pas vide et que le designer est affiché
-				.find('#report_show_table_designer:checked').each(function(){
-					$(this).parents('.inside:first')
-						.find( '.toggle-container.report_css textarea#report_css:not(:empty)'
-							 + ', .toggle-container.sql_before_render, textarea#sql_before_render:not(:empty)')
-							.parents('.toggle-container:first')
-								.prevAll('.toggle-trigger:not(.active)')
-									.trigger('toggle-active')
-					;
-				}).end()
+				.find('#report_show_table_designer')//:checked
+					.each(function(){
+						$(this).parents('.inside:first')
+							.find( '.toggle-container.report_css textarea#report_css:not(:empty)'
+								 + ', .toggle-container.sql_before_render, textarea#sql_before_render:not(:empty)')
+								.parents('.toggle-container:first')
+									.prevAll('.toggle-trigger:not(.active)')
+										.trigger('toggle-active')
+						;
+					}).end()
 			;
 		});
 	
