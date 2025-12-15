@@ -450,7 +450,7 @@ class Agdp_Admin_Posts_Import {
 					, get_edit_post_link( $update_existing->ID )
 					, htmlspecialchars( stripslashes($data['post']['post_title']) )
 					, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
-					, ! $is_newer ? '' 
+					, $same_import_package_key || ! $is_newer ? '' 
 						: sprintf('&nbsp;<span class="dashicons-before dashicons-info-outline" title="Plus récent ici que dans l\'import (%s > %s)"></span>'
 							, date('d/m/Y H:i:s', $post_time)
 							, date('d/m/Y H:i:s', $import_time)
