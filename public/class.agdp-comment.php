@@ -1200,7 +1200,7 @@ class Agdp_Comment {
 				. sprintf('<form class="agdp-ajax-action" data="%s">', esc_attr(json_encode($query)))
 				. wp_nonce_field(AGDP_TAG . '-comment_mailto_author', AGDP_TAG . '-comment_mailto_author_send', true, false)
 				.sprintf('<input type="text" name="mail_subject" size="7" value="%s"/>', esc_attr($subject))
-				.sprintf('<textarea name="mail_body" rows="7">%s</textarea>', $message)
+				.sprintf('<textarea name="mail_body" rows="7">%s</textarea>', htmlspecialchars($message))
 				.sprintf('<input type="submit" value="Envoyer à %s" />', $email)
 				.'</form></div><br></div>'
 			;

@@ -875,7 +875,7 @@ class Agdp_Admin_Options {
 				, AGDP_TAG, esc_attr( $option_id )
 				, esc_attr( $args['class'] )
 				, empty($args['rows']) ? '' : $args['rows']
-				, $value
+				, htmlspecialchars($value)
 			);
 		} elseif($input_type === 'ajax_action'){
 			if( $sub_args_index > 0 )
@@ -1242,8 +1242,8 @@ class Agdp_Admin_Options {
 			echo sprintf('<h2>Etat courant</h2>' );
 			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
 		} else {
-			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
 			echo sprintf('<h2>Mise à jour</h2>' );
+			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
 		}
 		echo sprintf('<label>%s</label>', $cmd );
 		$result = shell_exec( $cmd );

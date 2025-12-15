@@ -479,7 +479,7 @@ class Agdp_Admin_Packages {
 			, $post_type
 		);
 		
-		echo sprintf('<textarea style="width: 100%%;" rows="2">%s</textarea>', $data );
+		echo sprintf('<textarea style="width: 100%%;" rows="2">%s</textarea>', htmlspecialchars($data) );
 
 		echo '</ul></div>';
 	}

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * AgendaPartage Admin -> Edit -> Post_type implement
  * Custom post type for WordPress in Admin UI.

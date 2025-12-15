@@ -125,7 +125,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			else
 				$msg = $wpdb->last_error;
 			$sql = htmlentities($sql);
-			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction MySQL n'existe pas ou plus.";
+			$msg = "$msg<br><pre><code>$sql</code></pre><br>Attention, la fonction n'existe pas ou plus dans la base MySQL.";
 			switch( $_return_results ){
 				case 'admin_notice' : 
 					Agdp_Admin::add_admin_notice( $msg, 'error', true);
@@ -196,7 +196,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			$sql_function_name = $term['name'];
 		}
 		$mysql_script = self::get_current_mysql_function_body( $sql_function_name );
-		// debug_log(__FUNCTION__, $sql_function_name, $mysql_script);
+		debug_log(__FUNCTION__, $sql_function_name, $mysql_script, $_return_results);
 		if( ! $mysql_script )
 			return false;
 		
@@ -219,7 +219,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		$msg = sprintf('Attention, la fonction %s est différente dans la base MySQL et dans cet écran.'
 				. '<br><textarea style="width: 95%%;" rows=8 readonly=1>%s</textarea></pre>'
 				, $sql_function_name
-				, $mysql_script
+				, htmlspecialchars($mysql_script)
 			);
 		
 		switch( $_return_results ){
