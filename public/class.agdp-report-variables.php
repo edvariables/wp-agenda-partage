@@ -138,7 +138,10 @@ class Agdp_Report_Variables {
 		else
 			$report_id = $report->ID;
 		
-		self::$sql_global_vars_init = true;
+		if( ! $post )
+			$post = $report;
+		
+		static::$sql_global_vars_init = true;
 		static::$sql_global_vars = array_merge( static::$sql_global_vars, [
 			AGDP_VAR_BLOG_ID /* @BLOGID */ => get_current_blog_id(),
 			AGDP_VAR_BLOG_NAME /* @BLOGNAME */ => get_bloginfo('name'),

@@ -197,30 +197,33 @@ class Agdp_Report extends Agdp_Post {
 			foreach($matches[2] as $index => $variable){
 				//format
 				$src = $matches[0][$index];
+				// $var_domain
 				$var_domain = $matches[1][$index];
-				// :var
-				if( $var_domain === ':' ) {
-					//value
+				switch( $var_domain ){
+					case ':' :
+					//$variable_value
 					if( ! isset( $variables[$variable] )){
 						if( strpos($variable, $strings_prefix ) === 0 ){
-							$value = $sql_strings[$variable];
+							$variable_value = $sql_strings[$variable];
 						}
 						else {
 							if( in_array( $variable, self::css_pseudo_classes ) ){
-								continue;
+								continue 2;
 							}
 							
 							//TODO faire mieux (tableau, json, ...)
 							$request_key = sprintf('%s%s', AGDP_REPORT_VAR_PREFIX, $variable);
 							if( isset($_REQUEST[ $request_key ]) )
-								$value = $_REQUEST[ $request_key ];
+								$variable_value = $_REQUEST[ $request_key ];
 							elseif( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['value']) )
-								$value = $sql_variables[$variable]['value'];
+								$variable_value = $sql_variables[$variable]['value'];
 							else
-								$value = null;
+								$variable_value = null;
 						}
-						$variables[$variable] = $value;
+						$variables[$variable] = $variable_value;
 					}
+					else
+						$variable_value = $variables[$variable];
 					
 					$format = $matches[3][$index];
 					$format_args = $matches[4][$index];
@@ -291,12 +294,17 @@ class Agdp_Report extends Agdp_Post {
 								$variables[$variable] = 'DESC';
 							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $variables[$variable], $sql );
 							//skip prepare
-							continue 2;
+							continue 3;
 							
 						case 'report_sql': 
 							$error = '';
 							if( is_numeric($variables[$variable])
 							 && ( $sub_report = get_post($variables[$variable]) )){
+								 if( $format === '%d' ){
+									//$variables[$variable] returns ID
+									 break;
+								 }
+								//Check stack
 								if( ! isset($options[__FUNCTION__.':stack']) )
 									$options[__FUNCTION__.':stack'] = [];
 								elseif( $sub_report->ID == $report_id
@@ -321,22 +329,39 @@ class Agdp_Report extends Agdp_Post {
 										//is SQL SET
 										if( preg_match( '/^(?:\(|\s)*SET\s\@/i', $sql ) !== 0 ){
 											// and not SELECT
-											if( preg_match( '/\sSELECT\s/i', $sql ) === 0 )
+											if( preg_match( '/\sSELECT\s/i', $sql ) === 0 ){
 												$format = $format_JSON = '%J';
+											}
 										}
 									}
-									if( $format === '%d' ){
-										//$variables[$variable] retourne l'id
-									}
-									elseif( ! $format_JSON ) {
+									if( ! $format_JSON ) {
 										// debug_log(__FUNCTION__, '$sql AVANT', $sql);
 										// debug_log(__FUNCTION__, '$sub_sql AVANT', $sub_sql);
 										$sql = self::replace_sub_report_sql( $sql, $sub_sql, '/' . preg_quote($src) . '(?!%)/' );
-										// debug_log(__FUNCTION__, '$sub_sql APRES', $sql);
+										// debug_log(__FUNCTION__, 'replace_sub_report_sql $sub_sql APRES', $sql);
 										
 										// $sql = preg_replace( '/' . preg_quote($src) . '(?!%)/', $sub_sql, $sql );
 										//skip prepare
-										continue 2;
+										continue 3;
+									}
+									else{
+										switch( $format ){
+										case '%J' :
+										case '%JT' :
+										case '%JKV' :
+											$report_sql = $sql_variables[$variable]['report_sql'];
+											$result = static::get_sql_dbresults( $sub_report, $report_sql, $sql_variables, $options );
+											if( is_a($result, 'Exception') )
+												$result = [ 
+													'error' => $result->getMessage(),
+													'source' => __FUNCTION__,
+													'sub_report' => $sub_report->ID,
+													'sub_report_title' => $sub_report->post_title,
+												];
+											
+											$value = json_encode($result, JSON_UNESCAPED_UNICODE);
+											$variables[$variable] = $value;
+										}
 									}
 								}
 							}				 
@@ -367,7 +392,7 @@ class Agdp_Report extends Agdp_Post {
 							
 							$value = $variables[$variable];
 						
-							if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
+							/* if( $sql_variables && isset($sql_variables[$variable]) && isset($sql_variables[$variable]['type']) ){
 								switch($sql_variables[$variable]['type']){
 									case 'report_sql' :
 										//Injecte le résultat de la sous-requête sous forme JSON
@@ -395,13 +420,13 @@ class Agdp_Report extends Agdp_Post {
 										// }
 										break;
 								}
-							}
+							} */
 							$value = sprintf('CAST( "%s" AS JSON )',
 								str_replace("\n", '', addslashes( $value )),
 							);
 							
 							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-							continue 2;
+							continue 3;
 						
 						case '%JKV' ://{key: value, key: value, key: value, ...}
 						case '%JT' : //[{col1: value, col2: value, col3: value}, ...]
@@ -495,14 +520,15 @@ class Agdp_Report extends Agdp_Post {
 							);
 							
 							$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-							continue 2;
+							continue 3;
 						}
 					}
 					if( $format_Inject ){
 						if( ($value = $variables[$variable]) === null )
 							$value = '';
 						$sql = preg_replace( '/' . preg_quote($src) . '(?!%)/',  $value, $sql );
-						continue;
+						//skip prepare
+						continue 2;
 					}
 					//----------
 					//Remplacement de la variable par %format
@@ -553,8 +579,11 @@ class Agdp_Report extends Agdp_Post {
 						
 						$prepare[] = $variables[$variable];
 					}
-				}
-				elseif( $var_domain === '@' ){
+					break;
+				case '@' :
+					break;
+				default:
+					debug_log(__FUNCTION__, "Unknown prefix "); 
 				}
 			}
 			/* foreach variables
@@ -597,6 +626,7 @@ class Agdp_Report extends Agdp_Post {
 			$sql = str_replace( $escape_flag, '%', $sql );
 			
 			//JSON notations (@json[0].label devient @json->>"$[0].label" )
+				// debug_log(__FUNCTION__, 'avant replace_sql_json_syntax', $sql, @$options[__FUNCTION__.':stack'] );
 			$sql = self::replace_sql_json_syntax( $sql, $options );
 			if( is_a($sql, 'Exception') ){
 				// $errors[] = $sql->getMessage();
@@ -655,6 +685,14 @@ class Agdp_Report extends Agdp_Post {
 	 * Clear JSON[] notations in SQL, for @variables
 	 */
  	private static function replace_sql_json_syntax( $sql, &$options = false ) {
+		$sql_array = self::get_sql_as_array( $sql );
+		if( count($sql_array) > 1 ){
+			foreach($sql_array as $index => $sql_u)
+				$sql_array[ $index ] = trim( self::replace_sql_json_syntax( $sql_u, $options ), " ;\r\n");
+			
+			return implode(";\n", $sql_array);
+		}
+		
 		$used_variables = [];
 		
 		//@TERMS[`slug`]
@@ -767,11 +805,11 @@ class Agdp_Report extends Agdp_Post {
 			}
 		}
 		
-		/* // SELECT to JSON
+		// SELECT to JSON
 		// SET @SLUGS = SELECT slug, name FROM :termes t;
 		if( strpos($sql, 'SET ') !== false && strpos($sql, ' SELECT ') ){
 			$matches = [];
-			$pattern = '/(?:^SET\s+)(\@+[a-zA-Z_][a-zA-Z0-9_]*)\s?\=\s?SELECT\s+(`?[a-zA-Z_][a-zA-Z0-9_]*`?)(?:\s*,\s*)(`?[a-zA-Z_][a-zA-Z0-9_]*`?)/i';
+			$pattern = '/(?:^SET\s+)(\@+[a-zA-Z_][a-zA-Z0-9_]*)\s*\:\=\s*SELECT\s+(`?[a-zA-Z_][a-zA-Z0-9_]*`?)(?:\s*,\s*)(`?[a-zA-Z_][a-zA-Z0-9_]*`?)/i';
 			if( preg_match( $pattern, $sql, $matches ) ){
 				$variable = $matches[1];
 				$src = $matches[0];
@@ -794,7 +832,7 @@ class Agdp_Report extends Agdp_Post {
 				$sql = new Exception( sprintf('Erreur dans le format <code>SET @var = SELECT `key`, `value` FROM table t;</code><br> %s',
 					$sql));
 			}
-		} */
+		}
 		
 		if( $used_variables ){
 			$sql = self::check_dynamic_vars_needed( $sql, $used_variables, $options );
@@ -954,6 +992,8 @@ class Agdp_Report extends Agdp_Post {
 	
 	/**
 	 * get_global_vars_sql
+	 *
+	 * Returns (string) : SET  @BLOGID = '1',  @BLOGNAME = 'Agdp EDoc2019',  @BLOGURL = 'http://agdp.edoc2019',  @POSTID = '5133',  @PARENTID = '5132',  @POSTTYPE = 'agdpreport',  @REPORTID = '5133',...
 	 */
  	public static function get_global_vars_sql( $vars, $sql_variables = false, $options = false ) {
 		$set_vars = '';
@@ -982,7 +1022,7 @@ class Agdp_Report extends Agdp_Post {
 	
 	/**
 	 * get_render_sql
-	 * Wrap sql in a SELECT scripts FROM ( sql )
+	 * Wrap sql in a SELECT render_scripts FROM ( data_sql )
 	 */
  	public static function get_render_sql( $report, $sql, $sql_variables, &$options, $table_render ) {
 		
@@ -1136,10 +1176,10 @@ class Agdp_Report extends Agdp_Post {
 	}
 	
 	/**
-	 * get_default_table
+	 * get_error_table_html
 	 * Returns a html table based on $table_columns in case of sql error
 	 */
- 	public static function get_default_table( $report, $sql, $table_render, $sql_variables, &$options ) {
+ 	public static function get_error_table_html( $report, $sql, $table_render, $sql_variables, &$options ) {
 		self::wpdb( TRUE );
 		
 		$table_columns = $table_render && isset($table_render['columns']) ? $table_render['columns'] : false;
@@ -1245,35 +1285,43 @@ class Agdp_Report extends Agdp_Post {
 
 	/**
 	 * replace_sub_report_sql
+	 *
+	 * Returns $main_sql
 	 */
  	private static function replace_sub_report_sql( $main_sql, $sub_sql, $replace_pattern ) {
 		if( is_array($sub_sql) ){
-			$pre_sqls = [];
+			//trim + tab
+			$clean_sqls = [];
 			foreach( $sub_sql as $index => $sql_u ){
 				$sql_u = trim( $sql_u, ";\r\n \t");
-				if( ! $sql_u )
-					continue;
 				$sql_u = str_replace( "\n", "\n\t", $sql_u );
-				if( $index < count($sub_sql) - 1
-				 && $sql_u )
-					$pre_sqls[] = $sql_u;
+				$clean_sqls[] = $sql_u;
 			}
-			if( count($pre_sqls) ){
+			if( count($clean_sqls) === 0 ){
+				debug_log( __CLASS__ . '::' . __FUNCTION__, "ERROR NO SQL !", $sub_sql);
+				return '/**** ' . __FUNCTION__ . '( sub_sql is empty )' . ' ****/';
+			}
+			
+			// Inserts N-1 queries at the beginning of main sql
+			if( count($clean_sqls) > 1 ){
+				$pre_sqls = array_slice( $clean_sqls, 0, count($clean_sqls) - 1 );
 				$pre_sqls = implode(";\n\t", $pre_sqls);
 				$main_sql = $pre_sqls . ";\n" . $main_sql;
 			}
-			
-			$sub_sql = $sub_sql[ count($sub_sql) - 1 ];
+			// Last query
+			$sub_sql = $clean_sqls[ count($clean_sqls) - 1 ];
 		}
 		else {
+			//trim
 			$sub_sql = trim( $sub_sql, ";\r\n \t");
 			if( ! $sub_sql )
 				return $main_sql;
 			$sub_sql = str_replace( "\n", "\n\t", $sub_sql );
 		}
-			
+		
 		$sub_sql = '( ' . $sub_sql . ' )';
 
+		//preg_replace
 		$main_sql = preg_replace( $replace_pattern, $sub_sql, $main_sql );
 		return $main_sql;
 	}
@@ -1298,7 +1346,10 @@ class Agdp_Report extends Agdp_Post {
 		
 		if( ! $sql )
 			return;
-			
+		
+		if( ! isset($options[__FUNCTION__.':stack']) ) $options[__FUNCTION__.':stack'] = [];
+		$options[__FUNCTION__.':stack'][] = $report;
+		
 		$wpdb = self::wpdb();
 		
 		//global vars : @BLOGID, ...
@@ -1350,11 +1401,13 @@ class Agdp_Report extends Agdp_Post {
 						continue;
 					//$wpdb->get_results
 					$result_u = $wpdb->get_results($sql_uuu);
-				
-					array_push( $options['_sqls'], $sql_uuu );
+					
+					$depth = str_pad('', count($options[__FUNCTION__.':stack'])-1, "\t"); 
+					array_push( $options['_sqls'], $depth . $sql_uuu );
+					// debug_log( __FUNCTION__, $depth . $sql_uuu);
 					if( $wpdb->last_error ){
 						// debug_log( __FUNCTION__ . ' $result_u ', $result_u, $wpdb->last_error, $wpdb->last_query);
-						$wpdb->last_error .= sprintf(' (%d)<br>%s', $index, $wpdb->last_query);
+						$wpdb->last_error .= sprintf(' (%d)<br>%s', $index, $depth . $wpdb->last_query);
 						$result = $result_u;
 						break 3;
 					}
@@ -1380,6 +1433,8 @@ class Agdp_Report extends Agdp_Post {
 			if( ! is_a($result, 'WP_Error') )
 				$result = new Exception( $wpdb->last_error );
 		}
+		
+		array_pop($options[__FUNCTION__.':stack']);
 		
 		return $result;
 	}
@@ -1517,7 +1572,7 @@ class Agdp_Report extends Agdp_Post {
 			
 			$content .= sprintf('<div class="agdpreport" agdp_report="%d">%s</div>'
 				, $report_id
-				, static::get_default_table( $report, $sql, $table_render, $sql_variables, $options )
+				, static::get_error_table_html( $report, $sql, $table_render, $sql_variables, $options )
 			);
 			return $content;
 		}
