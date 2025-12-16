@@ -93,6 +93,8 @@ class Agdp_Report extends Agdp_Post {
 	public static function wpdb( $reset = false) {
 		if( ! $reset && self::$wpdb )
 			return self::$wpdb;
+		if( self::$wpdb )
+			self::$wpdb->close();
 		self::$wpdb = new Agdp_wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 		
 		global $wpdb;
