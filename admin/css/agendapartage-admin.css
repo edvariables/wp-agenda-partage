@@ -275,6 +275,7 @@ div.ajax_action-response {
 .agdp-diagram .toggle-trigger {
 	padding-top: 3px;
 	font-size: inherit;
+	display: block;
 }
 .agdp-diagram .toggle-container {
 	padding: 2px 0px 3px 15px;

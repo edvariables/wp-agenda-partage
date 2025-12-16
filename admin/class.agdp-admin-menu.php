@@ -110,14 +110,14 @@ class Agdp_Admin_Menu {
 			$page_title =  'Règles de publications';
 			$menu_slug = $parent_slug . '-rights';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array('Agdp_Admin_Options', 'agdp_rights_page_html'), null);
+				array(__CLASS__, 'agdp_rights_page_html'), null);
 			
 			//Import
 			$parent_slug = AGDP_TAG;			
 			$page_title = 'Importer';
 			$menu_slug = $parent_slug . '-import';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array('Agdp_Admin_Options', 'agdp_import_page_html'), null);
+				array(__CLASS__, 'agdp_import_page_html'), null);
 			
 			if( class_exists('Agdp_Maillog') ){
 				$parent_slug = AGDP_TAG;
@@ -131,20 +131,20 @@ class Agdp_Admin_Menu {
 				$page_title =  'Mise à jour de l\'extension';
 				$menu_slug = $parent_slug . '-git-update';
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-					array('Agdp_Admin_Options', 'agdp_git_update_page_html'), null);
+					array(__CLASS__, 'agdp_git_update_page_html'), null);
 			}
 			
 			if( current_user_can( 'manage_options' )){
 				$page_title =  'Génération des packages';
 				$menu_slug = $parent_slug . '-packages';
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-					array('Agdp_Admin_Options', 'agdp_packages_page_html'), null);
+					array(__CLASS__, 'agdp_packages_page_html'), null);
 			}
 			
 			$page_title =  'Arborescence du site';
 			$menu_slug = $parent_slug . '-diagram';
 			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array('Agdp_Admin_Options', 'agdp_diagram_page_html'), null);
+				array(__CLASS__, 'agdp_diagram_page_html'), null);
 			
 			//Menu Pages
 			$capability = 'moderate_comments';
@@ -228,7 +228,129 @@ class Agdp_Admin_Menu {
 			)
 		);
 	}
-
+	
+	
+	/**
+	* top level menu:
+	* callback functions
+	*/
+	public static function agdp_rights_page_html() {
+		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-rights.php');
+		Agdp_Admin_Edit_Rights::init();
+		Agdp_Admin_Edit_Rights::agdp_rights_page_html();
+	}
+	
+	
+	/**
+	* top level menu:
+	* callback functions
+	*/
+	public static function agdp_diagram_page_html() {
+		
+		//DEBUG
+		// self::test_code();
+		
+		/* $filename = 'C:\Arbeit\www\agenda-partage/wp-content/uploads/agdpmailbox/3621/2024/6/4F6A9F2D-1CAC-40E2-B66F-3EF5F07B1C9E@home-IMG_2336.jpeg';
+		$filename = str_replace('\\', '/', $filename);
+		if( file_exists($filename) ){
+			echo sprintf('<h3>%s</h3><img src="%s">', $filename, upload_file_url( $filename ));
+			
+			$filename = image_reduce($filename, 200, 300, true );
+			echo sprintf('<h3>%s</h3><img src="%s">', $filename, upload_file_url( $filename ));
+		} */
+		
+		echo sprintf('<pre>%s</pre>', Agdp::blog_diagram_html());
+	}
+	
+	/***********************
+	* top level menu:
+	* callback functions
+	*/
+	
+	/**
+	 * Update du plugin via GIT
+	 */
+	public static function agdp_git_update_page_html() {
+		
+		if ( ! current_user_can( 'manage_network_plugins' ) ) 
+			die( 'Accès non autorisé' );
+		
+		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
+		
+		$discard_changes = empty($_REQUEST['discard_changes']) ? [] : $_REQUEST['discard_changes'];
+		foreach( $discard_changes as $discard_file ){
+			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_file);
+			echo sprintf('<h2>Annulation des changements du fichier %s</h2>', $discard_file );
+			echo sprintf('<label>%s</label>', $cmd );
+			$result = shell_exec( $cmd );
+			if( $result === null )
+				$result = '';
+			else
+				echo sprintf('<pre>%s</pre>', $result);
+		}
+		
+		if( $is_status = empty($_REQUEST['action']) ){
+			echo sprintf('<h2>Etat courant</h2>' );
+			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
+		} else {
+			echo sprintf('<h2>Mise à jour</h2>' );
+			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
+		}
+		echo sprintf('<label>%s</label>', $cmd );
+		$result = shell_exec( $cmd );
+		if( $result === null )
+			$result = '';
+		else
+			echo sprintf('<pre>%s</pre>', $result);
+		
+		//discard_changes from status
+		$discard_inputs = '';
+		if( $is_status ){
+			$matches = [];
+			if( preg_match_all('/\t(modified|deleted)\:\s+([^\r\n]*)[\r\n]/', $result, $matches ) ){
+				foreach($matches[1] as $i => $file_status){
+					$modified_file = $matches[2][$i];
+					$discard_inputs .= sprintf('<li><label><input type="checkbox" name="discard_changes[]" value="%s">%s (%s)</label></li>',
+						$modified_file, $modified_file, $file_status
+					);
+				}
+				if( $discard_inputs ){
+					$discard_inputs = sprintf('<ul class=""><h4>Abandon des modifications en cours</h4>%s</ul></br></br>', $discard_inputs);
+				}
+			}
+		}
+		
+		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
+			. $discard_inputs
+			. '<input type="submit" name="action" value="Mettre à jour" class="button button-primary button-large"/>'
+			. '</form>';
+	}
+	
+	/**
+	 * Generate packages
+	 */
+	public static function agdp_packages_page_html() {
+		if( ! class_exists('Agdp_Admin_Packages') ){
+			require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-packages.php");
+			Agdp_Admin_Packages::init();
+		}
+		
+		echo sprintf('<h1>Génération des packages</h1>' );
+		
+		echo Agdp_Admin_Packages::generate_form();
+	}
+	
+	/**
+	 * Import Action
+	 */
+	public static function agdp_import_page_html() {
+		if( ! class_exists('Agdp_Admin_Posts_Import') ){
+			require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-posts-import.php");
+			Agdp_Admin_Posts_Import::init();
+		}
+		return Agdp_Admin_Posts_Import::agdp_import_page_html();
+	}
+	
 	/**
 	 * dashboard
 	 */

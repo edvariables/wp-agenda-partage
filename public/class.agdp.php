@@ -455,12 +455,6 @@ class Agdp {
 	 * Cf Agdp_Admin_Menu
 	 */
 	public static function get_options( ) {
-		// global $wpdb;
-		// $row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", AGDP_TAG ) );
-		// $value = $row->option_value;
-		// debug_log( __FUNCTION__, $value);
-		// debug_log( __FUNCTION__, unserialize($value));
-		// die();
 		if( self::$options_cache )
 			return self::$options_cache;
 		return self::$options_cache = get_option( AGDP_TAG );
@@ -499,7 +493,13 @@ class Agdp {
 		if ( $name === false ) {
 			return $options;
 		} elseif ( isset( $options[$name] ) ) {
-			return $options[$name];
+			$value = $options[$name];
+			if( is_string( $value ) )
+				$value = str_replace("\\\"", "\""
+						, str_replace("\\r", "\r"
+						, str_replace("\\n", "\n"
+						, $value )));
+			return $value;
 		} else {
 			return $default;
 		}
@@ -516,9 +516,15 @@ class Agdp {
 			if( isset($options[$name]))
 				unset($options[$name]);
 		}
-		else
+		else {
+			if( is_string( $value ) ){
+				$value =  str_replace("\"", "\\\""
+						,  str_replace("\r", "\\r"
+						, str_replace("\n", "\\n"
+						, $value )));
+			}
 			$options = array_merge( $options, array( $name => $value ) );
-		
+		}
 		if( $save_to_db )
 			$result = self::update_options( $options );
 		else

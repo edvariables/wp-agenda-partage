@@ -23,19 +23,11 @@ class Agdp_Admin_Options {
 		
 		global $pagenow;
 		if ( $pagenow === 'admin.php' && isset($_GET['page']) ) {
-			if( in_array( $_GET['page'], [AGDP_TAG, AGDP_TAG . '-rights'] ) ) {
+			if( in_array( $_GET['page'], [ AGDP_TAG, AGDP_TAG . '-rights' ] ) ) {
 				add_action('admin_head', array(__CLASS__, 'add_form_enctype'));
 				add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
-				
-				if ( $_POST && isset($_POST['submit']) ) {
-					add_action( 'pre_update_option_' . AGDP_TAG, array(__CLASS__,'on_pre_update_option'), 10, 3 );
-					add_action( 'update_option_' . AGDP_TAG, array(__CLASS__,'on_updated_option'), 10, 3 );
-				}
-				
 			}
 		}
-		
-		
 	}
 
 	/**
@@ -48,25 +40,46 @@ class Agdp_Admin_Options {
 		register_setting( AGDP_TAG, AGDP_TAG );
 		
 		$section_args = array(
-			'before_section' => '<div class="agdp-tabs-nav">',
+			'before_section' => '<div class="agdp-tabs-nav"><div id="%s"></div>',
 			'after_section' => '</div>'
 		);
 		
 		//Cette section permet d'englober les onglets suivants. Sans ça, pas d'onglets. Idem dans class.agendapartage-admin-edit-rights.php
+		$section_id = 'agdp_section_checkup';
 		add_settings_section(
-			'agdp_section_checkup',
+			$section_id,
 			'',
 			array(__CLASS__, 'check_module_health'),
-			AGDP_TAG, $section_args
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
 		
+		//Pages
+		$section_id = 'agdp_section_pages';
 		add_settings_section(
-			'agdp_section_pages',
+			$section_id,
 			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG, $section_args
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
-
+		if( true ){
+			// Last tab (default tab in js)
+			// (hidden field)
+			$field_id = self::get_last_tab_option_name();
+			add_settings_field(
+				$field_id, 
+				'',
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row hidden',
+					'input_type' => 'text',
+				]
+			);
+			
 			// 
 			$field_id = 'blog_presentation_page_id';
 			add_settings_field(
@@ -171,15 +184,18 @@ class Agdp_Admin_Options {
 					'post_type' => Agdp_Newsletter::post_type
 				]
 			);
-
+		}
+	
 		// register a new section in the "agendapartage" page
+		$section_id = 'agdp_section_agdpevents';
 		add_settings_section(
-			'agdp_section_agdpevents',
+			$section_id,
 			__( 'Évènements', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG, $section_args
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
-
+		if( true ){
 			// 
 			$field_id = 'agenda_page_id';
 			add_settings_field(
@@ -187,7 +203,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -202,7 +218,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -217,7 +233,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -232,7 +248,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -247,7 +263,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -262,7 +278,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_combos_posts_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -277,7 +293,7 @@ class Agdp_Admin_Options {
 				__( 'Diffusion "Lettre-info"', AGDP_TAG ),
 				array(__CLASS__, 'agdp_combos_terms_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -292,7 +308,7 @@ class Agdp_Admin_Options {
 				__( 'Statut des nouveaux évènements', AGDP_TAG ),
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'label' => Agdp::get_option_label($field_id),
@@ -312,7 +328,7 @@ class Agdp_Admin_Options {
 				'Html dans le descriptif',
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'label' => 'Autoriser',
@@ -328,7 +344,7 @@ class Agdp_Admin_Options {
 				'Complément Html dans les pages d\'évènements',
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
@@ -344,7 +360,7 @@ class Agdp_Admin_Options {
 				Agdp::get_option_label($field_id),
 				array(__CLASS__, 'agdp_input_cb'),
 				AGDP_TAG,
-				'agdp_section_agdpevents',
+				$section_id,
 				[
 					'label' => __('Diffusion docx', AGDP_TAG) . ' ' . self::get_ev_diffusion_docx(),
 					'learn-more' => [__( 'L\'importation du document Word (.docx) servant de modèle s\'effectue dans le paramétrage des diffusions des évènements.', AGDP_TAG )],
@@ -360,7 +376,7 @@ class Agdp_Admin_Options {
 					__( 'OpenAgenda', AGDP_TAG ),
 					array(__CLASS__, 'agdp_input_cb'),
 					AGDP_TAG,
-					'agdp_section_agdpevents',
+					$section_id,
 					[	[
 							'label' => __('Republier les derniers évènements (48H)', AGDP_TAG),
 							'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
@@ -378,15 +394,19 @@ class Agdp_Admin_Options {
 					]
 				);
 			}
+		}
+		
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
+		$section_id = 'agdp_section_covoiturages';
 		add_settings_section(
-			'agdp_section_covoiturages',
+			$section_id,
 			__( 'Covoiturages', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG, $section_args
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
-
+		if( true ){
 			// 
 			$field_id = 'covoiturage_managed';
 			add_settings_field(
@@ -514,7 +534,8 @@ class Agdp_Admin_Options {
 					'input_type' => 'checkbox'
 				]
 			);
-			
+		}
+		
 		//////////////////////////////////////////
 		// register a new section in the "agendapartage" page
 		// add_settings_section(
@@ -543,13 +564,15 @@ class Agdp_Admin_Options {
 		//////////////////////////////////////////
 
 		// register a new section in the "agendapartage" page
+		$section_id = 'agdp_section_security';
 		add_settings_section(
-			'agdp_section_security',
+			$section_id,
 			__( 'Divers', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG, $section_args
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
-
+		if( true ){
 			// 
 			$field_id = AGDP_CONNECT_MENU_ENABLE;
 			add_settings_field(
@@ -617,15 +640,18 @@ class Agdp_Admin_Options {
 					'input_type' => 'checkbox'
 				]
 			);
-
+		}
+		
 		// register a new section in the "agendapartage" page
+		$section_id = 'agdp_section_agdpevents_import';
 		add_settings_section(
-			'agdp_section_agdpevents_import',
+			$section_id,
 			__( 'Importation d\'évènements', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
-			AGDP_TAG, $section_args
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
-
+		if( true ){
 			// 
 			$field_id = 'agdpevent_import_ics';
 			add_settings_field(
@@ -639,14 +665,17 @@ class Agdp_Admin_Options {
 					'class' => 'agdp_row',
 				]
 			);
+		}
 		
 		if(is_multisite()){
 			// register a new section in the "agendapartage" page
+			$section_id = 'agdp_section_blog_import';
 			add_settings_section(
-				'agdp_section_blog_import',
+				$section_id,
 				__( 'Initialisation du site', AGDP_TAG ),
 				array(__CLASS__, 'settings_sections_cb'),
-				AGDP_TAG, $section_args
+				AGDP_TAG, array_merge( $section_args, 
+					[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 			);
 			if( get_current_blog_id() !== BLOG_ID_CURRENT_SITE ){
 				// 
@@ -666,13 +695,38 @@ class Agdp_Admin_Options {
 		}
 	}
 	
+	/**
+	 * init_js_sections_tabs
+	 */
+	public static function get_last_tab_option_name() {
+		global $pagenow;
+		$page = isset($_GET['page']) ? $_GET['page'] : $pagenow;
+		return '_last-tab_' . $page;
+	}
+	
+	/**
+	 * init_js_sections_tabs
+	 */
 	public static function init_js_sections_tabs() {
 		//
-		$argument = 'tab';
-		if( ! empty($_REQUEST[$argument]))
-			$default_tab = $_REQUEST[$argument];
-		else
-			$default_tab = 0;
+		$default_tab = 0;
+		$last_tab_option_name = self::get_last_tab_option_name();
+		foreach( [ 'tab', $last_tab_option_name ] as $argument ){
+			if( $_POST && isset($_POST[AGDP_TAG])
+			&& ! empty($_POST[AGDP_TAG][$argument])){
+				$default_tab = $_POST[AGDP_TAG][$argument];
+				unset($_POST[AGDP_TAG][$argument]);
+				break;
+			}
+			if( ! empty($_REQUEST[$argument])){
+				$default_tab = $_REQUEST[$argument];				
+				unset($_REQUEST[$argument]);
+				if( ! empty($_POST[$argument]))
+					unset($_POST[$argument]);
+				break;
+			}
+		}
+		
 		?><script type="text/javascript">
 	jQuery(document).ready(function(){
 		jQuery('form > div.agdp-tabs-wrap:first').each(function(){
@@ -684,7 +738,8 @@ class Agdp_Admin_Options {
 			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
 			var $submit = jQuery(this).find('p.submit');
-			var default_tab_name = '<?=$default_tab?>';
+			var default_tab_name = '<?php echo $default_tab; ?>';
+			var last_tab_option_name = '<?php echo $last_tab_option_name; ?>';
 			var default_tab = 0;
 			jQuery(this).find('div.agdp-tabs-nav > h2').each(function(){
 				tabs_counter++;
@@ -692,12 +747,20 @@ class Agdp_Admin_Options {
 				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
 				jQuery(this).parent().children().appendTo($content);
 				$contents.append($content);
-				if( default_tab_name && $content.find( '#' + default_tab_name + ':first').length )
+				if( default_tab_name && $content.find( '#' + default_tab_name + ':first, #agdp_section_' + default_tab_name + ':first').length )
 					default_tab = tabs_counter - 1;
 			});
 			jQuery(this)
 				.html( $tabs.tabs({
-					active: default_tab
+					active: default_tab,
+					activate: function(event, ui){
+						var tabName = ui.newPanel.find('[id]:first').attr('id');
+						if( ! tabName )
+							return;
+						if( tabName.indexOf('agdp_section_') === 0 )
+							tabName = tabName.substr('agdp_section_'.length);
+						$contents.find('#' + last_tab_option_name).val( tabName );
+					}
 				}) )
 				.append($submit);
 		});
@@ -757,6 +820,9 @@ class Agdp_Admin_Options {
 		<?php }
 	}
 	
+	/**
+	 * agdp_site_import_cb
+	 */
 	public static function agdp_site_import_cb( $args ){
 					
 		$option_id = $args['label_for'];
@@ -796,11 +862,12 @@ class Agdp_Admin_Options {
 		</div></ul>
 		<?php
 		
-		
 		echo Agdp_Admin::get_import_report(true);
-
 	}
 	
+	/**
+	 * agdp_import_ics_cb
+	 */
 	public static function agdp_import_ics_cb( $args ){
 		$option_id = $args['label_for'];
 		$post_status = Agdp::get_option($option_id . '-post_status');
@@ -841,9 +908,7 @@ class Agdp_Admin_Options {
 	}
 
 	/**
-	 * Option parmi la liste des posts du site
-	 * Attention, les auteurs de ces pages doivent être administrateurs
-	 * $args['post_type'] doit être fourni
+	 * Field Input
 	 */
 	public static function agdp_input_cb( $args, $sub_args_index = 0 ) {
 		if( ! empty($args[0]) && is_array($args) ){
@@ -870,6 +935,7 @@ class Agdp_Admin_Options {
 				, $args['label']
 			);
 		} elseif($input_type === 'textarea'){
+			// $value = str_replace( "\\r\\n", "\r\n", $value );
 			echo sprintf('<textarea id="%s" name="%s[%s]" class="%s" rows="%s">%s</textarea>'
 				, esc_attr( $option_id )
 				, AGDP_TAG, esc_attr( $option_id )
@@ -930,8 +996,7 @@ class Agdp_Admin_Options {
 		);
 		if($the_query->have_posts() ) {
 			// output the field
-			?>
-			<select id="<?php echo esc_attr( $option_id ); ?>"
+			?><select id="<?php echo esc_attr( $option_id ); ?>"
 				name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>]"
 			><option/>
 			<?php
@@ -1029,7 +1094,6 @@ class Agdp_Admin_Options {
 	
 	/**
 	* Page d'options
-	* callback functions
 	*/
 	public static function agdp_options_page_html() {
 		// check user capabilities
@@ -1051,17 +1115,9 @@ class Agdp_Admin_Options {
 		// show error/update messages
 		settings_errors( 'agdp_messages' );
 		
-		if( ! empty($_POST[AGDP_TAG]) ){
-			
-			debug_log(__FUNCTION__, $_POST[AGDP_TAG] );
+		//submit
+		self::submit_options_page();
 		
-			foreach($_POST[AGDP_TAG] as $option=>$value){
-				if( strpos($value, '"') !== false )
-					$value = str_replace('\\"', '"', $value );
-				Agdp::update_option( $option, $value, false);
-			}
-			Agdp::save_options();
-		}
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -1083,7 +1139,7 @@ class Agdp_Admin_Options {
 	}
 	
 	/**
-	 *
+	 * check_module_health
 	 */
 	public static function check_module_health() {
 		
@@ -1147,6 +1203,9 @@ class Agdp_Admin_Options {
 		}
 	}
 	
+	/**
+	 * get_ev_diffusion_docx
+	 **/
 	private static function get_ev_diffusion_docx( $returns_html = true){
 		$terms = get_terms( array(
 			'taxonomy'   => Agdp_Evenement::taxonomy_diffusion,
@@ -1173,165 +1232,55 @@ class Agdp_Admin_Options {
 		return false;
 	}
 	
-	
-	/**
-	* top level menu:
-	* callback functions
-	*/
-	public static function agdp_rights_page_html() {
-		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-rights.php');
-		Agdp_Admin_Edit_Rights::init();
-		Agdp_Admin_Edit_Rights::agdp_rights_page_html();
-	}
-	
-	
-	/**
-	* top level menu:
-	* callback functions
-	*/
-	public static function agdp_diagram_page_html() {
 		
-		//DEBUG
-		// self::test_code();
-		
-		/* $filename = 'C:\Arbeit\www\agenda-partage/wp-content/uploads/agdpmailbox/3621/2024/6/4F6A9F2D-1CAC-40E2-B66F-3EF5F07B1C9E@home-IMG_2336.jpeg';
-		$filename = str_replace('\\', '/', $filename);
-		if( file_exists($filename) ){
-			echo sprintf('<h3>%s</h3><img src="%s">', $filename, upload_file_url( $filename ));
-			
-			$filename = image_reduce($filename, 200, 300, true );
-			echo sprintf('<h3>%s</h3><img src="%s">', $filename, upload_file_url( $filename ));
-		} */
-		
-		echo sprintf('<pre>%s</pre>', Agdp::blog_diagram_html());
-	}
-	
-	private static function test_code(){
-	
-		
-	}
-	
-	/***********************
-	* top level menu:
-	* callback functions
-	*/
-	
-	/**
-	 * Update du plugin via GIT
-	 */
-	public static function agdp_git_update_page_html() {
-		
-		if ( ! current_user_can( 'manage_network_plugins' ) ) 
-			die( 'Accès non autorisé' );
-		
-		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
-		
-		$discard_changes = empty($_REQUEST['discard_changes']) ? [] : $_REQUEST['discard_changes'];
-		foreach( $discard_changes as $discard_file ){
-			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_file);
-			echo sprintf('<h2>Annulation des changements du fichier %s</h2>', $discard_file );
-			echo sprintf('<label>%s</label>', $cmd );
-			$result = shell_exec( $cmd );
-			if( $result === null )
-				$result = '';
-			else
-				echo sprintf('<pre>%s</pre>', $result);
-		}
-		
-		if( $is_status = empty($_REQUEST['action']) ){
-			echo sprintf('<h2>Etat courant</h2>' );
-			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
-		} else {
-			echo sprintf('<h2>Mise à jour</h2>' );
-			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
-		}
-		echo sprintf('<label>%s</label>', $cmd );
-		$result = shell_exec( $cmd );
-		if( $result === null )
-			$result = '';
-		else
-			echo sprintf('<pre>%s</pre>', $result);
-		
-		//discard_changes from status
-		$discard_inputs = '';
-		if( $is_status ){
-			$matches = [];
-			if( preg_match_all('/\t(modified|deleted)\:\s+([^\r\n]*)[\r\n]/', $result, $matches ) ){
-				foreach($matches[1] as $i => $file_status){
-					$modified_file = $matches[2][$i];
-					$discard_inputs .= sprintf('<li><label><input type="checkbox" name="discard_changes[]" value="%s">%s (%s)</label></li>',
-						$modified_file, $modified_file, $file_status
-					);
-				}
-				if( $discard_inputs ){
-					$discard_inputs = sprintf('<ul class=""><h4>Abandon des modifications en cours</h4>%s</ul></br></br>', $discard_inputs);
-				}
-			}
-		}
-		
-		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
-			. $discard_inputs
-			. '<input type="submit" name="action" value="Mettre à jour" class="button button-primary button-large"/>'
-			. '</form>';
-	}
-	
-	/**
-	 * Generate packages
-	 */
-	public static function agdp_packages_page_html() {
-		if( ! class_exists('Agdp_Admin_Packages') ){
-			require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-packages.php");
-			Agdp_Admin_Packages::init();
-		}
-		
-		echo sprintf('<h1>Génération des packages</h1>' );
-		
-		echo Agdp_Admin_Packages::generate_form();
-	}
-	
-	/**
-	 * Import Action
-	 */
-	public static function agdp_import_page_html() {
-		if( ! class_exists('Agdp_Admin_Posts_Import') ){
-			require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-posts-import.php");
-			Agdp_Admin_Posts_Import::init();
-		}
-		return Agdp_Admin_Posts_Import::agdp_import_page_html();
-	}
-	
 	/*********
 	 * SUBMIT
 	 ****/
-	 
+	
 	/**
-	* Hook avant mise à jour d'option
+	* Submit options page
 	*/
-	public static function on_pre_update_option( $values, $old_values, $option ) {
-		if( $option !== AGDP_TAG )
-			return;
+	private static function submit_options_page() {
+		//
+		if( ! empty($_POST[AGDP_TAG]) ){
+			
+			debug_log(__FUNCTION__, $_POST[AGDP_TAG] );
 		
-		$values = self::submit_unchecked_boxes( $values );
-		
-		//clear confirmation and force a random value to hook update_option
-		foreach(['site_import', 'agdpevent_import_ics'] as $option_key){
-			if(array_key_exists($option_key . '-confirm', $values)){
-				$values[$option_key . '-confirm'] = rand();
+			foreach($_POST[AGDP_TAG] as $option=>$value){
+				if( is_string($value) )
+					$value = str_replace('\\"', '"', $value );
+				Agdp::update_option( $option, $value, false);
 			}
+		
+			self::submit_unchecked_boxes();
+			
+			//clear confirmation and force a random value to hook update_option
+			foreach(['site_import', 'agdpevent_import_ics'] as $option_key){
+				if(array_key_exists($option_key . '-confirm', $_POST)){
+					Agdp::update_option($option_key . '-confirm', rand());
+				}
+			}
+			
+			add_action( 'pre_update_option_' . AGDP_TAG, array(__CLASS__,'on_pre_update_option'), 10, 3 );
+			add_action( 'update_option_' . AGDP_TAG, array(__CLASS__,'on_updated_option'), 10, 3 );
+			
+			Agdp::save_options();
+			
+			remove_action( 'pre_update_option_' . AGDP_TAG, array(__CLASS__,'on_pre_update_option'), 10, 3 );
+			remove_action( 'update_option_' . AGDP_TAG, array(__CLASS__,'on_updated_option'), 10, 3 );
 		}
-		return $values;
 	}
 	
 	/**
 	* Au submit de la pages d'options, contrôle les cases à cocher décochées (qui ne sont pas dans $_POST)
 	*/
-	public static function submit_unchecked_boxes( $values ) {
+	private static function submit_unchecked_boxes() {
 		if( empty( $_POST )
 		 || ! isset( $_POST['submit'] )
 		 || ! isset( $_POST[AGDP_TAG] )
 		 || isset( $_POST[AGDP_TAG][ '__' . __FUNCTION__ ] )
 		)
-			return $values;
+			return;
 		
 		foreach( [
 			'agdpevent_need_validation',
@@ -1346,14 +1295,29 @@ class Agdp_Admin_Options {
 		] as $option ){
 			
 			if( ! isset( $_POST[ AGDP_TAG ][ $option ] ) )
-				$values[ $option ] = false;
+				Agdp::update_option($option, false);
 		}
 		$_POST[AGDP_TAG][ '__' . __FUNCTION__ ] = 'done';
+	}
+	 
+	/**
+	* Hook avant mise à jour d'option par wp (Agdp::save_options())
+	*/
+	public static function on_pre_update_option( $values, $old_values, $option ) {
+		if( $option !== AGDP_TAG )
+			return;
+		
+		//clear confirmation and force a random value to hook update_option
+		foreach(['site_import', 'agdpevent_import_ics'] as $option_key){
+			if(array_key_exists($option_key . '-confirm', $values)){
+				$values[$option_key . '-confirm'] = rand();
+			}
+		}
 		return $values;
 	}
 	
 	/**
-	* Hook de mise à jour d'option
+	* Hook après mise à jour des options de l'extension (Agdp::save_options())
 	*/
 	public static function on_updated_option( $old_values, $values, $option ) {
 		if( $option !== AGDP_TAG )
@@ -1368,32 +1332,7 @@ class Agdp_Admin_Options {
 		$option_key = 'agdpevent_import_ics';
 		// debug_log( __FUNCTION__, array_key_exists($option_key . '-confirm', $values), $_FILES );
 		if( array_key_exists($option_key . '-confirm', $values) ){
-			if( count($_FILES)
-				&& array_key_exists( AGDP_TAG, $_FILES)
-				&& array_key_exists( 'name', $_FILES[AGDP_TAG])
-				&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
-			){
-				$fileName = $_FILES[AGDP_TAG]['tmp_name'][$option_key];
-				if($fileName){
-					$original_file_name = $_FILES[AGDP_TAG]['name'][$option_key];
-					if(array_key_exists($option_key . '-post_status', $values)){
-						$post_status = $values[$option_key . '-post_status'];
-					}
-					else
-						$post_status = 'publish';
-					if( ! array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
-						Agdp_Admin::set_import_report(sprintf('<div class="error notice"><p><strong>%s</strong></p></div>', 
-								__('Vous n\'avez pas confirmé l\'importation.', AGDP_TAG)));
-						var_dump($_POST);
-					}
-					elseif( $_POST[AGDP_TAG][$option_key . '-confirm'] !== 'done' ){
-						require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts-import.php');
-						require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents-import.php');
-						Agdp_Evenements_Import::import_ics($fileName, $post_status, $original_file_name);
-						$_POST[AGDP_TAG][$option_key . '-confirm'] = 'done';
-					}
-				}
-			}
+			self::on_updated_option_agdpevent_import_ics( $values );
 		}
 		
 		//Import d'un site
@@ -1406,6 +1345,40 @@ class Agdp_Admin_Options {
 		}
 		
 		$static_updating = false;
+	}
+	
+	/**
+	* on_updated_option_agdpevent_import_ics
+	*/
+	private static function on_updated_option_agdpevent_import_ics( $values ) {
+	
+		$option_key = 'agdpevent_import_ics';
+		if( count($_FILES)
+			&& array_key_exists( AGDP_TAG, $_FILES)
+			&& array_key_exists( 'name', $_FILES[AGDP_TAG])
+			&& array_key_exists( $option_key, $_FILES[AGDP_TAG]['tmp_name'])
+		){
+			$fileName = $_FILES[AGDP_TAG]['tmp_name'][$option_key];
+			if($fileName){
+				$original_file_name = $_FILES[AGDP_TAG]['name'][$option_key];
+				if(array_key_exists($option_key . '-post_status', $values)){
+					$post_status = $values[$option_key . '-post_status'];
+				}
+				else
+					$post_status = 'publish';
+				if( ! array_key_exists($option_key . '-confirm', $_POST[AGDP_TAG])){
+					Agdp_Admin::set_import_report(sprintf('<div class="error notice"><p><strong>%s</strong></p></div>', 
+							__('Vous n\'avez pas confirmé l\'importation.', AGDP_TAG)));
+					var_dump($_POST);
+				}
+				elseif( $_POST[AGDP_TAG][$option_key . '-confirm'] !== 'done' ){
+					require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts-import.php');
+					require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents-import.php');
+					Agdp_Evenements_Import::import_ics($fileName, $post_status, $original_file_name);
+					$_POST[AGDP_TAG][$option_key . '-confirm'] = 'done';
+				}
+			}
+		}
 	}
 }
 

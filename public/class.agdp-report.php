@@ -394,7 +394,7 @@ class Agdp_Report extends Agdp_Post {
 										$format = '%s';
 										$format_JSON = false;
 									}
-									$variable_value = json_encode($result, JSON_UNESCAPED_UNICODE);
+									$variable_value = json_encode($result,  JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 								}
 							}				 
 							else {
@@ -460,12 +460,12 @@ class Agdp_Report extends Agdp_Post {
 										foreach( $variable_value as $k => $v ){
 											$keys_values[] = [ 'key' => $k, 'value' => $v ];
 										}
-										$variable_value = json_encode( $keys_values, JSON_UNESCAPED_UNICODE );
+										$variable_value = json_encode( $keys_values, JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE );
 									}
 									else {
 										foreach( $variable_value as $key => $item )
 											$columns[] = $key;
-										$variable_value = sprintf('[%s]', json_encode( $variable_value, JSON_UNESCAPED_UNICODE ) );
+										$variable_value = sprintf('[%s]', json_encode( $variable_value, JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ) );
 									}
 								}
 								else {
@@ -496,7 +496,7 @@ class Agdp_Report extends Agdp_Post {
 											$variable_value = $values;
 										}
 									}
-									$variable_value = json_encode( $variable_value, JSON_UNESCAPED_UNICODE );
+									$variable_value = json_encode( $variable_value, JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE );
 									$variable_value = sprintf('[%s]', substr($variable_value, 1, strlen($variable_value) - 2) );
 								}
 								$str_columns = '';

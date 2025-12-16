@@ -344,6 +344,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				, esc_attr(
 					  "var $ = jQuery; var \$this = $(this);"
 					. "var shortcode = \$this.parents('.agdp-metabox-row').find(':input:first').val();"
+					. "if( ! shortcode ) return false;"
 					. "var url = \$this.attr('href').split('&shortcode=')[0];"
 					. "\$this.attr( 'href', url + '&shortcode=' + shortcode );"
 					// . "return false;"
@@ -370,7 +371,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				'input' => 'textarea',
 				'class' => 'shortcode',
 				'input_attributes' => 'rows="2" spellcheck="false"',
-				'default' => $shortcode,
+				// 'default' => $shortcode,
 				'comments' => $test_url 
 						. '<br>' . static::get_shortcode_helper()
 					,
