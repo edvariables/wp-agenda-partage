@@ -1245,6 +1245,12 @@ jQuery( function( $ ) {
 						)
 					)
 				;
+				$render.find('.report_toolbar_item label.report_refresh:first')
+					.clone()
+						.appendTo( $('<div class="report_footer_toolbar report_toolbar_item agdp-metabox-row is_admin"></div>')
+							.appendTo( $render.find('.inside:first') )
+						)
+				;
 			}
 			/* Refresh
 			 ****************/
@@ -1311,6 +1317,9 @@ jQuery( function( $ ) {
 					;
 				}).end()
 				//Columns
+				.find('thead')
+					.prepend('<caption class="report_table_designer">Titres&nbsp;des&nbsp;colonnes</caption>')
+					.end()
 				.find('thead > tr').each(function(){
 					var column_index = 0;
 					$(this)
@@ -1403,6 +1412,9 @@ jQuery( function( $ ) {
 					;
 				}).end()
 				//Rows
+				.find('tbody')
+					.prepend('<caption class="report_table_designer">Cellules&nbsp;des&nbsp;données</caption>')
+					.end()
 				.find('tbody > tr:first').each(function(){
 					//TODO ajouter une colonne de th avec le label "Classe" ou "Cellule"
 					$(this)
@@ -1483,6 +1495,9 @@ jQuery( function( $ ) {
 					;
 				}).end()
 				//Footer columns
+				.find('tfoot')
+					.prepend('<caption class="report_table_designer">Pieds&nbsp;des&nbsp;colonnes</caption>')
+					.end()
 				.find('tfoot > tr').each(function(){
 					var column_index = 0;
 					$(this)
@@ -1497,22 +1512,6 @@ jQuery( function( $ ) {
 								column_index++;
 							})
 							.end()
-						// .clone()
-							// .addClass('report_table_designer')
-							// .insertAfter(this)
-							// .children('th[column]')
-								// .attr('class', '')
-								// .each(function(){
-									// var column = this.getAttribute('column');
-									// var label = $(this).clone().children().remove().end().text();
-									// if( columns[ column ] === undefined )
-										// columns[ column ] = {};
-									// else if( columns[ column ][ 'visible' ] === false )
-										// $(this).addClass('hidden');
-									// columns[ column ][ 'label' ] = label;
-									// this.innerHTML = '<input class="column_label" value="' + label + '">';
-								// })
-								// .on('change', ':input', save_table_designer)
 						//Ligne de Script script
 						.clone()
 							.addClass('report_table_designer')
@@ -1525,9 +1524,9 @@ jQuery( function( $ ) {
 										return;
 									var script = columns[ column ]['tfoot_script'];
 									if( ! script )
-										script = '`' + column + '`';
+										script = '';
 									var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
-										.attr('title', "Script SQL pour la valeur des cellules de la colonne")
+										.attr('title', "Script SQL pour la valeur du pied de colonne")
 										.val( script );
 									if( columns[ column ][ 'visible' ] === false )
 										$(this).addClass('hidden');
@@ -1563,7 +1562,7 @@ jQuery( function( $ ) {
 										$(this).addClass('hidden');
 									var $class = $('<div><div>Classe: <div></div>').append(
 										$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
-											.attr('title', "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)")
+											.attr('title', "Classe du pied de la colonne.\nPar exemple, IF(COUNT(`ID`) >= :LIMIT, 'show-more', '')")
 											.val( attr_class )
 										)
 									;
@@ -1578,7 +1577,19 @@ jQuery( function( $ ) {
 				}).end()
 				
 			;
-				
+			
+			$render.find('.sql_prepared')
+				.prepend( $('<a></a>')
+					.addClass('close-box')
+					.addClass('dashicons-before dashicons-no-alt')
+					.click(function(e){
+						$(this).parent('.sql_prepared')
+							.remove();
+						//change option
+					})
+				)
+			;
+			
 		}
 		
 		/**
