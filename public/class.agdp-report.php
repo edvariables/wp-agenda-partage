@@ -1057,7 +1057,7 @@ class Agdp_Report extends Agdp_Post {
 		foreach( $table_columns as $column => $column_data ){
 			if( isset($table_columns[ $column ][ 'class' ]) ){
 				$class = $table_columns[ $column ][ 'class' ];
-				if( self::is_a_class_script( $class ) ){
+				if( self::is_a_sql_script( $class ) ){
 					$class_sql = trim($class, " ,;\n\r");
 					if( $select )
 						$select .= ', ';
@@ -1116,6 +1116,8 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	public static function get_table_wrapper_dbresults( $report, $sql_variables, &$options, $table_render, $dbresults ) {
 		
+		self::set_previous_results_variable( $dbresults );
+		
 		if( count($dbresults) > 1 ){
 			if( ! empty($options['_main_sql']) )
 				$sql = $options['_main_sql'];
@@ -1167,7 +1169,7 @@ class Agdp_Report extends Agdp_Post {
 			if( ! empty($table_caption[ 'class' ]) ){
 				$class = $table_caption[ 'class' ];
 				$class_sql = trim($class, " ,;\n\r");
-				if( self::is_a_class_script( $class ) ){
+				if( self::is_a_sql_script( $class ) ){
 					$select .= sprintf('%s AS `caption_class`', $class_sql);
 				}
 				else {
@@ -1195,7 +1197,7 @@ class Agdp_Report extends Agdp_Post {
 			foreach( $table_columns as $column => $column_data ){
 				if( isset($table_columns[ $column ][ $block_prefixe . 'class' ]) ){
 					$class = $table_columns[ $column ][ $block_prefixe . 'class' ];
-					if( self::is_a_class_script( $class ) ){
+					if( self::is_a_sql_script( $class ) ){
 						$class_sql = trim($class, " ,;\n\r");
 						if( $select )
 							$select .= ', ';
@@ -1206,12 +1208,14 @@ class Agdp_Report extends Agdp_Post {
 					continue;
 
 				$column_sql = $column_data[$block_prefixe . 'script'];
-				if( $select )
-					$select .= ', ';
-				$select .= sprintf('%s AS `%s%s`'
-					, $column_sql
-					, $block_prefixe
-					, $column);
+				if( self::is_a_sql_script( $column_sql ) ){
+					if( $select )
+						$select .= ', ';
+					$select .= sprintf('%s AS `%s%s`'
+						, $column_sql
+						, $block_prefixe
+						, $column);
+				}
 			}
 		}
 		//wrap
@@ -1530,9 +1534,6 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	private static function get_dbresults_as_json_table( $table_columns, $dbresults = false ) {
 		
-		if( $dbresults )
-			self::set_previous_results_variable( $dbresults );
-		
 		$str_columns = '';
 		foreach( $table_columns as $column_name => $column_value ){
 			if( substr($column_name, 0, 2) === '__' ){
@@ -1612,7 +1613,6 @@ class Agdp_Report extends Agdp_Post {
 		//report_show_sql
 		if( ! current_user_can('manage_options'))
 			return '';
-		debug_log( __FUNCTION__ );
 		$sql_prepared = '';
 		
 		$meta_key = 'report_show_sql';
@@ -1724,7 +1724,7 @@ class Agdp_Report extends Agdp_Post {
 			$content .= sprintf('<caption class="error">#Erreur : %s</caption>', $wrapper );
 			$wrapper = new StdClass();
 		}
-		else debug_log( __FUNCTION__, '$wrapper', $wrapper);
+		// else debug_log( __FUNCTION__, '$wrapper', $wrapper);
 		
 		//Caption
 		$meta_key = 'report_show_caption';
@@ -1754,9 +1754,14 @@ class Agdp_Report extends Agdp_Post {
 				if( substr($column_name, 0, 2) === '__' ){
 					continue;
 				}
-				$column_class_name = '__class__' . $block_prefix . $column_name;
-				if( isset( $wrapper->$column_class_name ) )		
-					$column_class = $wrapper->$column_class_name;
+				$column_thead_name =  $block_prefix . $column_name;
+				if( isset( $wrapper->$column_thead_name ) )				
+					$column_title = $wrapper->$column_thead_name;
+				else
+					$column_title = false;
+				$column_class_thead_name = '__class__' . $column_thead_name;
+				if( isset( $wrapper->$column_class_thead_name ) )		
+					$column_class = $wrapper->$column_class_thead_name;
 				else
 					$column_class = '';
 				
@@ -1765,24 +1770,24 @@ class Agdp_Report extends Agdp_Post {
 				if( $table_columns && isset($table_columns[ $column_name ] ) ){
 					$table_column = $table_columns[ $column_name ];
 					if( is_array($table_column) ){
-						$column_label = empty($table_column[ 'label' ]) ? $column_name : $table_column[ 'label' ];
 						$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
-						if( ! empty($table_column[ 'class' ]) ){
-							$value = $table_column[ 'class' ];
-							if( ! self::is_a_class_script( $value )  )
+						if( ! empty($table_column[ $block_prefix . 'class' ]) ){
+							$value = $table_column[ $block_prefix . 'class' ];
+							if( ! self::is_a_sql_script( $value )  )
 								$column_class .= ' ' . $value;
 						}
-						// if( ! empty($table_column[ 'script' ]) )
-							// $attributes .= ' column_script="' . esc_attr($table_column[ 'script' ]) . '"';
-					}
-					else {
-						$column_label = $table_column;
+						if( ! $column_title ){
+							if( ! empty($table_column[ $block_prefix . 'script' ]) ){
+								$value = $table_column[ $block_prefix . 'script' ];
+								if( ! self::is_a_sql_script( $value )  )
+									$column_title = $value;
+							}
+						}
 					}
 				}
-				if( isset( $wrapper->$column_name ) )		
-					$column_title = $wrapper->$column_name;
-				else
-					$column_title = $column_label;
+				if( ! $column_title ){
+					$column_title = $column_name;
+				}
 				if( ! $column_visible )
 					$column_class .= ' hidden';
 				$content .= sprintf('<th %s column="%s" %s>%s</th>'
@@ -1826,7 +1831,7 @@ class Agdp_Report extends Agdp_Post {
 					$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
 					if( ! empty($table_column[ 'class' ]) ){
 						$value = $table_column[ 'class' ];
-						if( ! self::is_a_class_script( $value ) ) 
+						if( ! self::is_a_sql_script( $value ) ) 
 							$column_class .= ' ' . $value;
 					}
 					// if( ! empty($table_column[ 'script' ]) )
@@ -1879,7 +1884,7 @@ class Agdp_Report extends Agdp_Post {
 							$column_visible = ! isset($table_column[ 'visible' ]) || $table_column[ 'visible' ];
 							if( ! empty($table_column[ $block_prefix . 'class' ]) ){
 								$value = $table_column[ $block_prefix . 'class' ];
-								if( ! self::is_a_class_script( $value )  )
+								if( ! self::is_a_sql_script( $value )  )
 									$column_class .= ' ' . $value;
 							}
 						}
@@ -2267,9 +2272,9 @@ class Agdp_Report extends Agdp_Post {
 	}
 	
 	/**
-	 * Teste si une valeur d'attribut class est un script ou une valeur directe de classe
+	 * Teste si une valeur d'attribut class est un script ou une valeur directe de classe ou de label
 	 */
-	public static function is_a_class_script( $class ){
+	public static function is_a_sql_script( $class ){
 		return $class && str_replace( ['@', '(', '"', '\''], '', $class ) !== $class;
 	}
 }

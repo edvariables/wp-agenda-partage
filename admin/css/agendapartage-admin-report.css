@@ -258,19 +258,25 @@
 	padding-left: 3px;
 	font-family: Courier;
 	font-style: italic;
+	background-color: #f4fce2;
+	width: 100%;
+	text-align: left;
+	width: 150%;
+	opacity: 85%;
 }
 
 #agdp_report-render .agdpreport tr:not(.report_table_designer) > * {
 	padding-right: 1em;
 }
-#agdp_report-render .agdpreport tr a.column-action {
+#agdp_report-render .agdpreport tr .column-actions {
 	opacity: 50%;
 	float: right;
 	top: -5px;
 	position: relative;
 	right: -14px;
+	white-space: nowrap;
 }
-#agdp_report-render .agdpreport tr a.column-action:hover {
+#agdp_report-render .agdpreport tr column-actions:hover {
 	opacity: 100%;
 }
 #agdp_report-render .agdpreport thead th:first-of-type a.move_column_left,
@@ -306,4 +312,7 @@
 }
 #agdp_report-render .sql_prepared .close-box {
 	float: right;
+	position: relative;
+	top: -1em;
+	right: -1em;
 }

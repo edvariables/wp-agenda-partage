@@ -986,7 +986,7 @@ jQuery( function( $ ) {
 		function refresh_report_menu(){
 			var $this = $(this);
 			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
-			var $menu_items = $render.find('.report_menu_item');
+			var $menu_items = $render.find('.report_menu_item'); //added from php Agdp_Admin_Edit_Report::get_metabox_render_fields()
 			var $menu = $menu_items.parent('#agdp_report-render-menu');
 			if( $menu.length === 0 ){
 				$menu = $('<div id="agdp_report-render-menu"></div>')
@@ -1316,7 +1316,8 @@ jQuery( function( $ ) {
 						)
 					;
 				}).end()
-				//Columns
+				/** Columns **/
+				// thead
 				.find('thead')
 					.prepend('<caption class="report_table_designer">Titres&nbsp;des&nbsp;colonnes</caption>')
 					.end()
@@ -1325,18 +1326,20 @@ jQuery( function( $ ) {
 					$(this)
 						.children('th[column]')
 							.each(function(){
-								this.innerHTML += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne.&#013;Pour supprimer définitivement, appuyer sur la touche Ctrl."></a>';
 								var column = this.getAttribute('column');
 								this.setAttribute( 'title', column );
 								
 								$table.find('tbody > tr:first > td:eq(' + column_index + ')')
 										.attr('column', column);
 										
-								if( ! columns[ column ] || ! columns[ column ][ 'label' ] )
-									this.innerHTML += '<a class="is_new_column column-action dashicons-before dashicons-info-outline" title="Cette colonne est nouvelle"></a>';
-								this.innerHTML += '<a class="move_column move_column_right column-action dashicons-before dashicons-arrow-right" title="Décaler la colonne à gauche"></a>';
-								this.innerHTML += '<a class="move_column move_column_left column-action dashicons-before dashicons-arrow-left" title="Décaler la colonne à gauche"></a>';
-								
+								var actions = '<div class="column-actions">';
+								actions += '<a class="move_column move_column_left column-action dashicons-before dashicons-arrow-left" title="Décaler la colonne à gauche"></a>';
+								actions += '<a class="move_column move_column_right column-action dashicons-before dashicons-arrow-right" title="Décaler la colonne à gauche"></a>';
+								if( ! columns[ column ] /* || ! columns[ column ][ 'thead_script' ] */ )
+									actions += '<a class="is_new_column column-action dashicons-before dashicons-info-outline" title="Cette colonne est nouvelle"></a>';
+								actions += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne.&#013;Pour supprimer définitivement, appuyer sur la touche Ctrl."></a>';
+								actions += '</div>';
+								this.innerHTML = actions + this.innerHTML;
 								column_index++;
 							})
 							//hide_column
@@ -1393,25 +1396,29 @@ jQuery( function( $ ) {
 								;
 							})
 							.end()
+						//Ligne de Script script
 						.clone()
 							.addClass('report_table_designer')
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each(function(){
-									var column = this.getAttribute('column');
-									var label = $(this).clone().children().remove().end().text();
-									if( columns[ column ] === undefined )
-										columns[ column ] = {};
-									else if( columns[ column ][ 'visible' ] === false )
-										$(this).addClass('hidden');
-									columns[ column ][ 'label' ] = label;
-									this.innerHTML = '<input class="column_label" value="' + label + '">';
-								})
+								.each( init_designer_thead_column_script )
 								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+						//Ligne de Classe class
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each(init_designer_thead_column_class)
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
 					;
 				}).end()
-				//Rows
+				// tbody
 				.find('tbody')
 					.prepend('<caption class="report_table_designer">Cellules&nbsp;des&nbsp;données</caption>')
 					.end()
@@ -1423,13 +1430,12 @@ jQuery( function( $ ) {
 							.each(function(){
 								var column = this.getAttribute('column');
 								//title="script"
-								var script = columns[ column ]['script'];
+								var script = columns[ column ] && columns[ column ]['script'];
 								if( ! script )
 									script = '';
 								this.setAttribute( 'title', script );
 							})
-							.on('click', '.is_new_column', function(){
-							})
+							// .on('click', '.is_new_column', function(){})
 							.end()
 						//Ligne de Classe class
 						.clone()
@@ -1437,25 +1443,7 @@ jQuery( function( $ ) {
 							.insertBefore(this)
 							.children('td[column]')
 								.attr('class', '')
-								.each(function(){
-									var column = this.getAttribute('column');
-									if( ! column )
-										return;
-									var attr_class = columns[ column ]['class'];
-									if( ! attr_class )
-										attr_class = '';
-									if( columns[ column ][ 'visible' ] === false )
-										$(this).addClass('hidden');
-									var $class = $('<div><div>Classe: <div></div>').append(
-										$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
-											.attr('title', "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)")
-											.val( attr_class )
-										)
-									;
-									$(this)
-										.html($class)
-									;
-								})
+								.each( init_designer_tbody_column_class )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1465,42 +1453,20 @@ jQuery( function( $ ) {
 							.insertBefore(this)
 							.children('td[column]')
 								.attr('class', '')
-								.each(function(){
-									var column = this.getAttribute('column');
-									if( ! column )
-										return;
-									var script = columns[ column ]['script'];
-									if( ! script )
-										script = '`' + column + '`';
-									var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
-										.attr('title', "Script SQL pour la valeur des cellules de la colonne")
-										.val( script );
-									if( columns[ column ][ 'visible' ] === false )
-										$(this).addClass('hidden');
-									$(this)
-										.html($script)
-									;
-									$script.on('change', function(){
-										$script.nextAll('.input-alert').remove();
-										if( /'.*(?<!\\)"/.exec(this.value) )
-											$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
-												.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
-												.insertAfter($script)
-											;
-									}).trigger('change');
-								})
+								.each( init_designer_tbody_column_script )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
 					;
 				}).end()
-				//Footer columns
+				// tfoot
 				.find('tfoot')
 					.prepend('<caption class="report_table_designer">Pieds&nbsp;des&nbsp;colonnes</caption>')
 					.end()
 				.find('tfoot > tr').each(function(){
 					var column_index = 0;
 					$(this)
+						//Init .attr('column', column)
 						.children('th[column]')
 							.each(function(){
 								var column = this.getAttribute('column');
@@ -1518,30 +1484,7 @@ jQuery( function( $ ) {
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each(function(){
-									var column = this.getAttribute('column');
-									if( ! column )
-										return;
-									var script = columns[ column ]['tfoot_script'];
-									if( ! script )
-										script = '';
-									var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
-										.attr('title', "Script SQL pour la valeur du pied de colonne")
-										.val( script );
-									if( columns[ column ][ 'visible' ] === false )
-										$(this).addClass('hidden');
-									$(this)
-										.html($script)
-									;
-									$script.on('change', function(){
-										$script.nextAll('.input-alert').remove();
-										if( /'.*(?<!\\)"/.exec(this.value) )
-											$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
-												.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
-												.insertAfter($script)
-											;
-									}).trigger('change');
-								})
+								.each( init_designer_tfoot_column_script )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1551,25 +1494,7 @@ jQuery( function( $ ) {
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each(function(){
-									var column = this.getAttribute('column');
-									if( ! column )
-										return;
-									var attr_class = columns[ column ]['tfoot_class'];
-									if( ! attr_class )
-										attr_class = '';
-									if( columns[ column ][ 'visible' ] === false )
-										$(this).addClass('hidden');
-									var $class = $('<div><div>Classe: <div></div>').append(
-										$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
-											.attr('title', "Classe du pied de la colonne.\nPar exemple, IF(COUNT(`ID`) >= :LIMIT, 'show-more', '')")
-											.val( attr_class )
-										)
-									;
-									$(this)
-										.html($class)
-									;
-								})
+								.each(init_designer_tfoot_column_class)
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1578,17 +1503,98 @@ jQuery( function( $ ) {
 				
 			;
 			
+			/***************
+			 * init_designer_column
+			 **/
+			function init_designer_thead_column_class(e){ init_designer_column_class.call( this, e, 'thead_' ); }
+			function init_designer_tbody_column_class(e){ init_designer_column_class.call( this, e, '' ); }
+			function init_designer_tfoot_column_class(e){ init_designer_column_class.call( this, e, 'tfoot_' ); }
+			function init_designer_column_class(e, block_prefix){
+				var title; 
+				if( block_prefix === 'tfoot_' )
+					title = "Classe du pied de la colonne.\nPar exemple, IF(COUNT(`ID`) >= :LIMIT, 'show-more', '')";
+				else if( block_prefix === 'thead_' )
+					title = "Classe de l'en-tête de la colonne.\nPar exemple, IF(COUNT(`ID`) >= :LIMIT, 'show-more', '')";
+				else
+					title = "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)";
+				var column = this.getAttribute('column');
+				if( ! column )
+					return;
+				var attr_class = columns[ column ] && columns[ column ][block_prefix + 'class']
+					? columns[ column ][block_prefix + 'class'] : '';
+				if( ! attr_class )
+					attr_class = '';
+				if( columns[ column ] && columns[ column ][ 'visible' ] === false )
+					$(this).addClass('hidden');
+				var $class = $('<div><div>Classe: <div></div>').append(
+					$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
+						.attr('title', title)
+						.val( attr_class )
+					)
+				;
+				$(this)
+					.html($class)
+				;
+			}
+			function init_designer_thead_column_script(e){ init_designer_column_script.call( this, e, 'thead_' ); }
+			function init_designer_tbody_column_script(e){ init_designer_column_script.call( this, e, '' ); }
+			function init_designer_tfoot_column_script(e){ init_designer_column_script.call( this, e, 'tfoot_' ); }
+			function init_designer_column_script(e, block_prefix){
+				var title; 
+				if( block_prefix === 'tfoot_' )
+					title = "Script SQL pour la valeur du pied de la colonne.\nPar exemple, COUNT(`ID`)";
+				else if( block_prefix === 'thead_' )
+					title = "Script SQL ou texte simple pour la valeur de l'en-tête de la colonne";
+				else
+					title = "Script SQL pour la valeur des cellules de la colonne";
+				
+				var column = this.getAttribute('column');
+				if( ! column )
+					return;
+				var script = columns[ column ] && columns[ column ][block_prefix + 'script']
+					? columns[ column ][block_prefix + 'script'] : '';
+				if( ! script ){
+					if( block_prefix === 'thead_' ){
+						script = column;
+					}
+					else
+						script = '';
+				}
+				var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
+					.attr('title', title)
+					.val( script );
+				if( columns[ column ] && columns[ column ][ 'visible' ] === false )
+					$(this).addClass('hidden');
+				$(this)
+					.html($script)
+				;
+				$script.on('change', check_input_quotes)
+					.trigger('change');
+			}
+			
+			// sql_prepared
 			$render.find('.sql_prepared')
 				.prepend( $('<a></a>')
 					.addClass('close-box')
 					.addClass('dashicons-before dashicons-no-alt')
 					.click(function(e){
+						$render.find('input[name="report_show_sql"]').prop('checked', false);
 						$(this).parent('.sql_prepared')
 							.remove();
-						//change option
 					})
 				)
 			;
+			
+			// check_input_quotes
+			function check_input_quotes(){
+				var $script = $(this);
+				$script.nextAll('.input-alert').remove();
+				if( /'.*(?<!\\)"/.exec(this.value) )
+					$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
+						.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
+						.insertAfter($script)
+					;
+			}
 			
 		}
 		
@@ -1653,42 +1659,49 @@ jQuery( function( $ ) {
 						table_render[ column ][ option ] = this.value;
 					})
 					.end()
-				.find('> thead > tr.report_table_designer > th :input.column_label')
-					.each(function(){
-						var $th = $(this.parentNode);
-						var column = $th.attr('column');
-						var label = this.value;
-						var visible = $th.is(':visible') && ! $th.is('.hidden');
-						columns[ column ] = {
-							label: label,
-							visible: visible,
-							index: column_index++,
-						};
-					})
-					.end()
-				.find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class')
+				// .find('> thead > tr.report_table_designer > th :input.column_label')
+					// .each(function(){
+						// var $th = $(this.parentNode);
+						// var column = $th.attr('column');
+						// var label = this.value;
+						// var visible = $th.is(':visible') && ! $th.is('.hidden');
+						// columns[ column ] = {
+							// label: label,
+							// visible: visible,
+							// index: column_index++,
+						// };
+					// })
+					// .end()
+				// .find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class')
+					// .each(function(){
+						// if( ! this.value )
+							// return;
+						// var $this = $(this);
+						// var column = $this.parents('[column]:first').attr('column');
+						// var option_name = $this.is('.column_script') ? 'script'
+									// : ($this.is('.column_class') ? 'class'
+									// : false);
+						// if( columns[ column ] === undefined )
+							// columns[ column ] = {};
+						// columns[ column ][ option_name ] = this.value;
+					// })
+					// .end()
+				.find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class'
+				  + ', > tfoot > tr.report_table_designer > th :input.column_script, > tfoot > tr.report_table_designer > th :input.column_class'
+				  + ', > thead > tr.report_table_designer > th :input.column_script, > thead > tr.report_table_designer > th :input.column_class')
 					.each(function(){
 						if( ! this.value )
 							return;
 						var $this = $(this);
+						var $block = $this.parents('tr:first').parent();
+						var block_prefix = $block.is('thead')
+											? 'thead_'
+											: ( $block.is('tfoot')
+												? 'tfoot_'
+												: '');
 						var column = $this.parents('[column]:first').attr('column');
-						var option_name = $this.is('.column_script') ? 'script'
-									: ($this.is('.column_class') ? 'class'
-									: false);
-						if( columns[ column ] === undefined )
-							columns[ column ] = {};
-						columns[ column ][ option_name ] = this.value;
-					})
-					.end()
-				.find('> tfoot > tr.report_table_designer > th :input.column_script, > tfoot > tr.report_table_designer > th :input.column_class')
-					.each(function(){
-						if( ! this.value )
-							return;
-						var block_var_prefix = 'tfoot_';
-						var $this = $(this);
-						var column = $this.parents('[column]:first').attr('column');
-						var option_name = $this.is('.column_script') ? block_var_prefix + 'script'
-									: ($this.is('.column_class') ? block_var_prefix + 'class'
+						var option_name = $this.is('.column_script') ? block_prefix + 'script'
+									: ($this.is('.column_class') ? block_prefix + 'class'
 									: false);
 						if( columns[ column ] === undefined )
 							columns[ column ] = {};
