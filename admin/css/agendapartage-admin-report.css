@@ -221,9 +221,7 @@
 #agdp_report-render-menu.active .report_menu_item select  {
 	margin-top: 4px;
 }
-/* #agdp_report-render-menu + .agdp-metabox-row {
-	clear: left;
-} */
+
 /* table.agdpreport */
 #agdp_report-render .agdpreport thead > tr.report_table_designer > th input {
 	width: 100%;

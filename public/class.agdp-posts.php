@@ -343,9 +343,87 @@ abstract class Agdp_Posts {
 	}
 	
 	/**
+	 * get_posts_with_path
+	 *
+	 * $post_ids is sorted by post_parent hierarchy
+	 */
+	public static function get_posts_with_path( $post_ids, $post_type ) {
+		$all_posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
+		$posts = [];
+		foreach( $all_posts as $post ){
+			$posts[ $post->ID.'' ] = $post;
+		}
+		$posts_path = [];
+		foreach( $post_ids as $post_id ){
+			$post = $posts[ $post_id.'' ];
+			if( is_a($post, 'WP_Post') ){
+				if( $post->post_parent ){
+					if( empty( $posts_path[ $post->post_parent.''] ) ){
+						debug_log( __FUNCTION__, "Parent introuvable $post->post_parent", $post->ID, $post->post_parent);
+						$current_path = $post->post_name;
+					}
+					else {
+						$parent_path = $posts_path[ $post->post_parent.''];
+						$current_path = $parent_path . '/' . $post->post_name;
+					}
+				}
+				else
+					$current_path = '/' . $post->post_name;
+				$posts_path[ $post->ID.''] = $current_path;
+				// debug_log(__FUNCTION__, $post_id, $current_path);
+				$post->post_path = $current_path;
+			}
+		}
+		return $posts;
+	}
+	
+	/**
 	 * Requête Ajax de récupération de liste de posts
 	 */
 	public static function on_ajax_action_get_posts( $data ) {
+		
+		/* $query = [
+			'post_type' => 'post'
+			, 'fields' => false
+			, 'numberposts' => 99
+		];
+		if( is_array($data) )
+			$query = array_merge($query, $data);
+		
+		$post_type = $data['post_type'];
+		$post_statuses = false;
+		if( ! empty($data['post_status']) )
+			$post_statuses = $data['post_status'];
+		if( ! $post_statuses )
+			$post_statuses = ['publish'];
+		
+		$post_ids = self::get_posts_and_descendants( $post_type, $post_statuses, false, [0] );
+		// debug_log(__FUNCTION__, '$post_ids', $post_ids);
+		
+		$posts = self::get_posts_with_path($post_ids, $post_type);
+		
+		$items = [];
+		foreach( $post_ids as $post_id ){
+			$post = $posts[ $post_id.'' ];
+			$item = [];
+				
+			if( is_a($post, 'WP_Post') ){
+				$post_id = $post->ID;
+				if( $field = $query['fields'] )
+					$item = $post->$field;
+				else
+					foreach( ['post_title', 'post_name', 'post_content', 'post_parent', 'post_path'] as $field )
+						$item[$field] = $post->$field;
+			}
+			else {
+				$item = $post;
+			}
+			$items[$post_id] = $item;
+		}
+		// debug_log(__FUNCTION__, '$items', $items);
+		return $items;
+		 */
+		
 		
 		$query = [
 			'post_type' => 'post'
@@ -354,6 +432,7 @@ abstract class Agdp_Posts {
 		];
 		if( is_array($data) )
 			$query = array_merge($query, $data);
+		
 		$posts = [];
 		foreach( get_posts($query) as $post_id => $post ){
 			$item = [];
@@ -363,7 +442,7 @@ abstract class Agdp_Posts {
 				if( $field = $query['fields'] )
 					$item = $post->$field;
 				else
-					foreach( ['post_title', 'post_name', 'post_content'] as $field )
+					foreach( ['post_title', 'post_name', 'post_content', 'parent_post'] as $field )
 						$item[$field] = $post->$field;
 			}
 			else {
@@ -429,7 +508,7 @@ abstract class Agdp_Posts {
 		foreach( $dbresult as $dbrow ){
 			$post_id = $dbrow->ID;
 			$ids[] = $post_id * 1;
-			// $ids[$post_id] = '[' . $deep . ']' . $dbrow->post_name;
+			// $ids[$post_id.''] = '[' . $deep . ']' . $dbrow->post_name;
 			if( ! $post_ids
 			|| ! in_array( $post_id, $post_ids ) ){
 				$parent_ids[] = $post_id;

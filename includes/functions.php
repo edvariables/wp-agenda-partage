@@ -471,7 +471,7 @@ function is_associative_array($array){
 }
 
 /**
- * get_relative_page
+ * get_post_path
  */
 function get_post_path($post, $root = ''){
 	if( is_numeric($post) )

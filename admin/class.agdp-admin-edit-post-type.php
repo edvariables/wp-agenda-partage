@@ -244,7 +244,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			case 'textarea':
 				if( ! $val && $default_val) $val = $default_val;
 				if( /* $is_array_field && */ is_array($val) ){
-					//debug_log(__FUNCTION__ . ' is_array($val)', $val);
+					// debug_log(__FUNCTION__ . ' is_array($val)', $val);
 					$val = implode("\n", $val);
 				}
 				echo '<textarea id="'.$id.'" name="'.$name.'"'

@@ -80,7 +80,7 @@ abstract class Agdp_Posts_Export {
 				$return = 'data';
 				break;
 			case 'json':
-				$export_data = json_encode( self::export_posts_object($posts, $filters) );
+				$export_data = json_encode( self::export_posts_object($posts, $filters), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 				$return = 'data';
 				break;
 				
@@ -826,7 +826,10 @@ abstract class Agdp_Posts_Export {
 			if( $post_terms )
 				$post_data['terms'] = $post_terms;
 			
-			$data[] = $post_data;
+			$post_data = apply_filters( AGDP_TAG . '_export_object_' . $post_type, $post_id, $post_data );
+			
+			if( $post_data )
+				$data[] = $post_data;
 		}
 		
 		if( $used_terms || $include_terms ){

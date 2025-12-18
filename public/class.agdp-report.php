@@ -64,6 +64,10 @@ class Agdp_Report extends Agdp_Post {
 		}
 		add_action( 'wp_ajax_'.AGDP_TAG.'_report_action', array(__CLASS__, 'on_ajax_action') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_report_action', array(__CLASS__, 'on_ajax_action') );
+		
+		add_filter( AGDP_TAG . '_export_object_' . static::post_type, array( __CLASS__, 'on_export_object' ), 10, 2 );
+		add_filter( AGDP_TAG . '_after_' . static::post_type . '_import', array( __CLASS__, 'on_after_post_import' ), 10, 3 );
+		
 	}
 	/*
 	 **/
@@ -330,10 +334,17 @@ class Agdp_Report extends Agdp_Post {
 						//Sub-report
 						case 'report_sql': 
 							$error = '';
-							if( is_numeric($variable_value)
-							 && ( $sub_report = get_post($variable_value) )){
+							$sub_report = false;
+							if( $variable_value ){
+								if( is_numeric($variable_value) )
+									$sub_report = get_post($variable_value);
+								else {
+									$sub_report = get_relative_page( $variable_value, $report_id, self::post_type );
+								}
+							}
+							if( $sub_report ){
 								 if( $format === '%d' ){
-									//$variable_value returns ID
+									$variable_value = $sub_report->ID;
 									break;
 								 }
 								 elseif( $format === '%s' ){
@@ -401,7 +412,7 @@ class Agdp_Report extends Agdp_Post {
 								}
 							}				 
 							else {
-								$errors[] = $error = sprintf('Le rapport "%d" est introuvable.', $variable_value);
+								$errors[] = $error = sprintf('Le rapport "%s" est introuvable.', $variable_value);
 								$variable_value = $error;
 							}
 							break;
@@ -1116,6 +1127,9 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	public static function get_table_wrapper_dbresults( $report, $sql_variables, &$options, $table_render, $dbresults ) {
 		
+		if( empty($table_render['columns']) )
+			return;
+		
 		self::set_previous_results_variable( $dbresults );
 		
 		if( count($dbresults) > 1 ){
@@ -1663,6 +1677,7 @@ class Agdp_Report extends Agdp_Post {
 		$content = '';
 		
 		if( is_a($dbresults, 'Exception') ){
+			$sql_prepared = self::get_sql_prepared( $report_id, $options );
 			$content = sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre><pre class="sql_prepared">%s</pre></div>'
 				, $report_id
 				, $dbresults->getMessage()
@@ -1671,15 +1686,17 @@ class Agdp_Report extends Agdp_Post {
 			
 			$content .= sprintf('<div class="agdpreport" agdp_report="%d">%s</div>'
 				, $report_id
-				, static::get_error_table_html( $report, $sql, $table_render, $sql_variables, $options )
+				, static::get_error_table_html( $report, $sql, false, $sql_variables, $options )
 			);
 			return $content;
 		}
-		if( ! is_array($dbresults) )
+		if( ! is_array($dbresults) ){
+			$sql_prepared = self::get_sql_prepared( $report_id, $options );
 			return sprintf('<div class="agdpreport error" agdp_report="%d"><pre>%s</pre><pre class="sql_prepared">%s</pre></div>'
 				, $report_id
 				, $dbresults
 				, htmlspecialchars($sql_prepared));
+		}
 		
 		$content = static::get_table_render_html( $report, $sql, $sql_variables, $options, $dbresults );
 		
@@ -2277,5 +2294,76 @@ class Agdp_Report extends Agdp_Post {
 	public static function is_a_sql_script( $class ){
 		return $class && str_replace( ['@', '(', '"', '\''], '', $class ) !== $class;
 	}
+	
+	/**
+	 * Hook d'export comme object (pour package)
+	 */
+	public static function on_export_object( $post_id, $post_data ){
+		if( ! empty($post_data['metas'])
+		 && ! empty($post_data['metas']['sql_variables'])){
+			$sql_variables = $post_data['metas']['sql_variables'];
+			$sql_variables = json_decode($sql_variables, true);
+			$has_changed = false;
+			foreach($sql_variables as $variable_name => $variable){
+				if( ! empty($variable)
+				 && ! empty($variable['type']) ){
+					switch( $variable['type']){
+					case 'report_sql' :
+						if( ! empty($variable['value'])
+						&& is_numeric($variable['value']) ){
+							$path = get_post_path($variable['value'], '/');
+							$variable['value'] = $path;
+							$sql_variables[$variable_name] = $variable;
+							$has_changed = true;
+						}
+						break;
+					}
+				 }
+			}
+			if( $has_changed ){
+				$post_data['metas']['sql_variables'] = json_encode($sql_variables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+			}
+		}
+		return $post_data;
+	}
+	
+	/**
+	 * Hook après l'import (packages)
+	 */
+	 public static function on_after_post_import( $post_id, $post_data, $options ){
+		if( ! empty($post_data['post']['meta_input'])
+		 && ! empty($post_data['post']['meta_input']['sql_variables'])){
+			$sql_variables = get_post_meta( $post_id, 'sql_variables', true );
+			if( $sql_variables && is_string($sql_variables) )
+				$sql_variables = json_decode($sql_variables, true);
+			$has_changed = false;
+			foreach($sql_variables as $variable_name => $variable){
+				if( ! empty($variable)
+				 && ! empty($variable['type']) ){
+					switch( $variable['type']){
+					case 'report_sql' :
+						if( empty($variable['value']) )
+							continue 2;
+						if( is_string($variable['value']) ){
+							$relative = get_relative_page($variable['value'], $post_id, self::post_type);
+							if( ! $relative )
+								continue 2;
+							$variable['value'] = $relative->ID;
+							$sql_variables[$variable_name] = $variable;
+							$has_changed = true;
+						}
+						elseif( is_numeric($variable['value']) ){
+							// TODO $options['original_ids']
+						}
+						break;
+					}
+				 }
+			}
+			if( $has_changed ){
+				update_post_meta( $post_id, 'sql_variables', json_encode($sql_variables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) );
+			}
+		}
+	 }
 }
+
 ?>

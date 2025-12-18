@@ -336,39 +336,41 @@ class Agdp_Admin_Packages {
 		 * Taxonomies
 		 */
 		$meta_key = '_term_in_package';
-		foreach($post_types as $post_type){
-			$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'names');
-			if( ! $post_taxonomies || count($post_taxonomies) === 0 )
-				continue;
-			//terms existants avec _term_in_package
-			$terms = get_terms([ 
-				'taxonomy' => $post_taxonomies,
-				'hide_empty' => false,
-				'meta_key' => $meta_key,
-				'meta_value' => '1',
-				'fields' => 'ids',
-			]);
-			if( is_wp_error($terms) ){
-				var_dump($terms);
-				continue;
+		if( ! empty($_POST[$meta_key]) ){
+			foreach($post_types as $post_type){
+				$post_taxonomies = get_taxonomies([ 'object_type' => [$post_type] ], 'names');
+				if( ! $post_taxonomies || count($post_taxonomies) === 0 )
+					continue;
+				//terms existants avec _term_in_package
+				$terms = get_terms([ 
+					'taxonomy' => $post_taxonomies,
+					'hide_empty' => false,
+					'meta_key' => $meta_key,
+					'meta_value' => '1',
+					'fields' => 'ids',
+				]);
+				if( is_wp_error($terms) ){
+					var_dump($terms);
+					continue;
+				}
+				
+				$checked_ids = [];
+				foreach($terms as $term_id){
+					if( ! in_array( $term_id, $_POST[$meta_key])){ //TODO SIC danger si no import tax
+						// debug_log(__FUNCTION__, 'delete_term_meta', $term_id, $meta_key ); 
+						delete_term_meta( $term_id, $meta_key );
+					}
+					else {
+						$checked_ids[] = $term_id;
+					}
+				}
+				
+				if( ! empty($_POST[$meta_key]) )
+					foreach( $_POST[$meta_key] as $term_id){
+						if( ! in_array( $term_id, $checked_ids ) )
+							update_term_meta( $term_id, $meta_key, '1' ); 
+					}
 			}
-			
-			$checked_ids = [];
-			foreach($terms as $term_id){
-				if( ! in_array( $term_id, $_POST[$meta_key])){
-					// debug_log(__FUNCTION__, 'delete_term_meta', $term_id, $meta_key ); 
-					delete_term_meta( $term_id, $meta_key );
-				}
-				else {
-					$checked_ids[] = $term_id;
-				}
-			}
-			
-			if( ! empty($_POST[$meta_key]) )
-				foreach( $_POST[$meta_key] as $term_id){
-					if( ! in_array( $term_id, $checked_ids ) )
-						update_term_meta( $term_id, $meta_key, '1' ); 
-				}
 		}
 	}
 	
@@ -456,7 +458,7 @@ class Agdp_Admin_Packages {
 		
 		$data = Agdp_Posts_Export::export_posts_object( $posts, $options );
 		if( $data ){
-			$data = json_encode($data, JSON_OBJECT_AS_ARRAY & JSON_UNESCAPED_SLASHES);
+			$data = json_encode($data, JSON_OBJECT_AS_ARRAY | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 			// $data = serialize( json_decode($data) );//remove object reference
 			// $data = serialize( $data );//remove object reference
 			if( file_exists($file_name) )

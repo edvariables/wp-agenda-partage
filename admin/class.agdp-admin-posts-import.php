@@ -253,7 +253,6 @@ class Agdp_Admin_Posts_Import {
 			return static::agdp_import_post( $post_data, $options );
 		}
 	
-		$new_posts = [];
 		$options['original_ids'] = [];
 		foreach( $data as $post_data )
 			if( ! empty($post_data['post']) )
@@ -266,10 +265,13 @@ class Agdp_Admin_Posts_Import {
 		if( ! empty($data['terms']) ){
 			$import_terms = empty($options['import_terms']) ? false : $options['import_terms'];
 			if( $import_terms )
-				$new_ids = static::agdp_import_terms( $data, $options );
+				$new_term_ids = static::agdp_import_terms( $data, $options );
 		}
 		
-		// agdp_import_posts callback
+		$new_posts = [];
+		$new_posts_post_types = [];
+		
+		// agdp_import_post of each
 		foreach( $data as $index => $post_data )
 			if( is_numeric($index)
 			&& ! empty($post_data['post']) ){
@@ -279,6 +281,11 @@ class Agdp_Admin_Posts_Import {
 					$data[$index] = $post_data;
 					$options['original_ids'][$original_id.''] = $new_id;
 					$new_posts[] = $new_id;
+					
+					$post_type = $post_data['post']['post_type'];
+					if( ! isset($new_posts_post_types[ $post_type ]) )
+						$new_posts_post_types[ $post_type ] = [];
+					$new_posts_post_types[ $post_type ][ $new_id.'' ] = $post_data;
 				}
 			}
 			
@@ -302,6 +309,11 @@ class Agdp_Admin_Posts_Import {
 				}
 			}
 		}
+		
+		if( $is_confirmed_action )
+			foreach( $new_posts_post_types as $post_type => $posts )
+				foreach( $posts as $post_id => $post_data )
+					apply_filters( AGDP_TAG . '_after_' . $post_type . '_import', $post_id, $post_data, $options );
 		
 		return $new_posts;
 	}
@@ -361,7 +373,9 @@ class Agdp_Admin_Posts_Import {
 			foreach($data['metas'] as $meta_key => $meta_value){
 				if( $meta_value ){
 					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
-					$data['metas'][$meta_key] = addslashes( $meta_value );
+					if( is_string($meta_value) )
+						$meta_value = addslashes( $meta_value );
+					$data['metas'][$meta_key] = $meta_value;
 				}
 			}
 			
