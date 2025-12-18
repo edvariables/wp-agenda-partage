@@ -742,16 +742,15 @@ jQuery( function( $ ) {
 				.each(refresh_report_menu)
 				.each(refresh_report_table_designer)
 				// montre le css ou sql si il n'est pas vide et que le designer est affiché
-				.find('#report_show_table_designer')//:checked
-					.each(function(){
-						$(this).parents('.inside:first')
-							.find( '.toggle-container.report_css textarea#report_css:not(:empty)'
-								 + ', .toggle-container.sql_before_render, textarea#sql_before_render:not(:empty)')
-								.parents('.toggle-container:first')
-									.prevAll('.toggle-trigger:not(.active)')
-										.trigger('toggle-active')
-						;
-					}).end()
+				.children('.inside:first')
+					.find( '.toggle-container.report_css textarea#report_css:not(:empty)'
+						 + ', .toggle-container.sql_before_render, textarea#sql_before_render:not(:empty)')
+						.each(function(e){
+							$(this).parents('.toggle-container:first')
+								.prevAll('.toggle-trigger:not(.active)')
+									.trigger('toggle-active')
+						;})
+					.end()
 			;
 		});
 	
@@ -1015,6 +1014,7 @@ jQuery( function( $ ) {
 					.parent('.hide_during_loading.loading')
 						.removeClass('loading')
 						.end()
+					.insertBefore( $render.find('.postbox-header > h2.hndle') )
 				;
 				/* Masque le menu si le click est hors menu */
 				function hide_report_menu(event) {
@@ -1402,7 +1402,9 @@ jQuery( function( $ ) {
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each( init_designer_thead_column_script )
+								.each( function(e){
+									init_designer_column_script.call( this, e, 'thead_' );
+								})
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1412,7 +1414,9 @@ jQuery( function( $ ) {
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each(init_designer_thead_column_class)
+								.each( function(e){ 
+									init_designer_column_class.call( this, e, 'thead_' ); 
+								} )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1443,7 +1447,9 @@ jQuery( function( $ ) {
 							.insertBefore(this)
 							.children('td[column]')
 								.attr('class', '')
-								.each( init_designer_tbody_column_class )
+								.each( function(e){ 
+									init_designer_column_class.call( this, e, '' );
+								} )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1453,7 +1459,9 @@ jQuery( function( $ ) {
 							.insertBefore(this)
 							.children('td[column]')
 								.attr('class', '')
-								.each( init_designer_tbody_column_script )
+								.each( function(e){
+									init_designer_column_script.call( this, e, '' );
+								} )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1484,7 +1492,9 @@ jQuery( function( $ ) {
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each( init_designer_tfoot_column_script )
+								.each( function(e){
+									init_designer_column_script.call( this, e, 'tfoot_' );
+								} )
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1494,7 +1504,9 @@ jQuery( function( $ ) {
 							.insertAfter(this)
 							.children('th[column]')
 								.attr('class', '')
-								.each(init_designer_tfoot_column_class)
+								.each( function(e){
+									init_designer_column_class.call( this, e, 'tfoot_' );
+								})
 								.on('change', ':input', save_table_designer)
 								.end()
 							.end()
@@ -1506,9 +1518,6 @@ jQuery( function( $ ) {
 			/***************
 			 * init_designer_column
 			 **/
-			function init_designer_thead_column_class(e){ init_designer_column_class.call( this, e, 'thead_' ); }
-			function init_designer_tbody_column_class(e){ init_designer_column_class.call( this, e, '' ); }
-			function init_designer_tfoot_column_class(e){ init_designer_column_class.call( this, e, 'tfoot_' ); }
 			function init_designer_column_class(e, block_prefix){
 				var title; 
 				if( block_prefix === 'tfoot_' )
@@ -1536,9 +1545,6 @@ jQuery( function( $ ) {
 					.html($class)
 				;
 			}
-			function init_designer_thead_column_script(e){ init_designer_column_script.call( this, e, 'thead_' ); }
-			function init_designer_tbody_column_script(e){ init_designer_column_script.call( this, e, '' ); }
-			function init_designer_tfoot_column_script(e){ init_designer_column_script.call( this, e, 'tfoot_' ); }
 			function init_designer_column_script(e, block_prefix){
 				var title; 
 				if( block_prefix === 'tfoot_' )
