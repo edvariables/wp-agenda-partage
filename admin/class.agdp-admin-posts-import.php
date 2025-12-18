@@ -313,7 +313,7 @@ class Agdp_Admin_Posts_Import {
 		if( $is_confirmed_action )
 			foreach( $new_posts_post_types as $post_type => $posts )
 				foreach( $posts as $post_id => $post_data )
-					apply_filters( AGDP_TAG . '_after_' . $post_type . '_import', $post_id, $post_data, $options );
+					$post_data = apply_filters( AGDP_TAG . '_after_' . $post_type . '_import', $post_data, $post_id, $options );
 		
 		return $new_posts;
 	}

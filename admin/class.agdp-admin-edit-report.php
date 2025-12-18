@@ -31,6 +31,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			add_action( 'admin_enqueue_scripts', array(__CLASS__, 'on_admin_enqueue_scripts'), 10, 1);
 			add_action( 'page_attributes_misc_attributes', array(__CLASS__, 'on_page_attributes_misc_attributes'), 10, 1);
 		}
+		add_filter( AGDP_TAG . '_' . static::post_type . '_duplicate_metas', array(__CLASS__, 'get_post_duplicate_metas'), 10, 3);
 		add_action( 'wp_ajax_'.AGDP_TAG.'_admin_edit_report_action', array(__CLASS__, 'on_ajax_action') );
 	}
 	/****************/
@@ -380,6 +381,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		return $fields;
 				
 	}
+	
 	/**
 	 * Callback lors de l'enregistrement du post.
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
@@ -389,6 +391,25 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			return;
 		}
 		self::save_metaboxes($report_id, $report);
+	}
+	
+	/**
+	 * Callback lors de l'enregistrement du post dupliqué.
+	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
+	 */
+	public static function get_post_duplicate_metas( $metas, $new_post_id, $original_post ){
+		if( ! empty($metas['shortcode']) ){
+			$shortcode_pattern = sprintf('/^(\s*\[%s)\s+%s([|]\S*)?/'
+				, Agdp_Report::shortcode
+				, $original_post->ID
+			);
+			$shortcode = $metas['shortcode'];
+			if( preg_match($shortcode_pattern, $shortcode) ){
+				$shortcode = preg_replace($shortcode_pattern, '$1 ' . $new_post_id . '$2', $shortcode);
+				$metas['shortcode'] = $shortcode;
+			}
+		}
+		return $metas;
 	}
 	
 	/**

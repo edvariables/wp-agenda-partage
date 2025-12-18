@@ -743,27 +743,34 @@ abstract class Agdp_Admin_Edit_Post_Type {
 
 			// Duplicate all post meta
 			$post_meta_infos = $wpdb->get_results("SELECT meta_key, meta_value FROM $wpdb->postmeta WHERE post_id=$post_id");
-			if (count($post_meta_infos) != 0) {
-				foreach ($post_meta_infos as $meta_info) {
-					$meta_key = $meta_info->meta_key;
-					if ( substr($meta_key, 0, strlen('_wp_old') ) === '_wp_old' )
-						continue;
-					if( $meta_info->meta_value === null )
-						continue;
-					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
-					$meta_value = addslashes($meta_info->meta_value);
-					// debug_log(__FUNCTION__, $meta_key, $meta_value, get_debug_type( $meta_value ));
-					
+			
+			// [ key => value ]
+			$metas = [];
+			foreach ($post_meta_infos as $meta_info) {
+				$meta_key = $meta_info->meta_key;
+				if ( substr($meta_key, 0, strlen('_wp_old') ) === '_wp_old' )
+					continue;
+				if( $meta_info->meta_value === null )
+					continue;
+				//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
+				$metas[ $meta_key ] = addslashes($meta_info->meta_value);
+			}
+			
+			// Hook
+			$filtred_metas = apply_filters( AGDP_TAG . '_' . $post->post_type . '_duplicate_metas', $metas, $new_post_id, $post);
+			
+			if( ! $filtred_metas )
+				$filtred_metas = $metas;
+			
+			if( $filtred_metas ){
+				// update_post_meta
+				foreach ($filtred_metas as $meta_key => $meta_value) {
 					update_post_meta($new_post_id, $meta_key, $meta_value); // Copy the post meta to the new post
 				}
 			}
 
-			$current_post_type =  get_post_type($post_id);
-			
-			$postType        = $post->post_type;
-			$newPostId       = $new_post_id;
-			$redirect        = sprintf('/wp-admin/post.php?post=%d&action=edit">',$new_post_id);
-			
+			//redirect
+			$redirect = sprintf('/wp-admin/post.php?post=%d&action=edit">',$new_post_id);
 			wp_safe_redirect( $redirect );
 
 			exit;

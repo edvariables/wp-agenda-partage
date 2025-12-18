@@ -2299,29 +2299,31 @@ class Agdp_Report extends Agdp_Post {
 	 * Hook d'export comme object (pour package)
 	 */
 	public static function on_export_object( $post_id, $post_data ){
-		if( ! empty($post_data['metas'])
-		 && ! empty($post_data['metas']['sql_variables'])){
-			$sql_variables = $post_data['metas']['sql_variables'];
-			$sql_variables = json_decode($sql_variables, true);
-			$has_changed = false;
-			foreach($sql_variables as $variable_name => $variable){
-				if( ! empty($variable)
-				 && ! empty($variable['type']) ){
-					switch( $variable['type']){
-					case 'report_sql' :
-						if( ! empty($variable['value'])
-						&& is_numeric($variable['value']) ){
-							$path = get_post_path($variable['value'], '/');
-							$variable['value'] = $path;
-							$sql_variables[$variable_name] = $variable;
-							$has_changed = true;
+		if( ! empty($post_data['metas']) ){
+			$metas = $post_data['metas'];
+			if( ! empty($metas['sql_variables'])){
+				$has_changed = false;
+				$sql_variables = $metas['sql_variables'];
+				$sql_variables = json_decode($sql_variables, true);
+				foreach($sql_variables as $variable_name => $variable){
+					if( ! empty($variable)
+					 && ! empty($variable['type']) ){
+						switch( $variable['type']){
+						case 'report_sql' :
+							if( ! empty($variable['value'])
+							&& is_numeric($variable['value']) ){
+								$path = get_post_path($variable['value'], '/');
+								$variable['value'] = $path;
+								$sql_variables[$variable_name] = $variable;
+								$has_changed = true;
+							}
+							break;
 						}
-						break;
-					}
-				 }
-			}
-			if( $has_changed ){
-				$post_data['metas']['sql_variables'] = json_encode($sql_variables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+					 }
+				}
+				if( $has_changed ){
+					$post_data['metas']['sql_variables'] = json_encode($sql_variables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+				}
 			}
 		}
 		return $post_data;
@@ -2330,40 +2332,70 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * Hook après l'import (packages)
 	 */
-	 public static function on_after_post_import( $post_id, $post_data, $options ){
-		if( ! empty($post_data['post']['meta_input'])
-		 && ! empty($post_data['post']['meta_input']['sql_variables'])){
-			$sql_variables = get_post_meta( $post_id, 'sql_variables', true );
-			if( $sql_variables && is_string($sql_variables) )
-				$sql_variables = json_decode($sql_variables, true);
-			$has_changed = false;
-			foreach($sql_variables as $variable_name => $variable){
-				if( ! empty($variable)
-				 && ! empty($variable['type']) ){
-					switch( $variable['type']){
-					case 'report_sql' :
-						if( empty($variable['value']) )
-							continue 2;
-						if( is_string($variable['value']) ){
-							$relative = get_relative_page($variable['value'], $post_id, self::post_type);
-							if( ! $relative )
+	 public static function on_after_post_import( $post_data, $post_id, $options ){
+		if( ! empty($post_data['post']['meta_input']) ){
+			$metas = $post_data['post']['meta_input'];
+			
+			/** sql_variables **/
+			if( ! empty($metas['sql_variables'])){
+				$sql_variables = get_post_meta( $post_id, 'sql_variables', true );
+				if( $sql_variables && is_string($sql_variables) )
+					$sql_variables = json_decode($sql_variables, true);
+				$has_changed = false;
+				foreach($sql_variables as $variable_name => $variable){
+					if( ! empty($variable)
+					 && ! empty($variable['type']) ){
+						switch( $variable['type']){
+						case 'report_sql' :
+							if( empty($variable['value']) )
 								continue 2;
-							$variable['value'] = $relative->ID;
-							$sql_variables[$variable_name] = $variable;
-							$has_changed = true;
+							if( is_string($variable['value']) ){
+								$relative = get_relative_page($variable['value'], $post_id, self::post_type);
+								if( ! $relative )
+									continue 2;
+								$variable['value'] = $relative->ID;
+								$sql_variables[$variable_name] = $variable;
+								$has_changed = true;
+							}
+							elseif( is_numeric($variable['value']) ){
+								// TODO $options['original_ids']
+							}
+							break;
 						}
-						elseif( is_numeric($variable['value']) ){
-							// TODO $options['original_ids']
-						}
-						break;
-					}
-				 }
+					 }
+				}
+				if( $has_changed ){
+					$post_data['post']['meta_input'] = $metas;
+					update_post_meta( $post_id, 'sql_variables', json_encode($sql_variables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) );
+				}
 			}
-			if( $has_changed ){
-				update_post_meta( $post_id, 'sql_variables', json_encode($sql_variables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) );
+			
+			if( isset( $post_data['_original_data'] ) )
+				$original_post_id = $post_data['_original_data']['ID'];
+			elseif( isset( $post_data['post'] ) )
+				$original_post_id = $post_data['post']->ID;
+			else {
+				debug_log(__FUNCTION__, $post_data);
+				$original_post_id = false;
+			}
+			
+			/** shortcode **/
+			if( $original_post_id
+			&& ! empty($metas['shortcode'])){
+				$shortcode = $metas['shortcode'];
+
+				$shortcode_pattern = sprintf('/^(\s*\[%s)\s+%s([|]\S*)?/'
+					, self::shortcode
+					, $original_post_id
+				);
+				if( preg_match($shortcode_pattern, $shortcode) ){
+					$shortcode = $metas['shortcode'] = preg_replace($shortcode_pattern, '$1 ' . $post_id . '$2', $shortcode);
+					$post_data['post']['meta_input'] = $metas;
+					update_post_meta( $post_id, 'shortcode', $shortcode );
+				}
 			}
 		}
+		return $post_data;
 	 }
 }
-
 ?>
