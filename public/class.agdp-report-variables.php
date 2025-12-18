@@ -88,7 +88,7 @@ class Agdp_Report_Variables {
 		if( $default_sql_variables && is_string($default_sql_variables) ){
 			$default_sql_variables = json_decode($default_sql_variables, true);
 		}
-		else
+		if( ! $default_sql_variables )
 			$default_sql_variables = [];
 		if( ! is_array($sql_variables) )
 			$sql_variables = $default_sql_variables;

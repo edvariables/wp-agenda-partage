@@ -158,7 +158,7 @@ class Agdp_Admin_Edit_WPCF7 {
 			}
 		}
 		if( ! $label 
-		&& in_array( $agdp_wpcf7_usage, array_keys( $usages ) ) ){
+		&& isset( $usages[$agdp_wpcf7_usage] ) ){
 			if( is_string($usages[$agdp_wpcf7_usage]) ){
 				$label = $usages[$agdp_wpcf7_usage];
 				$usages[$agdp_wpcf7_usage] = [

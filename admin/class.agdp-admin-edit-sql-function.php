@@ -196,7 +196,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			$sql_function_name = $term['name'];
 		}
 		$mysql_script = self::get_current_mysql_function_body( $sql_function_name );
-		debug_log(__FUNCTION__, $sql_function_name, $mysql_script, $_return_results);
+		// debug_log(__FUNCTION__, $sql_function_name, $mysql_script, $_return_results);
 		if( ! $mysql_script )
 			return false;
 		

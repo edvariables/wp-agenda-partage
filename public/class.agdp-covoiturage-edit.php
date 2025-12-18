@@ -505,7 +505,7 @@ class Agdp_Covoiturage_Edit {
 		$html .= sprintf('<select name="related_%s"><option value="">(aucun)</option>', Agdp_Evenement::post_type);
 		foreach($agdpevents as $agdpevent){
 			if( ! is_object($agdpevent) ){
-				debug_log_callstack( '! is_object($agdpevent)' );
+				debug_log_callstack( '! is_object($agdpevent)', $agdpevent );
 				continue;
 			}
 			$html .= sprintf('<option value="%s" %s>%s (%s)</option>'

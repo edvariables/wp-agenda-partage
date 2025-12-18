@@ -457,6 +457,9 @@ abstract class Agdp_Posts {
 	 * Retourne tous les posts à partir de parents.
 	 */
 	public static function get_posts_and_descendants( $post_type, $post_statuses, $post_ids = false, $parent_post_ids = false, $max_deep = 32 ) {
+		
+		//TODO Use of get_ancestors( id, $post_type, 'post_type') and WP_Post->ancestors
+		
 		if( $max_deep < 0 )
 			return [];
 			
