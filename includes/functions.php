@@ -474,6 +474,8 @@ function is_associative_array($array){
  * get_post_path
  */
 function get_post_path($post, $root = ''){
+	if( ! $post )
+		throw new Exception('Argument vide : $post = ' . print_r($post, true));
 	if( is_numeric($post) )
 		$post = get_post($post);
 	if($post->post_parent)

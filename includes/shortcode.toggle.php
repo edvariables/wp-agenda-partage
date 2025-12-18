@@ -19,16 +19,19 @@ function toggle_shortcode_cb( $atts, $content = null ) {
 		$action = AGDP_TAG.'_shortcode';
 		$method = '';
 		$refresh = '1'; //on each collapse 1|once
-		if(isset($atts['ajax'])
-		&& is_array($atts['ajax'])){
-			if( ! empty($atts['ajax']['refresh']))
-				$refresh = $atts['ajax']['refresh'];
-			if( ! empty($atts['ajax']['action']))
-				$action = $atts['ajax']['action'];
-			if( ! empty($atts['ajax']['method']))
-				$method = $atts['ajax']['method'];
-			if( ! empty($atts['ajax']['data']))
-				$data = $atts['ajax']['data'];
+		if(isset($atts['ajax'])){
+			if( is_array($atts['ajax'])){
+				if( ! empty($atts['ajax']['refresh']))
+					$refresh = $atts['ajax']['refresh'];
+				if( ! empty($atts['ajax']['action']))
+					$action = $atts['ajax']['action'];
+				if( ! empty($atts['ajax']['method']))
+					$method = $atts['ajax']['method'];
+				if( ! empty($atts['ajax']['data']))
+					$data = $atts['ajax']['data'];
+			}
+			else
+				$refresh = $atts['ajax'];
 		}
 		if( ! empty($atts['ajax-refresh']))
 			$refresh = $atts['ajax-refresh'];

@@ -304,10 +304,11 @@ class Agdp_Report extends Agdp_Post {
 							if( $format_IN ){
 								if( $variable_value ){
 									if( is_string( $variable_value ) ){
-										if( $variable_value[0] === '|' )
-											$variable_value = explode( '|', substr($variable_value, 1, strlen($variable_value) - 2 ));
+										if( strpos($variable_value, '|') !== false )
+											$variable_value = explode( '|', trim($variable_value, '|'));
 										else
 											$variable_value = explode( "\n", $variable_value );
+										
 									}
 									$format = implode(', ', array_fill(0, count($variable_value), '%s'));
 								}
@@ -1127,7 +1128,8 @@ class Agdp_Report extends Agdp_Post {
 	 */
  	public static function get_table_wrapper_dbresults( $report, $sql_variables, &$options, $table_render, $dbresults ) {
 		
-		if( empty($table_render['columns']) )
+		if( empty($table_render['columns'])
+		 || ! empty($options['_no_table_columns']) )
 			return;
 		
 		self::set_previous_results_variable( $dbresults );

@@ -60,10 +60,10 @@ class Agdp_Report_Shortcodes {
 		//champs sans valeur transformer en champ=true
 		foreach($atts as $key=>$value){
 			if(is_numeric($key)){
-				if( $key == 0 )
+				unset($atts[$key]);
+				if( $key == 0 && ! isset($atts['report_id']) )
 					$atts['report_id']=$value;
 				elseif( ! array_key_exists($value, $atts)){
-					unset($atts[$key]);
 					if( ($i = strpos($value, '=', 1)) > 0
 					&& ( $value[0] === ':' || $value[0] === '@' )){
 						$key = substr($value, 0, $i);
@@ -77,6 +77,8 @@ class Agdp_Report_Shortcodes {
 				}
 			}
 		}
+		// debug_log(__CLASS__.'::'.__FUNCTION__, 'post foreach', $atts);
+		
 		if(array_key_exists('toggle-ajax', $atts)){
 			$atts['toggle'] = $atts['toggle-ajax'];
 			$atts['ajax'] = true;
@@ -118,7 +120,7 @@ class Agdp_Report_Shortcodes {
 			
 			//Inner
 			$html = sprintf('[%s %s]%s[/%s]', $shortcode, $shortcode_atts , $content, $shortcode);
-			
+			// debug_log( __FUNCTION__, 'SHORTCODE', $html);
 			if( ! $ajax){
 				$html = do_shortcode($html);
 			}
@@ -150,6 +152,8 @@ class Agdp_Report_Shortcodes {
 		
 		$html = '';
 		
+		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts, $_REQUEST);
+		
 		foreach($atts as $key=>$value){
 			if(is_numeric($key)){
 				$atts[$value] = true;
@@ -157,7 +161,6 @@ class Agdp_Report_Shortcodes {
 					unset($atts[$key]);
 			}
 		}
-		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts, $_REQUEST);
 		if($shortcode == 'report'
 		&& count($atts) > 0){
 			
@@ -166,13 +169,10 @@ class Agdp_Report_Shortcodes {
 			&& in_array($atts['info'], $specificInfos))
 				$shortcode .= '-' . $atts['info'];
 			if( ! is_associative_array($atts))
-				if(is_numeric($atts['0']))
+				if( isset($atts['0'])
+				&& ( is_numeric($atts['0'])
+				  || preg_match('/^\d+\|\S+/', $atts['0']) ) )
 					$atts['report_id'] = $atts['0'];
-				elseif( ! array_key_exists('info', $atts))
-					if(in_array($atts['0'], $specificInfos))
-						$shortcode .= '-' . $atts['0'];
-					else
-						$atts['info'] = $atts['0'];
 		}
 		$no_html = isset($atts['no-html']) && $atts['no-html']
 				|| isset($atts['html']) && $atts['html'] == 'no';
