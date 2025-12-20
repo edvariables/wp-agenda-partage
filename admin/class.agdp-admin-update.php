@@ -100,7 +100,6 @@ class Agdp_Admin_Update {
 	 * Cancel files modifications as user confirmed in form (needed before git pull)
 	 */
 	private static function get_discard_changes_inputs($git_status) {
-		
 		$discard_inputs = '';
 		$matches = [];
 		if( preg_match_all('/\t(modified|deleted)\:\s+([^\r\n]*)[\r\n]/', $git_status, $matches ) ){
@@ -110,9 +109,9 @@ class Agdp_Admin_Update {
 					$modified_file, $modified_file, $file_status
 				);
 			}
-			if( $discard_inputs ){
-				$discard_inputs = sprintf('<ul class=""><h4>Abandon des modifications en cours</h4>%s</ul></br></br>', $discard_inputs);
-			}
+		}
+		if( $discard_inputs ){
+			$discard_inputs = sprintf('<ul class=""><h4>Abandon des modifications en cours</h4>%s</ul></br></br>', $discard_inputs);
 		}
 		
 		return $discard_inputs;
