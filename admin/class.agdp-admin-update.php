@@ -101,6 +101,7 @@ class Agdp_Admin_Update {
 	 */
 	private static function get_discard_changes_inputs($git_status) {
 		
+		$discard_inputs = '';
 		$matches = [];
 		if( preg_match_all('/\t(modified|deleted)\:\s+([^\r\n]*)[\r\n]/', $git_status, $matches ) ){
 			foreach($matches[1] as $i => $file_status){
