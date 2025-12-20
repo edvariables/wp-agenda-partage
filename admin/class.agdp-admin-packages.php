@@ -170,8 +170,9 @@ class Agdp_Admin_Packages {
 	/**
 	 * get_import_link
 	 */
-	private static function get_import_link( $post_type ) {
-		
+	public static function get_import_link( $post_type, $label = false ) {
+		if( ! $label )
+			$label = 'Package existant';
 		$file = self::get_existing_post_type_package_file( $post_type );
 		if( $file ){
 			$file_time = filemtime($file);
@@ -189,9 +190,10 @@ class Agdp_Admin_Packages {
 				$url = add_query_arg( 'agdppackage-post_type', $post_type, $url );
 				echo sprintf('<div class="import-file">'
 						. '<a class="button-primary button-large" href="%s"><span class="dashicons-before dashicons-database-import"></span>'
-						. 'Package existant<br>du %s</a>'
+						. '%s<br>du %s</a>'
 						. '</div>'
 					, $url
+					, $label
 					, $date//substr( $file, strlen( self::get_packages_path() ) + 1 )
 				);
 			}

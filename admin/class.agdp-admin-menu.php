@@ -129,9 +129,9 @@ class Agdp_Admin_Menu {
 			$parent_slug = AGDP_TAG;
 			if ( current_user_can( 'manage_network_plugins' ) ) {
 				$page_title =  'Mise à jour de l\'extension';
-				$menu_slug = $parent_slug . '-git-update';
+				$menu_slug = $parent_slug . '-plugin-update';
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-					array(__CLASS__, 'agdp_git_update_page_html'), null);
+					array(__CLASS__, 'agdp_plugin_update_page_html'), null);
 			}
 			
 			if( current_user_can( 'manage_options' )){
@@ -270,60 +270,13 @@ class Agdp_Admin_Menu {
 	/**
 	 * Update du plugin via GIT
 	 */
-	public static function agdp_git_update_page_html() {
-		
-		if ( ! current_user_can( 'manage_network_plugins' ) ) 
-			die( 'Accès non autorisé' );
-		
-		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
-		
-		$discard_changes = empty($_REQUEST['discard_changes']) ? [] : $_REQUEST['discard_changes'];
-		foreach( $discard_changes as $discard_file ){
-			$cmd = sprintf('git -C %s checkout %s ', AGDP_PLUGIN_DIR, $discard_file);
-			echo sprintf('<h2>Annulation des changements du fichier %s</h2>', $discard_file );
-			echo sprintf('<label>%s</label>', $cmd );
-			$result = shell_exec( $cmd );
-			if( $result === null )
-				$result = '';
-			else
-				echo sprintf('<pre>%s</pre>', $result);
+	public static function agdp_plugin_update_page_html() {
+		if( ! class_exists('Agdp_Admin_Update') ){
+			require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-update.php' );
+			Agdp_Admin_Update::init();
 		}
-		
-		if( $is_status = empty($_REQUEST['action']) ){
-			echo sprintf('<h2>Etat courant</h2>' );
-			$cmd = sprintf('git -C %s status', AGDP_PLUGIN_DIR);
-		} else {
-			echo sprintf('<h2>Mise à jour</h2>' );
-			$cmd = sprintf('git -C %s pull', AGDP_PLUGIN_DIR);
-		}
-		echo sprintf('<label>%s</label>', $cmd );
-		$result = shell_exec( $cmd );
-		if( $result === null )
-			$result = '';
-		else
-			echo sprintf('<pre>%s</pre>', $result);
-		
-		//discard_changes from status
-		$discard_inputs = '';
-		if( $is_status ){
-			$matches = [];
-			if( preg_match_all('/\t(modified|deleted)\:\s+([^\r\n]*)[\r\n]/', $result, $matches ) ){
-				foreach($matches[1] as $i => $file_status){
-					$modified_file = $matches[2][$i];
-					$discard_inputs .= sprintf('<li><label><input type="checkbox" name="discard_changes[]" value="%s">%s (%s)</label></li>',
-						$modified_file, $modified_file, $file_status
-					);
-				}
-				if( $discard_inputs ){
-					$discard_inputs = sprintf('<ul class=""><h4>Abandon des modifications en cours</h4>%s</ul></br></br>', $discard_inputs);
-				}
-			}
-		}
-		
-		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
-			. $discard_inputs
-			. '<input type="submit" name="action" value="Mettre à jour" class="button button-primary button-large"/>'
-			. '</form>';
+		Agdp_Admin_Update::update_form();
+		return;
 	}
 	
 	/**
