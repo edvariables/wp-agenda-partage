@@ -129,7 +129,7 @@ class Agdp_Shortcodes {
 		if( ! is_array($atts)){
 			$atts = array( $atts );
 		}
-		debug_log(__CLASS__.'::'.__FUNCTION__, static::get_post_type_shortcode(), $shortcode, $atts);
+		// debug_log(__CLASS__.'::'.__FUNCTION__, static::get_post_type_shortcode(), $shortcode, $atts);
 		
 		$atts = static::sanitize_attributes($atts);
 		
@@ -250,7 +250,7 @@ class Agdp_Shortcodes {
 				return get_post($str_post_id);
 		}
 		$str_post_id = trim( $str_post_id, '"\'' );
-		debug_log(__FUNCTION__, 'get_relative_page', $str_post_id, $relative_to, $post_type , get_relative_page( $str_post_id, $relative_to, $post_type ));
+		// debug_log(__FUNCTION__, 'get_relative_page', $str_post_id, $relative_to, $post_type , get_relative_page( $str_post_id, $relative_to, $post_type ));
 		return get_relative_page( $str_post_id, $relative_to, $post_type );
 	}
  	

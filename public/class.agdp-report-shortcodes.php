@@ -47,59 +47,6 @@ class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts, $_REQUEST);
 		// wp_die( __CLASS__ .'::'. __FUNCTION__ );
 		
-		/* foreach($atts as $key=>$value){
-			if(is_numeric($key)){
-				$atts[$value] = true;
-				if($key != '0')
-					unset($atts[$key]);
-			}
-		}
-		if($shortcode == 'report'
-		&& count($atts) > 0){
-			
-			$specificInfos = [];
-			if(array_key_exists('info', $atts)
-			&& in_array($atts['info'], $specificInfos))
-				$shortcode .= '-' . $atts['info'];
-			if( ! is_associative_array($atts))
-				if( isset($atts['0'])
-				&& ( is_numeric($atts['0'])
-				  || preg_match('/^\d+\|\S+/', $atts['0']) ) )
-					$atts['report_id'] = $atts['0'];
-		}
-		$no_html = isset($atts['no-html']) && $atts['no-html']
-				|| isset($atts['html']) && $atts['html'] == 'no';
-		
-		// report_id
-		if( ! empty($atts['report_id']) )
-			$report_id = $atts['report_id'];
-		if( empty($report_id) ){
-			global $post;
-			if( $post && $post->post_type === Agdp_Report::post_type ){
-				$report = $post;
-				$report_id = $post->ID;
-			}
-		}
-		if( empty($report) ){
-			if( ! $report_id ){
-				return sprintf('Shortcode %s : il manque la référence du report. <code>%s</code>', $shortcode, print_r($atts, true));
-			}
-			if( is_numeric($report_id) ){
-				$report = get_post( $report_id );
-				if( $report && $report->post_type !== Agdp_Report::post_type ){
-					return sprintf('Le document %d n\'est pas du type %s. <code>%s</code>', $report->ID, Agdp_Report::post_type, print_r($atts, true));
-				}
-			}
-			elseif( is_string($report_id) ){
-				if( strpos($report_id, '|') && is_numeric( substr($report_id, 0, strpos($report_id, '|') ) ) )
-					$report_id = substr($report_id, 0, strpos($report_id, '|') );
-				else
-					$report_id = trim( $report_id, '"\'' );
-				$relative_to = false;
-				$report = get_relative_page( $report_id, $relative_to, Agdp_Report::post_type );
-			}
-		} */
-		
 		if( ! empty($atts['report_id']) )
 			$report = static::get_post( $atts['report_id'], static::post_type );
 		else
