@@ -1614,7 +1614,7 @@ class Agdp_Report extends Agdp_Post {
 	}
 	
 	/**
-	 * get_option_value
+	 * get_meta_option_value
 	 */
  	private static function get_meta_option_value( $meta_key, $report_id, &$options ) {
 		if( isset($options[$meta_key]) )
@@ -1623,7 +1623,9 @@ class Agdp_Report extends Agdp_Post {
 	}
 	
 	/**
-	 * get_sql_prepared
+	 * Returns sql strings previously prepared
+	 *
+	 * from $options['_sqls']
 	 */
  	private static function get_sql_prepared( $report_id, $options ) {
 		//report_show_sql
@@ -2311,6 +2313,10 @@ class Agdp_Report extends Agdp_Post {
 					if( ! empty($variable)
 					 && ! empty($variable['type']) ){
 						switch( $variable['type']){
+						case 'post' :
+						case 'page' :
+						case 'forum' :
+						case 'newsletter' :
 						case 'report_sql' :
 							if( ! empty($variable['value'])
 							&& is_numeric($variable['value']) ){
@@ -2386,9 +2392,9 @@ class Agdp_Report extends Agdp_Post {
 			&& ! empty($metas['shortcode'])){
 				$shortcode = $metas['shortcode'];
 
-				$shortcode_pattern = sprintf('/^(\s*\[%s)\s+%s([|]\S*)?/'
+				$shortcode_pattern = sprintf('/^(\s*\[%s)\s+\d+([|]\S*)?/'
 					, self::shortcode
-					, $original_post_id
+					// , $original_post_id
 				);
 				if( preg_match($shortcode_pattern, $shortcode) ){
 					$shortcode = $metas['shortcode'] = preg_replace($shortcode_pattern, '$1 ' . $post_id . '$2', $shortcode);

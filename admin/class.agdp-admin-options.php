@@ -1244,7 +1244,7 @@ class Agdp_Admin_Options {
 		//
 		if( ! empty($_POST[AGDP_TAG]) ){
 			
-			debug_log(__FUNCTION__, $_POST[AGDP_TAG] );
+			// debug_log(__FUNCTION__, $_POST[AGDP_TAG] );
 		
 			foreach($_POST[AGDP_TAG] as $option=>$value){
 				if( is_string($value) )

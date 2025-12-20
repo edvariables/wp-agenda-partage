@@ -399,9 +399,9 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function get_post_duplicate_metas( $metas, $new_post_id, $original_post ){
 		if( ! empty($metas['shortcode']) ){
-			$shortcode_pattern = sprintf('/^(\s*\[%s)\s+%s([|]\S*)?/'
+			$shortcode_pattern = sprintf('/^(\s*\[%s)\s+\d+([|]\S*)?/'
 				, Agdp_Report::shortcode
-				, $original_post->ID
+				// , $original_post->ID
 			);
 			$shortcode = $metas['shortcode'];
 			if( preg_match($shortcode_pattern, $shortcode) ){

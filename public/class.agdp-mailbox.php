@@ -1328,7 +1328,6 @@ class Agdp_Mailbox {
 			if( ! $_POST['_wpcf7_container_post']
 			 || ! ($post = get_post($_POST['_wpcf7_container_post']) ) )
 				return;
-			
 			switch($post->post_type){
 				case Agdp_Evenement::post_type:
 				case Agdp_Covoiturage::post_type:
@@ -1354,7 +1353,6 @@ class Agdp_Mailbox {
 					){
 						return self::import_wpcf7_to_comment($contact_form, $abort, $submission, false, false, $post);
 					}
-						
 					break;
 				case Agdp_Forum::post_type:
 					$meta_key = AGDP_PAGE_META_MAILBOX;

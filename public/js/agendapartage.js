@@ -81,29 +81,6 @@ jQuery( function( $ ) {
 				$form.on('reset', 'form.wpcf7-form', function(e) {
 					e.preventDefault();
 				});
-				
-				/** En réponse d'enregistremement, le message mail_sent_ok contient l'url du post créé ou modifié **/
-				document.addEventListener( 'wpcf7mailsent', function( event ) {
-					var response = event.detail.apiResponse['message'];
-					if(response){
-						if(response.startsWith('redir:')){
-							var post_url = response.substring('redir:'.length);
-							if(post_url){
-								event.detail.apiResponse['message'] = 'La page va être rechargée. Merci de patienter.';
-								document.location = post_url;
-							}
-						}
-						else if(response.startsWith('js:')){
-							var script = response.substring('js:'.length);
-							if(script){
-								var result = eval(script);
-								if( ! result )
-									result = '&nbsp;'
-								event.detail.apiResponse['message'] = eval(script);
-							}
-						}
-					}
-				}, false );
 				/** En réponse d'enregistremement : autorise le html dans le message de réponse **/
 				['wpcf7invalid','wpcf7mailfailed', 'wpcf7submit', 'wpcf7mailsent'].forEach( function(evt) {
 						document.addEventListener( evt, function( event ) {
@@ -178,7 +155,29 @@ jQuery( function( $ ) {
 				
 				
 			});
-			
+				
+			/** En réponse d'enregistremement d'un wpcf7, le message mail_sent_ok contient l'url du post créé ou modifié **/
+			document.addEventListener( 'wpcf7mailsent', function( event ) {
+				var response = event.detail.apiResponse['message'];
+				if(response){
+					if(response.startsWith('redir:')){
+						var post_url = response.substring('redir:'.length);
+						if(post_url){
+							event.detail.apiResponse['message'] = 'La page va être rechargée. Merci de patienter.';
+							document.location = post_url;
+						}
+					}
+					else if(response.startsWith('js:')){
+						var script = response.substring('js:'.length);
+						if(script){
+							var result = eval(script);
+							if( ! result )
+								result = '&nbsp;'
+							event.detail.apiResponse['message'] = eval(script);
+						}
+					}
+				}
+			}, false );
 			
 			
 			/****************
@@ -294,8 +293,15 @@ jQuery( function( $ ) {
 			//input time
 			$('form.wpcf7-form input.input-time').prop('type', 'time');
 			
-			
+			/**
+			 * show_new_comment
+			 */
 			function show_new_comment(id, nonce){
+				var $comments = $('#comments');
+				if( $comments.length === 0 ) {
+					$comments = $('<div id="comments" class="comments-area"><ol class="comment-list"></ol></div>')
+						.appendTo('#main');
+				}
 				var $comment_list = $('#comments .comment-list');
 				if( $comment_list.length === 0)
 					return;
