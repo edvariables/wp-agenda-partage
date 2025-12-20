@@ -56,7 +56,7 @@ class Agdp_Admin_Update {
 		}
 		
 		echo sprintf('<form method="POST" action="%s">', $_SERVER['REQUEST_URI'])
-			. isset($discard_inputs) ? $discard_inputs : ''
+			. (isset($discard_inputs) ? $discard_inputs : '')
 			. '<input type="submit" name="action" value="Mettre à jour" class="button button-primary button-large"/>'
 			. '</form>';
 	}
