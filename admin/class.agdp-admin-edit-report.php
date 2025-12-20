@@ -352,7 +352,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				)
 		);
 		
-		$shortcode = Agdp_Report_Shortcodes::get_shortcode( $report );
+		$shortcode = Agdp_Report_Shortcodes::build_shortcode( $report );
 		$url = Agdp_Post::get_post_permalink($report
 				, 'mode=shortcode'
 				, 'shortcode=' . esc_attr($shortcode)

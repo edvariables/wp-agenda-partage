@@ -8,137 +8,29 @@
  *
  *	
  */
-class Agdp_Report_Shortcodes {
+class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 
-
+	const post_type = AGDP_Report::post_type;
+	
+	const info_shortcodes = [ 
+		'cell',
+		'open',
+		'next'
+	];
+	
+	const default_attr = 'report_id';
+	
 	private static $initiated = false;
 
 	public static function init() {
 		if ( ! self::$initiated ) {
+			
 			self::$initiated = true;
-
-			self::init_hooks();
-			self::init_shortcodes();
-		}
-	}
-
-	/**
-	 * Hook
-	 */
-	public static function init_hooks() {
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_report_shortcode_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_report_shortcode_cb') );
-	}
-
-	/////////////////
- 	// shortcodes //
- 	/**
- 	 * init_shortcodes
- 	 */
-	public static function init_shortcodes(){
-
-		add_shortcode( 'report', array(__CLASS__, 'shortcodes_callback') );
-
-	}
-
-	/**
-	* Callback des shortcodes
-	*/
-	public static function shortcodes_callback($atts, $content = '', $shortcode = null){
-
-		if( is_admin() 
-		&& ! wp_doing_ajax()
-		&& ! Agdp_Newsletter::is_sending_email())
-			return;
-		
-		if( ! is_array($atts)){
-			$atts = array();
-		}
-		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts);
-		
-		//champs sans valeur transformer en champ=true
-		foreach($atts as $key=>$value){
-			if(is_numeric($key)){
-				unset($atts[$key]);
-				if( $key == 0 && ! isset($atts['report_id']) )
-					$atts['report_id']=$value;
-				elseif( ! array_key_exists($value, $atts)){
-					if( ($i = strpos($value, '=', 1)) > 0
-					&& ( $value[0] === ':' || $value[0] === '@' )){
-						$key = substr($value, 0, $i);
-						$value = substr($value, $i + 1);
-						if( strlen($value) > 1 && $value[0] === '"' && $value[strlen($value)-1] === '"' )
-							$value = substr($value, 1, strlen($value) - 2);
-						$atts[ $key ] = $value;
-					}
-					else
-						$atts[$value] = true;
-				}
-			}
-		}
-		// debug_log(__CLASS__.'::'.__FUNCTION__, 'post foreach', $atts);
-		
-		if(array_key_exists('toggle-ajax', $atts)){
-			$atts['toggle'] = $atts['toggle-ajax'];
-			$atts['ajax'] = true;
-			unset($atts['toggle-ajax']);
-		}
-		
-		$key = 'ajax';
-		if(array_key_exists($key, $atts)){
-			$ajax = $atts[$key] ? $atts[$key] : true;
-			unset($atts[$key]);
-		}
-		else{
-			$ajax = false;
-			$key = 'report_id';
-			if(array_key_exists($key, $atts)){
-			}
-		}
-		// Si attribut toggle [report-details toggle="Contactez-nous !"]
-		// Fait un appel récursif si il y a l'attribut "ajax"
-		// TODO Sauf shortcode conditionnel
-		if(array_key_exists('toggle', $atts)){
 			
-			$shortcode_atts = '';
-			foreach($atts as $key=>$value){
-				if($key == 'toggle'){
-					$title = array_key_exists('title', $atts) && $atts['title'] 
-						? $atts['title']
-						: ( $atts['toggle'] 
-							? $atts['toggle'] 
-							: __($shortcode, AGDP_TAG)) ;
-				}
-				elseif( ! is_numeric($key) ){
-					if(is_numeric($value))
-						$shortcode_atts .= sprintf('%s=%s ', $key, $value);
-					else
-						$shortcode_atts .= sprintf('%s="%s" ', $key, esc_attr($value));
-				}
-			}
-			
-			//Inner
-			$html = sprintf('[%s %s]%s[/%s]', $shortcode, $shortcode_atts , $content, $shortcode);
-			// debug_log( __FUNCTION__, 'SHORTCODE', $html);
-			if( ! $ajax){
-				$html = do_shortcode($html);
-			}
-			else{
-				$ajax = sprintf('ajax="%s"', esc_attr($ajax));
-				$html = esc_attr(str_replace('"', '\\"', $html));
-			}
-			//toggle
-			//Bugg du toggle qui supprime des éléments
-			$guid = uniqid(AGDP_TAG);
-			$toogler = do_shortcode(sprintf('[toggle title="%s" %s]%s[/toggle]'
-				, esc_attr($title)
-				, $ajax 
-				, $guid
-			));
-			return str_replace($guid, $html, $toogler);
+			parent::init();
+
+			static::add_shortcodes();
 		}
-		return self::shortcodes_report_callback($atts, $content, $shortcode);
 	}
 	
 	/**
@@ -147,14 +39,15 @@ class Agdp_Report_Shortcodes {
 	* [report-description]
 	* [report-prop hide_comments=0 mark_as_ended=0 reply_link=0 comment_form=0]
 	*/
-	private static function shortcodes_report_callback($atts, $content = '', $shortcode = null){
+	protected static function do_shortcode($atts, $content = '', $shortcode = null){
 		$label = isset($atts['label']) ? $atts['label'] : '' ;
 		
 		$html = '';
 		
 		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts, $_REQUEST);
+		// wp_die( __CLASS__ .'::'. __FUNCTION__ );
 		
-		foreach($atts as $key=>$value){
+		/* foreach($atts as $key=>$value){
 			if(is_numeric($key)){
 				$atts[$value] = true;
 				if($key != '0')
@@ -205,9 +98,15 @@ class Agdp_Report_Shortcodes {
 				$relative_to = false;
 				$report = get_relative_page( $report_id, $relative_to, Agdp_Report::post_type );
 			}
-		}
+		} */
+		
+		if( ! empty($atts['report_id']) )
+			$report = static::get_post( $atts['report_id'], static::post_type );
+		else
+			$report = false;
+		
 		if( ! $report ) {
-			return sprintf('Référence du rapport incorrect : %s. <code>%s</code>', $report_id, print_r($atts, true));
+			return sprintf('Référence du rapport incorrect : %s. <code>%s</code>', @$atts['report_id'], print_r($atts, true));
 		}
 		$report_id = $report->ID;
 			
@@ -220,76 +119,48 @@ class Agdp_Report_Shortcodes {
 				elseif( $key[0] === '@' )
 					$sql_variables[ $key ] = $value;
 		}
-		switch($shortcode){
-				
-			case 'report':
-				$val = false;
-				
-				// infos
-				if( empty($atts['info']) ){
-					$atts['info'] = 'table';
-				}
-				$meta_name = $atts['info'] ;
-				switch($meta_name){
-					case 'table' :
-					case 'results' :
-						$val = Agdp_Report::get_report_html( $report_id, false, $sql_variables );
-						break;
-						
-					case 'cell' :
-					case 'cellule' :
-						$options = [];
-						$dbResults = Agdp_Report::get_report_results( $report_id, false, $sql_variables, $options );
-						$val = null;
-						if( is_array($dbResults) ){
-							foreach( $dbResults[0] as $val )
-								break;
-						}
-						break;
-				}
-				if($val === false)
-					$val = get_post_meta( $report_id, $meta_name, true, false);
-				
-				if($val || $content){
-					if($label)
-						return '<div class="agdp-report">'
-							. ($label ? '<span class="label"> '.$label.'<span>' : '')
-							. do_shortcode( $val . wp_kses_post($content))
-							. '</div>';
-					return do_shortcode( $val . wp_kses_post($content));
-				}
+
+		$val = false;
+		
+		// infos
+		if( empty($atts['info']) ){
+			$atts['info'] = 'table';
+		}
+		$meta_name = $atts['info'] ;
+		switch($meta_name){
+			case 'table' :
+			case 'results' :
+				$val = Agdp_Report::get_report_html( $report_id, false, $sql_variables );
 				break;
 				
-			default:
-			
-				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';
+			case 'cell' :
+			case 'cellule' :
+				$options = [];
+				$dbResults = Agdp_Report::get_report_results( $report_id, false, $sql_variables, $options );
+				$val = null;
+				if( is_array($dbResults) ){
+					foreach( $dbResults[0] as $val )
+						break;
+				}
+				break;
+		}
+		if($val === false)
+			$val = get_post_meta( $report_id, $meta_name, true, false);
+		
+		if($val || $content){
+			if($label)
+				return '<div class="agdp-report">'
+					. ($label ? '<span class="label"> '.$label.'<span>' : '')
+					. do_shortcode( $val . wp_kses_post($content))
+					. '</div>';
+			return do_shortcode( $val . wp_kses_post($content));
 		}
 	}
  	
 	/**
-	 * Get code secret from Ajax query, redirect to post url
+	 * build_shortcode
 	 */
-	public static function on_wp_ajax_report_shortcode_cb() {
-		$ajax_response = '';
-		$data = $_POST['data'];
-		if($data){ 
-			if( is_string( $data ) )
-				$data  = str_replace('\\"', '"', wp_specialchars_decode( $data ));
-			
-			$ajax_response = do_shortcode( $data );
-			
-		}
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
-	}
-	
-	/**
-	 * get_shortcode
-	 */
- 	public static function get_shortcode($report, $sql_variables = false){
+ 	public static function build_shortcode($report, $sql_variables = false){
 		$variables = [];
 		if( $sql_variables && is_string( $sql_variables ) ){
 			$variables = $sql_variables; 
@@ -320,15 +191,10 @@ class Agdp_Report_Shortcodes {
 			}
 			$variables = implode( ' ', $variables );
 		}
-		$shortcode = sprintf('[%s %d|%s %s]'
-					, Agdp_Report::shortcode
-					, $report->ID
-					, get_post_path($report, '/')
-					, $variables
-				);
+		
+		$shortcode = parent::build_shortcode( $report, $variables );
+		
 		return $shortcode;
 	}
 	
-	// shortcodes //
-	///////////////
 }
