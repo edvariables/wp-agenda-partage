@@ -498,3 +498,7 @@ form#agdppackages .agdppackages-post_type input[type="submit"] {
 	top: 5px;
 	left: -3px;
 }
+
+.wp-list-table.tags #the-list .unknown-term .column-name {
+	color: #b64848;
+}

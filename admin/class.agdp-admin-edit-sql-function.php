@@ -16,6 +16,8 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		parent::init();
 		
 		self::init_hooks();
+		
+		self::do_mysql_actions();
 	}
 	
 	public static function init_hooks() {
@@ -97,7 +99,6 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		
 		if( $wpdb->last_error && strpos($wpdb->last_error, 'does not exist') === false )
 			Agdp_Admin::add_admin_notice( $wpdb->last_error, 'error', true);
-			
 	}
 	
 	/**
@@ -350,15 +351,26 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	 * do mysql actions
 	 */
 	public static function do_mysql_actions(){
-		if( ! empty($_REQUEST['action']) ){
+		global $pagenow;
+		$taxonomy = Agdp_Report::taxonomy_sql_function;
+		
+		if ( $pagenow === 'edit-tags.php' 
+		&& ! empty($_REQUEST['action'])
+		&& isset($_GET['taxonomy'])
+		&& $_GET['taxonomy'] === $taxonomy ) {
 			switch( $_REQUEST['action'] ){
 				case 'drop_function' :
 					self::drop_sql_function_in_db( $_REQUEST['mysql_function'] );
+
+					$uri = sprintf('/wp-admin/edit-tags.php?taxonomy=%s&post_type=%s',
+								$taxonomy, Agdp_Report::post_type );
+					wp_redirect( $uri );
+					
 					break;
 				case 'create_term' :
 					self::create_term_from_mysql( $_REQUEST['mysql_function'] );
 					break;
-			}			
+			}
 		}
 	}
 	
@@ -570,8 +582,6 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	 * Adds in table all mysql functions that not exist as term
 	 **/
 	 public static function init_js_add_mysql_functions(){
-
-		self::do_mysql_actions();
 		
 		global $wpdb;
 		
@@ -626,7 +636,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			__( 'Générer' )
 		);
 		$actions['drop_function'] = sprintf(
-			'<a href="%s" aria-label="%s">%s</a>',
+			'<a href="%s" aria-label="%s" onclick="%s">%s</a>',
 			esc_url(
 				add_query_arg(
 					'mysql_function', $mysql_function_stamp,
@@ -637,6 +647,7 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			),
 			/* translators: %s: Taxonomy term name. */
 			esc_attr( sprintf( 'Supprimer de la base &#8220;%s&#8221;', $mysql_function_stamp ) ),
+			esc_attr( sprintf("return confirm(\"Confirmez-vous la suppression de la fonction `%s` dans la base MySQL ?\");", $mysql_function_stamp) ),
 			__( 'Supprimer' )
 		);
 		?><script>
@@ -659,9 +670,9 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 								.text(functions[index]) )
 							.append( $('<div></div>')
 							.addClass('row-actions')
-								.append(actions['create_term'].replace( mysql_function_stamp, functions[index] ))
+								.append(actions['create_term'].replaceAll( mysql_function_stamp, functions[index] ))
 								.append(' | ')
-								.append(actions['drop_function'].replace( mysql_function_stamp, functions[index] ))
+								.append(actions['drop_function'].replaceAll( mysql_function_stamp, functions[index] ))
 							)
 						)
 						.append( $('<td></td>')
