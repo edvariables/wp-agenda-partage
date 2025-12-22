@@ -678,7 +678,8 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 						.append( $('<td></td>')
 							.addClass('description column-description')
 							.append( $('<p></p>')
-								.html("<span class=\"dashicons-before dashicons-admin-comments\"></span>Fonction existant dans MySQL et non référencée comme terme.")
+								.html("<span class=\"dashicons-before dashicons-admin-comments\"></span>Fonction existante dans MySQL et non référencée comme terme."
+									. "<br>La fonction est tout de même utilisable.")
 							)
 						)
 				);

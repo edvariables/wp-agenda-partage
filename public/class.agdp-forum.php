@@ -811,8 +811,8 @@ class Agdp_Forum extends Agdp_Page {
 				return 'publish';
 			case 'subscriber' :
 				switch( $right ){
-					case '';
-					case false;
+					case '':
+					case false:
 					case 'P' : //Public;
 					case 'E' : //'Validation par e-mail';
 					case 'C' : //'Connexion requise';
