@@ -127,7 +127,8 @@ class Agdp_Admin_Packages {
 	 * current_user_can_generate
 	 */
 	 public static function current_user_can_generate() {
-		 return self::current_user_can('generate');
+		 return Agdp::get_option('can_generate_packages')
+			&& self::current_user_can('generate');
 	}
 	/**
 	 * current_user_can_import
@@ -148,7 +149,8 @@ class Agdp_Admin_Packages {
 		
 		if( ! empty($_POST['packages_form_submit']) ){
 			self::submit_packages_form();
-			self::generate_packages();
+			if( Agdp::get_option('can_generate_packages') )
+				self::generate_packages();
 		}
 		
 		echo sprintf('<form id="agdppackages" method="POST">');

@@ -640,6 +640,22 @@ class Agdp_Admin_Options {
 					'input_type' => 'checkbox'
 				]
 			);
+
+			// 
+			$field_id = 'can_generate_packages';
+			add_settings_field(
+				$field_id,
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				'agdp_section_security',
+				[
+					'label_for' => $field_id,
+					'label' => Agdp::get_option_label($field_id),
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
 		}
 		
 		// register a new section in the "agendapartage" page

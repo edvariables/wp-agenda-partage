@@ -448,6 +448,9 @@ class Agdp {
 				
 			case 'disable_sitemaps':
 				return __( 'Désactivation des sitemaps', AGDP_TAG );
+				
+			case 'can_generate_packages':
+				return __( 'Peut générer les packages', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}
