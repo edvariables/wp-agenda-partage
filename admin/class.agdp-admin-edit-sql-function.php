@@ -36,6 +36,13 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		
 		add_action( AGDP_TAG . '_' . $taxonomy . '_term_imported', array( __CLASS__, 'on_term_imported' ), 10, 2); //edit
 		
+		global $pagenow;
+		if ( $pagenow === 'edit-tags.php' && isset($_GET['taxonomy']) && $_GET['taxonomy'] === $taxonomy ) {
+			add_action('admin_head', array(__CLASS__, 'init_js_add_mysql_functions'));
+			if( isset($_REQUEST['action'])
+			&& $_REQUEST['action'] === 'create_term' )
+				add_action('admin_head', array(__CLASS__, 'init_js_create_term'));
+		}
 		
 	}
 	/****************/
@@ -79,10 +86,9 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	}
 	
 	/**
-	 * create_sql_function_in_db
+	 * drop_sql_function_in_db
 	 */
-	public static function create_sql_function_in_db( int $term_id, string $term_name, $_return_results = 'admin_notice' ){
-		$term_metas = get_term_meta($term_id, false, true);
+	public static function drop_sql_function_in_db( string $term_name ){
 		global $wpdb;
 		$sql = sprintf('DROP FUNCTION IF EXISTS `%s`', $term_name);
 		$wpdb->suppress_errors( true );
@@ -91,6 +97,49 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 		
 		if( $wpdb->last_error && strpos($wpdb->last_error, 'does not exist') === false )
 			Agdp_Admin::add_admin_notice( $wpdb->last_error, 'error', true);
+			
+	}
+	
+	/**
+	 * create_term_from_mysql
+	 */
+	public static function create_term_from_mysql( string $mysql_function ){
+		
+		$sql = self::get_current_mysql_function_body( $mysql_function );
+		
+		// echo "<pre>$sql</pre>";
+			
+		$matches = [];
+		$pattern = '/FUNCTION\s`(\S+)`\s*\(([^\)]*)\)\s+RETURNS\s([\s\S]+)BEGIN\s([\s\S]+)END\s*$/i';//.*
+		// $pattern = '/RETURNS([\s\S]+)BEGIN([\s\S]+)END\s*$/i';//.*
+		if( ! preg_match( $pattern, $sql, $matches ) )
+			return;
+		$return_type = preg_replace('/^(.*)([\r\n]+[\s\S]*)?$/', '$1', $matches[3]);
+		// echo "<pre>";
+		// var_dump($matches);
+		// echo "</pre>";
+		$term = new StdClass();
+		$term->term_id = '0';
+		$term->name = $matches[1];
+		$term->metas = [
+			'parameters' => $matches[2],
+			'return_type' => $return_type,
+			'body' => $matches[4],
+		];
+		$_REQUEST['create_term'] = $term;
+		// wp_die( print_r($_REQUEST['create_term'], true) );
+		
+	}
+	
+	/**
+	 * create_sql_function_in_db
+	 */
+	public static function create_sql_function_in_db( int $term_id, string $term_name, $_return_results = 'admin_notice' ){
+		
+		self::drop_sql_function_in_db( $term_name );
+		
+		$term_metas = get_term_meta($term_id, false, true);
+		global $wpdb;
 			
 		$body = rtrim( $term_metas['body'][0], " ;\r\n" );
 		
@@ -279,20 +328,143 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 	}
 	
 	/**
-	 * Register Meta Boxes (boite en édition du term)
+	 * On add form
 	 */
 	public static function on_add_form_fields( string $taxonomy ){
-		if( ! empty($_REQUEST['action']) && $_REQUEST['action'] === 'duplicate' 
-		 && ! empty($_REQUEST['source_tag']) ){
-			$tag = get_term( $_REQUEST['source_tag'] );
+		$tag = null;
+		if( ! empty($_REQUEST['action']) ){
+			if( $_REQUEST['action'] === 'duplicate' 
+			&& ! empty($_REQUEST['source_tag']) ){
+				$tag = get_term( $_REQUEST['source_tag'] );
+			}
+			elseif( $_REQUEST['action'] === 'create_term' 
+			&& ! empty($_REQUEST['create_term']) ){
+				$tag = new WP_Term( $_REQUEST['create_term'] );
+			}
 		}
-		else
-			$tag = null;
+			
 		self::on_edit_form_fields($tag, $taxonomy);
+	}
+	
+	/**
+	 * do mysql actions
+	 */
+	public static function do_mysql_actions(){
+		if( ! empty($_REQUEST['action']) ){
+			switch( $_REQUEST['action'] ){
+				case 'drop_function' :
+					self::drop_sql_function_in_db( $_REQUEST['mysql_function'] );
+					break;
+				case 'create_term' :
+					self::create_term_from_mysql( $_REQUEST['mysql_function'] );
+					break;
+			}			
+		}
+	}
+	
+	/**
+	 * Register Meta Boxes (boite en édition du term)
+	 */
+	public static function on_edit_form_fields( $tag, string $taxonomy ){
+	$meta_name = 'parameters';
+	$default_value = '';
+	if( isset($tag->metas) )
+		$default_value = $tag->metas[$meta_name];
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Paramètres de la fonction</label></th>
+        <td><?php
+			$example_ids = '`REPORT_ID` VARCHAR(1024), `TITLE` VARCHAR(1024), `VARS_JSON` JSON';
+			parent::metabox_html([array('name' => $meta_name,
+									// 'label' => __('Paramètres.', AGDP_TAG),
+									'type' => 'input',
+									'input' => 'textarea',
+									'class' => 'sql',
+									'default' => $default_value,
+									'learn-more' => 'De la forme : '
+										. '<br><code>' . htmlentities( $example_ids )
+										. '</code>'
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+    $meta_name = 'return_type';
+	$default_value = '';
+	if( isset($tag->metas) )
+		$default_value = $tag->metas[$meta_name];
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Type du retour de la fonction</label></th>
+        <td><?php
+			$example_ids = 'VARCHAR(1024) | INT | JSON | ... ';
+			parent::metabox_html([array('name' => $meta_name,
+									'type' => 'text',
+									'class' => 'sql',
+									'default' => $default_value,
+									'learn-more' => 'Type de données MySQL'
+										. '<br><code>' . htmlentities( $example_ids )
+										. '</code>'
+								)], $tag, null);
+        ?></td>
+    </tr>
+	<?php
+	$meta_name = 'body';
+	$default_value = '';
+	if( isset($tag->metas) )
+		$default_value = $tag->metas[$meta_name];
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Script de la fonction</label></th>
+        <td><?php
+			$example_ids = 'RETURN CONCAT(\'<label class="toggle-trigger" ajax=1\', \' data="\', @DATA, \'">\', \'<a href="#">\', `TITLE`, \'</a>\', \'</label>\');';
+			$comment = '<i>Les fonctions SQL sont créées comme déterministes et n\'exécutant pas de requête SQL dans leur script.</i>';
+			parent::metabox_html([array('name' => $meta_name,
+									// 'label' => __('Paramètres.', AGDP_TAG),
+									'type' => 'input',
+									'input' => 'textarea',
+									'class' => 'sql',
+									'default' => $default_value,
+									'input_attributes' => [ 'rows' => 12 ],
+									'learn-more' => 'Contenu entre BEGIN et END. Doit contenir un RETURN value;'
+										. '<br><code>' . htmlentities( $example_ids )
+										. '</code>'
+										.'<br>' . $comment
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+	$meta_name = 'use_example';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>">Exemple d'utilisation dans une cellule de rapport</label></th>
+        <td><?php
+			$parameters = $tag ? get_term_meta($tag->term_id, 'parameters', true) : '';
+			//retire les types
+			$parameters = preg_replace('/(`?\w+`?)(\s\w+(\s*[\(][^\)]*[\)])?)?(\s*,\s*|$)/', '$1$4', $parameters);
+			$example = $tag ? "$tag->name($parameters)" : '';
+			parent::metabox_html([array('name' => $meta_name,
+									// 'label' => __('Paramètres.', AGDP_TAG),
+									'type' => 'input',
+									'input' => 'textarea',
+									'class' => 'sql',
+									'learn-more' => '<code>' . $example
+										. '</code>'
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+	$meta_name = 'use_example_execute';
+    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
+        <th scope="row"><label for="<?php echo $meta_name;?>"></label></th>
+        <td><?php
+			$results = self::try_example( $tag );
+			parent::metabox_html([array('name' => $meta_name,
+									'label' => __('Tester cet exemple', AGDP_TAG),
+									'type' => 'checkbox',
+									'input' => 'input',
+									'comments' => $results
+								)], $tag, null);
+        ?></td>
+    </tr><?php
+		if( $tag === null)
+			echo '<br><br>';
 	}
 
 	/**
-	 * Register Meta Boxes (boite en édition du term)
+	 * Executes the use_example code
 	 */
 	public static function try_example( $tag ){
 		if( ! $tag )
@@ -373,98 +545,135 @@ class Agdp_Admin_Edit_SQL_Function extends Agdp_Admin_Edit_Post_Type {
 			$html = sprintf('<pre><code>%s</code></pre>', $html, true);
 		return $html;
 	}
+	
+	/**
+	 * init_js_create_term
+	 *
+	 * Init tag-name input in Add form
+	 **/
+	 public static function init_js_create_term(){
+		 if( empty($_REQUEST['mysql_function']) )
+			 return;
+		?><script>
+		var $ = jQuery;
+		var tag_name = '<?php echo $_REQUEST['mysql_function'] ?>';
+		$(document).ready( function(e){
+			var $input = $('form #tag-name');
+			$input.val( tag_name );
+		});
+		</script><?php
+	 }
 
 	/**
-	 * Register Meta Boxes (boite en édition du term)
-	 */
-	public static function on_edit_form_fields( $tag, string $taxonomy ){
-	
-	$meta_name = 'parameters';
-    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
-        <th scope="row"><label for="<?php echo $meta_name;?>">Paramètres de la fonction</label></th>
-        <td><?php
-			$example_ids = '`REPORT_ID` VARCHAR(1024), `TITLE` VARCHAR(1024), `VARS_JSON` JSON';
-			parent::metabox_html([array('name' => $meta_name,
-									// 'label' => __('Paramètres.', AGDP_TAG),
-									'type' => 'input',
-									'input' => 'textarea',
-									'class' => 'sql',
-									'learn-more' => 'De la forme : '
-										. '<br><code>' . htmlentities( $example_ids )
-										. '</code>'
-								)], $tag, null);
-        ?></td>
-    </tr><?php
-    $meta_name = 'return_type';
-    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
-        <th scope="row"><label for="<?php echo $meta_name;?>">Type du retour de la fonction</label></th>
-        <td><?php
-			$example_ids = 'VARCHAR(1024) | INT | JSON | ... ';
-			parent::metabox_html([array('name' => $meta_name,
-									'type' => 'text',
-									'class' => 'sql',
-									'learn-more' => 'Type de données MySQL'
-										. '<br><code>' . htmlentities( $example_ids )
-										. '</code>'
-								)], $tag, null);
-        ?></td>
-    </tr>
-	<?php
-	$meta_name = 'body';
-    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
-        <th scope="row"><label for="<?php echo $meta_name;?>">Script de la fonction</label></th>
-        <td><?php
-			$example_ids = 'RETURN CONCAT(\'<label class="toggle-trigger" ajax=1\', \' data="\', @DATA, \'">\', \'<a href="#">\', `TITLE`, \'</a>\', \'</label>\');';
-			$comment = '<i>Les fonctions SQL sont créées comme déterministes et n\'exécutant pas de requête SQL dans leur script.</i>';
-			parent::metabox_html([array('name' => $meta_name,
-									// 'label' => __('Paramètres.', AGDP_TAG),
-									'type' => 'input',
-									'input' => 'textarea',
-									'class' => 'sql',
-									'input_attributes' => [ 'rows' => 12 ],
-									'learn-more' => 'Contenu entre BEGIN et END. Doit contenir un RETURN value;'
-										. '<br><code>' . htmlentities( $example_ids )
-										. '</code>'
-										.'<br>' . $comment
-								)], $tag, null);
-        ?></td>
-    </tr><?php
-	$meta_name = 'use_example';
-    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
-        <th scope="row"><label for="<?php echo $meta_name;?>">Exemple d'utilisation dans une cellule de rapport</label></th>
-        <td><?php
-			$parameters = $tag ? get_term_meta($tag->term_id, 'parameters', true) : '';
-			//retire les types
-			$parameters = preg_replace('/(`?\w+`?)(\s\w+(\s*[\(][^\)]*[\)])?)?(\s*,\s*|$)/', '$1$4', $parameters);
-			$example = $tag ? "$tag->name($parameters)" : '';
-			parent::metabox_html([array('name' => $meta_name,
-									// 'label' => __('Paramètres.', AGDP_TAG),
-									'type' => 'input',
-									'input' => 'textarea',
-									'class' => 'sql',
-									'learn-more' => '<code>' . $example
-										. '</code>'
-								)], $tag, null);
-        ?></td>
-    </tr><?php
-	$meta_name = 'use_example_execute';
-    ?><tr class="form-field term-<?php echo $meta_name;?>-wrap">
-        <th scope="row"><label for="<?php echo $meta_name;?>"></label></th>
-        <td><?php
-			$results = self::try_example( $tag );
-			parent::metabox_html([array('name' => $meta_name,
-									'label' => __('Tester cet exemple', AGDP_TAG),
-									'type' => 'checkbox',
-									'input' => 'input',
-									'comments' => $results
-								)], $tag, null);
-        ?></td>
-    </tr><?php
-		if( $tag === null)
-			echo '<br><br>';
-	}
+	 * init_js_add_mysql_functions
+	 * 
+	 * Adds in table all mysql functions that not exist as term
+	 **/
+	 public static function init_js_add_mysql_functions(){
 
-
-	
+		self::do_mysql_actions();
+		
+		global $wpdb;
+		
+		$wpdb->suppress_errors( true );
+		$wpdb->hide_errors();
+		
+		$sql = "SHOW FUNCTION STATUS
+			WHERE Security_type = 'DEFINER'";
+		$mysql_functions = $wpdb->get_results($sql);
+		
+		if( $wpdb->last_error ){
+			if( $wpdb->last_error && (strpos($wpdb->last_error, 'does not exist') === false) )
+				Agdp_Admin::add_admin_notice( 
+					sprintf('%s<br><pre><code>%s</code></pre>', $wpdb->last_error, $wpdb->last_query)
+					, 'error', true);
+			return false;
+		}
+		
+		if( count($mysql_functions) === 0 )
+			return false;
+		
+		$term_names = [];
+		$terms = get_terms( array(
+			'taxonomy'   => Agdp_Report::taxonomy_sql_function,
+			'hide_empty' => false,
+		) );
+		foreach($terms as $term)
+			$term_names[] = $term->name;
+			
+		$funcs = [];
+		foreach( $mysql_functions as $func ){
+			if( in_array( $func->Name, $term_names ) )
+				continue;
+			$funcs[] = $func->Name;
+		}
+		$mysql_function_stamp = esc_attr('||_mysql_function_||');
+		$actions = [];
+		$uri = sprintf('/wp-admin/edit-tags.php?taxonomy=%s&post_type=%s',
+					Agdp_Report::taxonomy_sql_function, Agdp_Report::post_type );
+		$actions['create_term'] = sprintf(
+			'<a href="%s" aria-label="%s">%s</a>',
+			esc_url(
+				add_query_arg(
+					'mysql_function', $mysql_function_stamp,
+				add_query_arg(
+					'action', 'create_term',
+					$uri
+				))
+			),
+			/* translators: %s: Taxonomy term name. */
+			esc_attr( sprintf( 'Générer &#8220;%s&#8221;', $mysql_function_stamp ) ),
+			__( 'Générer' )
+		);
+		$actions['drop_function'] = sprintf(
+			'<a href="%s" aria-label="%s">%s</a>',
+			esc_url(
+				add_query_arg(
+					'mysql_function', $mysql_function_stamp,
+				add_query_arg(
+					'action', 'drop_function',
+					$uri
+				))
+			),
+			/* translators: %s: Taxonomy term name. */
+			esc_attr( sprintf( 'Supprimer de la base &#8220;%s&#8221;', $mysql_function_stamp ) ),
+			__( 'Supprimer' )
+		);
+		?><script>
+		var $ = jQuery;
+		$(document).ready( function(e){
+			var $table_body = $('#the-list');
+			var mysql_function_stamp = '<?php echo $mysql_function_stamp ?>';
+			var taxonomy = '<?php echo Agdp_Report::taxonomy_sql_function ?>';
+			var post_type = '<?php echo Agdp_Report::post_type ?>';
+			var functions = <?php echo json_encode( $funcs ) ?>;
+			var actions = <?php echo json_encode( $actions ) ?>;
+			for(var index in functions ){
+				 $table_body.append( 
+					 $('<tr></tr>')
+						.addClass('unknown-term')
+						.append(   '<th></th>')
+						.append( $('<td></td>')
+							.addClass('name column-name')
+							.append( $('<strong></strong>')
+								.text(functions[index]) )
+							.append( $('<div></div>')
+							.addClass('row-actions')
+								.append(actions['create_term'].replace( mysql_function_stamp, functions[index] ))
+								.append(' | ')
+								.append(actions['drop_function'].replace( mysql_function_stamp, functions[index] ))
+							)
+						)
+						.append( $('<td></td>')
+							.addClass('description column-description')
+							.append( $('<p></p>')
+								.html("<span class=\"dashicons-before dashicons-admin-comments\"></span>Fonction existant dans MySQL et non référencée comme terme.")
+							)
+						)
+				);
+			}
+		});
+		</script><?php
+	 }
 }
 ?>

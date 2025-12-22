@@ -15,12 +15,15 @@ class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 	const info_shortcodes = [ 
 		'cell',
 		'open',
+		'loop',
 		'next'
 	];
 	
 	const default_attr = 'report_id';
 	
 	private static $initiated = false;
+	
+	public static $report_stack = [];
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -43,12 +46,17 @@ class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 		$label = isset($atts['label']) ? $atts['label'] : '' ;
 		
 		$html = '';
+		$open_report = true;
 		
-		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts, $_REQUEST);
+		// debug_log(__CLASS__.'::'.__FUNCTION__, $shortcode, $atts/* , $_REQUEST */);
 		// wp_die( __CLASS__ .'::'. __FUNCTION__ );
 		
 		if( ! empty($atts['report_id']) )
 			$report = static::get_post( $atts['report_id'], static::post_type );
+		elseif( count(self::$report_stack) > 0 ){
+			$report = self::$report_stack[count(self::$report_stack)-1]['report'];
+			$open_report = false;
+		}
 		else
 			$report = false;
 		
@@ -76,30 +84,111 @@ class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 		$meta_name = $atts['info'] ;
 		switch($meta_name){
 			case 'table' :
-			case 'results' :
 				$val = Agdp_Report::get_report_html( $report_id, false, $sql_variables );
+				if($val)
+					return '<div class="agdp-report">'
+						. ($label ? '<span class="label"> '.$label.'<span>' : '')
+						. do_shortcode( $val . wp_kses_post($content))
+						. '</div>';
 				break;
 				
 			case 'cell' :
-			case 'cellule' :
-				$options = [];
-				$dbResults = Agdp_Report::get_report_results( $report_id, false, $sql_variables, $options );
 				$val = null;
-				if( is_array($dbResults) ){
-					foreach( $dbResults[0] as $val )
-						break;
+				$row = 0;
+				if( $open_report && $report_id ){
+					$options = [];
+					$dbResults = Agdp_Report::get_report_results( $report, false, $sql_variables, $options );
+				}
+				else{
+					if( count(self::$report_stack) === 0 ){
+						$val = sprintf('Aucun rapport défini.');
+					}
+					else {
+						$row = self::$report_stack[count(self::$report_stack)-1]['row'];
+						$dbResults = self::$report_stack[count(self::$report_stack)-1]['dbResults'];
+					}
+				}
+				if( $val === null
+				&& is_array($dbResults) ){
+					if( empty($atts['cell']) )
+						$cell = 0;
+					elseif( is_numeric($atts['cell']) )
+						$cell = $atts['cell'] * 1;
+					else
+						$cell = $atts['cell'];
+					if( empty($atts['cell']) )
+						$cell = 0;
+					elseif( is_numeric($atts['cell']) )
+						$cell = $atts['cell'] * 1;
+					else
+						$cell = $atts['cell'];
+					$field_index = 0;
+					foreach( $dbResults[$row] as $field => $field_value ){
+						if( ($cell == $field)
+						|| ($cell === $field_index) ){
+							$val = $field_value;
+							break;
+						}
+						$field_index++;
+					}
+				}
+				break;
+				
+			case 'loop' :
+			case 'open' :
+				$options = [];
+				$dbResults = Agdp_Report::get_report_results( $report, false, $sql_variables, $options );
+				self::$report_stack[] = [
+					'report_id' => $report_id,
+					'report' => $report,
+					'sql_variables' => $sql_variables,
+					'options' => $options,
+					'dbResults' => $dbResults,
+					'count' => count($dbResults),
+					'row' => 0,
+				];
+				$val = null;
+				if( $content ){
+					$html = '<div class="agdp-report">'
+						. ($label ? '<span class="label"> '.$label.'<span>' : '');
+					if( $meta_name === 'loop' ){
+						for( $row = 0; $row < count($dbResults); $row++ ){
+							self::$report_stack[count(self::$report_stack)-1]['row'] = $row;
+							$html .= do_shortcode( wp_kses_post($content));
+						}
+					}
+					else
+						$html .= do_shortcode( wp_kses_post($content));
+					$html .= '</div>';
+					return $html;
+				}
+				break;
+				
+			case 'close' :
+				array_pop( self::$report_stack );
+				$val = null;
+				break;
+				
+			case 'next' :
+				if( count(self::$report_stack) === 0 ){
+					$val = sprintf('Aucun rapport ouvert. Le shortcode [report-next] doit suivre un shortcode [report-open].');
+				}
+				elseif( $report_id 
+				&& self::$report_stack[count(self::$report_stack)-1]['report_id'] !== $report_id ){
+					$val = sprintf('Rapport ouvert différent ( %s != %s', self::$report_stack[count(self::$report_stack)-1]['report_id'], $report_id);
+				}
+				else {
+					self::$report_stack[count(self::$report_stack)-1]['row'] += 1;
+					if( self::$report_stack[count(self::$report_stack)-1]['row'] >= self::$report_stack[count(self::$report_stack)-1]['count'] ){
+						
+					}
 				}
 				break;
 		}
 		if($val === false)
 			$val = get_post_meta( $report_id, $meta_name, true, false);
-		
+					
 		if($val || $content){
-			if($label)
-				return '<div class="agdp-report">'
-					. ($label ? '<span class="label"> '.$label.'<span>' : '')
-					. do_shortcode( $val . wp_kses_post($content))
-					. '</div>';
 			return do_shortcode( $val . wp_kses_post($content));
 		}
 	}

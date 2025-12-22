@@ -531,7 +531,7 @@ function get_relative_page($slug, $relative_to, $post_type = false){
 			$path = $slug;
 		}
 	}
-	debug_log(__FUNCTION__, $path, $post_type, !!get_page_by_path( $path, OBJECT, $post_type ));
+	// debug_log(__FUNCTION__, $path, $post_type, !!get_page_by_path( $path, OBJECT, $post_type ));
 	
 	return get_page_by_path( $path, OBJECT, $post_type );
 }
