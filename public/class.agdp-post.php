@@ -20,6 +20,8 @@ abstract class Agdp_Post {
 	
 	const shortcode = false;
 	
+	const icon = 'text-page';
+	
 	private static $send_for_diffusion_history = [];
 	
 	private static $post_types = [];

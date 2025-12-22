@@ -23,8 +23,10 @@ class Agdp_Admin_Forum {
 		add_action( 'manage_' . Agdp_Forum::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-' . Agdp_Forum::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
 		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
-		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Forum::post_type)
+		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Page::post_type){
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
+			add_action( 'manage_posts_extra_tablenav', array( __CLASS__, 'on_manage_posts_extra_tablenav'), 10, 1);
+		}
 
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 	}
@@ -103,6 +105,32 @@ class Agdp_Admin_Forum {
 				$query->set('orderby','meta_value'); 
 				break;
 		}
+	}
+	
+	/**
+	 * Init on_manage_posts_extra_tablenav
+	 */
+	public static function on_manage_posts_extra_tablenav( $which ){
+		echo '<div class="alignleft actions '.AGDP_TAG.'-posts-edit">';
+		foreach([
+			'blog_presentation_page_id' => [ 'title' => 'Présentation' ],
+			'contact_page_id' => [ 'title' => 'Contactez-nous', 'icon' => 'email'],
+			'newsletter_subscribe_page_id' => [ 'title' => 'Lettres-infos', 'icon' => Agdp_Newsletter::icon ],
+			'agenda_page_id' => [ 'title' => 'Agenda', 'icon' => Agdp_Evenement::icon ],
+			'new_agdpevent_page_id' => [ 'title' => 'Nouvel évènement', 'icon' => Agdp_Evenement::icon ],
+			'covoiturages_page_id' => [ 'title' => 'Covoiturages', 'icon' => Agdp_Covoiturage::icon ],
+			'new_covoiturage_page_id' => [ 'title' => 'Nouveau covoiturage', 'icon' => Agdp_Covoiturage::icon ],
+		] as $option => $option_data ){
+			if( $page_id = Agdp::get_option( $option ) ){
+				$icon = empty($option_data['icon']) ? 'admin-page' : $option_data['icon'];
+				$page_title = sprintf('<span class="dashicons-before dashicons-%s"></span>%s'
+					,$icon
+					, $option_data['title'] );
+				$menu_slug = sprintf('post.php?post=%d&action=edit', $page_id);
+				echo /* sprintf */( "<a href=\"$menu_slug\">$page_title</a>");
+			}
+		}
+		echo '</div>';
 	}
 	
 	/**

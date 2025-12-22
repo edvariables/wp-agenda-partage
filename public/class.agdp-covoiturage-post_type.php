@@ -55,7 +55,7 @@ class Agdp_Covoiturage_Post_type {
 			'public'                => $is_managed,
 			'show_ui'               => $is_managed,
 			'show_in_menu'          => $is_managed,
-			'menu_icon'				=> 'dashicons-car',
+			'menu_icon'				=> 'dashicons-' . Agdp_Covoiturage::icon,
 			'menu_position'         => 26,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,

@@ -54,7 +54,7 @@ class Agdp_Admin_Menu {
 
 		    $user = wp_get_current_user();
 		    $roles = ( array ) $user->roles;
-		    if(!in_array('agdpevent', $roles)) {
+		    if( ! in_array('agdpevent', $roles)) {
 				remove_menu_page('posts');//TODO
 				remove_menu_page('wpcf7');
 			}
@@ -87,86 +87,106 @@ class Agdp_Admin_Menu {
 			
 			//Menu Evènements et Covoiturages
 			foreach( Agdp_Post::get_post_types() as $post_type ){
+				$parent_slug = sprintf('edit.php?post_type=%s', $post_type);
+				
 				$type_title = get_post_type_object($post_type)->labels->menu_name;
-				$parent_slug = sprintf('edit.php?post_type=%s', $post_type) ;
 				$page_title =  $type_title . ' en attente de validation';
 				$menu_slug = $parent_slug . '&post_status=pending';
 				add_submenu_page( $parent_slug, $page_title, 'En attente', $capability, $menu_slug, '', 1);
 			
-				$parent_slug = sprintf('edit.php?post_type=%s', $post_type) ;
 				$page_title =  $type_title . ' obsolètes d\'un mois';
 				$menu_slug = $parent_slug . '&date_max=' . wp_date('Y-m-d', strtotime('-1 Month'));
 				add_submenu_page( $parent_slug, $page_title, 'Obsolètes', $capability, $menu_slug, '', 2);
 			}
 			
 			//Menu Agenda partagé
-			//Mailboxes
-			$parent_slug = AGDP_TAG;			
-			$page_title = get_post_type_object(Agdp_Mailbox::post_type)->labels->menu_name;
-			$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Mailbox::post_type);
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
-			
-			$parent_slug = AGDP_TAG;
-			$page_title =  'Règles de publications';
-			$menu_slug = $parent_slug . '-rights';
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agdp_rights_page_html'), null);
-			
-			//Import
-			$parent_slug = AGDP_TAG;			
-			$page_title = 'Importer';
-			$menu_slug = $parent_slug . '-import';
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agdp_import_page_html'), null);
-			
-			if( class_exists('Agdp_Maillog') ){
+			if( true ){
 				$parent_slug = AGDP_TAG;
-				$page_title = get_post_type_object(Agdp_Maillog::post_type)->labels->menu_name;
-				$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Maillog::post_type);
+				
+				//Mailboxes		
+				$page_title = get_post_type_object(Agdp_Mailbox::post_type)->labels->menu_name;
+				$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Mailbox::post_type);
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
-			}
-		
-			$parent_slug = AGDP_TAG;
-			if ( current_user_can( 'manage_network_plugins' ) ) {
-				$page_title =  'Mise à jour de l\'extension';
-				$menu_slug = $parent_slug . '-plugin-update';
+				
+				$page_title =  'Règles de publications';
+				$menu_slug = $parent_slug . '-rights';
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-					array(__CLASS__, 'agdp_plugin_update_page_html'), null);
-			}
-			
-			if( current_user_can( 'manage_options' ) ){
-				if( Agdp::get_option('can_generate_packages') )
-					$page_title =  'Génération des packages';
-				else
-					$page_title =  'Packages';
-				$menu_slug = $parent_slug . '-packages';
+					array(__CLASS__, 'agdp_rights_page_html'), null);
+				
+				//Import		
+				$page_title = 'Importer';
+				$menu_slug = $parent_slug . '-import';
 				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-					array(__CLASS__, 'agdp_packages_page_html'), null);
-			}
+					array(__CLASS__, 'agdp_import_page_html'), null);
+				
+				if( class_exists('Agdp_Maillog') ){
+					$page_title = get_post_type_object(Agdp_Maillog::post_type)->labels->menu_name;
+					$menu_slug = sprintf('edit.php?post_type=%s', Agdp_Maillog::post_type);
+					add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+				}
 			
-			$page_title =  'Arborescence du site';
-			$menu_slug = $parent_slug . '-diagram';
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
-				array(__CLASS__, 'agdp_diagram_page_html'), null);
+				if ( current_user_can( 'manage_network_plugins' ) ) {
+					$page_title =  'Mise à jour de l\'extension';
+					$menu_slug = $parent_slug . '-plugin-update';
+					add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+						array(__CLASS__, 'agdp_plugin_update_page_html'), null);
+				}
+				
+				if( current_user_can( 'manage_options' ) ){
+					if( Agdp::get_option('can_generate_packages') )
+						$page_title =  'Génération des packages';
+					else
+						$page_title =  'Packages';
+					$menu_slug = $parent_slug . '-packages';
+					add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+						array(__CLASS__, 'agdp_packages_page_html'), null);
+				}
+				
+				$page_title =  'Arborescence du site';
+				$menu_slug = $parent_slug . '-diagram';
+				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+					array(__CLASS__, 'agdp_diagram_page_html'), null);
+			}
 			
 			//Menu Pages
-			$capability = 'moderate_comments';
-			$parent_slug = 'edit.php?post_type=page';
-			
-			$page_title = 'Forums';
-			$menu_slug = sprintf('edit.php?post_type=%s&orderby=%s&order=asc', Agdp_Forum::post_type, Agdp_Forum::tag);
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
-			
-			$page_title = 'Ajouter un forum';
-			$menu_slug = sprintf('post-new.php?post_type=%s&%s=1', Agdp_Forum::post_type, Agdp_Forum::tag);
-			add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+			if( true ){
+				$capability = 'moderate_comments';
+				$parent_slug = 'edit.php?post_type=page';
+				
+				$page_title = 'Forums';
+				$menu_slug = sprintf('edit.php?post_type=%s&orderby=%s&order=asc', Agdp_Forum::post_type, Agdp_Forum::tag);
+				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+				
+				$page_title = 'Ajouter un forum';
+				$menu_slug = sprintf('post-new.php?post_type=%s&%s=1', Agdp_Forum::post_type, Agdp_Forum::tag);
+				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+				
+				foreach([
+					// 'blog_presentation_page_id' => 'Présentation du site',
+					// 'contact_page_id' => 'Contactez-nous',
+					// 'newsletter_subscribe_page_id' => 'S\'abonner aux lettres-infos',
+					// 'agenda_page_id' => 'Agenda et évènements',
+					// 'new_agdpevent_page_id' => 'Nouvel évènement',
+					// 'covoiturages_page_id' => 'Covoiturages',
+					// 'new_covoiturage_page_id' => 'Nouveau covoiturage',
+				] as $option => $option_label ){
+					if( $page_id = Agdp::get_option( $option ) ){
+						$page_title = sprintf('<span class="dashicons-before dashicons-admin-page"></span>&nbsp;%s'
+							, $option_label );
+						$menu_slug = sprintf('post.php?post=%d&action=edit', $page_id);
+						add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, false, null);
+					}
+				}
+			}
 			
 			//Menu Rapports
-			$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Report::post_type) ;
-			foreach ( get_posts( [ 'post_type' => Agdp_Report::post_type, 'post_parent' => '0' ] ) as $root_report ){
-				$page_title =  $root_report->post_title;
-				$menu_slug = sprintf('edit.php?post_type=%s&post_parent=%d', $root_report->post_type, $root_report->ID);
-				add_submenu_page( $parent_slug, $page_title, 'Rapports ' . $page_title, $capability, $menu_slug);
+			if( true ){
+				$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Report::post_type) ;
+				foreach ( get_posts( [ 'post_type' => Agdp_Report::post_type, 'post_parent' => '0' ] ) as $root_report ){
+					$page_title =  $root_report->post_title;
+					$menu_slug = sprintf('edit.php?post_type=%s&post_parent=%d', $root_report->post_type, $root_report->ID);
+					add_submenu_page( $parent_slug, $page_title, 'Rapports ' . $page_title, $capability, $menu_slug);
+				}
 			}
 		}
 		
@@ -175,7 +195,6 @@ class Agdp_Admin_Menu {
 		foreach($menu as $menu_index => $menu_data)
 			if($menu_data[2] === 'wpcf7'){
 				$menu[$menu_index][0]	 = 'Formulaires';
-				
 				break;
 			}
 	}	

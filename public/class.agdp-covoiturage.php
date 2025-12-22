@@ -20,6 +20,8 @@ class Agdp_Covoiturage extends Agdp_Post {
 
 	const secretcode_argument = AGDP_COVOIT_SECRETCODE;
 	const field_prefix = 'cov-';
+	
+	const icon = 'car';
 
 	const postid_argument = AGDP_ARG_COVOITURAGEID;
 	const posts_page_option = 'covoiturages_page_id';

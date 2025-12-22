@@ -18,6 +18,8 @@ class Agdp_Mailbox {
 	const cron_hook = 'agdpmailbox_cron_hook';
 	
 	const sync_time_meta_key = 'imap_sync_time';
+	
+	const icon = 'email';
 		
 	// const user_role = 'author';
 

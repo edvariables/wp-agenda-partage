@@ -54,7 +54,7 @@ class Agdp_Evenement_Post_type {
 			'public'                => true,
 			'show_ui'               => true,
 			'show_in_menu'          => true,
-			'menu_icon'				=> 'dashicons-calendar-alt',
+			'menu_icon'				=> 'dashicons-' . Agdp_Evenement::icon,
 			'menu_position'         => 25,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,

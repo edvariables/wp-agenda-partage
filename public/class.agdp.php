@@ -416,7 +416,7 @@ class Agdp {
 			case 'new_agdpevent_page_id':
 				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
 			case 'blog_presentation_page_id':
-				return __( 'Page "Page de présentation du site"', AGDP_TAG );
+				return __( 'Page "Présentation du site"', AGDP_TAG );
 			case 'agdpevents_nl_diffusion_term_id'://Agdp_Evenements::newsletter_diffusion_term_id
 				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 				
@@ -442,9 +442,6 @@ class Agdp {
 				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
 			case 'allow_html_in_' . Agdp_Covoiturage::post_type :
 				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
-				
-			case 'forums_parent_id':
-				return __( 'Page parente des forums', AGDP_TAG );
 				
 			case 'disable_sitemaps':
 				return __( 'Désactivation des sitemaps', AGDP_TAG );

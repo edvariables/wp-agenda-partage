@@ -8,7 +8,7 @@
  */
 abstract class Agdp_Page {
 	
-	const post_type = false; //Must override
+	const post_type = 'page'; //Must override
 	const posts_type = false; //Must override
 	const page_type = false; //Must override
 	
