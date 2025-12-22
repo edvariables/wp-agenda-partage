@@ -210,7 +210,7 @@ class Agdp_Admin_Menu {
 			return;
 		}
 		
-		self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Evenements' );
+		self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Events' );
 		
 		if( Agdp_Covoiturage::is_managed() )
 			self::add_admin_bar_posts_menu( $wp_admin_bar, 'Agdp_Covoiturages' );

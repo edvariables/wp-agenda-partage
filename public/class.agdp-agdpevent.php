@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage -> Evenement
+ * AgendaPartage -> Event
  * Custom post type for WordPress.
  * 
  * Définition du Post Type agdpevent
@@ -10,9 +10,9 @@
  * A l'affichage d'un évènement, le Content est remplacé par celui de l'évènement Modèle
  * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor'
  *
- * Voir aussi Agdp_Admin_Evenement
+ * Voir aussi Agdp_Admin_Event
  */
-class Agdp_Evenement extends Agdp_Post {
+class Agdp_Event extends Agdp_Post {
 
 	const post_type = 'agdpevent';
 	const taxonomy_ev_category = 'ev_category';
@@ -90,11 +90,11 @@ class Agdp_Evenement extends Agdp_Post {
 		[agdpevent info="siteweb"]
 		[agdpevent info="attachments"]
 		';
-		if( Agdp_Evenement_Post_type::is_diffusion_managed() )
+		if( Agdp_Event_Post_type::is_diffusion_managed() )
 			$html .='[agdpevent-diffusions label="Diffusion (sous réserve) : "]';
 		
 		
-		$field_id = 'add_content_in_' . Agdp_Evenement::post_type;
+		$field_id = 'add_content_in_' . Agdp_Event::post_type;
 		$add_content = Agdp::get_option($field_id);
 		if( $add_content ){
 			$html .= $add_content;
@@ -529,7 +529,7 @@ class Agdp_Evenement extends Agdp_Post {
 	 */
 	public static function agdpevent_action_remove($post_id) {
 		if ( self::do_remove($post_id) )
-			return 'redir:' . Agdp_Evenements::get_url(); //TODO add month in url
+			return 'redir:' . Agdp_Events::get_url(); //TODO add month in url
 		return 'Impossible de supprimer cet évènement.';
 	}
 	
@@ -788,7 +788,7 @@ class Agdp_Evenement extends Agdp_Post {
 		$localisation = get_post_meta($post_id, 'ev-localisation', true);
 		if( $html )
 			$localisation = htmlentities($localisation);
-		if($cities = Agdp_Evenement::get_event_cities ($post_id, 'names')){
+		if($cities = Agdp_Event::get_event_cities ($post_id, 'names')){
 			$cities = implode(', ', $cities);
 			if( $html )
 				$cities = htmlentities($cities);
@@ -805,7 +805,7 @@ class Agdp_Evenement extends Agdp_Post {
 	 * Vérifie si la commune est déjà ennoncé dans la localisation
 	 */
 	public static function cities_in_localisation( $cities, $localisation ){
-		//$terms_like = Agdp_Evenement_Post_type::get_terms_like($tax_name, $tax_data['IN']);
+		//$terms_like = Agdp_Event_Post_type::get_terms_like($tax_name, $tax_data['IN']);
 		$cities = str_ireplace('saint', 'st'
 					, preg_replace('/\s|-/', '', $cities)
 		);
@@ -884,7 +884,7 @@ class Agdp_Evenement extends Agdp_Post {
 						$data['headers'][] = sprintf('Reply-to: %s', $email);
 					}
 					$data['subject'] = static::get_post_title( $post, true );
-					$data['message'] = Agdp_Evenements::get_list_item_html( $post, false, ['mode' => 'email'] );
+					$data['message'] = Agdp_Events::get_list_item_html( $post, false, ['mode' => 'email'] );
 					
 					switch( $data['attributes']['format']) {
 						case 'text' :

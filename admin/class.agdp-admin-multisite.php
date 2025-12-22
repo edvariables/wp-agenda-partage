@@ -50,7 +50,7 @@ class Agdp_Admin_Multisite {
 			$source_taxonomies = get_taxonomies(['object_type' => ['agdpevent']],'names');
 		restore_current_blog();
 		foreach($source_taxonomies as $tax_name){
-			if( $tax_name === Agdp_Evenement::taxonomy_city)
+			if( $tax_name === Agdp_Event::taxonomy_city)
 				continue;
 			$terms = get_terms(array(
 				'taxonomy' => $tax_name,
@@ -69,7 +69,7 @@ class Agdp_Admin_Multisite {
 						$term_metas = get_term_meta($term->term_id, '', true);
 					restore_current_blog();
 					
-					if( in_array( $tax_name, [ Agdp_Evenement::taxonomy_city, Agdp_Evenement::taxonomy_diffusion ] )){
+					if( in_array( $tax_name, [ Agdp_Event::taxonomy_city, Agdp_Event::taxonomy_diffusion ] )){
 						
 						//create only "default_checked" terms
 						$meta_name = 'default_checked';
@@ -94,10 +94,10 @@ class Agdp_Admin_Multisite {
 						}
 					}
 					
-					if( $tax_name === Agdp_Evenement::taxonomy_diffusion
-					&& ! empty($source_options[Agdp_Evenements::newsletter_diffusion_term_id])
-					&& $term->term_id == $source_options[Agdp_Evenements::newsletter_diffusion_term_id]){
-						Agdp::update_option(Agdp_Evenements::newsletter_diffusion_term_id, $new_term['term_id']);
+					if( $tax_name === Agdp_Event::taxonomy_diffusion
+					&& ! empty($source_options[Agdp_Events::newsletter_diffusion_term_id])
+					&& $term->term_id == $source_options[Agdp_Events::newsletter_diffusion_term_id]){
+						Agdp::update_option(Agdp_Events::newsletter_diffusion_term_id, $new_term['term_id']);
 					};
 					
 					if( $tax_name === Agdp_Covoiturage::taxonomy_diffusion

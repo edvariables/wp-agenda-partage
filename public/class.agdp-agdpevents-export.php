@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AgendaPartage -> Evenements
+ * AgendaPartage -> Events
  * Collection d'évènements
  */
-class Agdp_Evenements_Export extends Agdp_Posts_Export {
+class Agdp_Events_Export extends Agdp_Posts_Export {
 	
-	const post_type = Agdp_Evenement::post_type;
+	const post_type = Agdp_Event::post_type;
 	
 	/**
 	 * Retourne les données TXT pour le téléchargement de l'export des évènements
@@ -20,11 +20,11 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 		foreach($posts as $post){
 			$txt[] = $post->post_title;
 			$txt[] = str_repeat('-', 24);
-			$txt[] = Agdp_Evenement::get_event_dates_text( $post->ID );
+			$txt[] = Agdp_Event::get_event_dates_text( $post->ID );
 			$txt[] = get_post_meta($post->ID, 'ev-localisation', true);
-			if( $value = Agdp_Evenement::get_event_cities($post->ID))
+			if( $value = Agdp_Event::get_event_cities($post->ID))
 				$txt[] = implode(', ', $value);
-			if( $value = Agdp_Evenement::get_event_categories($post->ID))
+			if( $value = Agdp_Event::get_event_categories($post->ID))
 				$txt[] = implode(', ', $value);
 			foreach(['ev-organisateur', 'ev-email', 'ev-user-email', 'ev-phone', 'ev-siteweb'] as $meta_key)
 				if( $value = get_post_meta($post->ID, $meta_key, true) )
@@ -45,7 +45,7 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 
 		$txt = [];
 		foreach($posts as $post){
-			if( $cities = Agdp_Evenement::get_event_cities($post->ID))
+			if( $cities = Agdp_Event::get_event_cities($post->ID))
 				$cities = ' - ' . implode(', ', $cities);
 			else
 				$cities = '';
@@ -54,7 +54,7 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 			$localisation = get_post_meta($post->ID, 'ev-localisation', true);
 			if($localisation)
 				$localisation = ' - ' . $localisation;
-			$dates = Agdp_Evenement::get_event_dates_text( $post->ID );
+			$dates = Agdp_Event::get_event_dates_text( $post->ID );
 			$dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
 			$txt[] = $dates . $localisation;
 			
@@ -139,7 +139,7 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 		foreach($posts as $post){
 			$xml_post = str_replace('[**FIN**]', '', $xml_block_model);
 			
-			if( $cities = Agdp_Evenement::get_event_cities($post->ID))
+			if( $cities = Agdp_Event::get_event_cities($post->ID))
 				$cities = ' - ' . implode(', ', $cities);
 			else
 				$cities = '';
@@ -149,7 +149,7 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 			$localisation = get_post_meta($post->ID, 'ev-localisation', true);
 			if($localisation)
 				$localisation = ' - ' . $localisation;
-			$dates = Agdp_Evenement::get_event_dates_text( $post->ID );
+			$dates = Agdp_Event::get_event_dates_text( $post->ID );
 			$dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
 			$txt = $dates . $localisation;
 			$xml_post = str_replace('[Date-Lieu]', htmlspecialchars($txt), $xml_post);
@@ -257,10 +257,10 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 		$keywords = [];
 		$cities = [];
 		foreach([ 
-			'CATEGORIES' => Agdp_Evenement::taxonomy_ev_category
-			, 'CITIES' => Agdp_Evenement::taxonomy_city
+			'CATEGORIES' => Agdp_Event::taxonomy_ev_category
+			, 'CITIES' => Agdp_Event::taxonomy_city
 		] as $node_name => $tax_name){
-			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'all');
+			$terms = Agdp_Event::get_post_terms ($tax_name, $post->ID, 'all');
 			if($terms){
 				foreach($terms as $term){
 					$keywords[] = $term->name;
@@ -343,19 +343,19 @@ class Agdp_Evenements_Export extends Agdp_Posts_Export {
 			, 'USER-EMAIL'=>'ev-user-email'
 			, 'PHONE'=>'ev-phone'
 		];
-		if( ! empty($filters[Agdp_Evenement::secretcode_argument]) )
-			$fields[ strtoupper(Agdp_Evenement::secretcode_argument) ] = Agdp_Evenement::field_prefix . Agdp_Evenement::secretcode_argument;
+		if( ! empty($filters[Agdp_Event::secretcode_argument]) )
+			$fields[ strtoupper(Agdp_Event::secretcode_argument) ] = Agdp_Event::field_prefix . Agdp_Event::secretcode_argument;
 		foreach($fields as $node_name => $meta_key)
 			if( ! empty( $metas[$meta_key]))
 				$vevent->addNode(new ZCiCalDataNode($node_name . ':' . ZCiCal::formatContent( $metas[$meta_key])));
 
 		// Add terms
 		foreach([ 
-			'CATEGORIES' => Agdp_Evenement::taxonomy_ev_category
-			, 'CITIES' => Agdp_Evenement::taxonomy_city
-			, 'DIFFUSIONS' => Agdp_Evenement::taxonomy_diffusion
+			'CATEGORIES' => Agdp_Event::taxonomy_ev_category
+			, 'CITIES' => Agdp_Event::taxonomy_city
+			, 'DIFFUSIONS' => Agdp_Event::taxonomy_diffusion
 		] as $node_name => $tax_name){
-			$terms = Agdp_Evenement::get_post_terms ($tax_name, $post->ID, 'names');
+			$terms = Agdp_Event::get_post_terms ($tax_name, $post->ID, 'names');
 			if($terms){
 				//$terms = array_map(function($tax_name){ return str_replace(',','-', $tax_name);}, $terms);//escape ','
 				foreach($terms as $term_name)

@@ -1,17 +1,17 @@
 <?php
 
 /**
- * AgendaPartage Admin -> Edit -> Evenement
+ * AgendaPartage Admin -> Edit -> Event
  * Custom post type for WordPress in Admin UI.
  * 
  * Edition d'un évènement
  * Définition des metaboxes et des champs personnalisés des Évènements 
  *
- * Voir aussi Agdp_Evenement, Agdp_Admin_Evenement
+ * Voir aussi Agdp_Event, Agdp_Admin_Event
  */
-class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
+class Agdp_Admin_Edit_Event extends Agdp_Admin_Edit_Post_Type {
 
-	const post_type = Agdp_Evenement::post_type;
+	const post_type = Agdp_Event::post_type;
 
 	public static function init() {
 		parent::init();
@@ -23,7 +23,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 		
 		if(basename($_SERVER['PHP_SELF']) === 'post.php'
 		&& isset($_POST['post_type'])
-			&& $_POST['post_type'] === Agdp_Evenement::post_type 
+			&& $_POST['post_type'] === Agdp_Event::post_type 
 		&& isset($_POST['post_status'])
 			&& ! in_array($_POST['post_status'], [ 'trash', 'trashed' ]) ){
 			add_filter( 'wp_insert_post_data', array(__CLASS__, 'wp_insert_post_data_cb'), 10, 2 );
@@ -34,7 +34,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 		}
 		
 		if(array_key_exists('post_type', $_POST)
-		&& $_POST['post_type'] === Agdp_Evenement::post_type){
+		&& $_POST['post_type'] === Agdp_Event::post_type){
 			/** validation du post_content **/
 			add_filter( 'content_save_pre', array(__CLASS__, 'on_post_content_save_pre'), 10, 1 );
 
@@ -47,7 +47,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 				add_filter( 'wp_terms_checklist_args', array( __CLASS__, "on_wp_terms_checklist_args" ), 10, 2 ); 
 			}
 		}
-		add_action( 'add_meta_boxes_' . Agdp_Evenement::post_type, array( __CLASS__, 'register_agdpevent_metaboxes' ), 10, 1 ); //edit
+		add_action( 'add_meta_boxes_' . Agdp_Event::post_type, array( __CLASS__, 'register_agdpevent_metaboxes' ), 10, 1 ); //edit
 	}
 	/****************/
 
@@ -56,7 +56,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function wp_insert_post_data_cb ($data, $postarr ){
-		if($data['post_type'] != Agdp_Evenement::post_type)
+		if($data['post_type'] != Agdp_Event::post_type)
 			return $data;
 		
 		if( array_key_exists('ev-create-user', $postarr) && $postarr['ev-create-user'] ){
@@ -65,7 +65,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 		
 		//On sauve les révisions de meta_values
 		$post_id = empty($postarr['post_ID']) ? $postarr['ID'] : $postarr['post_ID'];
-		Agdp_Evenement_Edit::save_post_revision($post_id, $postarr, true);
+		Agdp_Event_Edit::save_post_revision($post_id, $postarr, true);
 		
 		return $data;
 	}
@@ -130,10 +130,10 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 	 * Register Meta Boxes (boite en édition de l'évènement)
 	 */
 	public static function register_agdpevent_metaboxes($post){
-		add_meta_box('agdp_agdpevent-dates', __('Dates de l\'évènement', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Evenement::post_type, 'normal', 'high');
-		add_meta_box('agdp_agdpevent-description', __('Description', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Evenement::post_type, 'normal', 'high');
-		add_meta_box('agdp_agdpevent-organisateur', __('Organisateur de l\'évènement', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Evenement::post_type, 'normal', 'high');
-		add_meta_box('agdp_agdpevent-general', __('Informations générales', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Evenement::post_type, 'normal', 'high');
+		add_meta_box('agdp_agdpevent-dates', __('Dates de l\'évènement', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Event::post_type, 'normal', 'high');
+		add_meta_box('agdp_agdpevent-description', __('Description', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Event::post_type, 'normal', 'high');
+		add_meta_box('agdp_agdpevent-organisateur', __('Organisateur de l\'évènement', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Event::post_type, 'normal', 'high');
+		add_meta_box('agdp_agdpevent-general', __('Informations générales', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Event::post_type, 'normal', 'high');
 				
 		if( current_user_can('manage_options') ){
 			self::register_metabox_admin();
@@ -146,7 +146,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 	 */
 	public static function register_metabox_admin(){
 		$title = self::$the_post_is_new ? __('Nouvel évènement', AGDP_TAG) : __('Évènement', AGDP_TAG);
-		add_meta_box('agdp_agdpevent-admin', $title, array(__CLASS__, 'metabox_callback'), Agdp_Evenement::post_type, 'normal', 'high');
+		add_meta_box('agdp_agdpevent-admin', $title, array(__CLASS__, 'metabox_callback'), Agdp_Event::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -419,7 +419,7 @@ class Agdp_Admin_Edit_Evenement extends Agdp_Admin_Edit_Post_Type {
 	}
 	
 	public static function on_wp_terms_checklist_args($args, int $post_id){
-		if( in_array( $args['taxonomy'], [ Agdp_Evenement::taxonomy_city, Agdp_Evenement::taxonomy_diffusion ] )){
+		if( in_array( $args['taxonomy'], [ Agdp_Event::taxonomy_city, Agdp_Event::taxonomy_diffusion ] )){
 			$meta_name = 'default_checked';
 			$args['selected_cats'] = [];
 			foreach($args['popular_cats'] as $term_id)

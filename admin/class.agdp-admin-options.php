@@ -287,7 +287,7 @@ class Agdp_Admin_Options {
 			);
 
 			// 
-			$field_id = Agdp_Evenements::newsletter_diffusion_term_id;
+			$field_id = Agdp_Events::newsletter_diffusion_term_id;
 			add_settings_field(
 				$field_id, 
 				__( 'Diffusion "Lettre-info"', AGDP_TAG ),
@@ -297,7 +297,7 @@ class Agdp_Admin_Options {
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
-					'taxonomy' => Agdp_Evenement::taxonomy_diffusion
+					'taxonomy' => Agdp_Event::taxonomy_diffusion
 				]
 			);
 
@@ -322,7 +322,7 @@ class Agdp_Admin_Options {
 			);
 			
 			// 
-			$field_id = 'allow_html_in_' . Agdp_Evenement::post_type;
+			$field_id = 'allow_html_in_' . Agdp_Event::post_type;
 			add_settings_field(
 				$field_id, 
 				'Html dans le descriptif',
@@ -338,7 +338,7 @@ class Agdp_Admin_Options {
 			);
 			
 			// 
-			$field_id = 'add_content_in_' . Agdp_Evenement::post_type;
+			$field_id = 'add_content_in_' . Agdp_Event::post_type;
 			add_settings_field(
 				$field_id, 
 				'Complément Html dans les pages d\'évènements',
@@ -369,7 +369,7 @@ class Agdp_Admin_Options {
 			);
 
 			// 
-			if( $diffusion_slug = Agdp_Evenement::has_diffusion_openagenda() ){
+			if( $diffusion_slug = Agdp_Event::has_diffusion_openagenda() ){
 				$field_id = 'agdpevent_ev_diffusion_openagenda_publish_events';
 				add_settings_field(
 					'', 
@@ -379,14 +379,14 @@ class Agdp_Admin_Options {
 					$section_id,
 					[	[
 							'label' => __('Republier les derniers évènements (48H)', AGDP_TAG),
-							'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
+							'method' => 'Agdp_Admin_Event::openagenda_publish_events',
 							'data' => [ 'term' => $diffusion_slug, 'last_updates' => 48 ],
 							'class' => 'agdp_row',
 							'input_type' => 'ajax_action'
 						],
 						[
 							'label' => __('Republier tous les évènements', AGDP_TAG),
-							'method' => 'Agdp_Admin_Evenement::openagenda_publish_events',
+							'method' => 'Agdp_Admin_Event::openagenda_publish_events',
 							'data' => [ 'term' => $diffusion_slug ],
 							'class' => 'agdp_row',
 							'input_type' => 'ajax_action'
@@ -1057,7 +1057,7 @@ class Agdp_Admin_Options {
 		<?php
 		$terms = get_terms( array('hide_empty' => false, 'taxonomy' => $taxonomy) );
 		switch($taxonomy){
-			case Agdp_Evenement::taxonomy_diffusion:
+			case Agdp_Event::taxonomy_diffusion:
 				$terms[] = (object)[ 'term_id' => -1, 'name' => '(sans gestion de diffusion)' ];
 				break;
 		}
@@ -1198,7 +1198,7 @@ class Agdp_Admin_Options {
 	 **/
 	private static function get_ev_diffusion_docx( $returns_html = true){
 		$terms = get_terms( array(
-			'taxonomy'   => Agdp_Evenement::taxonomy_diffusion,
+			'taxonomy'   => Agdp_Event::taxonomy_diffusion,
 			'hide_empty' => false,
 			'meta_key' => 'download_link',
 			'meta_value'=> 'docx'
@@ -1212,7 +1212,7 @@ class Agdp_Admin_Options {
 						site_url(sprintf('wp-admin/term.php?taxonomy=%s&tag_ID=%s&post_type=%s',
 							$term->taxonomy,
 							$term->term_id,
-							Agdp_Evenement::post_type
+							Agdp_Event::post_type
 						)),
 						$term->name
 					);
@@ -1279,7 +1279,7 @@ class Agdp_Admin_Options {
 			AGDP_CONNECT_MENU_ENABLE,
 			AGDP_MAILLOG_ENABLE,
 			AGDP_DEBUGLOG_ENABLE,
-			'allow_html_in_' . Agdp_Evenement::post_type,
+			'allow_html_in_' . Agdp_Event::post_type,
 			'allow_html_in_' . Agdp_Covoiturage::post_type,
 			
 		] as $option ){
@@ -1364,7 +1364,7 @@ class Agdp_Admin_Options {
 				elseif( $_POST[AGDP_TAG][$option_key . '-confirm'] !== 'done' ){
 					require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-posts-import.php');
 					require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents-import.php');
-					Agdp_Evenements_Import::import_ics($fileName, $post_status, $original_file_name);
+					Agdp_Events_Import::import_ics($fileName, $post_status, $original_file_name);
 					$_POST[AGDP_TAG][$option_key . '-confirm'] = 'done';
 				}
 			}

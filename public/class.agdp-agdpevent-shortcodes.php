@@ -6,9 +6,9 @@
  * 
  * Définition des shortcodes 
  *
- * Voir aussi Agdp_Admin_Evenement
+ * Voir aussi Agdp_Admin_Event
  */
-class Agdp_Evenement_Shortcodes {
+class Agdp_Event_Shortcodes {
 
 
 	private static $initiated = false;
@@ -96,7 +96,7 @@ class Agdp_Evenement_Shortcodes {
 				return $_SERVER['HTTP_REFERER'];
 			case 'link':
 			case 'a':
-				return sprintf('<a href="%s">%s</a>', Agdp_Evenement::get_post_permalink($post), $post->post_title);
+				return sprintf('<a href="%s">%s</a>', Agdp_Event::get_post_permalink($post), $post->post_title);
 
 			case 'mailto':
 				$email = get_post_meta( $post->ID, 'ev-email', true);
@@ -238,7 +238,7 @@ class Agdp_Evenement_Shortcodes {
 	*/
 	private static function shortcodes_agdpevent_callback($atts, $content = '', $shortcode = null){
 		
-		$post = Agdp_Evenement::get_post();
+		$post = Agdp_Event::get_post();
 		
 		if($post)
 			$post_id = $post->ID;
@@ -326,7 +326,7 @@ class Agdp_Evenement_Shortcodes {
 			case 'agdpevent-dates':
 
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
-				$val = Agdp_Evenement::get_event_dates_text( $post_id );
+				$val = Agdp_Event::get_event_dates_text( $post_id );
 				if($val || $content){
 					$val = do_shortcode( wp_kses_post($val . $content));
 					if($no_html)
@@ -340,7 +340,7 @@ class Agdp_Evenement_Shortcodes {
 				
 			case 'agdpevent-is-imported':
 
-				return Agdp_Evenement::get_post_imported( $post_id, $no_html );
+				return Agdp_Event::get_post_imported( $post_id, $no_html );
 				
 			case 'agdpevent-cree-depuis':
 
@@ -358,15 +358,15 @@ class Agdp_Evenement_Shortcodes {
 				return $html;
 				
 			case 'agdpevent-diffusions':
-				$tax_name = Agdp_Evenement::taxonomy_diffusion;
+				$tax_name = Agdp_Event::taxonomy_diffusion;
 			case 'agdpevent-cities':
 				if(!isset($tax_name) || !$tax_name)
-					$tax_name = Agdp_Evenement::taxonomy_city;
+					$tax_name = Agdp_Event::taxonomy_city;
 			case 'agdpevent-categories':
 				if(!isset($tax_name) || !$tax_name)
-					$tax_name = Agdp_Evenement::taxonomy_ev_category;
+					$tax_name = Agdp_Event::taxonomy_ev_category;
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
-				$terms = Agdp_Evenement::get_post_terms( $tax_name, $post_id, 'names');
+				$terms = Agdp_Event::get_post_terms( $tax_name, $post_id, 'names');
 				if($terms){
 					$val = implode(', ', $terms);
 					if($no_html)
@@ -383,13 +383,13 @@ class Agdp_Evenement_Shortcodes {
 			case 'agdpevent-message-contact':
 				
 				$meta_name = 'ev-organisateur' ;
-				$organisateur = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
+				$organisateur = Agdp_Event::get_post_meta($post_id, $meta_name, true, false);
 				if( ! $organisateur) {
 					return;
 				}
 
 				$meta_name = 'ev-email' ;
-				$email = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
+				$email = Agdp_Event::get_post_meta($post_id, $meta_name, true, false);
 				if(!$email) {
 					return Agdp::icon('warning'
 						, 'Vous ne pouvez pas envoyer de message, l\'évènement n\'a pas indiqué d\'adresse email.', 'agdp-error-light', 'div');
@@ -408,12 +408,12 @@ class Agdp_Evenement_Shortcodes {
 
 			case 'agdpevent-modifier-evenement':
 
-				return Agdp_Evenement_Edit::get_agdpevent_edit_content();
+				return Agdp_Event_Edit::get_agdpevent_edit_content();
 
 
 			case 'agdpevent-covoiturage':
 
-				return Agdp_Evenement::get_agdpevent_covoiturage();
+				return Agdp_Event::get_agdpevent_covoiturage();
 
 			case 'agdpevent-attachments':
 				
@@ -427,32 +427,32 @@ class Agdp_Evenement_Shortcodes {
 						$html .= esc_html($val) . '<br>';
 					
 				$meta_name = 'ev-dates'; 
-					$val = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, true);
+					$val = Agdp_Event::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'ev-organisateur'; 
-					$val = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, true);
+					$val = Agdp_Event::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'ev-localisation';
-					$val = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, true);
+					$val = Agdp_Event::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= esc_html($val) . '<br>';
 
 				$meta_name = 'ev-email';
-					$val = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, true);
+					$val = Agdp_Event::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= make_mailto($val) . '<br>';
 
 				$meta_name = 'ev-siteweb';
-					$val = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, true);
+					$val = Agdp_Event::get_post_meta($post_id, $meta_name, true, true);
 					if($val)
 						$html .= make_clickable(esc_html($val)) . '<br>';
 
 				$meta_name = 'ev-phone';
-					$val = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
+					$val = Agdp_Event::get_post_meta($post_id, $meta_name, true, false);
 					if($val)
 						$html .= antispambot($val) . '<br>';
 				
@@ -486,7 +486,7 @@ class Agdp_Evenement_Shortcodes {
 				$meta_name = $atts['info'] ;
 				if(!$meta_name)
 					return '<div class="error">Le paramètre info="'.$meta_name.'" du shortcode "agdpevent" est inconnu.</div>';
-				$val = Agdp_Evenement::get_post_meta($post_id, 'ev-' . $meta_name, true, false);
+				$val = Agdp_Event::get_post_meta($post_id, 'ev-' . $meta_name, true, false);
 				
 				if($val)
 					switch($meta_name){
@@ -511,7 +511,7 @@ class Agdp_Evenement_Shortcodes {
 				$meta_name = $atts['info'] ;
 				if(!$meta_name)
 					return '<div class="error">Le paramètre "info" du shortcode "agdpevent-condition" est inconnu.</div>';
-				$val = Agdp_Evenement::get_post_meta($post_id, 'ev-' . $meta_name, true, false);
+				$val = Agdp_Event::get_post_meta($post_id, 'ev-' . $meta_name, true, false);
 				if($val || $content){
 					return do_shortcode( wp_kses_post($val . $content));
 				}
@@ -521,7 +521,7 @@ class Agdp_Evenement_Shortcodes {
 			// shortcode conditionnel sur email
 			case 'agdpevent-avec-email':
 				$meta_name = 'ev-email' ;
-				$email = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
+				$email = Agdp_Event::get_post_meta($post_id, $meta_name, true, false);
 				if(is_email($email)){
 					return do_shortcode( wp_kses_post($content));
 				}
@@ -553,11 +553,11 @@ class Agdp_Evenement_Shortcodes {
 				$shortcode = 'agdpevents-list';
 			case 'agdpevents-list':
 				
-				return Agdp_Evenements::get_list_html( $content );
+				return Agdp_Events::get_list_html( $content );
 				
 			case 'agdpevents-email':
 				
-				$html = Agdp_Evenements::get_list_for_email( $content );
+				$html = Agdp_Events::get_list_for_email( $content );
 				return $html;
 
 			default:

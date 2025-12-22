@@ -221,9 +221,9 @@ class Agdp_Covoiturage_Edit {
 				] as $dest_field => $src_field)
 					$attrs[$dest_field] = get_post_meta( $agdpevent_id, $src_field, true );
 				$url = get_post_permalink( $agdpevent_id );
-				$attrs['cov-arrivee'] = Agdp_Evenement::get_event_localisation_and_cities( $agdpevent_id, false );
+				$attrs['cov-arrivee'] = Agdp_Event::get_event_localisation_and_cities( $agdpevent_id, false );
 				$attrs['cov-description'] = sprintf('En lien avec l\'évènement "%s" (<a href="%s">%s</a>).'
-					, Agdp_Evenement::get_post_title( $agdpevent_id, true  )
+					, Agdp_Event::get_post_title( $agdpevent_id, true  )
 					, $url
 					, $url
 				);
@@ -279,7 +279,7 @@ class Agdp_Covoiturage_Edit {
 					
 					$html .= sprintf('<div class="agdppost-edit-toolbar post-is-imported">%s<span class="agdppost-tool">%s</span><br>%s</div>'
 						, $is_imported
-						, Agdp_Evenement::get_agdpevent_action_link(
+						, Agdp_Event::get_agdpevent_action_link(
 							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null)
 						, 'Vos modifications seront sans doute écrasées ultérieurement.'
 					);
@@ -374,7 +374,7 @@ class Agdp_Covoiturage_Edit {
 		if( $is_periodique = get_post_meta($covoiturage->ID, $meta_name, true) )
 			return '';
 		
-		$meta_name = 'related_' . Agdp_Evenement::post_type;
+		$meta_name = 'related_' . Agdp_Event::post_type;
 		
 		$related_agdpevents = get_post_meta( $covoiturage->ID, $meta_name, false );
 		if( count($related_agdpevents) === 1 && !$related_agdpevents[0] )
@@ -391,7 +391,7 @@ class Agdp_Covoiturage_Edit {
 					, get_post_permalink($agdpevent)
 					, AGDP_ARG_COVOITURAGEID, $covoiturage->ID
 					, Agdp::icon('calendar-alt')
-					, Agdp_Evenement::get_post_title($agdpevent, true)
+					, Agdp_Event::get_post_title($agdpevent, true)
 			);
 		}
 		elseif( count($agdpevents) ){
@@ -434,7 +434,7 @@ class Agdp_Covoiturage_Edit {
 			if( $is_periodique = get_post_meta($covoiturage->ID, $meta_name, true) )
 				return '';
 			
-			$meta_name = 'related_' . Agdp_Evenement::post_type;
+			$meta_name = 'related_' . Agdp_Event::post_type;
 			$related_agdpevents = get_post_meta( $covoiturage->ID, $meta_name, false );
 			if( count($related_agdpevents) === 1 && ! $related_agdpevents[0])
 				$related_agdpevents = [];
@@ -480,7 +480,7 @@ class Agdp_Covoiturage_Edit {
 				'type' => 'DATE'
 			]];
 		$agdpevents = get_posts([
-			'post_type' => Agdp_Evenement::post_type,
+			'post_type' => Agdp_Event::post_type,
 			'post_status' => 'publish',
 			'meta_query' => $meta_query,
 			'numberposts' => 30,
@@ -502,7 +502,7 @@ class Agdp_Covoiturage_Edit {
 		}
 		$html = sprintf('<label>%s Évènement de l\'agenda associé au covoiturage</label>', Agdp::icon('calendar-alt'));
 		//TODO multiselect
-		$html .= sprintf('<select name="related_%s"><option value="">(aucun)</option>', Agdp_Evenement::post_type);
+		$html .= sprintf('<select name="related_%s"><option value="">(aucun)</option>', Agdp_Event::post_type);
 		foreach($agdpevents as $agdpevent){
 			if( ! is_object($agdpevent) ){
 				debug_log_callstack( '! is_object($agdpevent)', $agdpevent );
@@ -512,7 +512,7 @@ class Agdp_Covoiturage_Edit {
 				, $agdpevent->ID
 				, in_array( $agdpevent->ID, $related_agdpevents ) ? 'selected="selected"' : ''
 				, $agdpevent->post_title
-				, Agdp_Evenement::get_event_dates_text($agdpevent)
+				, Agdp_Event::get_event_dates_text($agdpevent)
 			);
 		}
 		$html .= '</select>';
@@ -828,7 +828,7 @@ class Agdp_Covoiturage_Edit {
 					'cov-'.AGDP_COVOIT_SECRETCODE => 1,
 					'cov-periodique-label' => 1,
 					'cov-date-fin' => 1,
-					'related_' . Agdp_Evenement::post_type => 1,
+					'related_' . Agdp_Event::post_type => 1,
 				) as $post_field => $input_field){
 					if($input_field === 1) $input_field = $post_field;
 					if(isset($inputs[$input_field]))

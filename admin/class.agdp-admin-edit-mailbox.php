@@ -97,7 +97,7 @@ class Agdp_Admin_Edit_Mailbox extends Agdp_Admin_Edit_Post_Type {
 									. ($destination['moderate'] && !in_array($destination['rights'], ['M', 'X']) ? ' - Modération' : '')
 							);
 							break;
-						case Agdp_Evenement::post_type:
+						case Agdp_Event::post_type:
 							$post_id = Agdp::get_option('agenda_page_id');
 							$links[] = sprintf('E-mails vers %s publiés dans <a href="/wp-admin/post.php?post=%s&action=edit">Evénements</a>.', $email, $post_id);
 							break;

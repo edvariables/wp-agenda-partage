@@ -71,13 +71,13 @@ class Agdp {
 		add_action( 'agendapartage-init', array( 'Agdp_Report_Variables', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent.php' );
-		add_action( 'agendapartage-init', array( 'Agdp_Evenement', 'init' ) );
+		add_action( 'agendapartage-init', array( 'Agdp_Event', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-edit.php' );
-		add_action( 'agendapartage-init', array( 'Agdp_Evenement_Edit', 'init' ) );
+		add_action( 'agendapartage-init', array( 'Agdp_Event_Edit', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents.php' );
-		add_action( 'agendapartage-init', array( 'Agdp_Evenements', 'init' ) );
+		add_action( 'agendapartage-init', array( 'Agdp_Events', 'init' ) );
 		
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-covoiturage.php' );
@@ -111,7 +111,7 @@ class Agdp {
 		add_action( 'agendapartage-init', array( 'Agdp_WPCF7', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-shortcodes.php' );
-		add_action( 'agendapartage-init', array( 'Agdp_Evenement_Shortcodes', 'init' ) );
+		add_action( 'agendapartage-init', array( 'Agdp_Event_Shortcodes', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-covoiturage-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Covoiturage_Shortcodes', 'init' ) );
@@ -417,7 +417,7 @@ class Agdp {
 				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
 			case 'blog_presentation_page_id':
 				return __( 'Page "Présentation du site"', AGDP_TAG );
-			case 'agdpevents_nl_diffusion_term_id'://Agdp_Evenements::newsletter_diffusion_term_id
+			case 'agdpevents_nl_diffusion_term_id'://Agdp_Events::newsletter_diffusion_term_id
 				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 				
 			case 'covoiturage_managed':
@@ -438,7 +438,7 @@ class Agdp {
 			case 'covoiturage_need_validation':
 				return __( 'Les nouveaux covoiturages doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
 				
-			case 'allow_html_in_' . Agdp_Evenement::post_type :
+			case 'allow_html_in_' . Agdp_Event::post_type :
 				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
 			case 'allow_html_in_' . Agdp_Covoiturage::post_type :
 				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
@@ -697,7 +697,7 @@ class Agdp {
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-report-post_type.php';
 					break;
 
-				case 'Agdp_Evenement_Post_type':
+				case 'Agdp_Event_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-post_type.php';
 					break;
 
@@ -727,8 +727,8 @@ class Agdp {
 		Agdp_Mailbox_Post_type::register_user_role();
 		self::include_and_init('Agdp_Report_Post_type');
 		Agdp_Report_Post_type::register_user_role();
-		self::include_and_init('Agdp_Evenement_Post_type');
-		Agdp_Evenement_Post_type::register_user_role();
+		self::include_and_init('Agdp_Event_Post_type');
+		Agdp_Event_Post_type::register_user_role();
 		self::include_and_init('Agdp_Newsletter_Post_type');
 		Agdp_Newsletter_Post_type::register_user_role();
 		self::include_and_init('Agdp_Covoiturage_Post_type');
@@ -956,7 +956,7 @@ class Agdp {
 		if( $page )
 		switch($page){
 			case self::get_option('new_agdpevent_page_id'):
-				return Agdp_Evenement::post_type;
+				return Agdp_Event::post_type;
 			case self::get_option('new_covoiturage_page_id'):
 				return Agdp_Covoiturage::post_type;
 			default:

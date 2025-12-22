@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage -> Evenement
+ * AgendaPartage -> Event
  * Custom post type for WordPress.
  * Custom user role for WordPress.
  * 
@@ -9,11 +9,11 @@
  * Définition de la taxonomie 'ev_category'
  * Définition du rôle utilisateur 'agdpevent'
  * A l'affichage d'un évènement, le Content est remplacé par celui de l'évènement Modèle
- * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor', see Agdp_Admin_Evenement::init_PostType_Supports
+ * En Admin, le bloc d'édition du Content est masqué d'après la définition du Post type : le paramètre 'supports' qui ne contient pas 'editor', see Agdp_Admin_Event::init_PostType_Supports
  *
- * Voir aussi Agdp_Admin_Evenement
+ * Voir aussi Agdp_Admin_Event
  */
-class Agdp_Evenement_Post_type {
+class Agdp_Event_Post_type {
 	
 	/**
 	 * Evenement post type.
@@ -46,15 +46,15 @@ class Agdp_Evenement_Post_type {
 			'label'                 => __( 'Évènement', AGDP_TAG ),
 			'description'           => __( 'Évènement de l\'agenda partagé', AGDP_TAG ),
 			'labels'                => $labels,
-			'supports'              => array( 'title', 'thumbnail', 'revisions' ),//, 'author', 'editor' see Agdp_Admin_Evenement::init_PostType_Supports
-			'taxonomies'            => array( Agdp_Evenement::taxonomy_ev_category
-											, Agdp_Evenement::taxonomy_city
-											, Agdp_Evenement::taxonomy_diffusion ),
+			'supports'              => array( 'title', 'thumbnail', 'revisions' ),//, 'author', 'editor' see Agdp_Admin_Event::init_PostType_Supports
+			'taxonomies'            => array( Agdp_Event::taxonomy_ev_category
+											, Agdp_Event::taxonomy_city
+											, Agdp_Event::taxonomy_diffusion ),
 			'hierarchical'          => false,
 			'public'                => true,
 			'show_ui'               => true,
 			'show_in_menu'          => true,
-			'menu_icon'				=> 'dashicons-' . Agdp_Evenement::icon,
+			'menu_icon'				=> 'dashicons-' . Agdp_Event::icon,
 			'menu_position'         => 25,
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
@@ -66,20 +66,20 @@ class Agdp_Evenement_Post_type {
 			//'capabilities'			=> $capabilities,
 			'capability_type'       => 'post'
 		);
-		register_post_type( Agdp_Evenement::post_type, $args );
+		register_post_type( Agdp_Event::post_type, $args );
 		
 		if(WP_POST_REVISIONS >= 0)
 			add_filter( 'wp_revisions_to_keep', array(__CLASS__, 'wp_revisions_to_keep'), 10, 2);
 		// add_filter( '_wp_post_revision_fields', array(__CLASS__, '_wp_post_revision_fields'), 10, 2);
 	}
 	public static function wp_revisions_to_keep( int $num, WP_Post $post ) {
-		if($post->post_type === Agdp_Evenement::post_type)
+		if($post->post_type === Agdp_Event::post_type)
 			return -1;
 		return $num;
 	}
 	
 	// public static function _wp_post_revision_fields( $fields, $post ) {
-		// if($post['post_type'] === Agdp_Evenement::post_type){
+		// if($post['post_type'] === Agdp_Event::post_type){
 			// error_log('_wp_post_revision_fields $fields[\'meta_input\'] = \'Paramètres\'');
 			// $fields['meta_input'] = 'Paramètres';
 		// }
@@ -123,7 +123,7 @@ class Agdp_Evenement_Post_type {
 			'show_in_nav_menus'          => true,
 			'show_tagcloud'              => true,
 		);
-		register_taxonomy( Agdp_Evenement::taxonomy_ev_category, array( Agdp_Evenement::post_type ), $args );
+		register_taxonomy( Agdp_Event::taxonomy_ev_category, array( Agdp_Event::post_type ), $args );
 
 	}
 	
@@ -163,7 +163,7 @@ class Agdp_Evenement_Post_type {
 			'show_in_nav_menus'          => true,
 			'show_tagcloud'              => true,
 		);
-		register_taxonomy( Agdp_Evenement::taxonomy_city, array( Agdp_Evenement::post_type ), $args );
+		register_taxonomy( Agdp_Event::taxonomy_city, array( Agdp_Event::post_type ), $args );
 
 	}
 	
@@ -203,7 +203,7 @@ class Agdp_Evenement_Post_type {
 			'show_in_nav_menus'          => true,
 			'show_tagcloud'              => true,
 		);
-		register_taxonomy( Agdp_Evenement::taxonomy_diffusion, array( Agdp_Evenement::post_type ), $args );
+		register_taxonomy( Agdp_Event::taxonomy_diffusion, array( Agdp_Event::post_type ), $args );
 
 	}
 	
@@ -237,20 +237,20 @@ class Agdp_Evenement_Post_type {
 			// 'create_posts' => false,
 			// 'create_agdpevents' => false,
 		// );
-		// add_role( Agdp_Evenement::post_type, __('Évènement', AGDP_TAG ),  $capabilities);
+		// add_role( Agdp_Event::post_type, __('Évènement', AGDP_TAG ),  $capabilities);
 	}
 
 	/**
 	 * Retourne tous les termes
 	 */
 	public static function get_all_types_agdpevent($array_keys_field = 'term_id', $query_args = []){
-		return Agdp_Evenement::get_all_terms(Agdp_Evenement::taxonomy_ev_category, $array_keys_field, $query_args);
+		return Agdp_Event::get_all_terms(Agdp_Event::taxonomy_ev_category, $array_keys_field, $query_args);
 	}
 	public static function get_all_cities($array_keys_field = 'term_id', $query_args = []){
-		return Agdp_Evenement::get_all_terms(Agdp_Evenement::taxonomy_city, $array_keys_field, $query_args);
+		return Agdp_Event::get_all_terms(Agdp_Event::taxonomy_city, $array_keys_field, $query_args);
 	}
 	public static function get_all_diffusions($array_keys_field = 'term_id', $query_args = []){
-		return Agdp_Evenement::get_all_terms(Agdp_Evenement::taxonomy_diffusion, $array_keys_field, $query_args );
+		return Agdp_Event::get_all_terms(Agdp_Event::taxonomy_diffusion, $array_keys_field, $query_args );
 	}
 	
 	/**
@@ -259,7 +259,7 @@ class Agdp_Evenement_Post_type {
 	public static function get_taxonomies ( $except = false ){
 		$taxonomies = [];
 		
-		$tax_name = Agdp_Evenement::taxonomy_ev_category;
+		$tax_name = Agdp_Event::taxonomy_ev_category;
 		if( ! $except || strpos($except, $tax_name ) === false)
 			$taxonomies[$tax_name] = array(
 				'name' => $tax_name,
@@ -271,7 +271,7 @@ class Agdp_Evenement_Post_type {
 				'none_label' => '(sans catégorie)'
 			);
 		
-		$tax_name = Agdp_Evenement::taxonomy_city;
+		$tax_name = Agdp_Event::taxonomy_city;
 		if( ! $except || strpos($except, $tax_name ) === false)
 			$taxonomies[$tax_name] = array(
 				'name' => $tax_name,
@@ -283,7 +283,7 @@ class Agdp_Evenement_Post_type {
 				'none_label' => '(sans commune)'
 			);
 		
-		$tax_name = Agdp_Evenement::taxonomy_diffusion;
+		$tax_name = Agdp_Event::taxonomy_diffusion;
 		if( ! $except || strpos($except, $tax_name ) === false)
 			$taxonomies[$tax_name] = array(
 				'name' => $tax_name,
@@ -302,7 +302,7 @@ class Agdp_Evenement_Post_type {
 	 *
 	 */
 	public static function is_diffusion_managed(){
-		return Agdp_Evenements::get_newsletter_diffusion_term_id() != -1;
+		return Agdp_Events::get_newsletter_diffusion_term_id() != -1;
 	}
 	
 	/**

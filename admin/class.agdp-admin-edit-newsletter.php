@@ -256,7 +256,7 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 		$fields = [];
 		
 		$meta_name = 'source';
-		$sources = [ Agdp_Evenement::post_type => 'Evènements'
+		$sources = [ Agdp_Event::post_type => 'Evènements'
 				, Agdp_Covoiturage::post_type => 'Covoiturages'
 				, 'agdpstats' => 'Statistiques pour administrateurices'];
 		//Forums

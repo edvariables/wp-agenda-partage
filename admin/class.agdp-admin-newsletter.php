@@ -122,7 +122,7 @@ class Agdp_Admin_Newsletter {
 				if( Agdp_Newsletter::is_active($post_id))
 					_e('active', AGDP_TAG);
 				else{
-					//Evite la confusion avec Agdp_Evenement::the_title
+					//Evite la confusion avec Agdp_Event::the_title
 					$post = get_post( $post_id );
 					if($post->post_status != 'publish')
 						echo 'non, statut "' . __($post->post_status) . '"';

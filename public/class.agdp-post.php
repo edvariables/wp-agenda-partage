@@ -3,7 +3,7 @@
 /**
  * AgendaPartage -> Post abstract
  * Extension des custom post type.
- * Uilisé par Agdp_Evenement et Agdp_Covoiturage
+ * Uilisé par Agdp_Event et Agdp_Covoiturage
  * 
  */
 abstract class Agdp_Post {
@@ -62,7 +62,7 @@ abstract class Agdp_Post {
 
 	/**
 	 * Hooks pour les classes enfants (static::post_type !== false)
-	 *	Les hooks sont appelés 2 fois (par Agdp_Evenement et Agdp_Covoiturage)
+	 *	Les hooks sont appelés 2 fois (par Agdp_Event et Agdp_Covoiturage)
 	 */
 	public static function init_hooks() {
 		// debug_log(static::post_type . ' init_hooks', Agdp::get_current_post_type());
@@ -78,8 +78,8 @@ abstract class Agdp_Post {
 			if( ! ($post_type = static::post_type) )
 				throw new ArgumentException('post_type argument is empty');
 		switch ($post_type){
-			case Agdp_Evenement::post_type :
-				return 'Agdp_Evenement';
+			case Agdp_Event::post_type :
+				return 'Agdp_Event';
 			case Agdp_Covoiturage::post_type :
 				return 'Agdp_Covoiturage';
 			case Agdp_Report::post_type :
@@ -330,8 +330,8 @@ abstract class Agdp_Post {
 			
 			if(is_home()){
 				//TODO et si Agdp_Covoiturage en page d'accueil, hein ?
-				$query_field = Agdp_Evenement::postid_argument;
-				$page_id_name = Agdp_Evenement::posts_page_option;
+				$query_field = Agdp_Event::postid_argument;
+				$page_id_name = Agdp_Event::posts_page_option;
 				if( (! isset($query->query_vars['post_type'])
 					|| $query->query_vars['post_type'] === '')
 				&& isset($query->query[$query_field])){
@@ -1272,7 +1272,7 @@ abstract class Agdp_Post {
 	
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages
-	 * Fonction appelable via Agdp_Evenement, Agdp_Covoiturage ou une page quelconque
+	 * Fonction appelable via Agdp_Event, Agdp_Covoiturage ou une page quelconque
 	 */
 	public static function get_diagram( $blog_diagram, $page ){
 		

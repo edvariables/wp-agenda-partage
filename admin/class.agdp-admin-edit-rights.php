@@ -208,7 +208,7 @@ class Agdp_Admin_Edit_Rights {
 			if( is_a($args['page'], 'WP_POST') ){
 				$page = $args['page'];
 			}
-			elseif( $args['page'] === Agdp_Evenement::post_type ){
+			elseif( $args['page'] === Agdp_Event::post_type ){
 				$page = get_post(Agdp::get_option('agenda_page_id'));
 			}
 			elseif( $args['page'] === Agdp_Covoiturage::post_type ){

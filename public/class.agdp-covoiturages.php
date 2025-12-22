@@ -516,7 +516,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 			), self::filter_anteriority_option($options));
 		
 		if(Agdp_Covoiturage_Post_type::is_diffusion_managed()){
-			$term_id = Agdp_Evenements::get_newsletter_diffusion_term_id();
+			$term_id = Agdp_Events::get_newsletter_diffusion_term_id();
 			self::add_tax_filter(Agdp_Covoiturage::taxonomy_diffusion, $term_id);
 		}
 		
@@ -922,7 +922,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 		if( ! $agdpevents_covoiturage_id || $agdpevents_covoiturage_id !== $covoiturage->ID ){
 			$agdpevents_covoiturage_id = $covoiturage->ID;
 		
-			$meta_name = 'related_' . Agdp_Evenement::post_type;
+			$meta_name = 'related_' . Agdp_Event::post_type;
 			
 			$related_agdpevents = get_post_meta( $covoiturage->ID, $meta_name, false );
 			if( count($related_agdpevents) === 1 && !$related_agdpevents[0] )
@@ -942,7 +942,7 @@ class Agdp_Covoiturages extends Agdp_Posts {
 						, get_post_permalink($agdpevent)
 						, AGDP_ARG_COVOITURAGEID, $covoiturage->ID
 						, Agdp::icon('calendar-alt')
-						, Agdp_Evenement::get_post_title($agdpevent, true)
+						, Agdp_Event::get_post_title($agdpevent, true)
 				);
 			}
 			elseif( count($agdpevents) ){
@@ -964,14 +964,14 @@ class Agdp_Covoiturages extends Agdp_Posts {
 				$agdpevent = $agdpevents[0];
 				$html .= sprintf('<span>%s Évènement associé : %s</span>'
 						, Agdp::icon('calendar-alt')
-						, Agdp_Evenement::get_post_title($agdpevent, true)
+						, Agdp_Event::get_post_title($agdpevent, true)
 				);
 			}
 			elseif( count($agdpevents) ){
 				$html .= sprintf('<span>%s %s évènement%s associé%s</span>', Agdp::icon('calendar-alt'), count($agdpevents), count($agdpevents) > 1 ? 's' : '', count($agdpevents) > 1 ? 's' : '');
 				foreach($agdpevents as $agdpevent){
 					$html .= sprintf('<span title="%s">%s</span>'
-						, Agdp_Evenement::get_post_title($agdpevent, true)
+						, Agdp_Event::get_post_title($agdpevent, true)
 						, Agdp::icon('calendar-alt')
 					);
 				}

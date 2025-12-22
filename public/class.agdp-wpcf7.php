@@ -96,15 +96,15 @@ class Agdp_WPCF7 {
 			case Agdp::get_option('contact_form_id') :
 			case Agdp::get_option('admin_message_contact_form_id') :
 				// debug_log(__CLASS__.'::on_wpcf7_form_class_attr_cb() : contact_form_id');
-				if( isset($_REQUEST[Agdp_Evenement::postid_argument]) )
-					Agdp_Evenement::wpcf7_contact_form_init_tags( $form );
+				if( isset($_REQUEST[Agdp_Event::postid_argument]) )
+					Agdp_Event::wpcf7_contact_form_init_tags( $form );
 				elseif( isset($_REQUEST[Agdp_Covoiturage::postid_argument]) )
 					Agdp_Covoiturage::wpcf7_contact_form_init_tags( $form );
 				elseif( isset($_REQUEST[AGDP_ARG_COMMENTID]) )
 					Agdp_Comment::wpcf7_contact_form_init_tags( $form );
 				elseif( $post ){
-					if( $post->post_type === Agdp_Evenement::post_type )
-						Agdp_Evenement::wpcf7_contact_form_init_tags( $form );
+					if( $post->post_type === Agdp_Event::post_type )
+						Agdp_Event::wpcf7_contact_form_init_tags( $form );
 					elseif( $post->post_type === Agdp_Covoiturage::post_type )
 						Agdp_Covoiturage::wpcf7_contact_form_init_tags( $form );
 				}
@@ -199,11 +199,11 @@ class Agdp_WPCF7 {
 		}
 		switch($form_id){
 			case Agdp::get_option('admin_message_contact_form_id') :
-				Agdp_Evenement::change_email_recipient($contact_form);
+				Agdp_Event::change_email_recipient($contact_form);
 				Agdp_Covoiturage::change_email_recipient($contact_form);
 				return;
 			case Agdp::get_option('agdpevent_edit_form_id') :
-				Agdp_Evenement_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
+				Agdp_Event_Edit::submit_agdpevent_form($contact_form, $abort, $submission);
 				return;
 			case Agdp::get_option('covoiturage_edit_form_id') :
 				Agdp_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
@@ -430,7 +430,7 @@ class Agdp_WPCF7 {
 		switch($form_id){
 			//Formulaire spécifique pour les évènements
 			case Agdp::get_option('agdpevent_edit_form_id') :
-				return Agdp_Evenement_Edit::wp_mail_emails_fields($args);
+				return Agdp_Event_Edit::wp_mail_emails_fields($args);
 			//Formulaire spécifique pour les covoiturages
 			case Agdp::get_option('covoiturage_edit_form_id') :
 				return Agdp_Covoiturage_Edit::wp_mail_emails_fields($args);
@@ -484,7 +484,7 @@ class Agdp_WPCF7 {
 	}
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages
-	 * Fonction appelable via Agdp_Evenement, Agdp_Covoiturage ou une page quelconque
+	 * Fonction appelable via Agdp_Event, Agdp_Covoiturage ou une page quelconque
 	 */
 	public static function get_diagram( $blog_diagram, $post ){
 		

@@ -312,7 +312,7 @@ class Agdp_Newsletter {
 			switch( $source[0] ){
 				case 'page' :
 					return get_post($source[1]);
-				case Agdp_Evenement::post_type :
+				case Agdp_Event::post_type :
 					return get_post(Agdp::get_option('agenda_page_id'));
 				case Agdp_Covoiturage::post_type :
 					return get_post(Agdp::get_option('covoiturages_page_id'));
@@ -444,8 +444,8 @@ class Agdp_Newsletter {
 	 */
 	 public static function get_newsletter_posts_post_type($newsletter){
 		switch($newsletter->ID){
-			case Agdp::get_option(Agdp_Evenement::newsletter_option) :
-				return Agdp_Evenement::post_type;
+			case Agdp::get_option(Agdp_Event::newsletter_option) :
+				return Agdp_Event::post_type;
 			case Agdp::get_option(Agdp_Covoiturage::newsletter_option) :
 				return Agdp_Covoiturage::post_type;
 			default:
@@ -1031,7 +1031,7 @@ class Agdp_Newsletter {
 			case 'admin_nl_post_id' :
 				return 'admin';
 			case 'events_nl_post_id' :
-				return Agdp_Evenement::post_type;
+				return Agdp_Event::post_type;
 			case 'covoiturages_nl_post_id' :
 				return Agdp_Covoiturage::post_type;
 			default:
@@ -2180,7 +2180,7 @@ class Agdp_Newsletter {
 		$icon = 'email-alt2';
 		if( isset($diagram['posts_type']) )
 			switch( $diagram['posts_type'] ){
-				case Agdp_Evenement::post_type :
+				case Agdp_Event::post_type :
 					$icon = 'calendar-alt';
 					break;
 				case Agdp_Covoiturage::post_type :

@@ -211,7 +211,7 @@ class Agdp_Mailbox {
 			$page = $page_id;
 			$page_id = $page->ID;
 		}
-		elseif( $page_id === Agdp_Evenement::post_type )
+		elseif( $page_id === Agdp_Event::post_type )
 			return get_post( Agdp::get_option('agenda_page_id') );
 		elseif( $page_id === Agdp_Covoiturage::post_type )
 			return get_post( Agdp::get_option('covoiturages_page_id') );
@@ -530,7 +530,7 @@ class Agdp_Mailbox {
 		';
 		
 		$post_type_pages = [
-			''.Agdp::get_option('agenda_page_id') => Agdp_Evenement::post_type,
+			''.Agdp::get_option('agenda_page_id') => Agdp_Event::post_type,
 			''.Agdp::get_option('covoiturages_page_id') => Agdp_Covoiturage::post_type,
 		];
 		$dispatches = [];
@@ -663,7 +663,7 @@ class Agdp_Mailbox {
 				case 'page':
 					$page_id = $dispatch['id'].'';
 					break;
-				case Agdp_Evenement::post_type :
+				case Agdp_Event::post_type :
 					$page_id = Agdp::get_option('agenda_page_id');
 					break;
 				case Agdp_Covoiturage::post_type :
@@ -835,7 +835,7 @@ class Agdp_Mailbox {
 					if($comment && ! is_wp_error($comment))
 						$imported[] = $comment;
 					break;
-				case Agdp_Evenement::post_type :
+				case Agdp_Event::post_type :
 					$post = self::import_message_to_post_type( $mailbox, $message, $dispatch[$email_to]['type'] );
 					if($post && ! is_wp_error($post))
 						$imported[] = $post;
@@ -1331,7 +1331,7 @@ class Agdp_Mailbox {
 			 || ! ($post = get_post($_POST['_wpcf7_container_post']) ) )
 				return;
 			switch($post->post_type){
-				case Agdp_Evenement::post_type:
+				case Agdp_Event::post_type:
 				case Agdp_Covoiturage::post_type:
 					//TODO
 		

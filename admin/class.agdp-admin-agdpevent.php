@@ -7,9 +7,9 @@
  * Colonnes de la liste des évènements
  * Dashboard
  *
- * Voir aussi Agdp_Evenement
+ * Voir aussi Agdp_Event
  */
-class Agdp_Admin_Evenement {
+class Agdp_Admin_Event {
 
 	public static function init() {
 
@@ -21,15 +21,15 @@ class Agdp_Admin_Evenement {
 		add_filter( 'map_meta_cap', array(__CLASS__, 'map_meta_cap'), 10, 4 );
 		
 		//add views
-		//add_filter( 'views_edit-' . Agdp_Evenement::post_type, array( __CLASS__, 'on_get_views' ), 10, 1 );
+		//add_filter( 'views_edit-' . Agdp_Event::post_type, array( __CLASS__, 'on_get_views' ), 10, 1 );
 		
 		//add custom columns for list view
-		add_filter( 'manage_' . Agdp_Evenement::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
-		add_action( 'manage_' . Agdp_Evenement::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
+		add_filter( 'manage_' . Agdp_Event::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
+		add_action( 'manage_' . Agdp_Event::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
 		//set custom columns sortable
-		add_filter( 'manage_edit-' . Agdp_Evenement::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
+		add_filter( 'manage_edit-' . Agdp_Event::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
 		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
-		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Evenement::post_type){
+		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Event::post_type){
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'));
 			add_filter( 'manage_posts_extra_tablenav', array( __CLASS__, 'on_manage_posts_extra_tablenav' ), 10, 1 );
 		}
@@ -65,7 +65,7 @@ class Agdp_Admin_Evenement {
 		  ->sub(new DateInterval('P2M'))
 		  ->format('Y-m-d');
 		$deletable_args = array(
-			'post_type' => Agdp_Evenement::post_type,
+			'post_type' => Agdp_Event::post_type,
 			'ev-date-fin'    => $date,
 		);
 		$deletable = array(
@@ -109,7 +109,7 @@ class Agdp_Admin_Evenement {
 	public static function manage_custom_columns( $column, $post_id ) {
 		switch ( $column ) {
 			case 'titre' :
-				//Evite la confusion avec Agdp_Evenement::the_title
+				//Evite la confusion avec Agdp_Event::the_title
 				$post = get_post( $post_id );
 				echo $post->post_title;
 				
@@ -125,7 +125,7 @@ class Agdp_Admin_Evenement {
 				
 				if( $post->post_status === 'pending' ){
 					if( current_user_can('moderate_comments')
-					|| (Agdp_Evenement::user_can_change_post($post_id))){
+					|| (Agdp_Event::user_can_change_post($post_id))){
 						$data = [
 							'post_type'=>$post->post_type,
 							'post_id'=>$post->ID
@@ -142,7 +142,7 @@ class Agdp_Admin_Evenement {
 				
 				break;
 			case 'dates' :
-				echo Agdp_Evenement::get_event_dates_text( $post_id );
+				echo Agdp_Event::get_event_dates_text( $post_id );
 				break;
 			case 'ev_category' :
 				the_terms( $post_id, $column, '<cite class="entry-terms">', ', ', '</cite>' );
@@ -188,7 +188,7 @@ class Agdp_Admin_Evenement {
 	 */
 	public static function on_pre_get_posts( $query ) {
 		global $wpdb;
-		if( $query->query['post_type'] !== Agdp_Evenement::post_type )
+		if( $query->query['post_type'] !== Agdp_Event::post_type )
 			return;
 		if(empty($query->query_vars))
 			return;
@@ -326,7 +326,7 @@ class Agdp_Admin_Evenement {
 			. "\n INNER JOIN {$blog_prefix}postmeta post_date_fin"
 			. "\n ON post_date_fin.post_id = post.ID"
 			. "\n AND post_date_fin.meta_key = 'ev-date-fin'"
-			. "\n WHERE post.post_type = '".Agdp_Evenement::post_type."'"
+			. "\n WHERE post.post_type = '".Agdp_Event::post_type."'"
 			. "\n AND post.post_status IN ('publish', 'pending', 'draft')"
 			. "\n AND GREATEST(post_date_debut.meta_value, post_date_fin.meta_value) >= CURRENT_DATE()"
 			. "\n AND ( post.post_author = {$user_id}"
@@ -377,7 +377,7 @@ class Agdp_Admin_Evenement {
 		
 		if(current_user_can('moderate_comments')
 		/* TODO || current_user_can('agdpevent') */){
-		    $agdpevents = Agdp_Evenements::get_posts( 10, [
+		    $agdpevents = Agdp_Events::get_posts( 10, [
 				'post_status' => ['publish', 'pending', 'draft']
 				, 'orderby' => ['post_modified' => 'DESC']
 			]);
@@ -425,9 +425,9 @@ class Agdp_Admin_Evenement {
 				if($edit_url)
 					$url = get_edit_post_link($agdpevent);
 				else
-					$url = Agdp_Evenement::get_post_permalink($agdpevent);
-				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, Agdp_Evenement::get_post_title($agdpevent) );
-				the_terms( $agdpevent->ID, Agdp_Evenement::taxonomy_ev_category, 
+					$url = Agdp_Event::get_post_permalink($agdpevent);
+				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a></h3>', $url, Agdp_Event::get_post_title($agdpevent) );
+				the_terms( $agdpevent->ID, Agdp_Event::taxonomy_ev_category, 
 					sprintf( '<div><cite class="entry-terms">' ), ', ', '</cite></div>' );
 				$the_date = get_the_date('', $agdpevent);
 				$the_modified_date = get_the_modified_date('', $agdpevent);
@@ -458,7 +458,7 @@ class Agdp_Admin_Evenement {
 		?><ul><?php
 		foreach($agdpevents as $agdpevent){
 			echo '<li>';
-			edit_post_link( Agdp_Evenement::get_post_title($agdpevent), '<h3 class="entry-title">', '</h3>', $agdpevent );
+			edit_post_link( Agdp_Event::get_post_title($agdpevent), '<h3 class="entry-title">', '</h3>', $agdpevent );
 			$the_date = get_the_date('', $agdpevent);
 			$the_modified_date = get_the_modified_date('', $agdpevent);
 			$html = '';
@@ -468,7 +468,7 @@ class Agdp_Admin_Evenement {
 			if($agdpevent->post_status != 'publish')
 				$html .= sprintf('<br><b>%s</b>', Agdp::icon( 'warning', $post_statuses[$agdpevent->post_status])) ;
 			
-			$value = Agdp_Evenement_Edit::get_agdpevent_email_address($agdpevent);
+			$value = Agdp_Event_Edit::get_agdpevent_email_address($agdpevent);
 			if($value)
 				$html .= sprintf(' - %s', $value);
 			
@@ -478,7 +478,7 @@ class Agdp_Admin_Evenement {
 			if( --$max_rows <= 0 && $the_modified_date != $today_date )
 				break;
 		}
-		echo sprintf('<li><a href="%s">%s...</a></li>', get_home_url( null, 'wp-admin/edit.php?post_type=' . Agdp_Evenement::post_type), __('Tous les évènements', AGDP_TAG));
+		echo sprintf('<li><a href="%s">%s...</a></li>', get_home_url( null, 'wp-admin/edit.php?post_type=' . Agdp_Event::post_type), __('Tous les évènements', AGDP_TAG));
 		?>
 		</ul><?php
 	}
@@ -490,7 +490,7 @@ class Agdp_Admin_Evenement {
 	 */
 	public static function on_wp_ajax_action_publish_post($data){
 		$post_id = $data['post_id'];
-		$result = Agdp_Evenement::agdpevent_action_publish( $post_id );
+		$result = Agdp_Event::agdpevent_action_publish( $post_id );
 		if( is_wp_error($result) )
 			return Agdp::icon('warning', $result->get_error_message());
 		return $result;
@@ -524,7 +524,7 @@ class Agdp_Admin_Evenement {
 		//publish
 		$filters = array(
 			'tax_query' => [[
-				'taxonomy' => Agdp_Evenement::taxonomy_diffusion,
+				'taxonomy' => Agdp_Event::taxonomy_diffusion,
 				'operator' => 'IN',
 				'field' => 'slug',
 				'terms' => $term,
@@ -542,7 +542,7 @@ class Agdp_Admin_Evenement {
 		else {
 			$max_modified_date = false;
 		}
-		$posts = Agdp_Evenements::get_posts($filters);
+		$posts = Agdp_Events::get_posts($filters);
 		$events = [];
 		foreach( $posts as $post_id ){
 			if( $max_modified_date ){
@@ -552,7 +552,7 @@ class Agdp_Admin_Evenement {
 				}
 			}
 			
-			Agdp_Evenement::send_for_diffusion( $post_id, $term );
+			Agdp_Event::send_for_diffusion( $post_id, $term );
 			$events[] = $post_id;
 		}
 		$count = count($events);
@@ -565,7 +565,7 @@ class Agdp_Admin_Evenement {
 				'value' => '',
 			],
 			'tax_query' => [[
-				'taxonomy' => Agdp_Evenement::taxonomy_diffusion,
+				'taxonomy' => Agdp_Event::taxonomy_diffusion,
 				'operator' => 'NOT IN',
 				'field' => 'slug',
 				'terms' => $term,
@@ -575,7 +575,7 @@ class Agdp_Admin_Evenement {
 			'fields' => 'ids',
 		);
 		$deleted = [];
-		$posts = Agdp_Evenements::get_posts($filters);
+		$posts = Agdp_Events::get_posts($filters);
 		// debug_log(__FUNCTION__, $posts);
 		foreach( $posts as $post_id ){
 			if( in_array( $post_id, $events ) )
@@ -585,7 +585,7 @@ class Agdp_Admin_Evenement {
 				if( $max_modified_date > $post->post_modified )
 					break;
 			}
-			Agdp_Evenement::send_for_diffusion( $post_id, $term, [], [$term]);
+			Agdp_Event::send_for_diffusion( $post_id, $term, [], [$term]);
 			$deleted[] = $post_id;
 		}
 		$count = count($events);

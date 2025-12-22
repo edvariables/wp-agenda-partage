@@ -138,11 +138,11 @@ abstract class Agdp_Posts_Export {
 		foreach($posts as $post){
 			$txt[] = $post->post_title;
 			$txt[] = str_repeat('-', 24);
-			// $txt[] = Agdp_Evenement::get_event_dates_text( $post->ID );
+			// $txt[] = Agdp_Event::get_event_dates_text( $post->ID );
 			// $txt[] = get_post_meta($post->ID, 'ev-localisation', true);
-			// if( $value = Agdp_Evenement::get_event_cities($post->ID))
+			// if( $value = Agdp_Event::get_event_cities($post->ID))
 				// $txt[] = implode(', ', $value);
-			// if( $value = Agdp_Evenement::get_event_categories($post->ID))
+			// if( $value = Agdp_Event::get_event_categories($post->ID))
 				// $txt[] = implode(', ', $value);
 			// foreach(['ev-organisateur', 'ev-email', 'ev-user-email', 'ev-phone', 'ev-siteweb'] as $meta_key)
 				// if( $value = get_post_meta($post->ID, $meta_key, true) )
@@ -163,7 +163,7 @@ abstract class Agdp_Posts_Export {
 
 		$txt = [];
 		foreach($posts as $post){
-			// if( $cities = Agdp_Evenement::get_event_cities($post->ID))
+			// if( $cities = Agdp_Event::get_event_cities($post->ID))
 				// $cities = ' - ' . implode(', ', $cities);
 			// else
 				// $cities = '';
@@ -172,7 +172,7 @@ abstract class Agdp_Posts_Export {
 			// $localisation = get_post_meta($post->ID, 'ev-localisation', true);
 			// if($localisation)
 				// $localisation = ' - ' . $localisation;
-			// $dates = Agdp_Evenement::get_event_dates_text( $post->ID );
+			// $dates = Agdp_Event::get_event_dates_text( $post->ID );
 			// $dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
 			// $txt[] = $dates . $localisation;
 			
@@ -257,7 +257,7 @@ abstract class Agdp_Posts_Export {
 		foreach($posts as $post){
 			$xml_post = str_replace('[**FIN**]', '', $xml_block_model);
 			
-			// if( $cities = Agdp_Evenement::get_event_cities($post->ID))
+			// if( $cities = Agdp_Event::get_event_cities($post->ID))
 				// $cities = ' - ' . implode(', ', $cities);
 			// else
 				// $cities = '';
@@ -267,7 +267,7 @@ abstract class Agdp_Posts_Export {
 			// $localisation = get_post_meta($post->ID, 'ev-localisation', true);
 			// if($localisation)
 				// $localisation = ' - ' . $localisation;
-			// $dates = Agdp_Evenement::get_event_dates_text( $post->ID );
+			// $dates = Agdp_Event::get_event_dates_text( $post->ID );
 			// $dates = str_replace([ date('Y'), date('Y + 1 year') ], '', $dates);
 			// $txt = $dates . $localisation;
 			// $xml_post = str_replace('[Date-Lieu]', htmlspecialchars($txt), $xml_post);

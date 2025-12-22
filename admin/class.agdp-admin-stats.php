@@ -125,7 +125,7 @@ class Agdp_Admin_Stats {
 	}
 
 	public static function agdpevents_stats() {
-		return self::posts_stats(Agdp_Evenement::post_type);
+		return self::posts_stats(Agdp_Event::post_type);
 	}
 	public static function covoiturages_stats() {
 		return self::posts_stats(Agdp_Covoiturage::post_type);
@@ -264,7 +264,7 @@ class Agdp_Admin_Stats {
 	}
 
 	public static function posts_stats_counters() {
-		$postcounters = explode('|', self::stats_postcounters( [ Agdp_Evenement::post_type, Agdp_Covoiturage::post_type ] ) );
+		$postcounters = explode('|', self::stats_postcounters( [ Agdp_Event::post_type, Agdp_Covoiturage::post_type ] ) );
 		$commentscounters = explode('|', self::stats_forumscounters());
 		for( $i = 0; $i < max(count($postcounters), count($commentscounters)); $i++){
 			if( count($postcounters) < $i )
@@ -280,7 +280,7 @@ class Agdp_Admin_Stats {
 	}
 
 	public static function agdpevents_stats_counters() {
-		return self::stats_postcounters(Agdp_Evenement::post_type);
+		return self::stats_postcounters(Agdp_Event::post_type);
 	}
 
 	public static function covoiturages_stats_counters() {

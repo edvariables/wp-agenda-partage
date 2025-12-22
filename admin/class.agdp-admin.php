@@ -52,7 +52,7 @@ class Agdp_Admin {
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Forum', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-agdpevent.php' );
-		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Evenement', 'init' ) );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Event', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-newsletter.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Newsletter', 'init' ) );
@@ -65,7 +65,7 @@ class Agdp_Admin {
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Covoiturage', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-agdpevent.php' );
-		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Evenement', 'init' ) );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Event', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-covoiturage.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Covoiturage', 'init' ) );
@@ -310,8 +310,8 @@ class Agdp_Admin {
 				$post_type = false;
 			try{
 				switch($post_type){
-					case Agdp_Evenement::post_type :
-						$class = 'Agdp_Admin_Evenement';
+					case Agdp_Event::post_type :
+						$class = 'Agdp_Admin_Event';
 						break;
 					default:
 						if( $post_type ){

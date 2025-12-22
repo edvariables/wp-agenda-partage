@@ -53,7 +53,7 @@ class Agdp_Admin_Edit_WPCF7 {
 				$html = Agdp_Newsletter::init_wpcf7_form_html( $args['form'] );
 				break;
 			case Agdp::get_option('agdpevent_edit_form_id'):
-				$html = Agdp_Evenement::init_wpcf7_form_html( $args['form'] );
+				$html = Agdp_Event::init_wpcf7_form_html( $args['form'] );
 				break;
 			case Agdp::get_option('covoiturage_edit_form_id'):
 				$html = Agdp_Covoiturage::init_wpcf7_form_html( $args['form'] );
@@ -98,9 +98,9 @@ class Agdp_Admin_Edit_WPCF7 {
 				$option_form_id = 'newsletter_subscribe_form_id';
 				$function = 'Agdp_Newsletter::init_wpcf7_form_html';
 				break;
-			case Agdp_Evenement::post_type :
+			case Agdp_Event::post_type :
 				$option_form_id = 'agdpevent_edit_form_id';
-				$function = 'Agdp_Evenement::init_wpcf7_form_html';
+				$function = 'Agdp_Event::init_wpcf7_form_html';
 				break;
 			case Agdp_Covoiturage::post_type :
 				$option_form_id = 'covoiturage_edit_form_id';

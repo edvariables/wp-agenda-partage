@@ -124,7 +124,7 @@ class Agdp_Covoiturages_Import extends Agdp_Posts_Import {
 				'cov-periodique' => 'periodique',
 				'cov-periodique-label' => 'periodique-label',
 				'cov-'.AGDP_COVOIT_SECRETCODE => AGDP_COVOIT_SECRETCODE,
-				'related_' . Agdp_Evenement::post_type => true,
+				'related_' . Agdp_Event::post_type => true,
 				'cov-organisateur' => 'organisateur',
 				'cov-email' => 'email',
 				'cov-phone' => 'phone',

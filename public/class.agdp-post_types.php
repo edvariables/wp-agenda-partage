@@ -29,7 +29,7 @@ class Agdp_Post_Types {
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report-post_type.php' );
 		
-		if(!class_exists('Agdp_Evenement'))
+		if(!class_exists('Agdp_Event'))
 			require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent.php' );
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-post_type.php' );
 		if(!class_exists('Agdp_Newsletter'))
@@ -61,10 +61,10 @@ class Agdp_Post_Types {
 		Agdp_Report_Post_type::register_taxonomy_report_style();
 		Agdp_Report_Post_type::register_taxonomy_sql_function();
 		
-		Agdp_Evenement_Post_type::register_post_type();
-		Agdp_Evenement_Post_type::register_taxonomy_ev_category();
-		Agdp_Evenement_Post_type::register_taxonomy_city();
-		Agdp_Evenement_Post_type::register_taxonomy_diffusion();
+		Agdp_Event_Post_type::register_post_type();
+		Agdp_Event_Post_type::register_taxonomy_ev_category();
+		Agdp_Event_Post_type::register_taxonomy_city();
+		Agdp_Event_Post_type::register_taxonomy_diffusion();
 		
 		Agdp_Newsletter_Post_type::register_post_type();
 		Agdp_Newsletter_Post_type::register_taxonomy_period();
@@ -93,12 +93,12 @@ class Agdp_Post_Types {
 		
 		unregister_post_type(Agdp_Mailbox::post_type);
 		
-		foreach( Agdp_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
+		foreach( Agdp_Event_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 			if ( post_type_exists( $tax_name ) ) 
 				unregister_post_type($tax_name);
 		}
 
-		unregister_post_type(Agdp_Evenement::post_type);
+		unregister_post_type(Agdp_Event::post_type);
 		unregister_post_type(Agdp_Newsletter::post_type);
 		
 		if(Agdp::maillog_enable()){

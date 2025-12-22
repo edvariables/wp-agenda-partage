@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage Admin -> Edit -> Evenement/Covoiturage -> localisation
+ * AgendaPartage Admin -> Edit -> Event/Covoiturage -> localisation
  * Custom taxonomy term for WordPress in Admin UI.
  * 
  * Edition d'une localisation

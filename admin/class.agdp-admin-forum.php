@@ -116,8 +116,8 @@ class Agdp_Admin_Forum {
 			'blog_presentation_page_id' => [ 'title' => 'Présentation' ],
 			'contact_page_id' => [ 'title' => 'Contactez-nous', 'icon' => 'email'],
 			'newsletter_subscribe_page_id' => [ 'title' => 'Lettres-infos', 'icon' => Agdp_Newsletter::icon ],
-			'agenda_page_id' => [ 'title' => 'Agenda', 'icon' => Agdp_Evenement::icon ],
-			'new_agdpevent_page_id' => [ 'title' => 'Nouvel évènement', 'icon' => Agdp_Evenement::icon ],
+			'agenda_page_id' => [ 'title' => 'Agenda', 'icon' => Agdp_Event::icon ],
+			'new_agdpevent_page_id' => [ 'title' => 'Nouvel évènement', 'icon' => Agdp_Event::icon ],
 			'covoiturages_page_id' => [ 'title' => 'Covoiturages', 'icon' => Agdp_Covoiturage::icon ],
 			'new_covoiturage_page_id' => [ 'title' => 'Nouveau covoiturage', 'icon' => Agdp_Covoiturage::icon ],
 		] as $option => $option_data ){

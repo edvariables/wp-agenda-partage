@@ -555,7 +555,7 @@ class Agdp_Admin_Edit_Forum extends Agdp_Admin_Edit_Post_Type {
 		switch( $post->ID ){
 		//posts
 		case Agdp::get_option('agenda_page_id'):
-			$post_type = Agdp_Evenement::post_type;
+			$post_type = Agdp_Event::post_type;
 			break;
 		case Agdp::get_option('covoiturages_page_id'):
 			$post_type = Agdp_Covoiturage::post_type;

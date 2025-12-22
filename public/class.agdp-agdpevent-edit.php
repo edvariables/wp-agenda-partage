@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage -> Evenement -> Edition
+ * AgendaPartage -> Event -> Edition
  * Edition d'un évènement en ligne dans le site, avec ou sans utilisateur wp
  * 
  * Définition du Html d'édition.
@@ -12,7 +12,7 @@
  * TODO : 
  * - Attention si on crée un évènement à partir d'un autre (is_new_post())
  */
-class Agdp_Evenement_Edit {
+class Agdp_Event_Edit {
 
 
 	private static $initiated = false;
@@ -58,7 +58,7 @@ class Agdp_Evenement_Edit {
 	*
 	*/
 	public static function get_post($agdpevent_id = false) {
-		return Agdp_Evenement::get_post($agdpevent_id);
+		return Agdp_Event::get_post($agdpevent_id);
 	}
 	
  	/**
@@ -98,7 +98,7 @@ class Agdp_Evenement_Edit {
 			if($post_id){
 				$post_title = isset( $post->post_title ) ? $post->post_title : '';
 			
-				$html = Agdp_Evenement::get_event_dates_text( $post_id )
+				$html = Agdp_Event::get_event_dates_text( $post_id )
 					. '<br>' . $post_title
 					. '<br>' . get_post_meta($post_id, 'ev-localisation', true);
 				return $html;
@@ -157,12 +157,12 @@ class Agdp_Evenement_Edit {
 		
  		if( $post ){
  			$post_id = $post->ID;
-			if( ! Agdp_Evenement::user_can_change_post($post)){
+			if( ! Agdp_Event::user_can_change_post($post)){
 				return self::get_agdpevent_edit_content_forbidden( $post );
 			}
 			$agdpevent_exists = ! $duplicate_from_id;
 			$meta_name = 'ev-user-email' ;
-			$email = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
+			$email = Agdp_Event::get_post_meta($post_id, $meta_name, true, false);
 			
 			/*if(!$email) {
 				return Agdp::icon('warning'
@@ -186,7 +186,7 @@ class Agdp_Evenement_Edit {
 					'ev-message-contact',
 					'attachments']
 					as $meta_name){
-				$attrs[$meta_name] = Agdp_Evenement::get_post_meta($post_id, $meta_name, true, false);
+				$attrs[$meta_name] = Agdp_Event::get_post_meta($post_id, $meta_name, true, false);
 			}
 		}
 		else{
@@ -227,8 +227,8 @@ class Agdp_Evenement_Edit {
 		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
 		$input = sprintf('<input type="hidden" class="agdpevent_edit_form_data" data="%s"/>', $attrs);
 		if($duplicate_from_id){
-			$title = Agdp_Evenement::get_post_title($post, true);
-			$url = Agdp_Evenement::get_post_permalink( $post_id, AGDP_EVENT_SECRETCODE);
+			$title = Agdp_Event::get_post_title($post, true);
+			$url = Agdp_Event::get_post_permalink( $post_id, AGDP_EVENT_SECRETCODE);
 			$html = sprintf('<p class="info"> Duplication de l\'évènement <a href="%s">%s</a></p>'
 					, $url, $title)
 				. $html;
@@ -239,7 +239,7 @@ class Agdp_Evenement_Edit {
 			$input .= sprintf('<input type="hidden" name="post_id" value="%s"/>', $post_id);
 			
 			//Maintient la transmission du code secret
-			$ekey = Agdp_Evenement::get_secretcode_in_request($post_id);		
+			$ekey = Agdp_Event::get_secretcode_in_request($post_id);		
 			if($ekey){
 				$input .= sprintf('<input type="hidden" name="%s" value="%s"/>', AGDP_EVENT_SECRETCODE, $ekey);
 			}
@@ -248,14 +248,14 @@ class Agdp_Evenement_Edit {
 		
 		if($agdpevent_exists){
 			//Is imported
-			if( $is_imported = Agdp_Evenement::get_post_imported( $post, false, true ) ){
+			if( $is_imported = Agdp_Event::get_post_imported( $post, false, true ) ){
 				if( current_user_can('moderate_comments') ){
 					$meta_name = AGDP_IMPORT_REFUSED;
 					$import_refused = get_post_meta( $post_id, $meta_name, true );
 					
 					$html .= sprintf('<div class="agdppost-edit-toolbar post-is-imported">%s<span class="agdppost-tool">%s</span><br>%s</div>'
 						, $is_imported
-						, Agdp_Evenement::get_agdpevent_action_link(
+						, Agdp_Event::get_agdpevent_action_link(
 							$post_id, 'refuse_import', true, null, false, null, $import_refused ? ['cancel'=>true] : null)
 						, 'Vos modifications seront sans doute écrasées ultérieurement.'
 					);
@@ -288,17 +288,17 @@ class Agdp_Evenement_Edit {
 		);
 				
 		if($post->post_status == 'publish')
-			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'unpublish', true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Event::get_agdpevent_action_link($post_id, 'unpublish', true));
 		elseif( current_user_can('moderate_comments')
-		|| (! Agdp_Evenement::waiting_for_activation($post_id)
-			&& Agdp_Evenement::user_can_change_post($post_id))){
-			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'publish', true));
+		|| (! Agdp_Event::waiting_for_activation($post_id)
+			&& Agdp_Event::user_can_change_post($post_id))){
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Event::get_agdpevent_action_link($post_id, 'publish', true));
 		}
 		if(current_user_can('edit_posts')
 		|| current_user_can('agdpevent'))
-			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'duplicate', true));
-		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_action_link($post_id, 'remove', true));
-		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Evenement::get_agdpevent_contact_email_link($post_id, true));
+			$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Event::get_agdpevent_action_link($post_id, 'duplicate', true));
+		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Event::get_agdpevent_action_link($post_id, 'remove', true));
+		$html .= sprintf('<span class="agdppost-tool">%s</span>', Agdp_Event::get_agdpevent_contact_email_link($post_id, true));
 		$html .= '</div>';
 		
 		return $html;
@@ -314,7 +314,7 @@ class Agdp_Evenement_Edit {
 		$html = $form->prop('form');//avec shortcodes du wpcf7
 		$post = get_post();
 		
-		$html = Agdp_Evenement::init_wpcf7_form_html( $html, $post );
+		$html = Agdp_Event::init_wpcf7_form_html( $html, $post );
 		
 		/** e-mail non-obligatoire si connecté **/
 		if(($user = wp_get_current_user())
@@ -355,10 +355,10 @@ class Agdp_Evenement_Edit {
 			$html .= '<ul>Pour pouvoir modifier un évènement vous devez remplir l\'une de ces conditions :';
 			
 			$html .= '<li>disposer d\'un code secret reçu par e-mail selon l\'adresse associée à l\'évènement.';
-			$html .= '<br>' . Agdp_Evenement::get_agdpevent_contact_email_link($post, true);
+			$html .= '<br>' . Agdp_Event::get_agdpevent_contact_email_link($post, true);
 			
 			//Formulaire de saisie du code secret
-			$url = Agdp_Evenement::get_post_permalink( $post );
+			$url = Agdp_Event::get_post_permalink( $post );
 			$query = [
 				'post_id' => $post_id,
 				'action' => AGDP_TAG . '_' . AGDP_EVENT_SECRETCODE
@@ -414,13 +414,13 @@ class Agdp_Evenement_Edit {
 		$ajax_response = '0';
 		if(array_key_exists("post_id", $_POST)){
 			$post = get_post($_POST['post_id']);
-			if($post->post_type != Agdp_Evenement::post_type)
+			if($post->post_type != Agdp_Event::post_type)
 				return;
 			$input = $_POST[AGDP_EVENT_SECRETCODE];
-			$codesecret = Agdp_Evenement::get_post_meta($post, 'ev-' . AGDP_EVENT_SECRETCODE, true);
+			$codesecret = Agdp_Event::get_post_meta($post, 'ev-' . AGDP_EVENT_SECRETCODE, true);
 			if(strcasecmp( $codesecret, $input) == 0){
 				//TODO : transient plutot que dans l'url
-				$url = Agdp_Evenement::get_post_permalink($post, AGDP_EVENT_SECRETCODE . '=' . $codesecret);
+				$url = Agdp_Event::get_post_permalink($post, AGDP_EVENT_SECRETCODE . '=' . $codesecret);
 				$ajax_response = sprintf('redir:%s', $url);
 			}
 			else{
@@ -606,7 +606,7 @@ class Agdp_Evenement_Edit {
 			if( ! is_object($post)){
 				$post = false;
 			}
-			elseif( ! Agdp_Evenement::user_can_change_post($post)){
+			elseif( ! Agdp_Event::user_can_change_post($post)){
 				$abort = true;
 				$error_message = sprintf('Vous n\'êtes pas autorisé à modifier cet évènement.');
 				$submission->set_response($error_message);
@@ -656,13 +656,13 @@ class Agdp_Evenement_Edit {
 			}
 			
 			//categories, communes et diffusions
-			$taxonomies = Agdp_Evenement_Post_type::get_taxonomies();
+			$taxonomies = Agdp_Event_Post_type::get_taxonomies();
 			$tax_terms = [];
 			foreach( $taxonomies as $tax_name => $taxonomy){
 				$field = $taxonomy['input'];
 			
 				$tax_terms[ $tax_name ] = [];
-				$all_terms = Agdp_Evenement::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms = Agdp_Event::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) ){
@@ -736,7 +736,7 @@ class Agdp_Evenement_Edit {
 		$postarr = array(
 			'post_title' => $post_title,
 			'post_name' => sanitize_title( $post_title ),
-			'post_type' => Agdp_Evenement::post_type,
+			'post_type' => Agdp_Event::post_type,
 			'post_author' => $post_author,
 			'meta_input' => $data,
 			'post_content' => $post_content,
@@ -768,7 +768,7 @@ class Agdp_Evenement_Edit {
 				// die();
 				if($doublon){
 					if(is_a($doublon, 'WP_Post')){
-						$url = Agdp_Evenement::get_post_permalink($doublon);
+						$url = Agdp_Event::get_post_permalink($doublon);
 						$error_message = sprintf('<br>L\'évènement <a href="%s"><b>%s</b></a> existe déjà à la même date et pour le même lieu.', $url, htmlentities($doublon->post_title));
 					}
 					else
@@ -812,7 +812,7 @@ class Agdp_Evenement_Edit {
 		//Taxonomies
 		//Si on est pas connecté, les valeurs de tax_input ne sont pas mises à jour (wp_insert_post : current_user_can( $taxonomy_obj->cap->assign_terms )
 		foreach($tax_terms as $tax_name => $tax_inputs){
-			if( $tax_name === Agdp_Evenement::taxonomy_diffusion )
+			if( $tax_name === Agdp_Event::taxonomy_diffusion )
 				$previous_terms[$tax_name] = wp_get_post_terms($post_id, $tax_name);
 			
 			$result = wp_set_post_terms($post_id, $tax_inputs, $tax_name, false);
@@ -826,7 +826,7 @@ class Agdp_Evenement_Edit {
 		}
 			
 		//attachments
-		Agdp_Mailbox::import_wpcf7_save_post_type_attachments($submission, Agdp_Evenement::post_type, $post_id, ! $post_is_new, $inputs);
+		Agdp_Mailbox::import_wpcf7_save_post_type_attachments($submission, Agdp_Event::post_type, $post_id, ! $post_is_new, $inputs);
 		
 				
 		//Gestion interne du mail
@@ -834,7 +834,7 @@ class Agdp_Evenement_Edit {
 		
 		if( $post_is_new && ! is_user_logged_in()){
 			if( $data['ev-user-email']) {
-				$result = Agdp_Evenement::send_validation_email($post_id, false, false, 'bool');
+				$result = Agdp_Event::send_validation_email($post_id, false, false, 'bool');
 				//TODO what to do if mail problem ?
 				
 				//En cas de succès, on recharge la page dans laquelle on affichera un message.
@@ -850,8 +850,8 @@ class Agdp_Evenement_Edit {
 		elseif( ! $post_is_new && ! is_user_logged_in()
 		&& $post->post_status === 'pending'
 		&& $data['ev-user-email'] && empty($prev_email)
-		&& Agdp_Evenement::waiting_for_activation($post)){
-			$result = Agdp_Evenement::send_validation_email($post_id, false, false, 'bool');
+		&& Agdp_Event::waiting_for_activation($post)){
+			$result = Agdp_Event::send_validation_email($post_id, false, false, 'bool');
 			
 			//En cas de succès, on recharge la page dans laquelle on affichera un message.
 			if($result)
@@ -860,15 +860,15 @@ class Agdp_Evenement_Edit {
 		
 		if( ! ( $post_is_new && $postarr['post_status'] === 'pending' ) ){
 			//Taxonomie Diffusion
-			$tax_name = Agdp_Evenement::taxonomy_diffusion;
+			$tax_name = Agdp_Event::taxonomy_diffusion;
 			if( isset($tax_terms[$tax_name])){
 				$tax_inputs = $tax_terms[$tax_name];
 				$previous_tax_inputs = $previous_terms[$tax_name];
-				Agdp_Evenement::send_for_diffusion( $post_id, $tax_name, $tax_inputs, $previous_tax_inputs );
+				Agdp_Event::send_for_diffusion( $post_id, $tax_name, $tax_inputs, $previous_tax_inputs );
 			}
 		}
 		
-		$url = Agdp_Evenement::get_post_permalink($post_id, AGDP_EVENT_SECRETCODE);
+		$url = Agdp_Event::get_post_permalink($post_id, AGDP_EVENT_SECRETCODE);
 		
 		$messages = ($contact_form->get_properties())['messages'];
 	
@@ -933,7 +933,7 @@ class Agdp_Evenement_Edit {
 	 */
 	public static function wp_save_post_revision_check_for_changes( bool $check_for_changes, WP_Post $latest_revision, WP_Post $post ){
 		
-		if($post->post_type != Agdp_Evenement::post_type){
+		if($post->post_type != Agdp_Event::post_type){
 			
 			// error_log('wp_save_post_revision_check_for_changes : $post->post_type = ' . var_export($post->post_type, true));
 		
@@ -963,7 +963,7 @@ class Agdp_Evenement_Edit {
 		$revision = get_post($revision_id);
 		$post_id = $revision->post_parent;
 		$post = get_post($post_id);
-		if($post->post_type != Agdp_Evenement::post_type)
+		if($post->post_type != Agdp_Event::post_type)
 			return;
 		
 		// $post_revisions = wp_get_post_revisions($post_id);
@@ -1118,7 +1118,7 @@ class Agdp_Evenement_Edit {
 	public static function get_post_idem($post_title, $meta_values){
 		if( ! is_array($meta_values))
 			throw new TypeError('$meta_values should be an array.');
-		$args = Agdp_Evenements::get_posts_query( 
+		$args = Agdp_Events::get_posts_query( 
 			array(
 				'post_status' => array( 'pending', 'publish', 'future' ),
 				'posts_per_page' => 1

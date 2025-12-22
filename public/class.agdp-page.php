@@ -3,7 +3,7 @@
 /**
  * AgendaPartage -> Page abstract
  * Extension des custom post type.
- * Uilisé par Agdp_Evenement et Agdp_Covoiturage
+ * Uilisé par Agdp_Event et Agdp_Covoiturage
  * 
  */
 abstract class Agdp_Page {
@@ -25,7 +25,7 @@ abstract class Agdp_Page {
 			$page_id = $page_id->ID;
 		switch( $page_id ){
 			case Agdp::get_option('agenda_page_id'):
-				return Agdp_Evenement::post_type;
+				return Agdp_Event::post_type;
 			case Agdp::get_option('covoiturages_page_id'):
 				return Agdp_Covoiturage::post_type;
 			default:
@@ -45,7 +45,7 @@ abstract class Agdp_Page {
 			$page_id = $page_id->ID;
 		switch( $page_id ){
 			case Agdp::get_option('agenda_page_id'):
-				return Agdp_Evenement::post_type;
+				return Agdp_Event::post_type;
 			case Agdp::get_option('covoiturages_page_id'):
 				return Agdp_Covoiturage::post_type;
 			default:
@@ -90,8 +90,8 @@ abstract class Agdp_Page {
 			$page_id = false;
 		}
 		switch( $post_type ){
-			case Agdp_Evenement::post_type:
-				return 'Agdp_Evenement';
+			case Agdp_Event::post_type:
+				return 'Agdp_Event';
 			case Agdp_Covoiturage::post_type:
 				return 'Agdp_Covoiturage';
 			default:
@@ -124,15 +124,15 @@ abstract class Agdp_Page {
 					return Agdp_WPCF7::icon;
 				case Agdp_Covoiturage::post_type :
 					return Agdp_Covoiturage::icon;
-				case Agdp_Evenement::post_type :
-					return Agdp_Evenement::icon;
+				case Agdp_Event::post_type :
+					return Agdp_Event::icon;
 			}
 		}
 		
 		foreach([
 			'new_agdpevent_page_id' => 'welcome-add-page',
 			'new_covoiturage_page_id' => 'welcome-add-page',
-			'agenda_page_id' => Agdp_Evenements::icon,
+			'agenda_page_id' => Agdp_Events::icon,
 			'covoiturages_page_id' => Agdp_Covoiturages::icon,
 		] as $option => $icon ){
 			if( $page_id == Agdp::get_option( $option ) ){
@@ -154,7 +154,7 @@ abstract class Agdp_Page {
 			$page_id = $page_id->ID;
 		$page_type = static::get_page_type( $page_id );
 		switch( $page_type ){
-			case Agdp_Evenement::post_type:
+			case Agdp_Event::post_type:
 			case Agdp_Covoiturage::post_type:
 				return $page_type;
 			default:
@@ -218,7 +218,7 @@ abstract class Agdp_Page {
 	
 	/**
 	 * Retourne l'analyse de la page des évènements ou covoiturages
-	 * Fonction appelable via Agdp_Evenement, Agdp_Covoiturage ou une page quelconque
+	 * Fonction appelable via Agdp_Event, Agdp_Covoiturage ou une page quelconque
 	 */
 	public static function get_diagram( $blog_diagram, $page ){
 		

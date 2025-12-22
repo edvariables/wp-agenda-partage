@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AgendaPartage -> Evenements
+ * AgendaPartage -> Events
  * Collection d'évènements
  */
-class Agdp_Evenements_Import extends Agdp_Posts_Import {
+class Agdp_Events_Import extends Agdp_Posts_Import {
 	
-	const post_type = Agdp_Evenement::post_type;
+	const post_type = Agdp_Event::post_type;
 	
 	
 	/**
@@ -83,7 +83,7 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 				
 				if( $post_status !== 'publish' ){
 					
-					Agdp_Evenement::change_post_status($existing_post->ID, $post_status);
+					Agdp_Event::change_post_status($existing_post->ID, $post_status);
 					$successCounter++;
 					debug_log('[UPDATE]post_status = ' . $post_status . ' / ' . var_export($post_title, true));
 					continue;
@@ -134,8 +134,8 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 			);
 			
 			//ev-codesecret
-			if( ! empty($event[ strtoupper(Agdp_Evenement::secretcode_argument) ]) )
-				$inputs['ev-codesecret'] = $event[ strtoupper(Agdp_Evenement::secretcode_argument) ];
+			if( ! empty($event[ strtoupper(Agdp_Event::secretcode_argument) ]) )
+				$inputs['ev-codesecret'] = $event[ strtoupper(Agdp_Event::secretcode_argument) ];
 			else
 				$inputs['ev-codesecret'] = Agdp::get_secret_code(6);
 		
@@ -158,21 +158,21 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 			
 			if( ! $existing_post ){
 				//Check doublon
-				$doublon = Agdp_Evenement_Edit::get_post_idem($post_title, $inputs);
+				$doublon = Agdp_Event_Edit::get_post_idem($post_title, $inputs);
 				if($doublon){
 					//var_dump($doublon);var_dump($post_title);var_dump($inputs);
 					debug_log('[IGNORE]$doublon = ' . var_export($post_title, true));
 					$ignoreCounter++;
-					$url = Agdp_Evenement::get_post_permalink($doublon);
+					$url = Agdp_Event::get_post_permalink($doublon);
 					$log[] = sprintf('<li><a href="%s">%s</a> existe déjà, avec le statut "%s".</li>', $url, htmlentities($doublon->post_title), $post_statuses[$doublon->post_status]);
 					continue;				
 				}
 			}
 			
 			// terms
-			$all_taxonomies = Agdp_Evenement_Post_type::get_taxonomies();
+			$all_taxonomies = Agdp_Event_Post_type::get_taxonomies();
 			
-			$post_type_taxonomies = array_change_key_case( Agdp_Evenement::get_taxonomies(), CASE_LOWER );
+			$post_type_taxonomies = array_change_key_case( Agdp_Event::get_taxonomies(), CASE_LOWER );
 			$taxonomies = [];
 			foreach($post_type_taxonomies as $taxonomy){
 				$tax_name = $taxonomy['name'];
@@ -182,12 +182,12 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 				if( is_string($event[$node_name]))
 					$event[$node_name] = explode(',', $event[$node_name]);
 				$taxonomies[$tax_name] = [];
-				$all_terms = Agdp_Evenement::get_all_terms($tax_name, 'name'); //indexé par $term->name
+				$all_terms = Agdp_Event::get_all_terms($tax_name, 'name'); //indexé par $term->name
 				$all_terms_lowercase = array_change_key_case( $all_terms );
 				foreach($event[$node_name] as $term_name){
 					if( ! array_key_exists( strtolower($term_name), $all_terms_lowercase)){
 						$data = [
-							'post_type'=>Agdp_Evenement::post_type,
+							'post_type'=>Agdp_Event::post_type,
 							'taxonomy'=>$tax_name,
 							'term'=>$term_name
 						];
@@ -205,7 +205,7 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 			$postarr = array(
 				'post_title' => $post_title,
 				'post_name' => sanitize_title( $post_title ),
-				'post_type' => Agdp_Evenement::post_type,
+				'post_type' => Agdp_Event::post_type,
 				'meta_input' => $inputs,
 				'post_content' =>  $post_content,
 				'post_status' => $post_status,
@@ -264,7 +264,7 @@ class Agdp_Evenements_Import extends Agdp_Posts_Import {
 			else{
 				$successCounter++;
 				$post = get_post($post_id);
-				$url = Agdp_Evenement::get_post_permalink($post);
+				$url = Agdp_Event::get_post_permalink($post);
 				$log[] = sprintf('<li><a href="%s">%s</a> a été importé avec le statut "%s"%s</li>'
 						, $url, htmlentities($post->post_title)
 						, $post_statuses[$post->post_status]

@@ -1,14 +1,14 @@
 <?php
 
 /**
- * AgendaPartage -> Evenements
+ * AgendaPartage -> Events
  * Collection d'évènements
  */
-class Agdp_Evenements extends Agdp_Posts {
+class Agdp_Events extends Agdp_Posts {
 
-	const post_type = Agdp_Evenement::post_type;
-	const postid_argument = Agdp_Evenement::postid_argument;
-	const page_id_option = Agdp_Evenement::posts_page_option;
+	const post_type = Agdp_Event::post_type;
+	const postid_argument = Agdp_Event::postid_argument;
+	const page_id_option = Agdp_Event::posts_page_option;
 	const newsletter_diffusion_term_id = 'agdpevents_nl_diffusion_term_id';
 	
 	const icon = 'calendar-alt';
@@ -47,7 +47,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			$post_status = 'publish';
 		
 		self::$default_posts_query = array(
-			'post_type' => Agdp_Evenement::post_type,
+			'post_type' => Agdp_Event::post_type,
 			'post_status' => $post_status,
 			
 			// BUGG du OR qui fait qu'il manque un meta_key = 'ev-date-debut'
@@ -198,7 +198,7 @@ class Agdp_Evenements extends Agdp_Posts {
 					AND date_debut.meta_key = 'ev-date-debut'
 					AND date_debut.meta_value >= CURDATE()
 				WHERE posts.post_status = 'publish'
-					AND posts.post_type = '". Agdp_Evenement::post_type ."'
+					AND posts.post_type = '". Agdp_Event::post_type ."'
 		";
 		if($sql_filters)
 			$sql .= " AND posts.ID IN ({$sql_filters})";
@@ -241,7 +241,7 @@ class Agdp_Evenements extends Agdp_Posts {
 		if(count($filters)){
 			$query_tax_terms = [];
 			// Taxonomies
-			foreach( Agdp_Evenement_Post_type::get_taxonomies() as $tax_name => $taxonomy){
+			foreach( Agdp_Event_Post_type::get_taxonomies() as $tax_name => $taxonomy){
 				if(isset($filters[$tax_name]))
 					$field = $tax_name;
 				else
@@ -275,7 +275,7 @@ class Agdp_Evenements extends Agdp_Posts {
 					$sql .= "\n LEFT JOIN {$blog_prefix}term_relationships tax_rl_{$tax_name}"
 								. "\n ON post.ID = tax_rl_{$tax_name}.object_id"
 					;
-					if($tax_name === Agdp_Evenement::taxonomy_city
+					if($tax_name === Agdp_Event::taxonomy_city
 					&& count($tax_data['IN'])){
 						$sql .=   "\n INNER JOIN {$blog_prefix}postmeta as localisation"
 									. "\n ON post.ID = localisation.post_id"
@@ -290,8 +290,8 @@ class Agdp_Evenements extends Agdp_Posts {
 						$tax_sql = "\n tax_rl_{$tax_name}.term_taxonomy_id"
 								. " IN (" . implode(', ', $tax_data['IN']) . ')'
 						;
-						if($tax_name === Agdp_Evenement::taxonomy_city){
-							$terms_like = Agdp_Evenement_Post_type::get_terms_like($tax_name, $tax_data['IN']);
+						if($tax_name === Agdp_Event::taxonomy_city){
+							$terms_like = Agdp_Event_Post_type::get_terms_like($tax_name, $tax_data['IN']);
 							foreach($terms_like as $like)
 								$tax_sql .= "\n OR localisation.meta_value LIKE '%{$like}%'";
 						}
@@ -414,7 +414,7 @@ class Agdp_Evenements extends Agdp_Posts {
 					$data['filters'] = $filters;
 				$ajax = sprintf('ajax="once" data="%s"',
 					esc_attr( json_encode ( array(
-						'action' => Agdp_Evenement::post_type . '_show_more',
+						'action' => Agdp_Event::post_type . '_show_more',
 						'data' => $data
 					)))
 				);
@@ -474,9 +474,9 @@ class Agdp_Evenements extends Agdp_Posts {
 				'mode' => 'email'
 			), self::filter_anteriority_option($options));
 				
-		if(Agdp_Evenement_Post_type::is_diffusion_managed()){
-			$term_id = Agdp_Evenements::get_newsletter_diffusion_term_id();
-			self::add_tax_filter(Agdp_Evenement::taxonomy_diffusion, $term_id);
+		if(Agdp_Event_Post_type::is_diffusion_managed()){
+			$term_id = Agdp_Events::get_newsletter_diffusion_term_id();
+			self::add_tax_filter(Agdp_Event::taxonomy_diffusion, $term_id);
 		}
 		
 		$css = '<style>'
@@ -588,13 +588,13 @@ class Agdp_Evenements extends Agdp_Posts {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		if( ! current_user_can('manage_options') || Agdp_Evenements::get_newsletter_diffusion_term_id() == -1)
-			$except_tax = Agdp_Evenement::taxonomy_diffusion;
+		if( ! current_user_can('manage_options') || Agdp_Events::get_newsletter_diffusion_term_id() == -1)
+			$except_tax = Agdp_Event::taxonomy_diffusion;
 		else
 			$except_tax = '';
-		$taxonomies = Agdp_Evenement_Post_type::get_taxonomies($except_tax);
+		$taxonomies = Agdp_Event_Post_type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
-			$taxonomy['terms'] = Agdp_Evenement::get_all_terms($tax_name);
+			$taxonomy['terms'] = Agdp_Event::get_all_terms($tax_name);
 			if( count($taxonomy['terms']) === 0 ){
 				unset($taxonomy['terms']);
 				continue;
@@ -720,7 +720,7 @@ class Agdp_Evenements extends Agdp_Posts {
 	public static function get_list_item_html($event, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 		
-		$allow_html_in_content = Agdp::get_option( 'allow_html_in_' . Agdp_Evenement::post_type );
+		$allow_html_in_content = Agdp::get_option( 'allow_html_in_' . Agdp_Event::post_type );
 		
 		if( $event->post_status === 'pending'
 		 && ( $email_mode
@@ -729,7 +729,7 @@ class Agdp_Evenements extends Agdp_Posts {
 		
 		$date_debut = get_post_meta($event->ID, 'ev-date-debut', true);
 					
-		$url = Agdp_Evenement::get_post_permalink( $event );
+		$url = Agdp_Event::get_post_permalink( $event );
 		$html = '';
 		
 		if( ! $email_mode ){
@@ -741,14 +741,14 @@ class Agdp_Evenements extends Agdp_Posts {
 			);
 			if( $event->post_status === 'pending' ){
 				$html .= sprintf('<div class="approve-post">%s</div>'
-					, Agdp_Evenement::get_agdpevent_action_link(
+					, Agdp_Event::get_agdpevent_action_link(
 						$event->ID
 						, 'publish'
 						, true
 						, ' Approuver'
 						, false, null
 						, /* $data */ [
-							'reload' => Agdp_Evenements::get_url($event)
+							'reload' => Agdp_Events::get_url($event)
 				]));
 			}
 		}
@@ -761,8 +761,8 @@ class Agdp_Evenements extends Agdp_Posts {
 		);
 		
 		$title = $event->post_title;
-		$localisation = Agdp_Evenement::get_event_localisation_and_cities($event->ID);
-		$dates = Agdp_Evenement::get_event_dates_text($event->ID);
+		$localisation = Agdp_Event::get_event_localisation_and_cities($event->ID);
+		$dates = Agdp_Event::get_event_dates_text($event->ID);
 		$covoiturages = self::get_agdpevent_covoiturages( $event, false );
 		
 		$html .= sprintf(
@@ -773,7 +773,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			.''
 			, htmlentities($dates), htmlentities($title), $localisation, $covoiturages);
 		
-		$categories = Agdp_Evenement::get_event_categories ($event, 'names');
+		$categories = Agdp_Event::get_event_categories ($event, 'names');
 		// var_dump($categories); die();
 		if($categories)
 			$html .= sprintf('<div class="agdpevent-categories" title="%s"><i>%s</i></div>', 'Catégories', htmlentities(implode(', ', $categories)));
@@ -877,7 +877,7 @@ class Agdp_Evenements extends Agdp_Posts {
 			$covoiturages = get_posts([
 				'post_type' => Agdp_Covoiturage::post_type,
 				'post_status' => 'publish',
-				'meta_key' => 'related_'.Agdp_Evenement::post_type,
+				'meta_key' => 'related_'.Agdp_Event::post_type,
 				'meta_value' => $agdpevent->ID,
 				'meta_compare' => '=',
 			]);
@@ -945,12 +945,12 @@ class Agdp_Evenements extends Agdp_Posts {
 		//$html .= Agdp::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data, $href);
 		
 		$meta_name = 'download_link';
-		foreach(Agdp_Evenement::get_all_terms(Agdp_Evenement::taxonomy_diffusion) as $term_id => $term){
+		foreach(Agdp_Event::get_all_terms(Agdp_Event::taxonomy_diffusion) as $term_id => $term){
 			$file_format = get_term_meta($term->term_id, $meta_name, true);
 			if( $file_format ){
 				$data = [
 					'file_format' => $file_format,
-					'filters' => [ Agdp_Evenement::taxonomy_diffusion => $term_id]
+					'filters' => [ Agdp_Event::taxonomy_diffusion => $term_id]
 				];
 				$title = sprintf('Télécharger les évènements pour %s (%s)', $term->name, $file_format);
 				

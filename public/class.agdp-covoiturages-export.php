@@ -108,7 +108,7 @@ class Agdp_Covoiturages_Export extends Agdp_Posts_Export {
 			, 'EMAIL'=>'cov-email'
 			, 'PHONE'=>'cov-phone'
 			, 'PHONE-SHOW'=>'cov-phone-show'
-			, strtoupper('related_' . Agdp_Evenement::post_type)=>'related_' . Agdp_Evenement::post_type // add source site url
+			, strtoupper('related_' . Agdp_Event::post_type)=>'related_' . Agdp_Event::post_type // add source site url
 			
 		] as $node_name => $meta_key)
 			if( ! empty( $metas[$meta_key])

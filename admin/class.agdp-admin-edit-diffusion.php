@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage Admin -> Edit -> Evenement/Covoiturage -> diffusion
+ * AgendaPartage Admin -> Edit -> Event/Covoiturage -> diffusion
  * Custom taxonomy term for WordPress in Admin UI.
  * 
  * Edition d'une diffusion
@@ -247,7 +247,7 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
         <td><?php
 			$meta_name = 'connexion';
 			$example_email = sprintf('%s@%s',
-				$taxonomy === Agdp_Evenement::taxonomy_diffusion
+				$taxonomy === Agdp_Event::taxonomy_diffusion
 					? 'evenement'
 					: ( $taxonomy === Agdp_Covoiturage::taxonomy_diffusion
 						? 'covoiturage'
