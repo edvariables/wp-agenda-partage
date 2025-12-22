@@ -133,6 +133,7 @@ class Agdp_Admin_Update {
 			foreach($matches[2] as $i => $post_type){
 				$label = 'Importer le package <b>' . $post_type . '</b>';
 				echo Agdp_Admin_Packages::get_import_link( $post_type, $label );
+				echo '<br><br>';
 			}
 		}
 	}
