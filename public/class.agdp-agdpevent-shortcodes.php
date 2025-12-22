@@ -58,62 +58,7 @@ class Agdp_Event_Shortcodes {
 		add_shortcode( 'agdpevent-covoiturage', array(__CLASS__, 'shortcodes_callback') );
 		
 		add_shortcode( 'agdpevents', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'agdpstats', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'post', array(__CLASS__, 'shortcode_post_callback') );
 
-	}
-
-	/**
-	 * [post]
-	 * [post info="ev-email"]
-	 * [post info="ev-telephone"]
-	 * [post info="mailto"]
-	 * [post info="uri"] [post info="url"]
-	 * [post info="a"] [post info="link"]
-	 * [post info="post_type"]
-	 * [post info="dump"]
-	 */
-	public static function shortcode_post_callback($atts, $content = '', $shortcode = null){
-		$post = get_post();
-		if(!$post){
-			echo $content;
-			return;
-		}
-
-		if( ! is_array($atts)){
-			$atts = array();
-		}
-
-		if(! array_key_exists('info', $atts)
-		|| ! ($info = $atts['info']))
-			$info = 'post_title';
-
-		switch($info){
-			case 'uri':
-			case 'url':
-				return $_SERVER['HTTP_REFERER'];
-			case 'link':
-			case 'a':
-				return sprintf('<a href="%s">%s</a>', Agdp_Event::get_post_permalink($post), $post->post_title);
-
-			case 'mailto':
-				$email = get_post_meta( $post->ID, 'ev-email', true);
-				return sprintf('<a href="mailto:%s">%s</a>', antispambot(sanitize_email($email)), $post->post_title);//TODO anti-spam
-
-			case 'dump':
-				return sprintf('<pre>%s</pre>', 'shortcodes dump : ' . var_export($post, true));
-
-			case 'title':
-				$info = 'post_title';
-
-			default :
-				if(isset($post->$info))
-					return $post->$info;
-				return get_post_meta( $post->ID, $info, true);
-
-		}
 	}
 
 	/**
@@ -217,10 +162,7 @@ class Agdp_Event_Shortcodes {
 		if($shortcode == 'agdpevents' || str_starts_with($shortcode, 'agdpevents-')){
 			return self::shortcodes_agdpevents_callback($atts, $content, $shortcode);
 		}
-		//De la forme [agdpstats stat] ou [agdpstats-stat]
-		if($shortcode == 'agdpstats' || str_starts_with($shortcode, 'agdpstats-')){
-			return self::shortcodes_agdpstats_callback($atts, $content, $shortcode);
-		}
+		
 		return self::shortcodes_agdpevent_callback($atts, $content, $shortcode);
 	}
 	
@@ -584,20 +526,6 @@ class Agdp_Event_Shortcodes {
 	 
 		// Don't forget to stop execution afterward.
 		wp_die();
-	}
-	
-	
-	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
-		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-stats.php');
-		if( count($atts)) {
-			if( in_array('postscounters', $atts) )
-				return Agdp_Admin_Stats::posts_stats_counters() . $content;
-			if( in_array('eventscounters', $atts) )
-				return Agdp_Admin_Stats::agdpevents_stats_counters() . $content;
-			if( in_array('covoituragescounters', $atts) )
-				return Agdp_Admin_Stats::agdpevents_stats_counters() . $content;
-		}
-		return Agdp_Admin_Stats::get_stats_result() . $content;
 	}
 	
 	// shortcodes //
