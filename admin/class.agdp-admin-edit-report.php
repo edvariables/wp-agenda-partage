@@ -24,6 +24,9 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	public static function init_hooks() {
 		global $pagenow;
 		if ( $pagenow === 'post.php' ) {
+			
+			add_action('admin_head', array(__CLASS__, 'init_js_field_tabs'));
+			
 			add_action( 'add_meta_boxes_' . self::post_type, array( __CLASS__, 'register_report_metaboxes' ), 10, 1 ); //edit
 			add_action( 'save_post_' . self::post_type, array(__CLASS__, 'save_post_report_cb'), 10, 3 );
 			add_action( 'admin_notices', array(__CLASS__, 'on_admin_notices_cb'), 10);
@@ -111,10 +114,11 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 	 * Register Meta Boxes (boite en édition du report)
 	 */
 	public static function register_report_metaboxes($post){
+		add_meta_box('agdp_report-shortcode', __('Intégration', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-inputs', __('Requête', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-variables', __('Variables', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 		add_meta_box('agdp_report-render', __('Rendu', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
-		add_meta_box('agdp_report-shortcode', __('Intégration', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
+		add_meta_box('agdp_report-form', __('Formulaires d\'édition', AGDP_TAG), array(__CLASS__, 'metabox_callback'), Agdp_Report::post_type, 'normal', 'high');
 	}
 
 	/**
@@ -140,6 +144,12 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 				echo Agdp_Report::get_report_html();
 				break;
 			
+			case 'agdp_report-form':
+				echo '<div class="hide_during_loading loading">';
+				parent::metabox_html( self::get_metabox_form_fields(), $post, $metabox );
+				echo '</div>';
+				break;
+			
 			case 'agdp_report-shortcode':
 				parent::metabox_html( self::get_metabox_shortcode_fields(), $post, $metabox );
 				break;
@@ -162,6 +172,7 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 			self::get_metabox_variables_fields(),
 			self::get_metabox_render_fields(),
 			self::get_metabox_shortcode_fields(),
+			self::get_metabox_form_fields(),
 			$package_fields,
 		);
 	}
@@ -323,6 +334,46 @@ class Agdp_Admin_Edit_Report extends Agdp_Admin_Edit_Post_Type {
 		];
 		return $fields;
 				
+	}
+	
+	/**
+	 * get_metabox_form_fields
+	 */
+	public static function get_metabox_form_fields(){
+		
+		$fields = [
+			[	'name' => '',
+				'label' => '',
+				'type' => 'tabs',
+				'fields' => [ 
+					[	'name' => 'edit_form',
+						'label' => 'Formulaire',
+						'type' => 'text',
+						'input' => 'textarea',
+						'input_attributes' => 'rows="10" spellcheck="false"',
+					],
+					[	'name' => 'sql_update',
+						'label' => 'UDPATE',
+						'type' => 'text',
+						'input' => 'textarea',
+						'input_attributes' => 'rows="10" spellcheck="false"',
+					],
+					[	'name' => 'sql_insert',
+						'label' => 'INSERT INTO',
+						'type' => 'text',
+						'input' => 'textarea',
+						'input_attributes' => 'rows="10" spellcheck="false"',
+					],
+					[	'name' => 'sql_delete',
+						'label' => 'DELETE',
+						'type' => 'text',
+						'input' => 'textarea',
+						'input_attributes' => 'rows="10" spellcheck="false"',
+					],
+				]
+			],
+		];
+		return $fields;				
 	}
 		
 	/**

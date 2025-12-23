@@ -42,7 +42,11 @@ body.colors-dark .color-red {
 }
 textarea.agdp_row,
 .agdp-metabox-row > textarea.shortcode,
-.agdp-metabox-row > textarea#sql, .agdp-metabox-row > textarea.sql {
+.agdp-metabox-row > textarea#sql, .agdp-metabox-row > textarea.sql,
+.agdp-metabox-row > textarea#sql_update,
+.agdp-metabox-row > textarea#sql_insert,
+.agdp-metabox-row > textarea#sql_delete,
+.agdp-metabox-row > textarea#edit_form {
 	width: 95%;
 	font-family: "Lucida Console", "Courier New", monospace;
 	font-size: 90%;

@@ -13,7 +13,7 @@ class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 	const post_type = AGDP_Report::post_type;
 	
 	const info_shortcodes = [ 
-		'cell',
+		'cell' => [ 'default_attr' => 'cell' ],
 		'open',
 		'loop',
 		'next'
@@ -123,14 +123,21 @@ class Agdp_Report_Shortcodes extends Agdp_Shortcodes {
 					else
 						$cell = $atts['cell'];
 					$field_index = 0;
+					$field_found = false;
 					foreach( $dbResults[$row] as $field => $field_value ){
 						if( ($cell == $field)
 						|| ($cell === $field_index) ){
 							$val = $field_value;
+							$field_found = true;
 							break;
 						}
 						$field_index++;
 					}
+					if( ! $field_found ){
+						debug_log( __FUNCTION__, "Colonne \"$cell\" introuvable", $dbResults[$row]);
+					}
+					elseif($label)
+						$val = '<span class="label"> '.$label.'<span>' . $val;
 				}
 				break;
 				

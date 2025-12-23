@@ -35,8 +35,10 @@ class Agdp_Shortcodes {
 
  	/**
  	 * get_post_type_shortcode
+	 *
+	 * $return_type : ARRAY_N | false | 'first'
  	 */
-	public static function get_post_type_shortcode( $return_type = false/* ARRAY_N */){
+	public static function get_post_type_shortcode( $return_type = false){
 		if( ! static::post_type )
 			return;
 		$abstracted_class = Agdp_Post::abstracted_class(static::post_type);
@@ -60,6 +62,37 @@ class Agdp_Shortcodes {
 		
 		return $shortcode;
 	}
+
+ 	/**
+ 	 * get_shortcode_default_attr
+	 *
+ 	 */
+	public static function get_shortcode_default_attr( $shortcode ){
+		
+		$root_shortcodes = self::get_post_type_shortcode( ARRAY_N );
+		
+		if( ! $root_shortcodes )
+			return;
+		
+		if( in_array( $shortcode, $root_shortcodes ) )
+			return static::default_attr;
+			
+		if( ! static::info_shortcodes )
+			return;
+		
+		foreach( static::info_shortcodes as $info => $details ){
+			foreach($root_shortcodes as $shortcode_u){
+				if( is_numeric( $info ) )
+					$info = $details;
+				if( $shortcode !== $shortcode_u . '-' . $info )
+					continue;
+				if( is_array($details) && ! empty($details['default_attr']) )
+					return $details['default_attr'];
+				return static::default_attr;
+			}
+		}
+		return static::default_attr;
+	}
 	
  	/**
  	 * add_shortcodes
@@ -80,8 +113,10 @@ class Agdp_Shortcodes {
 		if( ! static::info_shortcodes )
 			return;
 		
-		foreach( static::info_shortcodes as $info )
+		foreach( static::info_shortcodes as $info => $details )
 			foreach($shortcodes as $shortcode_u){
+				if( is_numeric( $info ) )
+					$info = $details;
 				// debug_log(__FUNCTION__, 'add_shortcode', "$shortcode_u-$info", static::class );
 				add_shortcode( $shortcode_u . '-' . $info, array( static::class, 'shortcodes_callback') );
 			}
@@ -91,22 +126,31 @@ class Agdp_Shortcodes {
 	/**
 	* Sanitize attributes
 	*/
-	public static function sanitize_attributes($atts){
+	public static function sanitize_attributes($atts, $shortcode){
+		
+		$default_attr = static::get_shortcode_default_attr( $shortcode );
+		// debug_log(__FUNCTION__, $default_attr, $shortcode );
 		
 		//Indexed array becomes an associative array
 		//Attributes without value becomes attr=true
+		$attr_index = 0;
 		foreach($atts as $key=>$value){
 			if(is_numeric($key)){
 				unset($atts[$key]);
-				if( static::default_attr
-				&& $key == 0
-				&& ! isset($atts[ static::default_attr ]) )
-					$atts[static::default_attr] = $value;
+				if( $default_attr
+				&& $attr_index === 0
+				&& strpos($value, '=') === false
+				&& ! isset($atts[ $default_attr ]) )
+					$atts[$default_attr] = $value;
 				elseif( ! array_key_exists($value, $atts)){
+					if( strpos($value, '<br>', -4) )
+						$value = substr($value, 0, strlen($value) - 4);
 					if( ($i = strpos($value, '=', 1)) > 0 ){
 						$key = substr($value, 0, $i);
 						$value = substr($value, $i + 1);
 						if( strlen($value) > 1 && $value[0] === '"' && $value[strlen($value)-1] === '"' )
+							$value = substr($value, 1, strlen($value) - 2);
+						elseif( strlen($value) > 1 && $value[0] === '\'' && $value[strlen($value)-1] === '\'' )
 							$value = substr($value, 1, strlen($value) - 2);
 						$atts[ $key ] = $value;
 					}
@@ -114,6 +158,7 @@ class Agdp_Shortcodes {
 						$atts[$value] = true;
 				}
 			}
+			$attr_index++;
 		}
 		return $atts;
 	}
@@ -133,7 +178,7 @@ class Agdp_Shortcodes {
 		}
 		// debug_log(__CLASS__.'::'.__FUNCTION__, static::get_post_type_shortcode(), $shortcode, $atts);
 		
-		$atts = static::sanitize_attributes($atts);
+		$atts = static::sanitize_attributes($atts, $shortcode);
 		
 		// debug_log(__CLASS__.'::'.__FUNCTION__, 'after sanitize_attributes', $atts);
 		

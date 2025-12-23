@@ -686,7 +686,7 @@ class Agdp_Admin_Options {
 	}
 	
 	/**
-	 * init_js_sections_tabs
+	 * get_last_tab_option_name
 	 */
 	public static function get_last_tab_option_name() {
 		global $pagenow;

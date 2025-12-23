@@ -169,6 +169,25 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		
 		?><<?php echo trim($container_tag);?> class="<?php echo trim($container_class);?>"><?php
 
+			
+		////////////////
+		if( $input_type === 'tabs' ){
+			echo '<div class="agdp-tabs-wrap">';
+			//sub fields
+			if( array_key_exists('fields', $field) && is_array($field['fields'])){
+				array_walk( $field['fields'], function( &$item ){
+					$item['container_class'] = trim((empty($item['container_class']) ? '' : $item['container_class'])
+						. ' agdp-tabs-nav');
+				});
+				self::metabox_html($field['fields'], $post, $metabox, $field);
+			}
+			echo '</div>';
+			?></<?php echo trim($container_tag);?>><?php
+			return;
+		}
+		
+		////////////////
+		
 		switch ($input_type) {
 			case 'number' :
 			case 'int' :
@@ -190,6 +209,7 @@ abstract class Agdp_Admin_Edit_Post_Type {
 					$input_type = 'text';
 				break;
 		}
+		
 		
 		if( $icon )
 			$icon = Agdp::icon($icon) . ' ';
@@ -217,6 +237,8 @@ abstract class Agdp_Admin_Edit_Post_Type {
 		}
 
 		switch ($input) {
+				
+			////////////////
 			case 'none':
 				if( $unit )
 					echo $unit;
@@ -825,6 +847,87 @@ abstract class Agdp_Admin_Edit_Post_Type {
 			return self::has_cap( $capability, false );
 		
 		return false;
+	}
+	
+	/**
+	 * get_last_tab_option_name
+	 */
+	public static function get_last_tab_option_name() {
+		global $pagenow;
+		$page = isset($_GET['page']) ? $_GET['page'] : $pagenow;
+		return '_last-tab_' . $page;
+	}
+	
+	/**
+	 * init_js_field_tabs
+	 */
+	public static function init_js_field_tabs() {
+		global $post;
+		if( ! $post
+		|| static::post_type !== $post->post_type )
+			return;
+		// debug_log( __FUNCTION__, static::post_type, $post);
+		//
+		$default_tab = 0;
+		$last_tab_option_name = self::get_last_tab_option_name();
+		/* foreach( [ 'tab', $last_tab_option_name ] as $argument ){
+			if( $_POST && isset($_POST[AGDP_TAG])
+			&& ! empty($_POST[AGDP_TAG][$argument])){
+				$default_tab = $_POST[AGDP_TAG][$argument];
+				unset($_POST[AGDP_TAG][$argument]);
+				break;
+			}
+			if( ! empty($_REQUEST[$argument])){
+				$default_tab = $_REQUEST[$argument];				
+				unset($_REQUEST[$argument]);
+				if( ! empty($_POST[$argument]))
+					unset($_POST[$argument]);
+				break;
+			}
+		} */
+		
+		?><script type="text/javascript">
+	jQuery(document).ready(function(){
+		jQuery('#post-body div.agdp-tabs-wrap:first').each(function(){
+			var id = 'agdp-tabs-' + Math.floor( Math.random()*1000);
+			var class_name = 'agdp-tabs';
+			var tabs_counter = 0;
+			var $tabs_contents = [];
+			var $tabs = jQuery('<div class="' + class_name + '"/>');
+			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
+			var $contents = jQuery('<ul/>').appendTo($tabs);
+			var $submit = jQuery(this).find('p.submit');
+			var default_tab_name = '<?php echo $default_tab; ?>';
+			var last_tab_option_name = '<?php echo $last_tab_option_name; ?>';
+			var default_tab = 0;
+			jQuery(this).find('div.agdp-tabs-nav').each(function(){
+				tabs_counter++;
+				var $label =  jQuery(this).find('label:first');
+				var label = $label.text().trim();
+				if( label.substr(label.length-1) === ':' )
+					label = label.substr(0, label.length-1).trimEnd();
+				$label.remove();
+				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + label + '</a></li>');
+				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
+				$content.append(this);
+				$contents.append($content);
+				if( default_tab_name && $content.find( '#' + default_tab_name + ':first').length )
+					default_tab = tabs_counter - 1;
+			});
+			jQuery(this)
+				.html( $tabs.tabs({
+					active: default_tab,
+					activate: function(event, ui){
+						var tabName = ui.newPanel.find('[id]:first').attr('id');
+						if( ! tabName )
+							return;
+						$contents.find('#' + last_tab_option_name).val( tabName );
+					}
+				}) )
+				.append($submit);
+		});
+	});</script>
+		<?php
 	}
 }
 ?>
