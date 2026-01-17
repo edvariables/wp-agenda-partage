@@ -1,0 +1,114 @@
+TODO list
+---------
+
+- Ajouter des marqueurs d'évènement sur une carte
+https://nouvelle-techno.fr/articles/pas-a-pas-inserer-une-carte-openstreetmap-sur-votre-site
+
+
+* Créer un rôle author-agdpevent
+
+* Taxonomy Type event Color
+
+* $(recaptcha).init après ajax sur androïd
+
+* Menu Se connecter n'apparait pas sur //agendapartage.fr
+	cf "top" menu qui n'est pas "top"
+
+* Event 
+- avec image
+	- load on toggle
+- récurrents
+	- via cron
+	- créer les suivants jusqu'au mois de l'évènement le plus vieux existant
+- révisions depuis /public
+- Mail de la part de l'administrateur
+		ne part pas chez l'organisateur mais agdp
+		email en hexa
+- Interdiction de http dans message levée pour admin et modérateur
+	
+* Events
+- Liste : griser les évènements passés
+- Filtre (sans commune) : (autre commune)
+- Show more months without ajax to 30 events limit
+- CHECK un event du 30/08 au 2/09 est-il bien visible aussi dans septembre ?
+	par contre, "du dimanche 31 déc 2023 de 19h au lundi 1er jan 2024 à 5h" ne doit rien afficher en janvier
+
+* Newsletter
+- shortcode [agdpnewsletter-user name|ID...] pour personnalisation du mailing
+- shortcode [agdp-stats] pour mailing admin
+- Désabonnement : suppression du user si jamais connecté
+- Pour les abonnés mensuels, afficher 2 mois
+- décocher "Recevoir maintenant" après envoi
+
+* Publish wp plugin
+
+* Admin dashboard
+- new events only
+- newsletter subscribers
+
+* Multisites
+- import médiathèque
+	option theme_mods_twentyseventeen
+	get_site_icon_url()
+- import sur nouveau site, il semble qu'il faille le faire 2 fois.
+- Sites voisins
+
+
+ajouter [forum info=url link]
+
+Publier Covoit dans Forum
+Links "Créer un covoiturage" à partir d'un commentaire
+
+Subscription-content : ['new', 'two_weeks', 'two_months']
+
+attachments des messages de forum : 
+- supprimer avec la suppression des commentaires via admin
+- purger
+
+Import email vers forum : d'après le html
+Page abo Lettres-infos : Activation de l'onglet par l'url
+Forum Rights : un droit en lecture, un droit en écriture
+
+dans https://pays-de-saint-felicien.agenda-partage.fr/wp-admin/post.php?post=2491&action=edit
+	Abonnements: on voit la même personne abonnée 'toutes les semaines' pour aujourd'hui et pour demain
+	
+Commentaire : répondre à l'auteur : blank...
+Commentaire à approuver : "Utilisateur adhérent" ou non-adhérent
+Commentaire approuvé : remplace le bloc commentaire par le nouveau
+Non connecté, ecopartage par url, ajout d'un commentaire : ça passe approuvé !
+Non connecté, bloquer l'accès à la page ecopartage via l'url (ou page alternative ?)
+
+Mettre en générique les classes _Shortcodes
+
+
+Edit Event : option de visibilité : public / pour abonné uniquement
+
+L'ajout d'un commentaire, depuis le formulaire de bas de page, affiche la dernière page des commentaires
+
+Connexion API OVH pour
+- Création des adresses e-mails et alias
+
+EDOC2019 : multisites pour tester les interactions inter-blogs 
+	agdp-nord-ardeche
+
+cf class.agendapartage-agdpevent.php //TODO if( self::waiting_for_activation($post) )
+	sinon, pas d'url
+	
+do_action( “load-{$pagenow}” )
+https://developer.wordpress.org/reference/hooks/load-pagenow/
+
+export ics d'event : DTStart apparait en double (send_for_diffusion())
+
+Bugg : double exécution simultannée du cron d'envoi de la newsletter
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Mailbox::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [agdpmailbox-cron state]0|Aucune boîte e-mails active
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Newsletter::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Mailbox::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [agdpmailbox-cron state]0|Aucune boîte e-mails active
+[Pays de Saint-Félicien][2024-06-29 12:20:46] [blog 2]Agdp_Newsletter::on_cron_exec
+[Pays de Saint-Félicien][2024-06-29 12:20:47] [agdpnl-cron state]1|1 abonnés à traiter | mail #0 : 1 destinataire(s) edid@free.fr | Au final, 1 mail(s) envoyé(s) à 1 destinataire(s) en 1 sec. Identifiants : #3.
+[Pays de Saint-Félicien][2024-06-29 12:20:47] [agdpnl-cron state]1|1 abonnés à traiter | mail #0 : 1 destinataire(s) edid@free.fr | Au final, 1 mail(s) envoyé(s) à 1 destinataire(s) en 1 sec. Identifiants : #3.
+
+
+update comment : add nonce
+edit comment : perte du html et des sauts de lignes

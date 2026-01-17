@@ -1,0 +1,523 @@
+/**
+ * Feuille de styles pour Agdp mode Admin
+ */
+
+
+h3.alert {
+	border-left: 3px solid orange;
+	color: darkorange;
+	padding-left: 1em;
+}
+h3.error {
+	border-left: 3px solid red;
+	color: darkred;
+	padding-left: 1em;
+}
+h3.info {
+	border-left: 3px solid blue;
+	padding-left: 1em;
+}
+.color-red {
+	color: #b32d2e !important;
+}
+body.colors-dark .color-red {
+	color: lightsalmon !important;
+}
+.color-green {
+	color: green !important;
+}
+.agdp-metabox-row > label {
+	min-width: 12em;
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 8px;
+}
+.agdp-metabox-row.agdp-metabox-subfields > label {
+	min-width: 0;
+}
+.agdp-metabox-row > input, 
+.agdp-metabox-row > textarea {
+	width: 25em;
+	display: inline-block;
+}
+textarea.agdp_row,
+.agdp-metabox-row > textarea.shortcode,
+.agdp-metabox-row > textarea#sql, .agdp-metabox-row > textarea.sql,
+.agdp-metabox-row > textarea#sql_update,
+.agdp-metabox-row > textarea#sql_insert,
+.agdp-metabox-row > textarea#sql_delete,
+.agdp-metabox-row > textarea#edit_form {
+	width: 95%;
+	font-family: "Lucida Console", "Courier New", monospace;
+	font-size: 90%;
+}
+.agdp-metabox-row > input.sql {
+	font-family: "Lucida Console", "Courier New", monospace;
+	font-size: 90%;
+}
+.agdp-metabox-row.side-box > input, 
+.agdp-metabox-row.side-box > textarea {
+	width: 100%;/* 12em */
+}
+.agdp-metabox-row > input[type="number"] {
+	width: 5em;	
+}
+.agdp-metabox-row > input[type="date"] {
+	width: 10em;	
+}
+.agdp-metabox-row > input[placeholder="hh:mm"] {
+	width: 5em;	
+}
+.agdp-metabox-row > input[type="submit"] {
+	width: auto;
+}
+.agdp-metabox-row > .multiselect-wrap {
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 6px;
+	margin-bottom: 4px;
+}
+.agdp-metabox-row > .multiselect-wrap > label {
+	padding-right: 1em;
+}
+.agdp-metabox-row.is_not_admin.admin_only {
+	display: none;
+}
+
+.agdp-metabox-row.agdp-metabox-subfields {
+	display: inline;
+	margin-left: 1em;
+}
+.toggle-trigger:not(.active) + .agdp-metabox-row.agdp-metabox-subfields,
+.toggle-trigger:not(.active) + .report_style_terms + .agdp-metabox-row.agdp-metabox-subfields {
+	display: none;
+}
+.agdp-metabox-row.agdp-metabox-subfields.hidden {
+	display: none;
+}
+
+.agdp-metabox-row.description > label {
+	margin-top: 2px;
+}
+
+.agdp-metabox-row #ev-codesecret {
+	border: none;
+	width: 10em;
+	color: #333333;  
+	background-color: transparent;
+	margin-top: 6px;
+}
+
+/* as other inputs */
+input[type="gps"] {
+	padding: 0 8px;
+	line-height: 2;
+	min-height: 30px;
+    box-shadow: 0 0 0 transparent;
+    border-radius: 4px;
+    border: 1px solid #7e8993;
+}
+
+form#addtag > label[for] {
+	padding-bottom: 0px;
+}
+form#addtag > label[for] + div.agdp-metabox-row {
+	padding-bottom: 1em;
+	margin-left: 1em;
+}
+
+img.coo-favicon {
+	width: 16px;
+	height: 16px;
+	margin-right: 4px;
+}
+
+.import-report {
+	background-color: #f7f7f7;
+	border-color: #9fa4a6;
+	border-style: solid;
+	padding: 1em;
+}
+.import-report > span {
+	font-weight: bold;
+}
+.import-report li {
+	margin-top: 1em;
+}
+
+#wpbody-content .revisions .hide-children > * {
+	display: none;
+}
+
+#dashboard-widgets-wrap hr {
+	border-top: 1px solid #b1b1d1;
+	border-bottom: 1px solid #b3f6f6;
+}
+
+#dashboard-widgets-wrap .dashboard-agdpmaillogs table {
+	width: 100%;
+}
+#dashboard-widgets-wrap .dashboard-agdpmaillogs table td {
+	width: 30%;
+}
+#dashboard-widgets-wrap .dashboard-agdpmaillogs .entry-title {
+	font-weight: bold;
+}
+
+#the-list .type-agdpevent.status-pending td.column-titre,
+#the-list .type-agdpevent.status-pending td.column-date {
+	color: #975d17;
+}
+
+#the-list .type-agdpevent.status-draft td.column-titre,
+#the-list .type-agdpevent.status-draft td.column-date {
+	color: darkred;
+}
+
+#the-list .type-agdpevent .is-imported-post {
+	font-size: smaller;
+}
+
+#post #major-publishing-actions #duplicate-action,
+#post #major-publishing-actions #export-action {
+	text-align: right;
+}
+#post #major-publishing-actions #publishing-action {
+	margin-top: 1em;
+}
+
+a.dashicons-before {
+	text-decoration: none;
+}
+a.dashicons-before:focus {
+	outline: none;
+	box-shadow: none;
+	color: #2271b1;
+}
+
+/*toggle shortcode*/
+.toggle-trigger {
+	cursor: pointer;
+	margin: 0px !important;
+}
+.toggle-trigger:not(.dashicons-before) {
+	background-color: transparent;/*#F5F5F5;*/
+	background-image: url('../../public/images/toggle-plus.png');
+	background-position: 10px center;
+	background-repeat: no-repeat;
+	display: inline-block;
+	padding-left: 2em;
+}
+body.colors-dark .toggle-trigger {
+	background-color: #252525;
+}
+/* label.toggle-trigger:not(.dashicons-before) {
+	padding-left: 2em;
+} */
+
+.toggle-trigger a {
+	color: #333;
+	text-decoration: none;
+	/* display: block; */
+	box-shadow: none;
+}
+body.colors-dark .toggle-trigger a {
+	color: #CCC;
+}
+.toggle-trigger.dashicons-before a {
+	display: inline-block;
+}
+
+.toggle-trigger a:hover {
+	color: #0489B7;
+	text-decoration: none;
+}
+body.colors-dark .toggle-trigger a:hover {
+	color: #FA7628;
+}
+.toggle-trigger .wpcf7-spinner {
+	float: right;
+}
+
+.toggle-trigger.active:not(.dashicons-before){
+	background-image: url('../../public/images/toggle-minus.png') !important;
+	background-repeat: no-repeat;
+}
+
+.toggle-container {
+	display: none;
+	overflow: hidden;
+	padding: 2px 10px;
+	padding-left: 1.5em;
+}
+textarea.toggle-container {
+	overflow: inherit;
+}
+.toggle-trigger.active + .toggle-container {
+	display: block;
+}
+
+.ajax_action-response .close-box {
+	float: right;
+}
+.ajax_action_info {
+	text-align: center;
+}
+div.ajax_action-response {
+	border-style: solid;
+	border-color:orange;
+	padding: 5px;
+}
+
+/**
+ * diagram
+ */
+.agdp-diagram .toggle-trigger > .dashicons-before,
+.agdp-diagram .toggle-container > :not(.toggle-trigger,.toggle-container) {
+	margin-left: 2.5em;
+}
+.agdp-diagram .toggle-trigger {
+	padding-top: 3px;
+	font-size: inherit;
+	display: block;
+}
+.agdp-diagram .toggle-container {
+	padding: 2px 0px 3px 15px;
+}
+.agdp-diagram .dashicons-before {
+	color: #27748f;
+}
+.agdp-diagram .dashicons-before.dashicons-warning {
+	color: #cd5555;
+}
+.agdp-diagram .dashicons-before.alert {
+	color: #be692b;
+}
+
+.agdp-diagram .show-mouse-over {
+	color: #afd2de;
+}
+.agdp-diagram :hover > a > .show-mouse-over  {
+	color: inherit;
+}
+table.agdp-diagram  {
+	border-collapse:collapse;
+	margin-bottom: 2em;
+}
+table.agdp-diagram td  {
+	border-bottom: 1px solid;
+	max-width: 33%;
+}
+table.agdp-diagram a  {
+	text-decoration: none;
+	color: inherit;
+}
+/* table.agdp-diagram a .dashicons-before { */
+	/* color: #2271b1; */
+/* } */
+
+/**
+ * comment
+ */
+table.form-table.editcomment ul.attachments img {
+	max-width: 200px;
+}
+
+table.forum-subscribers td, table.forum-subscribers th {
+	padding-left: 1em;
+	padding-right: 1em;
+}
+div.edit-post-layout__metaboxes {
+	margin-left:auto;
+	margin-right:auto
+}
+.block-editor .postbox {
+	border-top: 1px solid lightsteelblue;
+	background-color: beige;
+}
+
+#wpadminbar #wp-admin-bar-agdpevents .ab-icon::before {
+  content: "\f508";
+  top: 3px;
+}
+
+#wpadminbar #wp-admin-bar-covoiturages .ab-icon::before {
+  content: "\f16b";
+  top: 3px;
+}
+
+.agdp-metabox-row code {
+	padding-left:0px;
+}
+.agdp-metabox-row .sql-helper-variables label {
+	min-width: 8em;
+	display: inline-block;
+}
+
+#titlediv .agdp_wpcf7_usage.inside {
+	padding: 6px;
+}
+#titlediv .agdp_wpcf7_usage.inside label {
+	cursor: pointer;
+	margin-right: 1em;
+}
+
+.agdp-import-posts.confirmation {
+	margin-bottom: 2em;
+	border-bottom: solid #2271b1 1px;
+	padding-bottom: 1em;
+}
+.agdp-import-posts .confirm_action_posts {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+.agdp-import-posts .confirm_action_posts > div + div {
+	margin-left: 1em;
+}
+
+#the-list .column-sql {
+  overflow: hidden;
+}
+#the-list .column-sql code {
+	white-space: pre;
+	padding: 0px;
+	font-size: smaller;
+	line-height: 15px;
+}
+/*
+ *******/
+ 
+/**
+ * wpcf7-spinner
+ */
+.wpcf7-spinner {
+	visibility: hidden;
+	display: inline-block;
+	background-color: #23282d; /* Dark Gray 800 */
+	opacity: 0.75;
+	width: 18px;
+	height: 18px;
+	border: none;
+	border-radius: 100%;
+	padding: 0;
+	margin: 0 8px;
+	position: relative;
+	
+	vertical-align: middle;
+}
+
+.wpcf7-spinner::before {
+	content: '';
+	position: absolute;
+	background-color: #fbfbfc; /* Light Gray 100 */
+	top: 0px;
+	left: 0px;
+	width: 8px;
+	height: 8px;
+	border: none;
+	border-radius: 100%;
+	transform-origin: 9px 9px;
+	animation-name: spin;
+	animation-duration: 1000ms;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wpcf7-spinner::before {
+		animation-name: blink;
+		animation-duration: 2000ms;
+	}
+}
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes blink {
+	from {
+		opacity: 0;
+	}
+
+	50% {
+		opacity: 1;
+	}
+
+	to {
+		opacity: 0;
+	}
+}
+
+.wpcf7 [inert] {
+	opacity: 0.5;
+}
+/*
+ *******/
+ 
+ 
+/* SQL Function */
+table.use_example_results {
+	border-spacing: 0px;
+}
+table.use_example_results td {
+	line-height: 1em;
+	padding: 2px;
+	border: solid 1px burlywood;
+}
+
+/* Packages */
+.agdppackages-post_type {
+	vertical-align: top;
+	padding-left: 2em;
+}
+form#agdppackages .agdppackages-post_type {
+	display: inline-block;
+}
+form#agdppackages .agdppackages-post_type input[type="submit"] {
+	margin-top: 1em;
+}
+.agdppackages-post_type .import-file {
+	/* display: inline-block;
+	border: solid #2271b1 2px;
+	border-radius: 5px; */
+	padding: 6px;
+	margin-bottom: 1em;
+}
+.agdppackages-post_type .import-file > a {
+	text-align: center;
+	padding: 4px 6px;
+}
+.agdppackages-post_type .in_package li > ul > li,
+#confirm_action_posts li > ul > li {
+	margin-left: 1.5em;
+}
+
+.wp-core-ui .button.button-large > .dashicons-before {
+	position: relative;
+	top: 5px;
+	left: -3px;
+}
+
+.wp-list-table.tags #the-list .unknown-term .column-name {
+	color: #b64848;
+}
+
+#posts-filter .agendapartage-posts-edit {
+	margin-top: 1px;
+	opacity: 75%;
+	font-size: 0.9em;
+}
+#posts-filter .agendapartage-posts-edit a {
+	margin-left: 6px;
+	display: inline-block;
+	width: 20%;
+	vertical-align: top;
+}
+#posts-filter .agendapartage-posts-edit .dashicons-before {
+	font-size: 14px;
+}
