@@ -68,7 +68,7 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 	/****************/
 	public static function manage_columns($columns){
 		$columns['default_checked'] = 'Coché par défaut';
-		$columns['properties'] = 'Lien / Connexion';
+		$columns['properties'] = 'Affichée / Lien / Connexion';
 		$columns['order_index'] = 'Ordre de tri';
 		return $columns;
 	}
@@ -85,6 +85,10 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 				break;
 			case 'properties' :
 				$properties = [];
+				$meta_key = 'public_display';
+				$value = get_term_meta( $term_id, $meta_key, true );
+				$properties[] = $value === '' ? 'Affichée' : ( $value === '0' ? 'Non' : ($value === 'admin' ? 'Masquée sauf Admin' : 'Masquée') );
+				
 				$meta_key = 'download_link';
 				if( $value = get_term_meta( $term_id, $meta_key, true ) )
 					$properties[] = 'Téléchargement ' . $value;
@@ -148,7 +152,7 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 	 * A ce stade, les metaboxes ne sont pas encore sauvegardées
 	 */
 	public static function saved_term_cb ( int $term_id, int $tt_id, bool $update, array $args ){
-		foreach([ 'default_checked', 'download_link', 'connexion', 'connexion_pwd', 'order_index' ] as $meta_name)
+		foreach([ 'default_checked', 'public_display', 'download_link', 'connexion', 'connexion_pwd', 'order_index' ] as $meta_name)
 			if(array_key_exists($meta_name, $args) && $args[$meta_name] ){
 				update_term_meta($term_id, $meta_name, $args[$meta_name]);
 			}
@@ -239,6 +243,22 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 									'label' => __('Coché par défaut lors de la création d\'un enregistrement.', AGDP_TAG),
 									'type' => 'bool',
 									// 'default' => $checked
+								)], $tag, null);
+        ?></td>
+    </tr>
+	<tr class="form-field">
+        <th scope="row"><label for="public_display"><?= __('Visiblité publique', AGDP_TAG)?></label></th>
+        <td><?php
+			$meta_name = 'public_display';
+			
+			$values = [ 'show' => 'Affichée'
+						, 'hide' => 'Masquée'
+						, 'admin' => 'Masquée sauf Admin'
+					];
+			
+			parent::metabox_html([array('name' => $meta_name,
+									'input' => 'select',
+									'values' => $values
 								)], $tag, null);
         ?></td>
     </tr>

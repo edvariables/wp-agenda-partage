@@ -307,6 +307,9 @@ class Agdp_Event_Shortcodes {
 			case 'agdpevent-categories':
 				if(!isset($tax_name) || !$tax_name)
 					$tax_name = Agdp_Event::taxonomy_ev_category;
+			// case 'agdpevent-diffusions':
+			// case 'agdpevent-cities':
+			// case 'agdpevent-categories':
 				$meta_name = 'ev-' . substr($shortcode, strlen('agdpevent-')) ;
 				$terms = Agdp_Event::get_post_terms( $tax_name, $post_id, 'names');
 				if($terms){

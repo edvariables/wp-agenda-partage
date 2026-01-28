@@ -593,7 +593,8 @@ abstract class Agdp_Post {
 				'hide_empty' => false,
 				'taxonomy' => $taxonomy
 			), $query_args);
-		if( in_array( $taxonomy, self::get_taxonomies_diffusion() ) )
+		$taxonomies_diffusion = self::get_taxonomies_diffusion();
+		if( in_array( $taxonomy, $taxonomies_diffusion ) )
 			if( empty( $query_args['orderby'] )
 			 || $query_args['orderby'] === 'order_index' ){
 				$order_index_filters = true;
@@ -619,8 +620,9 @@ abstract class Agdp_Post {
 		}
 		
 		$meta_names = [];
-		if( in_array( $taxonomy, self::get_taxonomies_diffusion() ) ){
+		if( in_array( $taxonomy, $taxonomies_diffusion ) ){
 			$meta_names[] = 'default_checked';
+			$meta_names[] = 'public_display';
 			$meta_names[] = 'download_link';
 			$meta_names[] = 'connexion';
 		}
@@ -681,6 +683,29 @@ abstract class Agdp_Post {
 		if(!$post_id){
 			throw new Exception('get_post_terms : $post_id ne peut être null;');
 		}
+		
+		if( in_array( $tax_name, self::get_taxonomies_diffusion() ) ){
+			if( ! is_array($args) )
+				$args = [ 'fields' => $args ];
+			
+			$forbidden_public_display = ['hide'];
+			if( ! current_user_can('manage_options') )
+				$forbidden_public_display[] = 'admin';
+			
+			$args[ 'meta_query' ] = [
+				'relation' => 'OR',
+				[
+					'key' => 'public_display',
+					'compare' => 'NOT EXISTS',
+				],
+				[
+					'key' => 'public_display',
+					'value' => $forbidden_public_display,
+					'compare' => 'NOT IN',
+				],
+			];
+		}
+		
 		return wp_get_post_terms($post_id, $tax_name, $args);
 	}
 	
