@@ -55,7 +55,7 @@ abstract class Agdp_Posts_Export {
 			$posts_class = Agdp_Page::get_posts_class( $post_type );
 			return ($posts_class .'_Export')::do_export( $posts, $file_format, $return, $filters);
 		}
-			
+		
 		$encode_to = "UTF-8";
 		switch( strtolower( $file_format )){
 			case 'vcalendar':
@@ -826,7 +826,7 @@ abstract class Agdp_Posts_Export {
 			if( $post_terms )
 				$post_data['terms'] = $post_terms;
 			
-			$post_data = apply_filters( AGDP_TAG . '_export_object_' . $post_type, $post_id, $post_data );
+			$post_data = apply_filters( AGDP_TAG . '_export_object_' . $post_type, $post_data, $post_id );
 			
 			if( $post_data )
 				$data[] = $post_data;
