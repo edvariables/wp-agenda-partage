@@ -47,8 +47,8 @@ class Agdp_Admin_Event {
 		
 		echo '<div class="alignleft actions custom-posts-filters">';
 		
-			$selected_filter = isset($_REQUEST['supprimables'] ) ? $_REQUEST['supprimables'] : false;
-			echo sprintf('<label><input type="checkbox" name="supprimables" %s>Supprimables</label>'
+			$selected_filter = isset($_REQUEST['deletable'] ) ? $_REQUEST['deletable'] : false;
+			echo sprintf('<label><input type="checkbox" name="deletable" %s>Supprimables</label>'
 				, $selected_filter ? 'checked="checked"' : ''
 			);
 		
@@ -200,15 +200,9 @@ class Agdp_Admin_Event {
 			$query->set('meta_compare', '<');  
 			$query->set('meta_value', $_REQUEST['date_max']);  
 		}
-		//TODO relou
-		// if( ! empty( $_REQUEST['supprimables'] ) ){
-			// $date = (new DateTime())
-			  // ->sub(new DateInterval('P2M'))
-			  // ->format('Y-m-d');
-			// $query->query_vars['meta_key'] = 'ev-date-fin';  
-			// $query->query_vars['meta_compare'] = '<';
-			// $query->query_vars['meta_value'] = $date;  
-		// }
+		if( ! empty( $_REQUEST['deletable'] ) ){
+			add_filter( 'posts_where', array( __CLASS__, 'on_posts_where_deletable'), 10, 2);
+		}
 		
 		if( ! empty($query->query_vars['orderby']) ){
 			switch( $query->query_vars['orderby']) {
@@ -223,6 +217,30 @@ class Agdp_Admin_Event {
 			}
 		}
 			// debug_log(__FUNCTION__, $query);
+	}
+	/**
+	 * on_posts_where_deletable
+	 *
+	 */
+	public static function on_posts_where_deletable( string $where, WP_Query $query ) {
+		global $wpdb;
+		$date = (new DateTime())
+		  ->sub(new DateInterval('P2M'))
+		  ->format('Y-m-d');
+		$sql = "SELECT ID
+			FROM {$wpdb->posts} posts
+			INNER JOIN {$wpdb->postmeta} debut
+				ON posts.ID = debut.post_id
+				AND debut.meta_key = 'ev-date-debut'
+			LEFT JOIN {$wpdb->postmeta} fin
+				ON posts.ID = fin.post_id
+				AND debut.meta_key = 'ev-date-fin'
+			WHERE debut.meta_value > '$date'
+			AND ( fin.post_id IS NULL
+				OR fin.meta_value > '$date'
+			)";
+		$where .= " AND ID NOT IN ($sql)";
+		return $where;
 	}
 	/****************/
 
