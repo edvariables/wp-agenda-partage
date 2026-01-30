@@ -234,11 +234,11 @@ class Agdp_Admin_Event {
 				AND debut.meta_key = 'ev-date-debut'
 			LEFT JOIN {$wpdb->postmeta} fin
 				ON posts.ID = fin.post_id
-				AND debut.meta_key = 'ev-date-fin'
-			WHERE debut.meta_value > '$date'
-			AND ( fin.post_id IS NULL
-				OR fin.meta_value > '$date'
-			)";
+				AND fin.meta_key = 'ev-date-fin'
+			WHERE (debut.meta_value > '$date'
+				AND fin.post_id IS NULL)
+			OR fin.meta_value > '$date'
+			";
 		$where .= " AND ID NOT IN ($sql)";
 		return $where;
 	}
