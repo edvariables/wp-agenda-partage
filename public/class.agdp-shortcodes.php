@@ -325,7 +325,7 @@ class Agdp_Shortcodes {
 			if( in_array('eventscounters', $atts) )
 				return Agdp_Admin_Stats::agdpevents_stats_counters() . $content;
 			if( in_array('covoituragescounters', $atts) )
-				return Agdp_Admin_Stats::agdpevents_stats_counters() . $content;
+				return Agdp_Admin_Stats::covoiturages_stats_counters() . $content;
 		}
 		return Agdp_Admin_Stats::get_stats_result() . $content;
 	}

@@ -1809,6 +1809,13 @@ class Agdp_Newsletter {
 		
 		$subject = wp_strip_all_tags( do_shortcode( $subject ) );
 		
+		$is_admin_stats = $newsletter->ID === Agdp::get_option('admin_nl_post_id');
+		if( $is_admin_stats && strpos( $subject, '(0|0|0|0)' ) !== FALSE ){
+			self::content_is_empty(true);
+			return false;
+		}
+		
+		
 		if( self::get_newsletter_posts_post_type( $newsletter) === Agdp_Covoiturage::post_type )
 			$subject = sprintf('[%s]', $subject);
 		else
