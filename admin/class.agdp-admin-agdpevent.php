@@ -236,7 +236,10 @@ class Agdp_Admin_Event {
 				ON posts.ID = fin.post_id
 				AND fin.meta_key = 'ev-date-fin'
 			WHERE (debut.meta_value > '$date'
-				AND fin.post_id IS NULL)
+				AND ( fin.post_id IS NULL
+					OR fin.meta_value = ''
+				)
+			)
 			OR fin.meta_value > '$date'
 			";
 		$where .= " AND ID NOT IN ($sql)";
