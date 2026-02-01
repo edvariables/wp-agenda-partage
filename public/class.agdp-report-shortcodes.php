@@ -1,8 +1,7 @@
 <?php
 
 /**
- * AgendaPartage -> Forum
- * Page liée à une mailbox
+ * AgendaPartage -> Report
  * 
  * Définition des shortcodes 
  *

@@ -17,20 +17,17 @@ class Agdp_Shortcodes {
 	public static function init() {
 		if ( ! self::$initiated ) {
 			self::$initiated = true;
-
-			self::init_hooks();
-			
-			self::add_shortcodes();
 		}
+			
+		static::init_hooks();
+		
+		static::add_shortcodes();
 	}
 
 	/**
 	 * Hook
 	 */
 	public static function init_hooks() {
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_shortcode_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_shortcode_cb') );
 	}
 
  	/**
@@ -97,18 +94,22 @@ class Agdp_Shortcodes {
  	/**
  	 * add_shortcodes
  	 */
-	public static function add_shortcodes(){
-		add_shortcode( 'agdpstats', array(__CLASS__, 'shortcodes_agdpstats_callback') );
-		add_shortcode( 'post', array(__CLASS__, 'shortcode_post_callback') );
-		
-		$shortcodes = static::get_post_type_shortcode( ARRAY_N );
+	public static function add_shortcodes( $shortcodes = false ){
+				
+		if( ! $shortcodes ){
+			//get_post_type_shortcode
+			$shortcodes = static::get_post_type_shortcode( ARRAY_N );
+		}
+		elseif( ! is_array( $shortcodes ))
+			$shortcodes = array( $shortcodes );
 		
 		if( ! $shortcodes )
 			return;
 		
 		//Main
-		foreach($shortcodes as $shortcode_u)
+		foreach($shortcodes as $shortcode_u){
 			add_shortcode( $shortcode_u, array( static::class, 'shortcodes_callback') );
+		}
 		
 		if( ! static::info_shortcodes )
 			return;
@@ -266,26 +267,6 @@ class Agdp_Shortcodes {
 	}
 	
 	/**
-	 * Hook wp_ajax_shortcode
-	 */
-	public static function on_wp_ajax_shortcode_cb() {
-		$ajax_response = '';
-		$data = $_POST['data'];
-		if($data){ 
-			if( is_string( $data ) )
-				$data  = str_replace('\\"', '"', wp_specialchars_decode( $data ));
-			
-			$ajax_response = do_shortcode( $data );
-			
-		}
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
-	}
-	
-	/**
 	 * Extracts post_id from a string post_id|post_path
 	 */
 	public static function get_post( $str_post_id, $post_type = false, $relative_to = false ) {
@@ -312,72 +293,5 @@ class Agdp_Shortcodes {
 					, $attributes
 				);
 		return $shortcode;
-	}
-	
-	
-	
-	
-	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
-		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-stats.php');
-		if( count($atts)) {
-			if( in_array('postscounters', $atts) )
-				return Agdp_Admin_Stats::posts_stats_counters() . $content;
-			if( in_array('eventscounters', $atts) )
-				return Agdp_Admin_Stats::agdpevents_stats_counters() . $content;
-			if( in_array('covoituragescounters', $atts) )
-				return Agdp_Admin_Stats::covoiturages_stats_counters() . $content;
-		}
-		return Agdp_Admin_Stats::get_stats_result() . $content;
-	}
-
-	/**
-	 * [post]
-	 * [post info="ev-email"]
-	 * [post info="ev-telephone"]
-	 * [post info="mailto"]
-	 * [post info="uri"] [post info="url"]
-	 * [post info="a"] [post info="link"]
-	 * [post info="post_type"]
-	 * [post info="dump"]
-	 */
-	public static function shortcode_post_callback($atts, $content = '', $shortcode = null){
-		$post = get_post();
-		if(!$post){
-			echo $content;
-			return;
-		}
-
-		if( ! is_array($atts)){
-			$atts = array();
-		}
-
-		if(! array_key_exists('info', $atts)
-		|| ! ($info = $atts['info']))
-			$info = 'post_title';
-
-		switch($info){
-			case 'uri':
-			case 'url':
-				return $_SERVER['HTTP_REFERER'];
-			case 'link':
-			case 'a':
-				return sprintf('<a href="%s">%s</a>', Agdp_Event::get_post_permalink($post), $post->post_title);
-
-			case 'mailto':
-				$email = get_post_meta( $post->ID, 'ev-email', true);
-				return sprintf('<a href="mailto:%s">%s</a>', antispambot(sanitize_email($email)), $post->post_title);//TODO anti-spam
-
-			case 'dump':
-				return sprintf('<pre>%s</pre>', 'shortcodes dump : ' . var_export($post, true));
-
-			case 'title':
-				$info = 'post_title';
-
-			default :
-				if(isset($post->$info))
-					return $post->$info;
-				return get_post_meta( $post->ID, $info, true);
-
-		}
 	}
 }

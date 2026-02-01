@@ -110,8 +110,15 @@ class Agdp {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-wpcf7.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_WPCF7', 'init' ) );
 		
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Post_Shortcodes', 'init' ) );
+		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Event_Shortcodes', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevents-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Events_Shortcodes', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-covoiturage-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Covoiturage_Shortcodes', 'init' ) );

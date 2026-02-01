@@ -8,7 +8,29 @@
  *
  * Voir aussi Agdp_Admin_Event
  */
-class Agdp_Event_Shortcodes {
+class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
+
+	const post_type = Agdp_Event::post_type;
+	
+	const default_attr = 'post_id';
+	
+	const info_shortcodes = [ 
+		'titre',
+		'categories',
+		'cities',
+		'diffusions',
+		'description',
+		'dates',
+		'localisation',
+		'is-imported',
+		'details',
+		'attachments',
+		'message-contact',
+		'avec-email',
+		'cree-depuis',
+		'modifier-evenement',
+		'covoiturage',
+	];
 
 
 	private static $initiated = false;
@@ -16,9 +38,8 @@ class Agdp_Event_Shortcodes {
 	public static function init() {
 		if ( ! self::$initiated ) {
 			self::$initiated = true;
-
-			self::init_hooks();
-			self::init_shortcodes();
+			
+			parent::init();
 		}
 	}
 
@@ -29,7 +50,6 @@ class Agdp_Event_Shortcodes {
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_agdpevent_shortcode_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_agdpevent_shortcode_cb') );
-		add_filter('wpcf7_mail_components', array(__CLASS__, 'on_wpcf7_mail_components'), 10, 3);
 	}
 
 	/////////////////
@@ -37,34 +57,16 @@ class Agdp_Event_Shortcodes {
  	/**
  	 * init_shortcodes
  	 */
-	public static function init_shortcodes(){
+	public static function add_shortcodes( $shortcodes = false ){
 
-		add_shortcode( 'agdpevent-titre', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-categories', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-cities', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-diffusions', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-description', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-dates', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-localisation', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-is-imported', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-details', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-attachments', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-message-contact', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-avec-email', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-cree-depuis', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'agdpevent-modifier-evenement', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'agdpevent-covoiturage', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'agdpevents', array(__CLASS__, 'shortcodes_callback') );
+		parent::add_shortcodes();
 
 	}
 
 	/**
 	* Callback des shortcodes
 	*/
-	public static function shortcodes_callback($atts, $content = '', $shortcode = null){
+	/* public static function shortcodes_callback($atts, $content = '', $shortcode = null){
 
 		if(is_admin() 
 		&& ! wp_doing_ajax()
@@ -165,7 +167,7 @@ class Agdp_Event_Shortcodes {
 		
 		return self::shortcodes_agdpevent_callback($atts, $content, $shortcode);
 	}
-	
+	 */
 	/**
 	* [agdpevent info=titre|description|dates|localisation|details|message-contact|modifier-evenement|attachments]
 	* [agdpevent-titre]
@@ -178,7 +180,7 @@ class Agdp_Event_Shortcodes {
 	* [agdpevent-avec-email]
 	* [agdpevent-modifier-evenement]
 	*/
-	private static function shortcodes_agdpevent_callback($atts, $content = '', $shortcode = null){
+	protected static function do_shortcode($atts, $content = '', $shortcode = null){
 		
 		$post = Agdp_Event::get_post();
 		
@@ -478,65 +480,6 @@ class Agdp_Event_Shortcodes {
 		}
 	}
 	
-	/**
-	* [agdpevents]
-	* [agdpevents liste|list|calendar|calendrier|week|semaine|ics]
-	* [agdpevents mode:liste|list|calendar|calendrier|week|semaine|ics]
-	*/
-	public static function shortcodes_agdpevents_callback($atts, $content = '', $shortcode = null){
-		
-		if($shortcode == 'agdpevents'
-		&& count($atts) > 0){
-			if(array_key_exists('mode', $atts))
-				$shortcode .= '-' . $atts['mode'];
-			elseif(array_key_exists('0', $atts))
-				$shortcode .= '-' . $atts['0'];
-		}
-
-		switch($shortcode){
-			case 'agdpevents-liste':
-				$shortcode = 'agdpevents-list';
-			case 'agdpevents-list':
-				
-				return Agdp_Events::get_list_html( $content );
-				
-			case 'agdpevents-email':
-				
-				$html = Agdp_Events::get_list_for_email( $content );
-				return $html;
-
-			default:
-				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';
-		}
-	}
-
- 	
-	/**
-	 * Get code secret from Ajax query, redirect to post url
-	 */
-	public static function on_wp_ajax_agdpevent_shortcode_cb() {
-		$ajax_response = '';
-		$data = $_POST['data'];
-		if($data){ 
-			if( is_string( $data ) )
-				$data  = str_replace('\\"', '"', wp_specialchars_decode( $data ));
-			
-			$ajax_response = do_shortcode( $data );
-			
-		}
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
-	}
-	
 	// shortcodes //
 	///////////////
-	
-	// define the wpcf7_mail_components callback 
-	public static function on_wpcf7_mail_components( $components, $wpcf7_get_current_contact_form, $instance ){ 
-		$components['body'] = do_shortcode($components['body']);
-		return $components;
-	} 
 }

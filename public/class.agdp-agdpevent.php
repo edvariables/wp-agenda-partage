@@ -18,6 +18,7 @@ class Agdp_Event extends Agdp_Post {
 	const taxonomy_ev_category = 'ev_category';
 	const taxonomy_city = 'ev_city';
 	const taxonomy_diffusion = 'ev_diffusion';
+	const shortcode = self::post_type;
 	
 	const icon = 'calendar-alt';
 
