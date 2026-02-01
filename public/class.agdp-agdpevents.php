@@ -196,12 +196,14 @@ class Agdp_Events extends Agdp_Posts {
 				INNER JOIN {$blog_prefix}postmeta date_debut
 					ON posts.ID = date_debut.post_id
 					AND date_debut.meta_key = 'ev-date-debut'
-					AND date_debut.meta_value >= CURDATE()
+					AND date_debut.meta_value >= CURDATE()";
+		if($sql_filters)
+			$sql .= " INNER JOIN ({$sql_filters}) filtered_ids
+					ON posts.ID = filtered_ids.ID";
+		$sql .= "
 				WHERE posts.post_status = 'publish'
 					AND posts.post_type = '". Agdp_Event::post_type ."'
 		";
-		if($sql_filters)
-			$sql .= " AND posts.ID IN ({$sql_filters})";
 		
 		$sql .= "GROUP BY year, month
 				ORDER BY year, month

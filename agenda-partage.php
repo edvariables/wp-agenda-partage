@@ -42,6 +42,7 @@ define( 'AGDP_EMAIL_DOMAIN', AGDP_PLUGIN_NAME . '.replace' ); //replace.agendapa
 define( 'AGDP_MAILLOG_ENABLE', 'maillog_enable');
 define( 'AGDP_DEBUGLOG_ENABLE', 'debuglog_enable');
 define( 'AGDP_CONNECT_MENU_ENABLE', 'connect_menu_enable');
+define( 'AGDP_DEBUGLOG_WPDB_QUERIES', FALSE);
 			
 //argument de requête pour modification d'évènement. code généré par Agdp::get_secret_code()
 define( 'AGDP_EVENT_SECRETCODE', 'codesecret' ); 

@@ -152,6 +152,12 @@ class Agdp {
 		
 		if( self::get_option('disable_sitemaps') )
 			add_filter(  'wp_sitemaps_enabled', '__return_false' );
+		
+		/*DEBUG ALL MYSQL QUERIES*/
+		if( AGDP_DEBUGLOG_WPDB_QUERIES ){
+			define( 'SAVEQUERIES', true );
+			add_action( 'log_query_custom_data', array( __CLASS__, 'on_debug_log_query_custom_data'), 10, 5 );
+		}
 	}
 	
 	/**
@@ -1385,5 +1391,14 @@ class Agdp {
 			
 		$html .= '</table>';
 		return $html;
+	}
+	
+	
+	/**
+	 * DEBUG LOG WPDB QUERY
+	 */
+	public static function on_debug_log_query_custom_data( $query_data, $query, $query_time, $query_callstack, $query_start ){
+		if( strpos( $query, 'wor5504_posts' ) )
+			debug_log(__FUNCTION__, $query_data, $query, $query_time, $query_callstack, $query_start );
 	}
 }

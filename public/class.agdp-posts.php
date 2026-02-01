@@ -124,7 +124,7 @@ abstract class Agdp_Posts {
 					unset($query['posts_where_filters']);
 					continue;
 				}
-				add_filter('posts_where', array(__CLASS__, 'on_posts_where_filters'),10,2);
+				add_filter('posts_clauses', array(__CLASS__, 'on_posts_clauses_filters'),10,2);
 				$posts_where_filters = true;
 				// debug_log('get_posts $posts_where_filters = true;');
 				break;
@@ -140,20 +140,30 @@ abstract class Agdp_Posts {
 		remove_filter( 'posts_clauses', array(__CLASS__, 'on_posts_clauses_meta_query'), 10, 2 );
 		
 		if( ! empty($posts_where_filters))
-			remove_filter('posts_where', array(__CLASS__, 'on_posts_where_filters'),10,2);
+			remove_filter('posts_clauses', array(__CLASS__, 'on_posts_clauses_filters'),10,2);
 		
 		return $the_query->posts; 
     }
+	
 	/**
 	* Filtre WP_Query sur une requête
 	*/
-	public static function on_posts_where_filters($where, $wp_query){
-		// debug_log('on_posts_where_filters', $where , $wp_query->get( 'posts_where_filters' ));
+	public static function on_posts_clauses_filters($clauses, $wp_query){
+		// debug_log(__FUNCTION__, $clauses , $wp_query->get( 'posts_where_filters' ));
 		if($filters_sql = $wp_query->get( 'posts_where_filters' )){
 			global $wpdb;
-			$where .= ' AND ' . $wpdb->posts . '.ID IN ('.$filters_sql.')';
+			$alias = uniqid('posts_filtered');
+			$clauses['join'] .= sprintf("
+			INNER JOIN (%s) %s
+			ON %s.ID = %s.ID"
+				, $filters_sql
+				, $alias
+				, $wpdb->posts
+				, $alias
+			);
+			// debug_log(__FUNCTION__, '$clauses[\'join\']', $clauses['join']);
 		}
-		return $where;
+		return $clauses;
 	}
 	
 	/***********************************************************/
