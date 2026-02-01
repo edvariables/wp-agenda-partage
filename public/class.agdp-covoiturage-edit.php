@@ -504,6 +504,8 @@ class Agdp_Covoiturage_Edit {
 		//TODO multiselect
 		$html .= sprintf('<select name="related_%s"><option value="">(aucun)</option>', Agdp_Event::post_type);
 		foreach($agdpevents as $agdpevent){
+			if( ! $agdpevent )
+				continue;
 			if( ! is_object($agdpevent) ){
 				debug_log_callstack( '! is_object($agdpevent)', $agdpevent );
 				continue;

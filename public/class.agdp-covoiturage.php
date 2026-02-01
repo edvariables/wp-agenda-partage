@@ -747,7 +747,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 			;
 			return $html;
 		}
-		return antispambot(esc_html($val), -0.5);
+		return antispambot(esc_html($val));
 	}
 
 	

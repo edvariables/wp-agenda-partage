@@ -217,7 +217,7 @@ function decode_spamcause_unrot($pair, $pos, $key = false){
 	if ($pos % 2 == 0)                                           # "even" position => 2nd char is offset
 		$pair = $pair[1] . $pair[0];                               # swap letters in pair
 	$offset = (ord('g') - ord($pair[0])) * 16;                     # treat 1st char as offset
-	return chr(ord($pair[0]) + ord($pair[1]) - $key - $offset);        # map to original character
+	return chr((ord($pair[0]) + ord($pair[1]) - $key - $offset) % 256);        # map to original character
 }
 
 /**

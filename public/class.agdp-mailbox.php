@@ -1400,7 +1400,7 @@ class Agdp_Mailbox {
 			if( ! isset($emails[$email_to]) )
 				return;
 		}
-		debug_log(__FUNCTION__, $email_to);
+		// debug_log(__FUNCTION__, $email_to);
 		
 		//$mail_properties['additional_headers'] de la forme Reply-To: "[abonne-nom]"<[abonne-email]>
 		$email_replyto = wpcf7_mail_replace_tags(strtolower($mail_properties['additional_headers']));

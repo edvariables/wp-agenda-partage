@@ -234,7 +234,8 @@ class Agdp {
 		
 		//$rc = curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //WAS FALSE
 		$rc = curl_exec($ch);
-		curl_close($ch);
+		// curl_close($ch); OBSOLET.
+		// 	may be replaced with curl_setopt($curl, CURLOPT_FORBID_REUSE, TRUE);
 		
 		if( $rc )
 			$message .= ', returns : ' . print_r( $rc, true );
