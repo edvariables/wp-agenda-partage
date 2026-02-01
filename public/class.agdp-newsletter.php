@@ -1810,7 +1810,8 @@ class Agdp_Newsletter {
 		$subject = wp_strip_all_tags( do_shortcode( $subject ) );
 		
 		$is_admin_stats = $newsletter->ID === Agdp::get_option('admin_nl_post_id');
-		if( $is_admin_stats && strpos( $subject, '(0|0|0|0)' ) !== FALSE ){
+		// debug_log(__FUNCTION__, $is_admin_stats, $subject, strpos( $subject, '(0|0|0|0)' ) !== FALSE );
+		if( $is_admin_stats && strpos( $subject, '0|0|0|0' ) !== FALSE ){
 			self::content_is_empty(true);
 			return false;
 		}
