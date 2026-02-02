@@ -201,12 +201,8 @@ class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
 		
 		if($shortcode == 'agdpevent'
 		&& count($atts) > 0){
-			
-			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact'
-							, 'modifier-evenement', 'is-imported', 'details', 'categories'
-							, 'attachments', 'covoiturage'];
 			if(array_key_exists('info', $atts)
-			&& in_array($atts['info'], $specificInfos))
+			&& in_array($atts['info'], self::info_shortcodes))
 				$shortcode .= '-' . $atts['info'];
 			if(array_key_exists('0', $atts))
 				if(is_numeric($atts['0']))

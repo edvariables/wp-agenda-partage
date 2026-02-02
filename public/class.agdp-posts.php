@@ -152,10 +152,10 @@ abstract class Agdp_Posts {
 		// debug_log(__FUNCTION__, $clauses , $wp_query->get( 'posts_where_filters' ));
 		if($filters_sql = $wp_query->get( 'posts_where_filters' )){
 			global $wpdb;
-			$alias = uniqid('posts_filtered');
+			$alias = 'posts_filtered';
 			$clauses['join'] .= sprintf("
-			INNER JOIN (%s) %s
-			ON %s.ID = %s.ID"
+				INNER JOIN (%s) %s
+				ON %s.ID = %s.ID"
 				, $filters_sql
 				, $alias
 				, $wpdb->posts
