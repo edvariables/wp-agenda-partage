@@ -236,12 +236,15 @@ class Agdp_Event extends Agdp_Post {
 		]);
 		$html = sprintf('<ul class="agdp-covoiturages-list">');
 		//Ajouter
-		$new_link = sprintf('<a href="%s">Cliquez ici pour créer un %s covoiturage associé</a>'
-			,  add_query_arg( 
-				AGDP_ARG_EVENTID, $agdpevent->ID
-				, get_permalink(Agdp::get_option('new_covoiturage_page_id')))
-			, count($covoiturages) ? 'autre' : 'nouveau'
-		);
+		if ( ! Agdp_Newsletter::is_sending_email() )
+			$new_link = sprintf('<a href="%s">Cliquez ici pour créer un %s covoiturage associé</a>'
+				,  add_query_arg( 
+					AGDP_ARG_EVENTID, $agdpevent->ID
+					, get_permalink(Agdp::get_option('new_covoiturage_page_id')))
+				, count($covoiturages) ? 'autre' : 'nouveau'
+			);
+		else
+			$new_link = false;
 		if( count($covoiturages) ){
 			$html .= sprintf('<label>%s %s covoiturage%s associé%s</label>', Agdp::icon('car'), count($covoiturages), count($covoiturages) > 1 ? 's' : '', count($covoiturages) > 1 ? 's' : '');
 			foreach($covoiturages as $covoiturage){
@@ -251,11 +254,12 @@ class Agdp_Event extends Agdp_Post {
 					, Agdp_Covoiturage::get_post_title( $covoiturage, true )
 				);
 			}
-			$html .= sprintf('<li>%s%s</li>'
-				, Agdp::icon('welcome-add-page')
-				, $new_link);
+			if( $new_link )
+				$html .= sprintf('<li>%s%s</li>'
+					, Agdp::icon('welcome-add-page')
+					, $new_link);
 		}
-		else
+		elseif( $new_link )
 			$html .= sprintf('<label>%s %s</label>'
 				, Agdp::icon('car')
 				, $new_link
