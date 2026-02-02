@@ -204,7 +204,7 @@ class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
 			
 			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact'
 							, 'modifier-evenement', 'is-imported', 'details', 'categories'
-							, 'attachments'];
+							, 'attachments', 'covoiturage'];
 			if(array_key_exists('info', $atts)
 			&& in_array($atts['info'], $specificInfos))
 				$shortcode .= '-' . $atts['info'];
@@ -359,7 +359,6 @@ class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
 
 
 			case 'agdpevent-covoiturage':
-
 				return Agdp_Event::get_agdpevent_covoiturage();
 
 			case 'agdpevent-attachments':
