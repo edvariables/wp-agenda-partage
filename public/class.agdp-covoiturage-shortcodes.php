@@ -1,14 +1,31 @@
 <?php
 
 /**
- * AgendaPartage -> Covoiturage
+ * AgendaPartage -> Covoiturage -> Shortcodes
  * Custom post type for WordPress.
  * 
  * Définition des shortcodes 
- *
- * Voir aussi Agdp_Admin_Covoiturage
  */
-class Agdp_Covoiturage_Shortcodes {
+class Agdp_Covoiturage_Shortcodes extends Agdp_Shortcodes {
+
+	const post_type = Agdp_Covoiturage::post_type;
+	
+	const default_attr = 'post_id';
+	
+	const info_shortcodes = [ 
+		'titre',
+		'categories',
+		'cities',
+		'diffusions',
+		'description',
+		'dates',
+		'localisation',
+		'details',
+		'message-contact',
+		'avec-email',
+		'cree-depuis',
+		'modifier-covoiturage',
+	];
 
 
 	private static $initiated = false;
@@ -16,150 +33,13 @@ class Agdp_Covoiturage_Shortcodes {
 	public static function init() {
 		if ( ! self::$initiated ) {
 			self::$initiated = true;
-
-			self::init_hooks();
-			self::init_shortcodes();
+			
+			parent::init();
 		}
-	}
-
-	/**
-	 * Hook
-	 */
-	public static function init_hooks() {
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_covoiturage_shortcode_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_covoiturage_shortcode_cb') );
 	}
 
 	/////////////////
  	// shortcodes //
- 	/**
- 	 * init_shortcodes
- 	 */
-	public static function init_shortcodes(){
-
-		add_shortcode( 'covoiturage-titre', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-categories', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-cities', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-diffusions', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-description', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-dates', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-localisation', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-details', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-message-contact', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-avec-email', array(__CLASS__, 'shortcodes_callback') );
-		add_shortcode( 'covoiturage-cree-depuis', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'covoiturage-modifier-covoiturage', array(__CLASS__, 'shortcodes_callback') );
-		
-		add_shortcode( 'covoiturages', array(__CLASS__, 'shortcodes_callback') );
-
-	}
-
-	/**
-	* Callback des shortcodes
-	*/
-	public static function shortcodes_callback($atts, $content = '', $shortcode = null){
-
-		if(is_admin() 
-		&& ! wp_doing_ajax()
-		&& ! Agdp_Newsletter::is_sending_email())
-			return;
-		
-		if( ! is_array($atts)){
-			$atts = array();
-		}
-		
-		//champs sans valeur transformer en champ=true
-		foreach($atts as $key=>$value){
-			if(is_numeric($key) && ! array_key_exists($value, $atts)){
-				$atts[$value] = true;
-				unset($atts[$key]);
-			}
-		}
-		if(array_key_exists('toggle-ajax', $atts)){
-			$atts['toggle'] = $atts['toggle-ajax'];
-			$atts['ajax'] = true;
-			unset($atts['toggle-ajax']);
-		}
-		
-		$key = 'ajax';
-		if(array_key_exists($key, $atts)){
-			$ajax = $atts[$key] ? $atts[$key] : true;
-			unset($atts[$key]);
-		}
-		else{
-			$ajax = false;
-			$key = 'post_id';
-			if(array_key_exists($key, $atts)){
-				global $post;
-				if(!$post){
-					$post = get_post($atts[$key]);
-					
-					//Nécessaire pour WPCF7 pour affecter une valeur à _wpcf7_container_post
-					global $wp_query;
-					if($post)
-						$wp_query->in_the_loop = true;
-				}
-				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
-				unset($atts[$key]);
-			}
-			$key = AGDP_COVOIT_SECRETCODE ;
-			if(array_key_exists($key, $atts)){
-				$_POST[$key] = $_REQUEST[$key] = $atts[$key];
-				unset($atts[$key]);
-			}
-		}
-		// Si attribut toggle [covoiturage-details toggle="Contactez-nous !"]
-		// Fait un appel récursif si il y a l'attribut "ajax"
-		// TODO Sauf shortcode conditionnel
-		if(array_key_exists('toggle', $atts)){
-			
-			$shortcode_atts = '';
-			foreach($atts as $key=>$value){
-				if($key == 'toggle'){
-					$title = array_key_exists('title', $atts) && $atts['title'] 
-						? $atts['title']
-						: ( $atts['toggle'] 
-							? $atts['toggle'] 
-							: __($shortcode, AGDP_TAG)) ;
-				}
-				elseif( ! is_numeric($key) ){
-					if(is_numeric($value))
-						$shortcode_atts .= sprintf('%s=%s ', $key, $value);
-					else
-						$shortcode_atts .= sprintf('%s="%s" ', $key, esc_attr($value));
-				}
-			}
-			
-			//Inner
-			$html = sprintf('[%s %s]%s[/%s]', $shortcode, $shortcode_atts , $content, $shortcode);
-			
-			if( ! $ajax){
-				$html = do_shortcode($html);
-			}
-			else{
-				$ajax = sprintf('ajax="%s"', esc_attr($ajax));
-				$html = esc_attr(str_replace('"', '\\"', $html));
-			}
-			//toggle
-			//Bugg du toggle qui supprime des éléments
-			$guid = uniqid(AGDP_TAG);
-			$toogler = do_shortcode(sprintf('[toggle title="%s" %s]%s[/toggle]'
-				, esc_attr($title)
-				, $ajax 
-				, $guid
-			));
-			return str_replace($guid, $html, $toogler);
-		}
-
-		//De la forme [covoiturages liste] ou [covoiturages-calendrier]
-		if($shortcode == 'covoiturages' || str_starts_with($shortcode, 'covoiturages-')){
-			return self::shortcodes_covoiturages_callback($atts, $content, $shortcode);
-		}
-		return self::shortcodes_covoiturage_callback($atts, $content, $shortcode);
-	}
 	
 	/**
 	* [covoiturage info=titre|description|dates|localisation|details|message-contact|modifier-covoiturage|created_since]
@@ -173,7 +53,7 @@ class Agdp_Covoiturage_Shortcodes {
 	* [covoiturage-modifier-covoiturage]
 	* [covoiturage-cree-depuis]
 	*/
-	private static function shortcodes_covoiturage_callback($atts, $content = '', $shortcode = null){
+	protected static function do_shortcode($atts, $content = '', $shortcode = null){
 		
 		$post = Agdp_Covoiturage::get_post();
 		
@@ -192,23 +72,10 @@ class Agdp_Covoiturage_Shortcodes {
 			}
 		}
 		
-		if($shortcode == 'covoiturage'
-		&& count($atts) > 0){
-			
-			$specificInfos = ['titre', 'localisation', 'description', 'dates', 'message-contact', 'modifier-covoiturage', 'details'];
-			if(array_key_exists('info', $atts)
-			&& in_array($atts['info'], $specificInfos))
-				$shortcode .= '-' . $atts['info'];
-			if(array_key_exists('0', $atts))
-				if(is_numeric($atts['0']))
-					$atts['post_id'] = $atts['0'];
-				elseif( ! array_key_exists('info', $atts))
-					if(in_array($atts['0'], $specificInfos))
-						$shortcode .= '-' . $atts['0'];
-					else
-						$atts['info'] = $atts['0'];
+		if(array_key_exists('info', $atts)
+		&& in_array($atts['info'], self::info_shortcodes))
+			$shortcode .= '-' . $atts['info'];
 					
-		}
 		$no_html = isset($atts['no-html']) && $atts['no-html']
 				|| isset($atts['html']) && $atts['html'] == 'no';
 		
@@ -442,69 +309,6 @@ class Agdp_Covoiturage_Shortcodes {
 			
 				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';
 		}
-	}
-	
-	/**
-	* [covoiturages]
-	* [covoiturages liste|list|calendar|calendrier|week|semaine|ics]
-	* [covoiturages mode:liste|list|calendar|calendrier|week|semaine|ics]
-	*/
-	public static function shortcodes_covoiturages_callback($atts, $content = '', $shortcode = null){
-		
-		if($shortcode == 'covoiturages'
-		&& count($atts) > 0){
-			if(array_key_exists('mode', $atts))
-				$shortcode .= '-' . $atts['mode'];
-			elseif(array_key_exists('0', $atts))
-				$shortcode .= '-' . $atts['0'];
-		}
-
-		switch($shortcode){
-			case 'covoiturages-liste':
-				$shortcode = 'covoiturages-list';
-			case 'covoiturages-list':
-				
-				return Agdp_Covoiturages::get_list_html( $content );
-				
-			case 'covoiturages-email':
-				
-				$html = Agdp_Covoiturages::get_list_for_email( $content );
-				return $html;
-
-			default:
-				return '<div class="error">Le shortcode "'.$shortcode.'" inconnu.</div>';
-		}
-	}
-
- 	
-	/**
-	 * Get code secret from Ajax query, redirect to post url
-	 */
-	public static function on_wp_ajax_covoiturage_shortcode_cb() {
-		$ajax_response = '';
-		$data = $_POST['data'];
-		if($data){ 
-			if( is_string( $data ) )
-				$data  = str_replace('\\"', '"', wp_specialchars_decode( $data ));
-			
-			$ajax_response = do_shortcode( $data );
-			
-		}
-		// Make your array as json
-		wp_send_json($ajax_response);
-	 
-		// Don't forget to stop execution afterward.
-		wp_die();
-	}
-	
-	
-	public static function shortcodes_agdpstats_callback($atts, $content = '', $shortcode = null){
-		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-stats.php');
-		if( count($atts)) {
-			if( in_array('covoituragescounters', $atts) )
-				return Agdp_Admin_Stats::covoiturages_stats_covoituragescounters() . $content;
-		}
-		return Agdp_Admin_Stats::get_stats_result() . $content;
 	}
 	
 	// shortcodes //

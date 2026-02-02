@@ -855,7 +855,7 @@ class Agdp_Covoiturage_Edit {
 						$data[$field] = false;
 				}
 			}
-			
+			debug_log( __FUNCTION__, $inputs);
 			//categories, communes et diffusions
 			$tax_terms = [];
 			foreach( Agdp_Covoiturage_Post_type::get_taxonomies() as $tax_name => $taxonomy){

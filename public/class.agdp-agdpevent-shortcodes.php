@@ -1,7 +1,7 @@
 <?php
 
 /**
- * AgendaPartage -> Évènement
+ * AgendaPartage -> Évènement -> Shortcodes
  * Custom post type for WordPress.
  * 
  * Définition des shortcodes 
@@ -43,25 +43,8 @@ class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
 		}
 	}
 
-	/**
-	 * Hook
-	 */
-	public static function init_hooks() {
-		
-		add_action( 'wp_ajax_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_agdpevent_shortcode_cb') );
-		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_shortcode', array(__CLASS__, 'on_wp_ajax_agdpevent_shortcode_cb') );
-	}
-
 	/////////////////
  	// shortcodes //
- 	/**
- 	 * init_shortcodes
- 	 */
-	public static function add_shortcodes( $shortcodes = false ){
-
-		parent::add_shortcodes();
-
-	}
 
 	/**
 	* Callback des shortcodes
@@ -191,29 +174,10 @@ class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
 				
 		$html = '';
 		
-		foreach($atts as $key=>$value){
-			if(is_numeric($key)){
-				$atts[$value] = true;
-				if($key != '0')
-					unset($atts[$key]);
-			}
-		}
+		if(array_key_exists('info', $atts)
+		&& in_array($atts['info'], self::info_shortcodes))
+			$shortcode .= '-' . $atts['info'];
 		
-		if($shortcode == 'agdpevent'
-		&& count($atts) > 0){
-			if(array_key_exists('info', $atts)
-			&& in_array($atts['info'], self::info_shortcodes))
-				$shortcode .= '-' . $atts['info'];
-			if(array_key_exists('0', $atts))
-				if(is_numeric($atts['0']))
-					$atts['post_id'] = $atts['0'];
-				elseif( ! array_key_exists('info', $atts))
-					if(in_array($atts['0'], $specificInfos))
-						$shortcode .= '-' . $atts['0'];
-					else
-						$atts['info'] = $atts['0'];
-					
-		}
 		$no_html = isset($atts['no-html']) && $atts['no-html']
 				|| isset($atts['html']) && $atts['html'] == 'no';
 		

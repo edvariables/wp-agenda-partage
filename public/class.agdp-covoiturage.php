@@ -17,6 +17,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 	const post_type = 'covoiturage';
 	const taxonomy_city = 'cov_city';
 	const taxonomy_diffusion = 'cov_diffusion';
+	const shortcode = self::post_type;
 
 	const secretcode_argument = AGDP_COVOIT_SECRETCODE;
 	const field_prefix = 'cov-';
@@ -64,7 +65,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		// $post_title = isset( $covoiturage->post_title ) ? $covoiturage->post_title : '';
 		$intentionid = $data ? $data['cov-intention'] : get_post_meta($covoiturage_id, 'cov-intention', true);
 		$intention = Agdp_Covoiturage_Post_type::get_intention_label($intentionid);
-		$is_periodique = $data ? $data['cov-periodique'] : get_post_meta($covoiturage_id, 'cov-periodique', true);
+		$is_periodique = $data && isset($data['cov-periodique']) ? $data['cov-periodique'] : get_post_meta($covoiturage_id, 'cov-periodique', true);
 		if( $is_periodique ){
 			$le = $no_html ? "tous les" : "Tous les";
 			$dates = $data ? $data['cov-periodique-label'] : get_post_meta($covoiturage_id, 'cov-periodique-label', true);
@@ -89,7 +90,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 		$vers = "vers";
 		$arrivee = $data ? $data['cov-arrivee'] : get_post_meta($covoiturage_id, 'cov-arrivee', true);
 		
-		$nb_places = $data ? $data['cov-nb-places'] : get_post_meta($covoiturage_id, 'cov-nb-places', true);
+		$nb_places = $data && isset($data['cov-nb-places']) ? $data['cov-nb-places'] : get_post_meta($covoiturage_id, 'cov-nb-places', true);
 		
 		if( !  $no_html){
 			$intention = sprintf('<span class="cov-intention cov-intention-%s">%s</span>', $intentionid, $intention);

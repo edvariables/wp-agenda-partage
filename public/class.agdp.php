@@ -123,6 +123,9 @@ class Agdp {
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-covoiturage-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Covoiturage_Shortcodes', 'init' ) );
 		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-covoiturages-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Covoiturages_Shortcodes', 'init' ) );
+		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-forum-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Forum_Shortcodes', 'init' ) );
 		
