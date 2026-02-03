@@ -186,7 +186,117 @@ class Agdp_Admin_Options {
 			);
 		}
 	
-		// register a new section in the "agendapartage" page
+		// Contacts
+		$section_id = 'agdp_section_agdpcontacts';
+		add_settings_section(
+			$section_id,
+			__( 'Annuaire', AGDP_TAG ),
+			array(__CLASS__, 'settings_sections_cb'),
+			AGDP_TAG, array_merge( $section_args, 
+				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
+		);
+		if( true ){
+
+			// 
+			$field_id = 'new_agdpcontact_page_id';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'post_type' => 'page'
+				]
+			);
+
+			// 
+			$field_id = 'agdpcontact_edit_form_id';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+
+			// 
+			$field_id = 'agdpcontact_message_contact_form_id';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_combos_posts_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'post_type' => WPCF7_ContactForm::post_type
+				]
+			);
+
+			// 
+			$field_id = 'agdpcontact_need_validation';
+			add_settings_field(
+				$field_id, 
+				__( 'Statut des nouveaux contacts', AGDP_TAG ),
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'label' => Agdp::get_option_label($field_id),
+					'learn-more' => [__( 'Si l\'utilisateur est connecté, le ccontact est toujours publié.', AGDP_TAG )
+									, __( 'Si vous cochez cette option, la saise des ccontacts va se complexifier pour les utilisateurs.', AGDP_TAG )
+									, __( 'Même si cette option n\'est pas cochée, les utilisateurs non connectés reçoivent un email.', AGDP_TAG )
+									, __( 'Cochez si vous voulez limiter et tracer les intrusions ou abus.', AGDP_TAG )],
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
+			
+			// 
+			$field_id = 'allow_html_in_' . Agdp_Contact::post_type;
+			add_settings_field(
+				$field_id, 
+				'Html dans le descriptif',
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'label' => 'Autoriser',
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
+			
+			// 
+			$field_id = 'add_content_in_' . Agdp_Contact::post_type;
+			add_settings_field(
+				$field_id, 
+				'Complément Html dans les pages de contacts',
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+					'input_type' => 'textarea',
+					'rows' => '4',
+				]
+			);
+		}
+		
+	
+		// Evènements
 		$section_id = 'agdp_section_agdpevents';
 		add_settings_section(
 			$section_id,
@@ -397,7 +507,7 @@ class Agdp_Admin_Options {
 		}
 		
 		//////////////////////////////////////////
-		// register a new section in the "agendapartage" page
+		// Covoiturages
 		$section_id = 'agdp_section_covoiturages';
 		add_settings_section(
 			$section_id,
@@ -1030,6 +1140,7 @@ class Agdp_Admin_Options {
 				<div class="dashicons-before dashicons-welcome-learn-more">Dans les pages des évènements, seuls les administrateurs voient un formulaire d'envoi de message à l'organisateur.</div>
 				<?php
 				break;
+			case 'agdpccontact_message_contact_form_id':
 			case 'agdpevent_message_contact_form_id':
 				?>
 				<div class="dashicons-before dashicons-welcome-learn-more">Dans les formulaires, les adresses emails comme organisateur@<?php echo AGDP_EMAIL_DOMAIN?> ou client@<?php echo AGDP_EMAIL_DOMAIN?> sont remplacées par des valeurs dépendantes du contexte.</div>
@@ -1144,7 +1255,8 @@ class Agdp_Admin_Options {
 		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
 		, 'contact_page_id' => 'page'
 		, 'contact_form_id' => 'WPCF7_Contact_Form'
-		, 'agdpevent_message_contact_form_id' => 'page'
+		, 'agdpcontact_message_contact_form_id' => 'WPCF7_Contact_Form'
+		, 'agdpevent_message_contact_form_id' => 'WPCF7_Contact_Form'
 		, 'agenda_page_id' => 'page'
 		, 'new_agdpevent_page_id' => 'page'
 		, 'blog_presentation_page_id' => 'page'

@@ -69,6 +69,16 @@ class Agdp {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-report-variables.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Report_Variables', 'init' ) );
+		
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-contact.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Contact', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-contact-edit.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Contact_Edit', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-contacts.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Contacts', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Event', 'init' ) );
@@ -113,6 +123,12 @@ class Agdp {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-post-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Post_Shortcodes', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-contact-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Contact_Shortcodes', 'init' ) );
+		
+		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-contacts-shortcodes.php' );
+		add_action( 'agendapartage-init', array( 'Agdp_Contacts_Shortcodes', 'init' ) );
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-shortcodes.php' );
 		add_action( 'agendapartage-init', array( 'Agdp_Event_Shortcodes', 'init' ) );
@@ -222,6 +238,10 @@ class Agdp {
 		}
 	}
 	private static function call_blog_wp_cron( $blog ){
+		
+		if( ! function_exists('curl_init')){
+			return;
+		}
 		$message = '';
 
 		$command = $blog->siteurl . '/wp-cron.php?doing_wp_cron';//='.microtime( true );
@@ -418,12 +438,22 @@ class Agdp {
 			case 'newsletter_subscribe_page_id':
 				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
 			
-			case 'agdpevent_edit_form_id':
-				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
 			case 'contact_page_id':
 				return __( 'Page "Ecrivez-nous"', AGDP_TAG );
 			case 'contact_form_id':
 				return __( 'Formulaire "Ecrivez-nous"', AGDP_TAG );
+			
+			
+			case 'agdpcontact_edit_form_id':
+				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
+			case 'agdpcontact_message_contact_form_id':
+				return __( 'Message à un contact de l\'annuaire', AGDP_TAG );
+			case 'new_agdpcontact_page_id':
+				return __( 'Page "Ajouter un contact"', AGDP_TAG );
+				
+			
+			case 'agdpevent_edit_form_id':
+				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
 			case 'agdpevent_message_contact_form_id':
 				return __( 'Message aux organisateurs dans les pages des évènements', AGDP_TAG );
 			case 'agdpevent_import_ics':
@@ -450,6 +480,8 @@ class Agdp {
 			case 'covoiturages_nl_diffusion_term_id'://Agdp_Covoiturages::newsletter_diffusion_term_id
 				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
 				
+			case 'agdpcontact_need_validation':
+				return __( 'Les nouveaux contacts doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
 			case 'agdpevent_need_validation':
 				return __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
 			case 'covoiturage_need_validation':
@@ -714,6 +746,10 @@ class Agdp {
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-report-post_type.php';
 					break;
 
+				case 'Agdp_Contact_Post_type':
+		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-contact-post_type.php';
+					break;
+
 				case 'Agdp_Event_Post_type':
 		 			$file = AGDP_PLUGIN_DIR . '/public/class.agdp-agdpevent-post_type.php';
 					break;
@@ -744,6 +780,8 @@ class Agdp {
 		Agdp_Mailbox_Post_type::register_user_role();
 		self::include_and_init('Agdp_Report_Post_type');
 		Agdp_Report_Post_type::register_user_role();
+		self::include_and_init('Agdp_Contact_Post_type');
+		Agdp_Contact_Post_type::register_user_role();
 		self::include_and_init('Agdp_Event_Post_type');
 		Agdp_Event_Post_type::register_user_role();
 		self::include_and_init('Agdp_Newsletter_Post_type');

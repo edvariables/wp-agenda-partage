@@ -51,6 +51,9 @@ class Agdp_Admin {
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-forum.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Forum', 'init' ) );
 		
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-contact.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Contact', 'init' ) );
+		
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Event', 'init' ) );
 
@@ -63,6 +66,9 @@ class Agdp_Admin {
 		}
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-covoiturage.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Covoiturage', 'init' ) );
+
+		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-contact.php' );
+		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Contact', 'init' ) );
 
 		require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-agdpevent.php' );
 		add_action( 'agendapartage-admin_init', array( 'Agdp_Admin_Edit_Event', 'init' ) );

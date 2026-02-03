@@ -16,9 +16,10 @@ jQuery( function( $ ) {
 		$body.on('wpcf7_form_fields-init', function(){
 			
 			/****************
-			 *	Evènements, covoiturages et messages
+			 *	Evènements, contacts, covoiturages et messages
 			 *******************************/
 			$("input.agdpevent_edit_form_data"
+			+ ", input.contact_edit_form_data"
 			+ ", input.covoiturage_edit_form_data"
 			+ ", input.agdpmessage_edit_form_data").each( function(){
 				/** Complète les champs de formulaire avec les valeurs fournies via un input **/
@@ -366,13 +367,13 @@ jQuery( function( $ ) {
 		});
 
 		/**
-		 * Scroll jusqu'au #hash de la forme #(event|covoiturage)id%d (correction de la hauteur du menu)
+		 * Scroll jusqu'au #hash de la forme #(event|covoiturage|contact)id%d (correction de la hauteur du menu)
 		 */
 		if( window.location.hash ){
-			if( /(event|covoiturage)id[0-9]+/.test(window.location.hash)) {
+			if( /(event|covoiturage|contact)id[0-9]+/.test(window.location.hash)) {
 				$( 'body ').ready(function(){
 				 
-				var matches = window.location.hash.match(/(event|covoiturage)id[0-9]+/);
+				var matches = window.location.hash.match(/(event|covoiturage|contact)id[0-9]+/);
 				var $dom = $('#' + matches[0]);
 				if( $dom.length === 0)
 					return;
@@ -390,10 +391,10 @@ jQuery( function( $ ) {
 		}
 		
 		/**
-		 * Liste d'évènements ou de covoiturages
+		 * Liste d'évènements ou de covoiturages ou de contacts
 		 */
 		//Filtres de l'agenda
-		$('.agdp-agdpevents-list-header form, .agdp-covoiturages-list-header form').each(function(event){
+		$('.agdp-agdpevents-list-header form, .agdp-covoiturages-list-header form, .agdp-agdpcontacts-list-header form').each(function(event){
 			var $form = $(this);
 			/** manage 'all' checkbox **/
 			$form.find('label:not([for]) > input[type="checkbox"]').on('click', function(event){

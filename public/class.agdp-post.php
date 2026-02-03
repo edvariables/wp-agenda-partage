@@ -78,6 +78,8 @@ abstract class Agdp_Post {
 			if( ! ($post_type = static::post_type) )
 				throw new ArgumentException('post_type argument is empty');
 		switch ($post_type){
+			case Agdp_Contact::post_type :
+				return 'Agdp_Contact';
 			case Agdp_Event::post_type :
 				return 'Agdp_Event';
 			case Agdp_Covoiturage::post_type :
@@ -891,8 +893,12 @@ abstract class Agdp_Post {
 		
 			if($post){
 				$post_terms = array();
-				foreach(wp_get_post_terms($post->ID, $tax_name, []) as $term)
-					$post_terms[ $term->term_id . ''] = $term->name;
+				$terms = wp_get_post_terms($post->ID, $tax_name, []);
+				if( is_wp_error($terms) )
+					debug_log(__FUNCTION__, $tax_name, $terms);
+				else
+					foreach($terms as $term)
+						$post_terms[ $term->term_id . ''] = $term->name;
 			}
 			else {
 				$post_terms = false;

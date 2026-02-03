@@ -24,7 +24,7 @@ class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 		
 		if(basename($_SERVER['PHP_SELF']) === 'post.php'
 		&& isset($_POST['post_type'])
-			&& $_POST['post_type'] === Agdp_Covoiturage::post_type 
+			&& $_POST['post_type'] === static::post_type 
 		&& isset($_POST['post_status'])
 			&& ! in_array($_POST['post_status'], [ 'trash', 'trashed' ]) ){
 			add_filter( 'wp_insert_post_data', array(__CLASS__, 'wp_insert_post_data_cb'), 10, 2 );
@@ -35,20 +35,20 @@ class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 		}
 		
 		if(array_key_exists('post_type', $_POST)
-		&& $_POST['post_type'] === Agdp_Covoiturage::post_type){
+		&& $_POST['post_type'] === static::post_type){
 			/** validation du post_content **/
 			add_filter( 'content_save_pre', array(__CLASS__, 'on_post_content_save_pre'), 10, 1 );
 
 			/** save des meta values et + **/
 			if(basename($_SERVER['PHP_SELF']) === 'post.php'){
-				add_action( 'save_post_covoiturage', array(__CLASS__, 'save_post_covoiturage_cb'), 10, 3 );
+				add_action( 'save_post_' . static::post_type, array(__CLASS__, 'save_post_covoiturage_cb'), 10, 3 );
 			}
 			/** initialisation des diffusions par défaut pour les nouveaux covoiturages */
 			if(basename($_SERVER['PHP_SELF']) === 'post-new.php'){
 				add_filter( 'wp_terms_checklist_args', array( __CLASS__, "on_wp_terms_checklist_args" ), 10, 2 ); 
 			}
 		}
-		add_action( 'add_meta_boxes_' . Agdp_Covoiturage::post_type, array( __CLASS__, 'register_covoiturage_metaboxes' ), 10, 1 ); //edit
+		add_action( 'add_meta_boxes_' . static::post_type, array( __CLASS__, 'register_covoiturage_metaboxes' ), 10, 1 ); //edit
 	}
 	/****************/
 
