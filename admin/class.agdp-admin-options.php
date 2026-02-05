@@ -58,7 +58,7 @@ class Agdp_Admin_Options {
 		$section_id = 'agdp_section_pages';
 		add_settings_section(
 			$section_id,
-			__( 'Références des pages et formulaires (Contacts)', AGDP_TAG ),
+			__( 'Références des pages et formulaires', AGDP_TAG ),
 			array(__CLASS__, 'settings_sections_cb'),
 			AGDP_TAG, array_merge( $section_args, 
 				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
