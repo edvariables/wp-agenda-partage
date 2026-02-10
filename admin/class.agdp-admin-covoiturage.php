@@ -26,10 +26,10 @@ class Agdp_Admin_Covoiturage {
 		//set custom columns sortable
 		add_filter( 'manage_edit-' . Agdp_Covoiturage::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
 		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
-		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Covoiturage::post_type)
+		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Covoiturage::post_type){
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
 			add_filter( 'manage_posts_extra_tablenav', array( __CLASS__, 'on_manage_posts_extra_tablenav' ), 10, 1 );
-
+		}
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 	}
 	/****************/
