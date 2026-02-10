@@ -28,10 +28,29 @@ class Agdp_Admin_Covoiturage {
 		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
 		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Covoiturage::post_type)
 			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
+			add_filter( 'manage_posts_extra_tablenav', array( __CLASS__, 'on_manage_posts_extra_tablenav' ), 10, 1 );
 
 		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
 	}
 	/****************/
+	/**
+	 * Ajout de filtres dans la liste des posts
+	 */
+	public static function on_manage_posts_extra_tablenav( $which ){
+		
+		if ($which !== 'top') 
+			return;
+		
+		echo '<div class="alignleft actions custom-posts-filters">';
+		
+			$selected_filter = isset($_REQUEST['deletable'] ) ? $_REQUEST['deletable'] : false;
+			echo sprintf('<label><input type="checkbox" name="deletable" %s>Supprimables</label>'
+				, $selected_filter ? 'checked="checked"' : ''
+			);
+		
+		echo '</div>';
+	}
+
 	
 	/**
 	 * Liste de covoiturages
@@ -132,6 +151,10 @@ class Agdp_Admin_Covoiturage {
 			$query->set('meta_compare', '<');  
 			$query->set('meta_value', $_REQUEST['date_max']);  
 		}
+		
+		if( ! empty( $_REQUEST['deletable'] ) ){
+			add_filter( 'posts_where', array( __CLASS__, 'on_posts_where_deletable'), 10, 2);
+		}
 			
 		if( ! empty($query->query_vars['orderby']) ){
 			switch( $query->query_vars['orderby']) {
@@ -145,6 +168,34 @@ class Agdp_Admin_Covoiturage {
 					break;
 			}
 		}
+	}
+	
+	/**
+	 * on_posts_where_deletable
+	 *
+	 */
+	public static function on_posts_where_deletable( string $where, WP_Query $query ) {
+		global $wpdb;
+		$date = (new DateTime())
+		  ->sub(new DateInterval('P2M'))
+		  ->format('Y-m-d');
+		$sql = "SELECT ID
+			FROM {$wpdb->posts} posts
+			LEFT JOIN {$wpdb->postmeta} debut
+				ON posts.ID = debut.post_id
+				AND debut.meta_key = 'cov-date-debut'
+			LEFT JOIN {$wpdb->postmeta} fin
+				ON posts.ID = fin.post_id
+				AND fin.meta_key = 'cov-date-fin'
+			LEFT JOIN {$wpdb->postmeta} periodique
+				ON posts.ID = periodique.post_id
+				AND debut.meta_key = 'cov-periodique'
+			WHERE (( periodique.meta_value != '1' OR debut.meta_value > '$date' )
+			   AND ( periodique.meta_value = '1' OR fin.meta_value > '$date' )
+			)
+			";
+		$where .= " AND ID NOT IN ($sql)";
+		return $where;
 	}
 	/****************/
 
