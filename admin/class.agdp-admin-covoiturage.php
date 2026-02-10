@@ -57,10 +57,8 @@ class Agdp_Admin_Covoiturage {
 	 */
 	public static function manage_columns( $columns ) {
 		$dates_label = __( 'Date(s)', AGDP_TAG );
-		if( ! empty( $_REQUEST['date_max'] )
-		 && ( $date_max = strtotime($_REQUEST['date_max']) )
-		){
-			$dates_label .= ' avant le ' . wp_date('d/m/Y', $date_max );
+		if( ! empty( $_REQUEST['deletable'] ) ){
+			$dates_label .= ' avant le ' . wp_date('d/m/Y', static::get_deletable_date( ) );
 		}
 		unset( $columns );
 		$columns = array(
@@ -143,14 +141,6 @@ class Agdp_Admin_Covoiturage {
 		global $wpdb;
 		if(empty($query->query_vars))
 			return;
-		if( ! empty( $_REQUEST['date_max'] ) ){
-			if( ! empty($query->query_vars['orderby']) ){
-				//TODO ?
-			}
-			$query->set('meta_key', 'cov-date-debut');  
-			$query->set('meta_compare', '<');  
-			$query->set('meta_value', $_REQUEST['date_max']);  
-		}
 		
 		if( ! empty( $_REQUEST['deletable'] ) ){
 			add_filter( 'posts_where', array( __CLASS__, 'on_posts_where_deletable'), 10, 2);
@@ -171,14 +161,23 @@ class Agdp_Admin_Covoiturage {
 	}
 	
 	/**
+	 * get_deletable_date
+	 *
+	 */
+	public static function get_deletable_date( ) {
+		$date = (new DateTime())
+		  ->sub(new DateInterval('P2M'))
+		  ->format('Y-m-d');
+		return $date;
+	}
+	
+	/**
 	 * on_posts_where_deletable
 	 *
 	 */
 	public static function on_posts_where_deletable( string $where, WP_Query $query ) {
 		global $wpdb;
-		$date = (new DateTime())
-		  ->sub(new DateInterval('P2M'))
-		  ->format('Y-m-d');
+		$date = static::get_deletable_date();
 		$sql = "SELECT ID
 			FROM {$wpdb->posts} posts
 			LEFT JOIN {$wpdb->postmeta} debut

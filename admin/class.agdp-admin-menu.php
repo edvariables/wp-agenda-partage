@@ -96,8 +96,8 @@ class Agdp_Admin_Menu {
 			
 				$obsolatable = in_array( $post_type, [ Agdp_Event::post_type, Agdp_Covoiturage::post_type ] );
 				if( $obsolatable){
-					$page_title =  $type_title . ' obsolètes d\'un mois';
-					$menu_slug = $parent_slug . '&date_max=' . wp_date('Y-m-d', strtotime('-1 Month'));
+					$page_title =  $type_title . ' obsolètes';
+					$menu_slug = $parent_slug . '&deletable=1';
 					add_submenu_page( $parent_slug, $page_title, 'Obsolètes', $capability, $menu_slug, '', 2);
 				}
 			}
