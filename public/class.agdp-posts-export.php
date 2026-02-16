@@ -64,7 +64,7 @@ abstract class Agdp_Posts_Export {
 				$export_data = static::export_posts_ics($posts, $filters);
 				break;
 			case 'csv':
-				$encode_to = "Windows-1252";
+				$encode_to = "Windows-1252"; //SIC : reste en UTF8
 				$export_data = static::export_posts_csv($posts, $filters);
 				break;
 			case 'txt':
@@ -262,8 +262,9 @@ abstract class Agdp_Posts_Export {
 	public static function export_escape_csv($str){
 		return str_replace("\n", '\\n', 
 			str_replace("\r", '\\r', 
+			str_replace("\t", '  ', 
 				$str
-		));
+		)));
 	}
 	
 	/**********************************************************/

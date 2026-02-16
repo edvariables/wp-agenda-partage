@@ -42,15 +42,16 @@ class Agdp_Events_Export extends Agdp_Posts_Export {
 	 * Retourne les données CSV pour le téléchargement de l'export des évènements
 	 */
 	public static function export_posts_csv($posts){
-		return parent::export_posts_csv($posts);
-		$txt = implode("\t", [
+		
+		$data = array([
 			'id',
 			'title', 
 			'date_begin', 
 			'date_begin_time', 
 			'date_end', 
 			'date_time', 
-			'locations', 
+			'location', 
+			'cities', 
 			'categories',
 			'organisateur',
 			'email', 
@@ -60,23 +61,29 @@ class Agdp_Events_Export extends Agdp_Posts_Export {
 			'description',
 		]);
 		foreach($posts as $post){
-			$txt .= "\r\n" . $post->ID;
-			$txt .= "\t" . esc_attr($post->post_title);
-			$txt .= "\t" . Agdp_Event::get_event_dates_text( $post->ID );
-			$txt .= "\t" . get_post_meta($post->ID, 'ev-localisation', true);
-			$txt .= "\t" . ($value = Agdp_Event::get_event_cities($post->ID)
-							? implode(', ', $value)
-							: '');
-			$txt .= "\t" . ($value = Agdp_Event::get_event_categories($post->ID)
-							? implode(', ', $value)
-							: '');
-			foreach(['ev-organisateur', 'ev-email', 'ev-user-email', 'ev-phone', 'ev-siteweb'] as $meta_key){
-				$txt .= "\t" . get_post_meta($post->ID, $meta_key, true);
-			}
-			$txt .= "\t" . esc_attr($post->post_content);
+			$fields = [ $post->ID ];
+			$fields[] = self::export_escape_csv($post->post_title);
 			
+			foreach(['ev-date-debut', 'ev-heure-debut', 'ev-date-fin', 'ev-heure-fin'] as $meta_key){
+				$fields[] = get_post_meta($post->ID, $meta_key, true);
+			}
+			$fields[] = get_post_meta($post->ID, 'ev-localisation', true);
+			if( $value = Agdp_Event::get_event_cities($post->ID) )
+				$value = implode(', ', $value);
+			$fields[] = self::export_escape_csv($value);
+			if( $value = Agdp_Event::get_event_categories($post->ID) )
+				$value = implode(', ', $value);
+			$fields[] = self::export_escape_csv($value);
+			
+			foreach(['ev-organisateur', 'ev-email', 'ev-user-email', 'ev-phone', 'ev-siteweb'] as $meta_key){
+				$fields[] = self::export_escape_csv( get_post_meta($post->ID, $meta_key, true) );
+			}
+			$fields[] = self::export_escape_csv($post->post_content);
+			
+			$data[] = $fields;
 		}
-		return $txt;
+		
+		return self::export_data_csv($data);
 	}
 	
 	/**
