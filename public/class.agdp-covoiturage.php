@@ -223,7 +223,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 				$creator = new WP_User($covoiturage->post_author);
 				if(($user_name = $creator->get('display_name'))
 				|| ($user_name = $creator->get('user_login')))
-					$html .= '<p>créé par "' . $user_name . '"</p>';
+					$html .= '<p>modifié par "' . $user_name . '"</p>';
 			}
 		}
 		return $html;
