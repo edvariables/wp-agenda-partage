@@ -88,6 +88,9 @@ class Agdp_Admin_Contact {
 		}
 	}
 
+	/**
+	 * manage_sortable_columns
+	 */
 	public static function manage_sortable_columns( $columns ) {
 		$columns['titre']    = 'titre';
 		$columns['author']    = 'author';
@@ -96,6 +99,7 @@ class Agdp_Admin_Contact {
 		$columns['contact'] = 'contact';
 		return $columns;
 	}
+	
 	/**
 	 * Sort custom column
 	 */
@@ -103,14 +107,6 @@ class Agdp_Admin_Contact {
 		global $wpdb;
 		if(empty($query->query_vars))
 			return;
-		if( ! empty( $_REQUEST['date_max'] ) ){
-			if( ! empty($query->query_vars['orderby']) ){
-				//TODO ?
-			}
-			$query->set('meta_key', 'cont-date-debut');  
-			$query->set('meta_compare', '<');  
-			$query->set('meta_value', $_REQUEST['date_max']);  
-		}
 			
 		if( ! empty($query->query_vars['orderby']) ){
 			switch( $query->query_vars['orderby']) {

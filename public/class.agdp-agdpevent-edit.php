@@ -47,6 +47,7 @@ class Agdp_Event_Edit {
 		add_filter( 'wpcf7_validate_date', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_validate_date*', array(__CLASS__, 'wpcf7_validate_fields_cb'), 10, 2);
 		add_filter( 'wpcf7_posted_data_text', array(__CLASS__, 'wpcf7_posted_data_fields_cb'), 10, 3);
+		add_filter( 'wpcf7_posted_data_url', array(__CLASS__, 'wpcf7_posted_data_fields_cb'), 10, 3);
 		
 		add_action( 'wp_ajax_'.AGDP_TAG.'_'.AGDP_EVENT_SECRETCODE, array(__CLASS__, 'on_wp_ajax_agdpevent_code_secret_cb') );
 		add_action( 'wp_ajax_nopriv_'.AGDP_TAG.'_'.AGDP_EVENT_SECRETCODE, array(__CLASS__, 'on_wp_ajax_agdpevent_code_secret_cb') );
@@ -1028,6 +1029,7 @@ class Agdp_Event_Edit {
 				}
 				
 				break;
+				
 			case 'ev-date-debut':
 			case 'ev-date-fin':
 				$strDate = isset( $_POST[$tag->name] ) ? trim( $_POST[$tag->name] ) : '';
@@ -1065,6 +1067,7 @@ class Agdp_Event_Edit {
 					}
 				}
 				break;
+				
 			default:
 				break;
 		}
@@ -1104,6 +1107,15 @@ class Agdp_Event_Edit {
 					return is_array($_POST['ev-cities']) ? implode (', ', $_POST['ev-cities']) : $_POST['ev-cities'];
 				}
 				break;
+				
+			case 'ev-siteweb':
+				$url = isset( $_POST[$tag->name] ) ? trim( $_POST[$tag->name] ) : '';
+				if( ! $url ){
+					break;
+				}
+				$url = preg_replace('/^(http)(s)??/', '$1s', $url );
+				return $url;
+				
 			default:
 				break;
 		}

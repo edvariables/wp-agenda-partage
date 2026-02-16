@@ -465,6 +465,7 @@ class Agdp_WPCF7 {
 		$pattern = sprintf('/%s([0-9a-z]+)\"/', preg_quote('[contact-form-7 id="'));
 		if( preg_match_all( $pattern, $content, $matches ) ){
 			foreach( $matches[1] as $wpcf7_id ){
+				$post = false;
 				if( is_numeric($wpcf7_id) && ! ctype_xdigit($wpcf7_id) )
 					$post = get_post($wpcf7_id);
 				else

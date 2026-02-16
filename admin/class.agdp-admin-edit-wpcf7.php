@@ -58,6 +58,9 @@ class Agdp_Admin_Edit_WPCF7 {
 			case Agdp::get_option('covoiturage_edit_form_id'):
 				$html = Agdp_Covoiturage::init_wpcf7_form_html( $args['form'] );
 				break;
+			case Agdp::get_option('agdpcontact_edit_form_id'):
+				$html = Agdp_Contact::init_wpcf7_form_html( $args['form'] );
+				break;
 		}
 		if( $html )
 			$contact_form->set_properties( ['form' => $html] );
@@ -106,6 +109,10 @@ class Agdp_Admin_Edit_WPCF7 {
 				$option_form_id = 'covoiturage_edit_form_id';
 				$function = 'Agdp_Covoiturage::init_wpcf7_form_html';
 				break;
+			case Agdp_Contact::post_type :
+				$option_form_id = 'agdpcontact_edit_form_id';
+				$function = 'Agdp_Contact::init_wpcf7_form_html';
+				break;
 			default:
 				return;
 		}
@@ -135,7 +142,8 @@ class Agdp_Admin_Edit_WPCF7 {
 		];
 		
 		$options_usages = [
-			  'agdpevent_edit_form_id'
+			  'agdpcontact_edit_form_id'
+			, 'agdpevent_edit_form_id'
 			, 'admin_message_contact_form_id'
 			, 'agdpevent_message_contact_form_id'
 			, 'contact_form_id'

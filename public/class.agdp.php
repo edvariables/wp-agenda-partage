@@ -445,7 +445,7 @@ class Agdp {
 			
 			
 			case 'agdpcontact_edit_form_id':
-				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
+				return __( 'Formulaire d\'ajout et de modification de contact', AGDP_TAG );
 			case 'agdpcontact_message_contact_form_id':
 				return __( 'Message à un contact de l\'annuaire', AGDP_TAG );
 			case 'new_agdpcontact_page_id':

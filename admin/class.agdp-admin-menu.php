@@ -191,6 +191,17 @@ class Agdp_Admin_Menu {
 					add_submenu_page( $parent_slug, $page_title, 'Rapports ' . $page_title, $capability, $menu_slug);
 				}
 			}
+			
+			//Menu Annuaire / Contacts
+			if( true ){
+				$capability = 'moderate_comments';
+				$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Contact::post_type) ;
+				
+				$page_title = 'Importer';
+				$menu_slug = $parent_slug . '-import';
+				add_submenu_page( $parent_slug, $page_title, $page_title, $capability, $menu_slug, 
+					array(__CLASS__, 'agdp_contacts_import_page_html'), null);
+			}
 		}
 		
 		//Replace wpcf7 menu title
@@ -263,6 +274,17 @@ class Agdp_Admin_Menu {
 		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-edit-rights.php');
 		Agdp_Admin_Edit_Rights::init();
 		Agdp_Admin_Edit_Rights::agdp_rights_page_html();
+	}
+	
+	
+	/**
+	* top level menu:
+	* callback functions
+	*/
+	public static function agdp_contacts_import_page_html() {
+		require_once(AGDP_PLUGIN_DIR . '/admin/class.agdp-admin-contact-import.php');
+		Agdp_Admin_Contact_Import::init();
+		Agdp_Admin_Contact_Import::import_page_html();
 	}
 	
 	
