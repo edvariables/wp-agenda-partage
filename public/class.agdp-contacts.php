@@ -528,10 +528,7 @@ class Agdp_Contacts extends Agdp_Posts {
 		
 		$filters_summary = [];
 		$all_selected_terms = [];
-		if( ! current_user_can('manage_options') || Agdp_Contacts::get_newsletter_diffusion_term_id() == -1)
-			$except_tax = Agdp_Contact::taxonomy_diffusion;
-		else
-			$except_tax = '';
+		$except_tax = '';
 		$taxonomies = Agdp_Contact_Post_type::get_taxonomies($except_tax);
 		foreach( $taxonomies as $tax_name => $taxonomy){
 			$taxonomy['terms'] = Agdp_Contact::get_all_terms($tax_name);
@@ -763,7 +760,7 @@ class Agdp_Contacts extends Agdp_Posts {
 					if(($user_name = $creator->get('display_name'))
 					|| ($user_name = $creator->get('user_login'))){
 						$html .= '<td/><td>';
-						$html .= 'créé par <a>' . $user_name . '</a>';
+						$html .= 'modifié <a>' . $user_name . '</a>';
 						
 						$html .= '</td></tr><tr>';
 					}

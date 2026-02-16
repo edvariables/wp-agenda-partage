@@ -822,7 +822,7 @@ class Agdp_Events extends Agdp_Posts {
 				$creator = new WP_User($event->post_author);
 				if(($user_name = $creator->get('display_name'))
 				|| ($user_name = $creator->get('user_login'))){
-					$created_by = ', créé par <a>' . $user_name . '</a>';
+					$created_by = ', modifié par <a>' . $user_name . '</a>';
 				}
 			}
 		}
