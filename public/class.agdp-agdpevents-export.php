@@ -39,6 +39,47 @@ class Agdp_Events_Export extends Agdp_Posts_Export {
 	}
 	
 	/**
+	 * Retourne les données CSV pour le téléchargement de l'export des évènements
+	 */
+	public static function export_posts_csv($posts){
+		return parent::export_posts_csv($posts);
+		$txt = implode("\t", [
+			'id',
+			'title', 
+			'date_begin', 
+			'date_begin_time', 
+			'date_end', 
+			'date_time', 
+			'locations', 
+			'categories',
+			'organisateur',
+			'email', 
+			'user-email', 
+			'phone',
+			'siteweb',
+			'description',
+		]);
+		foreach($posts as $post){
+			$txt .= "\r\n" . $post->ID;
+			$txt .= "\t" . esc_attr($post->post_title);
+			$txt .= "\t" . Agdp_Event::get_event_dates_text( $post->ID );
+			$txt .= "\t" . get_post_meta($post->ID, 'ev-localisation', true);
+			$txt .= "\t" . ($value = Agdp_Event::get_event_cities($post->ID)
+							? implode(', ', $value)
+							: '');
+			$txt .= "\t" . ($value = Agdp_Event::get_event_categories($post->ID)
+							? implode(', ', $value)
+							: '');
+			foreach(['ev-organisateur', 'ev-email', 'ev-user-email', 'ev-phone', 'ev-siteweb'] as $meta_key){
+				$txt .= "\t" . get_post_meta($post->ID, $meta_key, true);
+			}
+			$txt .= "\t" . esc_attr($post->post_content);
+			
+		}
+		return $txt;
+	}
+	
+	/**
 	 * Retourne les données Bulle-Verte bv.txt pour le téléchargement de l'export des évènements
 	 */
 	public static function export_posts_bv_txt($posts){

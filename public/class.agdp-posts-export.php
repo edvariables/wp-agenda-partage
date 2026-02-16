@@ -63,6 +63,10 @@ abstract class Agdp_Posts_Export {
 			case 'ics':
 				$export_data = static::export_posts_ics($posts, $filters);
 				break;
+			case 'csv':
+				$encode_to = "Windows-1252";
+				$export_data = static::export_posts_csv($posts, $filters);
+				break;
 			case 'txt':
 				$encode_to = "Windows-1252";
 				$export_data = static::export_posts_txt($posts);
@@ -207,6 +211,59 @@ abstract class Agdp_Posts_Export {
 			
 		}
 		return implode("\r\n", $txt);
+	}
+	
+	/**********************************************************/
+	/******************  CSV  ********************************/
+	
+	/**
+	 * Retourne les données CSV pour le téléchargement de l'export des posts
+	 */
+	public static function export_posts_csv($posts){
+		
+		$data = array([
+			'id',
+			'title', 
+			'description',
+		]);
+		
+		foreach($posts as $post){
+			$fields = [ $post->ID ];
+			$fields[] = self::export_escape_csv( $post->post_title );
+			
+			$fields[] = self::export_escape_csv( $post->post_content );
+			
+			$data[] = $fields;
+		}
+		
+		return self::export_data_csv($data);
+	}
+	
+	/**
+	 * Retourne les données CSV pour un tableau
+	 */
+	public static function export_data_csv($data){
+		// output up to 5MB is kept in memory, if it becomes bigger it will automatically be written to a temporary file
+		$csv = fopen('php://temp/maxmemory:'. (5*1024*1024), 'r+');
+
+		foreach($data as $fields){
+			fputcsv($csv, $fields, "\t", '"', '\\');
+		}
+		rewind($csv);
+		// put it all in a variable
+		$output = stream_get_contents($csv);
+		fclose($csv);
+		return $output;
+	}
+	
+	/**
+	 * Escape for CSV
+	 */
+	public static function export_escape_csv($str){
+		return str_replace("\n", '\\n', 
+			str_replace("\r", '\\r', 
+				$str
+		));
 	}
 	
 	/**********************************************************/
