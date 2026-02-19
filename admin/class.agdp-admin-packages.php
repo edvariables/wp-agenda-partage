@@ -53,6 +53,14 @@ class Agdp_Admin_Packages {
 	}
 	
 	/**
+	 * get_package_file_post_type
+	 */
+	public static function get_package_file_post_type( $file_name ) {
+		$infos = explode( '.', basename($file_name) );
+		return $infos[0];
+	}
+	
+	/**
 	 * get_post_type_package_url
 	 */
 	public static function get_post_type_package_url( $post_type, $file = null ) {

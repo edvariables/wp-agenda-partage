@@ -104,12 +104,11 @@ class Agdp_Admin_Posts_Import {
 							<input type="hidden" name="is_confirmed_action" value="1">
 							<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
 						</div><?php
-							if( $import_package 
-							 && $data_source 
+							if( $data_source === self::import_package_tag
 							 && $file_name ){
-								$data_source_label = sprintf(' du package <a href="%s"><i>%s</i></a>'
+								$data_source_label = sprintf(' du package <a href="%s">%s</a>'
 									, Agdp_Admin_Packages::get_post_type_package_url( $post_type, $file_name )
-									, $data_source
+									, Agdp_Admin_Packages::get_package_file_post_type( $file_name )
 								);
 							}
 							else
