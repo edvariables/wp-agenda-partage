@@ -497,6 +497,12 @@ form#agdppackages .agdppackages-post_type input[type="submit"] {
 	margin-left: 1.5em;
 }
 
+.agdp-import-posts > .existing-packages > .import-file {
+	margin: 1em 1em;
+	display: inline-block;
+	max-width: 16em;
+}
+
 .wp-core-ui .button.button-large > .dashicons-before {
 	position: relative;
 	top: 5px;

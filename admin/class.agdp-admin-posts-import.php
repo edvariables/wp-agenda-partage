@@ -29,13 +29,14 @@ class Agdp_Admin_Posts_Import {
 	public static function agdp_import_page_html() {
 		$action = 'import';
 		
+		if( ! class_exists('Agdp_Admin_Packages') ){
+			require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-packages.php");
+			Agdp_Admin_Packages::init();
+		}
+		
 		$import_package = empty($_REQUEST['import-'.self::import_package_tag]) ? false : $_REQUEST['import-'.self::import_package_tag];
 		if( $import_package ){
 			$data_source = self::import_package_tag;
-			if( ! class_exists('Agdp_Admin_Packages') ){
-				require_once( AGDP_PLUGIN_DIR . "/admin/class.agdp-admin-packages.php");
-				Agdp_Admin_Packages::init();
-			}
 			$post_type = empty($_REQUEST[self::import_package_tag . '-post_type']) ? false : $_REQUEST[self::import_package_tag . '-post_type'];
 		
 			$file_name = Agdp_Admin_Packages::get_existing_post_type_package_file( $post_type );
@@ -102,9 +103,18 @@ class Agdp_Admin_Posts_Import {
 							<textarea name="action-data"><?php echo isset($data_str) ? htmlspecialchars( $data_str ) : '' ?></textarea>
 							<input type="hidden" name="is_confirmed_action" value="1">
 							<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
-						</div>
-						<div><h1>Importation<?php echo $data_source ? ' du package ' . $data_source : ''?> en attente de confirmation</h1>
-							<label><input type="checkbox" name="update_existing"<?php if( $update_existing ) echo ' checked';?>> Mettre à jour les enregistrements pré-existants (sur la base du titre) </label>
+						</div><?php
+							if( $import_package 
+							 && $data_source 
+							 && $file_name ){
+								$data_source_label = sprintf(' du package <a href="%s"><i>%s</i></a>'
+									, Agdp_Admin_Packages::get_post_type_package_url( $post_type, $file_name )
+									, $data_source
+								);
+							}
+							else
+								$data_source_label = $data_source ? ' du package <i>' . $data_source . '</i>' : '';
+						?><div><h1>Importation<?php echo $data_source_label ?> en attente de confirmation</h1><label><input type="checkbox" name="update_existing"<?php if( $update_existing ) echo ' checked';?>> Mettre à jour les enregistrements pré-existants (sur la base du titre) </label>
 							<br><label><input type="checkbox" name="create_news"<?php if( $create_news ) echo ' checked';?>> Créer de nouveaux enregistrements</label>
 							<br>&nbsp;&nbsp;<label><input type="checkbox" name="add_title_suffix"<?php if( $add_title_suffix ) echo ' checked';?>> Ajouter un suffixe aux titres </label>
 								<input type="text" name="title_suffix" value="<?php echo esc_attr($title_suffix);?>">
@@ -217,7 +227,18 @@ class Agdp_Admin_Posts_Import {
 		//FORM
 		?><form class="agdp-import-posts" action="<?php echo $url;?>" method="post">
 			<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
-			<div><h3>Coller ici les données à importer</h3>
+			<?php
+				if( empty($data_str) ){
+					echo '<div class="existing-packages">';
+					foreach( Agdp_Admin_Packages::get_packageable_post_types() as $post_type ){
+						$package_file = Agdp_Admin_Packages::get_post_type_package_file( $post_type );
+						if( ! file_exists($package_file) )
+							continue;
+						echo Agdp_Admin_Packages::get_import_link( $post_type, "Package ".$post_type, "" );
+					}
+					echo '</div>';
+				}
+			?><div><h3>Coller ici les données à importer</h3>
 				<textarea name="action-data" rows="5" cols="100"><?php echo isset($data_str) ? htmlspecialchars( $data_str ) : '' ?></textarea>
 			</div>
 			<label><input type="checkbox" name="confirm_action"<?php if( $confirm_action ) echo ' checked';?>> Confirmer chaque importation</label>

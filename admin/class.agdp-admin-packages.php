@@ -26,7 +26,6 @@ class Agdp_Admin_Packages {
 	public static function init_hooks() {
 	}
 	
-	
 	/**
 	 * get_packages_path
 	 */
@@ -44,13 +43,23 @@ class Agdp_Admin_Packages {
 	/**
 	 * get_post_type_package_file
 	 */
-	public static function get_post_type_package_file( $post_type, $last_update ) {
+	public static function get_post_type_package_file( $post_type, $last_update = false ) {
 		return sprintf('%s/%s.pack.%s' 
 			, self::get_packages_path()
 			, $post_type
 			// , str_replace(':', '', str_replace('-', '', str_replace(' ', '_', $last_update )))
 			, AGDP_TAG
 		);
+	}
+	
+	/**
+	 * get_post_type_package_url
+	 */
+	public static function get_post_type_package_url( $post_type, $file = null ) {
+		if( $file === null )
+			$file = self::get_post_type_package_file( $post_type );
+		$file = str_replace( '\\', '/', $file );
+		return str_replace( str_replace( '\\', '/', WP_CONTENT_DIR), WP_CONTENT_URL, $file );
 	}
 	
 	/**
@@ -75,7 +84,11 @@ class Agdp_Admin_Packages {
 	 * get_packageable_post_types
 	 */
 	public static function get_packageable_post_types() {
-		return [ Agdp_Report::post_type, 'page', Agdp_WPCF7::post_type ];
+		return [
+			Agdp_Report::post_type,
+			'page',
+			Agdp_WPCF7::post_type,
+		];
 	}
 	
 	/**
@@ -172,8 +185,8 @@ class Agdp_Admin_Packages {
 	/**
 	 * get_import_link
 	 */
-	public static function get_import_link( $post_type, $label = false ) {
-		if( ! $label )
+	public static function get_import_link( $post_type, $label = null, $class = "button-primary button-large" ) {
+		if( $label === null )
 			$label = 'Package existant';
 		$file = self::get_existing_post_type_package_file( $post_type );
 		if( $file ){
@@ -191,9 +204,10 @@ class Agdp_Admin_Packages {
 				$url = add_query_arg( 'import-agdppackage', 1, $url );
 				$url = add_query_arg( 'agdppackage-post_type', $post_type, $url );
 				echo sprintf('<div class="import-file">'
-						. '<a class="button-primary button-large" href="%s"><span class="dashicons-before dashicons-database-import"></span>'
+						. '<a class="%s" href="%s"><span class="dashicons-before dashicons-database-import"></span>'
 						. '%s<br>du %s</a>'
 						. '</div>'
+					, $class
 					, $url
 					, $label
 					, $date//substr( $file, strlen( self::get_packages_path() ) + 1 )

@@ -16,8 +16,8 @@
 	- WP Contact Form 7
 - Plugins conseillés
 	- Akismet Anti-Spam
-	- ReCaptcha v2 for Contact Form 7
 	- WP Mail Smtp - SMTP7
+- Config : xmlrpc désactivé
  * Author: Emmanuel Durand, edid@free.fr
  * Author URI: https://agenda-partage.fr
  * Tags: 
