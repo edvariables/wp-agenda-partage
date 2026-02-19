@@ -75,7 +75,7 @@ class Agdp_Admin_Packages {
 	 * get_packageable_post_types
 	 */
 	public static function get_packageable_post_types() {
-		return [ Agdp_Report::post_type, 'page' ];
+		return [ Agdp_Report::post_type, 'page', Agdp_WPCF7::post_type ];
 	}
 	
 	/**
@@ -232,12 +232,16 @@ class Agdp_Admin_Packages {
 				$post_time = strtotime( $post->post_modified );
 				$is_newer = $file_time && $file_time < $post_time;
 				
+				if( $post->post_type === Agdp_WPCF7::post_type )
+					$url = sprintf('/wp-admin/admin.php?page=wpcf7&post=%s&action=edit', $post->ID);
+				else
+					$url = $post->guid;
 				echo sprintf('<li><label><input type="checkbox" name="%s[]" value="%d" %s>%s%s</label></li>'
 					, $meta_key
 					, $post->ID
 					, $is_package_root ? 'checked="checked"' : ''
 					, sprintf('<a href="%s" target="_blank">%s</a>'
-						, $post->guid
+						, $url
 						, htmlentities($post->post_title)
 					)
 					, ! $is_newer ? '' 

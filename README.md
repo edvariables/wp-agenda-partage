@@ -47,5 +47,5 @@ https://agenda-partage.fr
 	
 - Plugins conseillés
 	- Akismet Anti-Spam
-	- ReCaptcha v2 for Contact Form 7
 	- WP Mail Smtp - SMTP7
+	- AIOS ou tout autre extension de sécurité

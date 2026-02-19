@@ -5,6 +5,8 @@
  * Tools for WPCF7
  */
 class Agdp_WPCF7 {
+
+	const post_type = 'wpcf7_contact_form';
 	
 	private static $initiated = false;
 	
@@ -207,6 +209,9 @@ class Agdp_WPCF7 {
 				return;
 			case Agdp::get_option('covoiturage_edit_form_id') :
 				Agdp_Covoiturage_Edit::submit_covoiturage_form($contact_form, $abort, $submission);
+				return;
+			case Agdp::get_option('agdpcontact_edit_form_id') :
+				Agdp_Contact_Edit::submit_contact_form($contact_form, $abort, $submission);
 				return;
 		}
 

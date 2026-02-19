@@ -1304,7 +1304,7 @@ class Agdp {
 						if( is_a( $in, 'WP_Post') ){
 							$title = $in->post_title;
 							$href = sprintf('/wp-admin/admin.php?page=%s&post=%s&action=edit'
-								, $in->post_type === 'wpcf7_contact_form' ? 'wpcf7' : $in->post_type
+								, $in->post_type === Agdp_WPCF7::post_type ? 'wpcf7' : $in->post_type
 								, $in->ID
 							);
 							$title = sprintf('<a href="%s">%s</a>'

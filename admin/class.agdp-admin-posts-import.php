@@ -339,9 +339,10 @@ class Agdp_Admin_Posts_Import {
 				// );
 			return false;
 		}
-		if( ! Agdp_Admin_Edit_Post_Type::has_cap( 'import', $data['post']['post_type'] ) ){
+		$post_type = $data['post']['post_type'];
+		if( ! Agdp_Admin_Edit_Post_Type::has_cap( 'import', $post_type ) ){
 				echo sprintf( '<div class="error">Le type %s ne peut pas être importé.<pre>%s</pre></div>'
-					, $data['post']['post_type']
+					, $post_type
 					, htmlspecialchars( json_encode($data['post']) )
 				);
 			return false;
@@ -403,13 +404,19 @@ class Agdp_Admin_Posts_Import {
 		if( $update_existing ){
 			//TODO search with parent slug path
 			$existing = get_posts([
-				'post_type' => $data['post']['post_type'],
+				'post_type' => $post_type,
 				'post_status' => ['publish', 'pending', 'draft', 'private', 'future', $data['post']['post_status']],
 				'title' => wp_slash( $data['post']['post_title'] ),
 				'numberposts' => 2
 			]);
 			if( $existing ){
 				$update_existing = $existing[0];
+				
+				if( $post_type === Agdp_WPCF7::post_type )
+					$edit_url = sprintf('/wp-admin/admin.php?page=wpcf7&post=%s&action=edit', $update_existing->ID);
+				else
+					$edit_url = get_edit_post_link( $update_existing->ID );
+				
 				if( count($existing) > 1 ){
 					echo sprintf( '<div>%s Plus d\'un enregistrement existent, la mise à jour est impossible. 1er : <a href="%s">%s</a></div>'
 						, Agdp::icon('help')
@@ -443,7 +450,7 @@ class Agdp_Admin_Posts_Import {
 			if( $confirm_action || $is_confirmed_action ) {
 				$confirm_key = sprintf('confirm_%s_%s_%s'
 					, 'update'
-					, $data['post']['post_type']
+					, $post_type
 					, $original_id
 				);
 			}
@@ -461,7 +468,7 @@ class Agdp_Admin_Posts_Import {
 					, $confirm_key
 					, $same_import_package_key ? '' : 'checked' //TODO $is_newer ?
 					, Agdp::icon('update')
-					, get_edit_post_link( $update_existing->ID )
+					, $edit_url
 					, htmlspecialchars( stripslashes($data['post']['post_title']) )
 					, $same_import_package_key ? ' <span title="aucun changement depuis le dernier import">(identique)</span>' : ''
 					, $same_import_package_key || ! $is_newer ? '' 
@@ -499,7 +506,7 @@ class Agdp_Admin_Posts_Import {
 			if( $confirm_action || $is_confirmed_action ) {
 				$confirm_key = sprintf('confirm_%s_%s_%s'
 					, 'create'
-					, $data['post']['post_type']
+					, $post_type
 					, $original_id
 				);
 			}
@@ -509,7 +516,7 @@ class Agdp_Admin_Posts_Import {
 					, 'checked'
 					, Agdp::icon('plus')
 					, htmlspecialchars( stripslashes( $data['post']['post_title'] ) )
-					, $data['post']['post_type']
+					, $post_type
 				);
 				return $original_id;
 			}
