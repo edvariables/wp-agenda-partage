@@ -491,6 +491,8 @@ class Agdp {
 				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
 			case 'allow_html_in_' . Agdp_Covoiturage::post_type :
 				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
+			case 'allow_html_in_' . Agdp_Contact::post_type :
+				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
 				
 			case 'disable_sitemaps':
 				return __( 'Désactivation des sitemaps', AGDP_TAG );

@@ -1393,6 +1393,8 @@ class Agdp_Admin_Options {
 			AGDP_DEBUGLOG_ENABLE,
 			'allow_html_in_' . Agdp_Event::post_type,
 			'allow_html_in_' . Agdp_Covoiturage::post_type,
+			'allow_html_in_' . Agdp_Contact::post_type,
+			'can_generate_packages',
 			
 		] as $option ){
 			
