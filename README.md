@@ -39,6 +39,9 @@ https://agenda-partage.fr
 	
 - Module de traçage des emails sortant du site.
 
+- Gestion d'annuaire de contacts
+	- En cours de développement
+
 - Représentation de l'agenda dans le code php du plugin : pas de template utilisable (sic)
 - Pas de paramétrage possible des champs wpcf7 hors du code php
 
