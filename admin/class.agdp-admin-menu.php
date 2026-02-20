@@ -55,6 +55,10 @@ class Agdp_Admin_Menu {
 		    $user = wp_get_current_user();
 		    $roles = ( array ) $user->roles;
 		    if( ! in_array('agdpevent', $roles)) {
+				foreach( ['page', 'wpcf7'] as $post_type ){
+					$parent_slug = sprintf('edit.php?post_type=%s', $post_type);
+					remove_menu_page($parent_slug);
+				}
 				remove_menu_page('posts');//TODO
 				remove_menu_page('wpcf7');
 			}
@@ -85,8 +89,18 @@ class Agdp_Admin_Menu {
 				add_submenu_page( $parent_slug, $page_title, 'Covoiturages à venir', $capability, $menu_slug);
 			}
 			
-			//Menu Evènements et Covoiturages
+			//Menu Evènements, Covoiturages, Contacts
 			foreach( Agdp_Post::get_post_types() as $post_type ){
+				
+				if( $post_type !== Agdp_Event::post_type
+				&& ! Agdp_Post::is_managed( $post_type ) ){
+
+					$parent_slug = sprintf('edit.php?post_type=%s', $post_type);
+					remove_menu_page($parent_slug);
+				
+					continue;
+				}
+					
 				$parent_slug = sprintf('edit.php?post_type=%s', $post_type);
 				
 				$type_title = get_post_type_object($post_type)->labels->menu_name;
@@ -193,7 +207,7 @@ class Agdp_Admin_Menu {
 			}
 			
 			//Menu Annuaire / Contacts
-			if( true ){
+			if( Agdp_Contact::is_managed() ){
 				$capability = 'moderate_comments';
 				$parent_slug = sprintf('edit.php?post_type=%s', Agdp_Contact::post_type) ;
 				

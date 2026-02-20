@@ -196,6 +196,21 @@ class Agdp_Admin_Options {
 				[ 'before_section' => sprintf($section_args['before_section'], $section_id) ] )
 		);
 		if( true ){
+			// 
+			$field_id = 'agdpcontact_managed';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'label' => Agdp::get_option_label($field_id),
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
 
 			// 
 			$field_id = 'new_agdpcontact_page_id';
@@ -1246,22 +1261,32 @@ class Agdp_Admin_Options {
 		
 		$source_options = Agdp::get_option();
 	    $logs = [];
-		foreach([
-		  'admin_message_contact_form_id' => 'WPCF7_Contact_Form'
-		, 'newsletter_subscribe_form_id' => 'WPCF7_Contact_Form'
-		, 'events_nl_post_id' => 'agdpnl'
-		, 'covoiturages_nl_post_id' => 'agdpnl'
-		, 'newsletter_subscribe_page_id' => 'page'
-		, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
-		, 'contact_page_id' => 'page'
-		, 'contact_form_id' => 'WPCF7_Contact_Form'
-		, 'agdpcontact_message_contact_form_id' => 'WPCF7_Contact_Form'
-		, 'agdpevent_message_contact_form_id' => 'WPCF7_Contact_Form'
-		, 'agenda_page_id' => 'page'
-		, 'new_agdpevent_page_id' => 'page'
-		, 'blog_presentation_page_id' => 'page'
-		, 'agdpevents_nl_diffusion_term_id' => 'term'/* 
-		, 'covoiturages_nl_diffusion_term_id' => 'term' */]
+		$options = [
+			  'admin_message_contact_form_id' => 'WPCF7_Contact_Form'
+			, 'newsletter_subscribe_form_id' => 'WPCF7_Contact_Form'
+			, 'events_nl_post_id' => 'agdpnl'
+			, 'newsletter_subscribe_page_id' => 'page'
+			, 'agdpevent_edit_form_id' => 'WPCF7_Contact_Form'
+			, 'agdpevent_message_contact_form_id' => 'WPCF7_Contact_Form'
+			, 'agenda_page_id' => 'page'
+			, 'new_agdpevent_page_id' => 'page'
+			, 'blog_presentation_page_id' => 'page'
+			, 'agdpevents_nl_diffusion_term_id' => 'term'/* 
+			, 'covoiturages_nl_diffusion_term_id' => 'term' */
+		];
+		if( Agdp_Covoiturage::is_managed() ) {
+			$options = array_merge( $options, [
+				'covoiturages_nl_post_id' => 'agdpnl'
+			] );
+		}
+		if( Agdp_Contact::is_managed() ) {
+			$options = array_merge( $options, [
+				  'contact_page_id' => 'page'
+				, 'contact_form_id' => 'WPCF7_Contact_Form'
+				, 'agdpcontact_message_contact_form_id' => 'WPCF7_Contact_Form'
+			] );
+		}
+		foreach( $options
 		as $option_name => $post_type){
 		
 			$option_label = Agdp::get_option_label($option_name);
@@ -1386,6 +1411,7 @@ class Agdp_Admin_Options {
 		
 		foreach( [
 			'agdpevent_need_validation',
+			'agdpcontact_managed',
 			'covoiturage_managed',
 			'covoiturage_need_validation',
 			AGDP_CONNECT_MENU_ENABLE,

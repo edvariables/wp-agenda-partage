@@ -438,6 +438,9 @@ class Agdp {
 			case 'newsletter_subscribe_page_id':
 				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
 			
+				
+			case 'agdpcontact_managed':
+				return __( 'Gestion de l\'annuaire et des contacts', AGDP_TAG );
 			case 'contact_page_id':
 				return __( 'Page "Ecrivez-nous"', AGDP_TAG );
 			case 'contact_form_id':

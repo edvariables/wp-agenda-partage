@@ -367,7 +367,7 @@ class Agdp_Covoiturage_Edit {
 		
 		if( ! $covoiturage )
 			return '';
-		if( ! Agdp::get_option('covoiturage_managed') )
+		if( ! Agdp_Covoiturage::is_managed() )
 			return '';
 		
 		$meta_name = 'cov-periodique';
@@ -424,7 +424,7 @@ class Agdp_Covoiturage_Edit {
  	 * Complète le formulaire pour l'affectation d'évènements liés au covoiturage
  	 */
 	public static function get_agdpevents_edit( $covoiturage ) {
-		if( ! Agdp::get_option('covoiturage_managed') )
+		if( ! Agdp_Covoiturage::is_managed() )
 			return '';
 		
 		if( $covoiturage ){
