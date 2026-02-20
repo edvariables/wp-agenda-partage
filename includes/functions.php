@@ -142,7 +142,7 @@ function dateDiff($date1, $date2){
 }
 
 /**
- * Retourne le texte littéral de l'intervals entre deux dates
+ * Retourne le texte littéral de l'interval entre deux dates
  */
  function date_diff_text ($old_date, $intro = true, $before = '', $after = ''){
 	if( is_string($old_date_str = $old_date)){
@@ -217,7 +217,8 @@ function decode_spamcause_unrot($pair, $pos, $key = false){
 	if ($pos % 2 == 0)                                           # "even" position => 2nd char is offset
 		$pair = $pair[1] . $pair[0];                               # swap letters in pair
 	$offset = (ord('g') - ord($pair[0])) * 16;                     # treat 1st char as offset
-	return chr((ord($pair[0]) + ord($pair[1]) - $key - $offset) % 256);        # map to original character
+	$i = ceil( (ord($pair[0]) + ord($pair[1]) - $key - $offset) % 256 );
+	return chr( $i );        # map to original character
 }
 
 /**
@@ -338,7 +339,7 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 					$height = $size[0];
 					break;
 			}
-			if( $tmp_source )
+			if( ! empty($tmp_source) )
 				$source = $tmp_source;
 		}
 	}
@@ -400,8 +401,9 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 			break;
 	}
 	
-    imagedestroy($thumb);
-    imagedestroy($source);
+    //DEPRECATED 
+	// imagedestroy($thumb); 
+    // imagedestroy($source); 
 	
 	return $new_file;
 }
