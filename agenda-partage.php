@@ -18,7 +18,7 @@
 	- Akismet Anti-Spam
 	- WP Mail Smtp - SMTP7
 - Config : xmlrpc désactivé
- * Author: Emmanuel Durand, edid@free.fr
+ * Author: Emmanuel Durand, contact@agenda-partage.fr
  * Author URI: https://agenda-partage.fr
  * Tags: 
  * License: GPLv3
