@@ -146,7 +146,10 @@ abstract class Agdp_Post {
 			else
 				$post_type = static::post_type;
 		$option = $post_type . '_managed';
-		// debug_log(__FUNCTION__, $option, Agdp::get_option($option), Agdp::get_option($option, true), Agdp::get_option());
+		if( ! empty( $_POST[AGDP_TAG] )
+		&& is_array( $_POST[AGDP_TAG] ) )
+			return ! empty( $_POST[AGDP_TAG][$option] );
+	 
 		return !! Agdp::get_option($option, true);
 	}
 	
