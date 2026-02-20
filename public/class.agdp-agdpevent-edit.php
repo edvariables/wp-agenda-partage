@@ -729,6 +729,14 @@ class Agdp_Event_Edit {
 			$data['activation_key'] = $new_post_need_validation;
 		}
 		
+		if( $new_post_need_validation
+		 && empty( $data['ev-user-email'] ) ){
+			$abort = true;
+			$error_message = sprintf('Vous devez renseigner au moins un des deux champs d\'adresse e-mail.');
+			$submission->set_response($error_message);
+			return false;
+		}
+		
 		$post_title = $data['post_title'];
 		unset($data['post_title']);
 		$post_content = $data['post_content'];
