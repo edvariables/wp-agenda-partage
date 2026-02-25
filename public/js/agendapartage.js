@@ -532,7 +532,10 @@ jQuery( function( $ ) {
 										.append( $inner )
 									);
 								}
+								$same_date_posts.show();
 							}
+							else
+								$same_date_posts.hide();
 						}
 						else if(typeof response === 'string'){
 							var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
