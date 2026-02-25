@@ -23,12 +23,12 @@
  * Tags: 
  * License: GPLv3
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
- * Version: 1.3.05
+ * Version: 1.3.06
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AGDP_VERSION', '1.3.05' );
+define( 'AGDP_VERSION', '1.3.06' );
 define( 'AGDP_MINIMUM_WP_VERSION', '5.0' );
 
 define( 'AGDP_PLUGIN', __FILE__ );

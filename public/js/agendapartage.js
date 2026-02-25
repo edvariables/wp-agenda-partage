@@ -453,10 +453,108 @@ jQuery( function( $ ) {
 		/**
 		 * Covoiturage
 		 */
-		//Filtres de l'agenda
 		// Covoiture : obtention du n° de téléphone masqué
 		$body.on('click', '#email4phone-title', function(e) {
 			$(this).toggleClass('active');
+		});
+		
+		/**
+		 * Ajout d'un Evènement, modification de date : affichage des évènements de la même date
+		 */
+		$body.on('change', '.wpcf7-form input[name="ev-date-debut"]', function(e) {
+			var $actionElnt = $(this);
+			var $form = $actionElnt.parents('form:first');
+			var sDate = $actionElnt.val();
+			if( ! sDate ){
+				return;
+			}
+			$form
+				.removeClass('sent')
+				.attr('data-status', 'init')
+				.find('.wpcf7-response-output')
+					.html('')
+					.end()
+			
+			var post_id = $actionElnt.parents('article[id]:first').attr('id');
+			if( ! post_id || ! post_id.startsWith('post-'))
+				return;
+			post_id = post_id.substr('post-'.length);
+			
+			var form_id = $form.find('input[name="_wpcf7"]:first').val();
+			
+			var $same_date_posts = $form.find('ul.same_date_posts');
+			$same_date_posts.html('');
+			
+			jQuery.ajax({
+				url : agdp_ajax.ajax_url,
+				type : 'post',
+				data : {
+					'action' : 'agdevent_get_date_events', //newsletters + forums
+					'post_id' : post_id,
+					'form_id' : form_id,
+					'date' : sDate,
+					'numberposts' : 2,
+					'_nonce' : agdp_ajax.check_nonce
+				},
+				success : function( response ) {
+					$spinner.remove();
+					if( $same_date_posts.length === 0 ){
+						$same_date_posts = $('<ul></ul>')
+							.addClass('same_date_posts');
+						var $parent = $actionElnt.parents('p:first');
+						if( $parent.parent().is('td') ){
+							$parent = $('<td></td>')
+								.appendTo($parent.parents('tr:first'));
+							$parent.append($same_date_posts);
+						}
+						else
+							$same_date_posts.insertAfter($parent);
+					}
+					if(response){
+						if(typeof response === 'object' ){
+							var length =  Object.keys(response.posts).length;
+							if( length ){
+								$same_date_posts.append('<h5>A la même date :</h5>');
+								for(const post_id in response.posts){
+									var post = response.posts[post_id];
+									var $inner;
+									if( post.url === undefined )
+										$inner = $('<span></span>')
+											.text(post.title)
+										;
+									else
+										$inner = $('<a></a>')
+											.attr('href', post.url)
+											.attr('target', '_blank')
+											.text(post.title)
+										;
+									$same_date_posts.append( $('<li></li>')
+										.append( $inner )
+									);
+								}
+							}
+						}
+						else if(typeof response === 'string'){
+							var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+							.click(function(){$msg.remove()});
+							$actionElnt.after($msg);
+							$msg.get(0).scrollIntoView();
+						}
+					}
+				},
+				fail : function( response ){
+					$spinner.remove();
+					if(response) {
+						var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+							.click(function(){$msg.remove()});
+						$actionElnt.after($msg);
+						$msg.get(0).scrollIntoView();
+					}
+				}
+			});
+			var $spinner = $actionElnt.next('.wpcf7-spinner');
+			if($spinner.length == 0 && $same_date_posts.length > 0)
+				$same_date_posts.append($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
 		});
 		
 		/**

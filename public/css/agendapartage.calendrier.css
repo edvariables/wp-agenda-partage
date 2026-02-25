@@ -224,3 +224,24 @@ body.colors-dark .agdp-agdpevents-email *, body.colors-dark .aevs-email * {
 p.agdpevent-add + p.agdpevent-add {
 	display: none;
 }
+
+/* same_date_posts */
+form.wpcf7-form ul.same_date_posts {
+	list-style: none;
+	font-size: smaller;
+	border-style: solid;
+	border-color: orange;
+	padding: 5px;
+	border-radius: 2px;
+}
+form.wpcf7-form ul.same_date_posts > h5 {
+	color: red;
+	font-size: smaller;
+}
+form.wpcf7-form p + ul.same_date_posts > li {
+	float: left;
+	width: 600%;
+}
+form.wpcf7-form p + ul.same_date_posts > li:last-of-type {
+	margin-bottom: 2em;
+}

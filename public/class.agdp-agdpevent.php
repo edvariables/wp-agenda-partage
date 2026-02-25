@@ -48,6 +48,9 @@ class Agdp_Event extends Agdp_Post {
 		add_action( 'wp_ajax_agdpevent_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
 		add_action( 'wp_ajax_nopriv_agdpevent_action', array(__CLASS__, 'on_wp_ajax_agdpevent_action_cb') );
 		
+		add_action( 'wp_ajax_agdevent_get_date_events', array(__CLASS__, 'on_wp_ajax_agdevent_get_date_events') );
+		add_action( 'wp_ajax_nopriv_agdevent_get_date_events', array(__CLASS__, 'on_wp_ajax_agdevent_get_date_events') );
+		
 		add_filter(self::post_type . '_send_for_diffusion_mailto', array(__CLASS__, 'on_send_for_diffusion_mailto'), 10, 1 );
 	}
  
@@ -921,5 +924,59 @@ class Agdp_Event extends Agdp_Post {
 			return $term;
 		}
 		return false;
+	}
+	
+	
+	 
+	/**
+	 * Répond à une requête ajax pendant l'ajout d'un évènement. Retourne les évènements d'une date
+	 * cf public/js/agendapartage.js
+	 */
+	public static function on_wp_ajax_agdevent_get_date_events(){
+		
+		if( ! Agdp::check_nonce())
+			wp_die();
+		
+		$ajax_response = '0';
+		if(array_key_exists("date", $_POST)){
+			$date = $_POST['date'];
+			$post_id = $_POST['post_id'];
+			$events = [];
+			
+			$max_posts = 5;
+			if( ! empty($_POST['numberposts']) )
+				$max_posts = $_POST['numberposts'];
+			$posts = get_posts([
+					'post_type' => Agdp_Event::post_type,
+					'post_status' => 'publish',
+					'numberposts' => $max_posts + 1,
+					'meta_key' => 'ev-date-debut',
+					'meta_value' => $date,
+					'meta_compare' => '=',
+					'post__not_in' => [ $post_id ],
+				]
+			);
+			foreach($posts as $post){
+				$events[ $post->ID ] = [
+					'title' => self::get_post_title( $post, true ),
+					'url' => get_post_permalink( $post ),
+				];
+				if( count($events) == $max_posts
+				&& count($posts) > $max_posts){
+					$events[] = [
+						'ID' => -1,
+						'title' => '(et plus...)',
+					];
+				}
+			}
+			$ajax_response = [
+				'date' => $date,
+				'posts' => $events,
+			];
+		}
+		
+		wp_send_json($ajax_response);
+		
+		wp_die();
 	}
 }
