@@ -57,7 +57,7 @@ class Agdp_Event extends Agdp_Post {
  	/**
  	 * Retourne le titre de la page
  	 */
-	public static function get_post_title( $agdpevent = null, $no_html = false) {
+	public static function get_post_title( $agdpevent = null, $no_html = false, $show_year = true) {
  		if( is_numeric($agdpevent))
 			$agdpevent = get_post($agdpevent);
 		if( ! isset($agdpevent) || ! is_object($agdpevent)){
@@ -70,7 +70,7 @@ class Agdp_Event extends Agdp_Post {
 		$post_title = isset( $agdpevent->post_title ) ? $agdpevent->post_title : '';
 		$separator = $no_html ? ', ' : '<br>';
 		$html = $post_title
-			. $separator . self::get_event_dates_text( $agdpevent->ID )
+			. $separator . self::get_event_dates_text( $agdpevent->ID, $show_year )
 			. $separator . get_post_meta($agdpevent->ID, 'ev-localisation', true);
 		return $html;
 	}
@@ -191,11 +191,8 @@ class Agdp_Event extends Agdp_Post {
 					break;
 				
 			case 'publish': 
-				$page_id = Agdp::get_option('agenda_page_id');
-				if($page_id){
-					$url = self::get_post_permalink($page_id, self::secretcode_argument);
-					$url = add_query_arg( self::postid_argument, $agdpevent->ID, $url);
-					$url .= '#' . self::postid_argument . $agdpevent->ID;
+				$url = Agdp_Events::get_post_permalink_in_agenda( $agdpevent );
+				if($url){
 					$html .= sprintf('<br><br>Pour voir cet évènement dans l\'agenda, <a href="%s">cliquez ici %s</a>.'
 					, $url
 					, Agdp::icon('calendar-alt'));
@@ -739,7 +736,7 @@ class Agdp_Event extends Agdp_Post {
 	/**
 	 * Retourne le texte des dates et heures d'un évènement
 	 */
-	public static function get_event_dates_text( $post_id ) {
+	public static function get_event_dates_text( $post_id, $show_year = true ) {
 		if(is_object($post_id))
 			$post_id = $post_id->ID;
 		$date_debut    = get_post_meta( $post_id, 'ev-date-debut', true );
@@ -748,13 +745,17 @@ class Agdp_Event extends Agdp_Post {
 		$date_fin    = get_post_meta( $post_id, 'ev-date-fin', true );
 		$heure_fin    = get_post_meta( $post_id, 'ev-heure-fin', true );
 		if(mysql2date( 'j', $date_debut ) === '1')
-			$format_date_debut = 'l j\e\r M Y';
+			$format_date_debut = 'l j\e\r M';
 		else
-			$format_date_debut = 'l j M Y';
+			$format_date_debut = 'l j M';
 		if($date_fin && mysql2date( 'j', $date_fin ) === '1')
-			$format_date_fin = 'l j\e\r M Y';
+			$format_date_fin = 'l j\e\r M';
 		else
-			$format_date_fin = 'l j M Y';
+			$format_date_fin = 'l j M';
+		if( $show_year ){
+			$format_date_debut .= ' Y';
+			$format_date_fin .= ' Y';
+		}
 		if( $heure_debut )
 			$heure_debut = str_replace(':', 'h', str_replace(':00', 'h', $heure_debut));
 		if( $heure_fin )
@@ -957,16 +958,20 @@ class Agdp_Event extends Agdp_Post {
 				]
 			);
 			foreach($posts as $post){
+				$url = Agdp_Events::get_post_permalink_in_agenda( $post );
 				$events[ $post->ID ] = [
-					'title' => self::get_post_title( $post, true ),
-					'url' => get_post_permalink( $post ),
+					'title' => self::get_post_title( $post, true, false ),
+					'url' => $url,
 				];
+				//more
 				if( count($events) == $max_posts
 				&& count($posts) > $max_posts){
 					$events[] = [
-						'ID' => -1,
+						'ID' => 0,
 						'title' => '(et plus...)',
+						'url' => $url,
 					];
+					break;
 				}
 			}
 			$ajax_response = [

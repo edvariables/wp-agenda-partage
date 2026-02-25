@@ -719,6 +719,9 @@ class Agdp_Events extends Agdp_Posts {
 		return $html;
 	}
 	
+	/**
+	 * get_list_item_html
+	 */
 	public static function get_list_item_html($event, $requested_id, $options){
 		$email_mode = is_array($options) && isset($options['mode']) && $options['mode'] == 'email';
 		
@@ -764,7 +767,7 @@ class Agdp_Events extends Agdp_Posts {
 		
 		$title = $event->post_title;
 		$localisation = Agdp_Event::get_event_localisation_and_cities($event->ID);
-		$dates = Agdp_Event::get_event_dates_text($event->ID);
+		$dates = Agdp_Event::get_event_dates_text($event->ID, false);
 		$covoiturages = self::get_agdpevent_covoiturages( $event, false );
 		
 		$html .= sprintf(
@@ -967,6 +970,20 @@ class Agdp_Events extends Agdp_Posts {
 		return $html;
 	}
 
+	/**
+	 * Url de l'agenda avec sélection d'un évènement
+	 */
+	public static function get_post_permalink_in_agenda($agdpevent) {
+		$page_id = Agdp::get_option('agenda_page_id');
+		if($page_id){
+			$url = Agdp_Event::get_post_permalink($page_id, Agdp_Event::secretcode_argument);
+			$url = add_query_arg( Agdp_Event::postid_argument, $agdpevent->ID, $url);
+			$url .= '#' . Agdp_Event::postid_argument . $agdpevent->ID;
+			return $url;
+		}
+		return false;
+	}
+	
 	/**
 	 * Requête Ajax de téléchargement de fichier
 	 */

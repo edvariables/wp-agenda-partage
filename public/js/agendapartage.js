@@ -493,7 +493,7 @@ jQuery( function( $ ) {
 					'post_id' : post_id,
 					'form_id' : form_id,
 					'date' : sDate,
-					'numberposts' : 2,
+					'numberposts' : 3,
 					'_nonce' : agdp_ajax.check_nonce
 				},
 				success : function( response ) {
