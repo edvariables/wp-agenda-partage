@@ -838,12 +838,14 @@ abstract class Agdp_Posts_Export {
 			}
 			else
 				$post = get_post( $post_id );
+			$post_type = $post->post_type;
 			
 			$meta_input = get_post_meta($post->ID, '', true);//TODO ! true
 			$metas = [];
 			if( ! isset($meta_input['error'])){
 				foreach($meta_input as $meta_name => $meta_value){
-					if( $meta_name[0] === '_' )
+					if( $meta_name[0] === '_'
+					&&  $post_type !== Agdp_WPCF7::post_type )
 						continue;
 					
 					// $meta_value = implode("\r\n", $meta_value);
@@ -860,7 +862,6 @@ abstract class Agdp_Posts_Export {
 				'metas' => $metas,
 			];
 			
-			$post_type = $post->post_type;
 			if( isset( $post_type_taxonomies[$post_type] ) )
 				$post_taxonomies = $post_type_taxonomies[$post_type];
 			else {

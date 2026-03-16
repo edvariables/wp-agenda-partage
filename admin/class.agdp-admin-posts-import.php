@@ -105,7 +105,7 @@ class Agdp_Admin_Posts_Import {
 							<input type="hidden" name="data_source" value="<?php echo $data_source ?>">
 						</div><?php
 							if( $data_source === self::import_package_tag
-							 && $file_name ){
+							 && ! empty($file_name) ){
 								$data_source_label = sprintf(' du package <a href="%s">%s</a>'
 									, Agdp_Admin_Packages::get_post_type_package_url( $post_type, $file_name )
 									, Agdp_Admin_Packages::get_package_file_post_type( $file_name )
@@ -584,8 +584,13 @@ class Agdp_Admin_Posts_Import {
 			}
 				
 			$icon = $update_existing ? 'update' : 'plus';
+			
+			if( $post_type === Agdp_WPCF7::post_type )
+				$edit_url = sprintf('/wp-admin/admin.php?page=wpcf7&post=%s&action=edit', $new_post_id);
+			else
+				$edit_url= get_edit_post_link( $new_post_id );
 			echo sprintf( '<div><a href="%s">%s %s</a></div>'
-				, get_edit_post_link( $new_post_id )
+				, $edit_url
 				, Agdp::icon($icon)
 				, htmlspecialchars( stripslashes( $data['post']['post_title'] ) )
 			);
