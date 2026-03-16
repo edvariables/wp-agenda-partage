@@ -394,8 +394,12 @@ class Agdp_Admin_Posts_Import {
 			foreach($data['metas'] as $meta_key => $meta_value){
 				if( $meta_value ){
 					//TODO addslashes ? (nécessaire pour les json mais fait disparaitre \ dans un title)
-					if( is_string($meta_value) )
-						$meta_value = addslashes( $meta_value );
+					if( is_string($meta_value) ){
+						if( is_serialized( $meta_value ) )
+							$meta_value = @unserialize( trim( $meta_value ) );
+						else
+							$meta_value = addslashes( $meta_value );
+					}
 					$data['metas'][$meta_key] = $meta_value;
 				}
 			}
