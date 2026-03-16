@@ -310,7 +310,7 @@ class Agdp_WPCF7 {
 		if( strlen($message) < 200)
 			return false;
 		
-		$forbidden_words = ['http']; //TODO
+		$forbidden_words = []; //'http' TODO
 		foreach($forbidden_words as $word)
 			if( strpos($message, $word) !== false ){
 				$error_message = sprintf('Veuillez retirer le terme "%s" de votre message.', $word);

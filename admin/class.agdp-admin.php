@@ -210,7 +210,9 @@ class Agdp_Admin {
 	 * Affiche une notification dans l'administration
 	 * Gère avec ou sans block-editor.
 	 */
-	public static function add_admin_notice_now($message, $attrs){
+	public static function add_admin_notice_now($message, $attrs, $is_html = false){
+		if( is_string($attrs) )
+			$attrs = [ 'type' => $attrs ];
 		$current_screen = get_current_screen();
 		$is_block_editor = method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor();
 		if($is_block_editor){
@@ -231,6 +233,10 @@ class Agdp_Admin {
     );
 } )( window.wp );
 </script><?php
+		}
+		elseif( is_array($message) ){
+			foreach( $message as $msg )
+				wp_admin_notice($msg, $attrs);
 		}
 		else
 			wp_admin_notice($message, $attrs);

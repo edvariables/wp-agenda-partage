@@ -852,6 +852,7 @@ class Agdp_Admin_Options {
 			var $tabs = jQuery('<div class="' + class_name + '"/>');
 			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
 			var $contents = jQuery('<ul/>').appendTo($tabs);
+			var $notices = jQuery(this).find('div.notice');
 			var $submit = jQuery(this).find('p.submit');
 			var default_tab_name = '<?php echo $default_tab; ?>';
 			var last_tab_option_name = '<?php echo $last_tab_option_name; ?>';
@@ -877,7 +878,9 @@ class Agdp_Admin_Options {
 						$contents.find('#' + last_tab_option_name).val( tabName );
 					}
 				}) )
-				.append($submit);
+				.prepend($notices)
+				.append($submit)
+			;
 		});
 	});</script>
 		<?php
@@ -1326,7 +1329,7 @@ class Agdp_Admin_Options {
 		//TODO default_check "La lettre-info"
 		
 		if( count($logs) ){
-			Agdp_Admin::add_admin_notice($logs, 'error', true);
+			Agdp_Admin::add_admin_notice_now($logs, 'error', true);
 		}
 	}
 	
