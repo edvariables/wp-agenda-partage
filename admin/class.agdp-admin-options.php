@@ -58,7 +58,7 @@ class Agdp_Admin_Options {
 		if( true ){
 			// Last tab (default tab in js)
 			// (hidden field)
-			$field_id = Agdp_Admin_Menu::get_last_tab_option_name();
+			$field_id = Agdp_Admin::get_last_tab_option_name();
 			add_settings_field(
 				$field_id, 
 				'',
