@@ -30,10 +30,8 @@ class Agdp {
 	public static function init_includes() {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-wpdb.php' );
-			
-		//TODO seulemet à l'activation / desactivation, non ? pourtant sans ça, le menu du plugin n'est plus visible
+		
 		add_action( 'agendapartage-init', array( __CLASS__, 'register_post_types' ) );
-		// self::register_post_types();
 
 		if(!function_exists('toggle_shortcode_cb'))
 			require_once( AGDP_PLUGIN_DIR . '/includes/shortcode.toggle.php' );
@@ -502,6 +500,9 @@ class Agdp {
 				
 			case 'can_generate_packages':
 				return __( 'Peut générer les packages', AGDP_TAG );
+				
+			case 'dashboard_diagram':
+				return __( 'Affiche l\'arborescence du site dans le tableau de bord', AGDP_TAG );
 			default:
 				return "[{$name}]";
 		}

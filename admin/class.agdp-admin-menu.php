@@ -369,8 +369,9 @@ class Agdp_Admin_Menu {
 	public static function init_dashboard_widgets() {
 	    self::remove_dashboard_widgets();
 	    global $wp_meta_boxes;
-		if( current_user_can('manage_options') ){
-			add_meta_box( 'dashboard_my_comments',
+		if( current_user_can('manage_options')
+		&& Agdp::get_option('dashboard_diagram') ){
+			add_meta_box( 'dashboard_site_diagram',
 				__('Arborescence du site', AGDP_TAG),
 				array(__CLASS__, 'blog_diagram_cb'),
 				'dashboard',
