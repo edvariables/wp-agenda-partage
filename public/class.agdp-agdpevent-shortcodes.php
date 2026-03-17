@@ -400,7 +400,12 @@ class Agdp_Event_Shortcodes extends Agdp_Shortcodes {
 							$val = make_clickable(esc_html($val));
 							break;
 						case 'phone' :
+							$val = antispambot(esc_html($val));
+							break;
 						case 'email' :
+							$show = Agdp_Event::get_post_meta($post_id, 'ev-' . $meta_name . '-show', true, false);
+							if( ! $show )
+								return;
 							$val = antispambot(esc_html($val));
 							break;
 					}

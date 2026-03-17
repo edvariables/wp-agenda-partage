@@ -646,7 +646,8 @@ class Agdp_Event_Edit {
 			//checkboxes
 			foreach(array(
 				// 'ev-date-journee-entiere',
-				'ev-message-contact'
+				'ev-message-contact',
+				'ev-email-show',
 				) as $field){
 				if(array_key_exists($field, $inputs)){
 					if( is_array( $inputs[$field] ) )
@@ -692,8 +693,8 @@ class Agdp_Event_Edit {
 			$data = $contact_form;
 		}
 
-		$data['ev-organisateur-show'] = 1;//TODO
-		$data['ev-email-show'] = 0;//TODO
+		if( ! isset($data['ev-email-show']) )
+			$data['ev-email-show'] = 0;//TODO
 		
 		if( empty( $data['ev-user-email'] ) )
 			$data['ev-user-email'] = $data['ev-email'];

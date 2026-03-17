@@ -91,6 +91,7 @@ class Agdp_Event extends Agdp_Post {
 		[agdpevent-description]
 		[agdpevent info="organisateur" label="Organisateur : "][agdpevent-cree-depuis][/agdpevent]
 		[agdpevent info="phone" label="Téléphone : "]
+		[agdpevent info="email" label="E-mail : "]
 		[agdpevent info="siteweb"]
 		[agdpevent info="attachments"]
 		';
