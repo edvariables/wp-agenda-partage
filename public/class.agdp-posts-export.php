@@ -827,6 +827,12 @@ abstract class Agdp_Posts_Export {
 			$options = [];
 		$include_terms = isset($options['include_terms']) ? $options['include_terms'] : false;
 		
+		$source_data = [
+			'url'=> site_url(),
+			'name'=> get_bloginfo('name', 'raw'),
+			'date'=> date('Y-m-d H:i:s'),
+		];
+		
 		$data = [];
 		$post_type_taxonomies = [];
 		$taxonomies = [];
@@ -858,6 +864,7 @@ abstract class Agdp_Posts_Export {
 			}
 			$post->post_password = null;
 			$post_data = [
+				'source' => $source_data,
 				'post' => $post,
 				'metas' => $metas,
 			];
