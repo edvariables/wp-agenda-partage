@@ -812,13 +812,17 @@ class Agdp_Events extends Agdp_Posts {
 		if($show){
 			$email = get_post_meta($event->ID, 'ev-email', true);
 			if($email){
-				$alink = sprintf('<a href="mailto:%s?body=Bonjour, A propos de %s (%s), &subject=A propos de %s">%s</a>',
-					esc_attr($email),
-					esc_attr($title),
-					esc_attr($url),
-					esc_attr($title),
-					antispambot($email)
-				);
+				
+				if( ! $email_mode )
+					$alink = sprintf('<a href="mailto:%s?body=Bonjour, A propos de %s (%s), &subject=A propos de %s">%s</a>',
+						esc_attr($email),
+						esc_attr($title),
+						esc_attr($url),
+						esc_attr($title),
+						antispambot($email)
+					);
+				else
+					$alink = $email;
 				$html .= sprintf('<div class="ev-email"><span>Email : </span><span>%s</span></div>',  $alink );
 			}
 		}

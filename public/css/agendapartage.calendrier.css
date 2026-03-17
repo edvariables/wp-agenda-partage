@@ -5,8 +5,10 @@
 
 
 .agdp-agdpevents-list ul {
-	padding-bottom: 1em;
 	list-style: none;
+}
+.agdp-agdpevents-list > ul {
+	padding-bottom: 1em;
 }
  
 .agdp-agdpevents-list > ul > li {
@@ -114,6 +116,7 @@ body.colors-dark .agdpevent.post-status-pending {
 .agdp-agdpevents-list > ul > li pre {
 	white-space: pre-wrap;
 }
+.agdp-agdpevents-list > ul > li .ev-covoiturages,
 .agdp-agdpevents-list > ul > li .ev-phone > span:first-of-type,
 .agdp-agdpevents-list > ul > li .ev-email > span:first-of-type,
 .agdp-agdpevents-list > ul > li .ev-organisateur > span:first-of-type {
