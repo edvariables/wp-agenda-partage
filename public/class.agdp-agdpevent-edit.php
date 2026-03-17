@@ -119,6 +119,8 @@ class Agdp_Event_Edit {
 				&& $user->ID !== 0)
 					return $user->user_nicename;
 				return '';
+			case 'ev-email-show' :
+				return false;
 			case 'ev-email' :
 			case 'ev-user-email' :
 				if(($user = wp_get_current_user())
@@ -209,6 +211,7 @@ class Agdp_Event_Edit {
 			foreach( [
 				'ev-organisateur',
 				'ev-email',
+				'ev-email-show',
 				'ev-user-email'
 			] as $meta_name)
 				$attrs[$meta_name] = self::get_default_value($meta_name);
@@ -218,12 +221,14 @@ class Agdp_Event_Edit {
 		// Génère le formulaire
 		// Interception du formulaire avant la génération du html
 		add_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'wpcf7_form_init_tags_cb'), 10, 1 ); 
+		
 		$html = sprintf('[contact-form-7 id="%s"]', $form_id);
 		$html = do_shortcode( wp_kses_post($html));
 		if(! $html)
 			return;
-		remove_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'wpcf7_form_init_tags_cb'), 10); 
 		
+		remove_filter( 'wpcf7_form_class_attr', array(__CLASS__, 'wpcf7_form_init_tags_cb'), 10); 
+
 		// Ajoute les données à affecter aux inputs via javascript.
 		// cf agendapartage.js
 		$attrs = str_replace('"', "&quot;", htmlentities( json_encode($attrs) ));
@@ -654,7 +659,7 @@ class Agdp_Event_Edit {
 					if( is_array( $inputs[$field] ) )
 						$data[$field] = count($inputs[$field]) ? $inputs[$field][0] : false;
 					else
-						$data[$field] = $inputs[$field];
+						$data[$field] = $inputs[$field] && $inputs[$field] !== '0';
 				}
 			}
 			
@@ -695,7 +700,7 @@ class Agdp_Event_Edit {
 		}
 
 		if( ! isset($data['ev-email-show']) )
-			$data['ev-email-show'] = 0;//TODO
+			$data['ev-email-show'] = '';
 		
 		if( empty( $data['ev-user-email'] ) )
 			$data['ev-user-email'] = $data['ev-email'];

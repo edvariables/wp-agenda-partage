@@ -43,8 +43,11 @@ jQuery( function( $ ) {
 								$input.filter('[value="' + fields[field_name][i] + '"]')
 									.prop('checked', true);
 						}
-						else
+						else {
+							if( fields[field_name] === '0' )
+								fields[field_name] = false;
 							$input.prop('checked', !! fields[field_name]);
+						}
 					}
 					else if($input.attr('type') == 'radio'){
 						if( fields[field_name] instanceof Array ){
