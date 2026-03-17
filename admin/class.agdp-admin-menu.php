@@ -29,6 +29,17 @@ class Agdp_Admin_Menu {
 
 		add_action( 'admin_bar_menu', array(__CLASS__, 'on_wp_admin_bar_posts_menu'), 64 );
 		
+		//Onglets
+		global $pagenow;
+		if ( $pagenow === 'admin.php' && isset($_GET['page']) ) {
+			if( in_array( $_GET['page'], [
+				AGDP_TAG, //options
+				AGDP_TAG . '-rights',
+			] ) ) {
+				add_action('admin_head', array(__CLASS__, 'init_js_sections_tabs'));
+			}
+		}
+		
 	}
 
 	/**
@@ -400,7 +411,101 @@ class Agdp_Admin_Menu {
 		if( ! current_user_can('moderate_comments') )
 			remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
 	}
-
+	
+	/**
+	 * init_js_sections_tabs
+	 */
+	public static function init_js_sections_tabs() {
+		//
+		$default_tab = 0;
+		$last_tab_option_name = self::get_last_tab_option_name();
+		foreach( [ 'tab', $last_tab_option_name ] as $argument ){
+			if( $_POST && isset($_POST[AGDP_TAG])
+			&& ! empty($_POST[AGDP_TAG][$argument])){
+				$default_tab = $_POST[AGDP_TAG][$argument];
+				unset($_POST[AGDP_TAG][$argument]);
+				break;
+			}
+			if( ! empty($_REQUEST[$argument])){
+				$default_tab = $_REQUEST[$argument];				
+				unset($_REQUEST[$argument]);
+				if( ! empty($_POST[$argument]))
+					unset($_POST[$argument]);
+				break;
+			}
+		}
+		
+		?><script type="text/javascript">
+	jQuery(document).ready(function(){
+		jQuery('form > div.agdp-tabs-wrap:first').each(function(){
+			var id = 'agdp-tabs-' + Math.floor( Math.random()*1000);
+			var class_name = 'agdp-tabs';
+			var tabs_counter = 0;
+			var $tabs_contents = [];
+			var $tabs = jQuery('<div class="' + class_name + '"/>');
+			var $nav = jQuery('<ul class="' + class_name + '-nav"/>').appendTo($tabs);
+			var $contents = jQuery('<ul/>').appendTo($tabs);
+			var $notices = jQuery(this).find('div.notice');
+			var $submit = jQuery(this).find('p.submit');
+			var default_tab_name = '<?php echo $default_tab; ?>';
+			var last_tab_option_name = '<?php echo $last_tab_option_name; ?>';
+			var default_tab = 0;
+			jQuery(this).find('div.agdp-tabs-nav > h2').each(function(){
+				tabs_counter++;
+				$nav.append('<li><a href="#' + id + '-' + tabs_counter + '">' + this.innerText + '</a></li>');
+				var $content = jQuery('<div id="' + id + '-' + tabs_counter + '" class="agdp-panel"><div/>');
+				jQuery(this).parent().children().appendTo($content);
+				$contents.append($content);
+				if( default_tab_name && $content.find( '#' + default_tab_name + ':first, #agdp_section_' + default_tab_name + ':first').length )
+					default_tab = tabs_counter - 1;
+			});
+			jQuery(this)
+				.html( $tabs.tabs({
+					active: default_tab,
+					activate: function(event, ui){
+						var tabName = ui.newPanel.find('[id]:first').attr('id');
+						if( ! tabName )
+							return;
+						if( tabName.indexOf('agdp_section_') === 0 )
+							tabName = tabName.substr('agdp_section_'.length);
+						$contents.find('#' + last_tab_option_name).val( tabName );
+					}
+				}) )
+				.prepend($notices)
+				.append($submit)
+			;
+		});
+	});</script>
+		<?php
+	}
+	
+	/** 
+	 * Modifie la balise <from en ajoutant l'attribut enctype="multipart/form-data".
+	 * Injecté dans le <head>
+	 * [unused]
+	 */
+	public static function add_form_enctype() {
+		$tag = isset($_GET['page']) ? $_GET['page'] : AGDP_TAG;
+		?><script type="text/javascript">
+				jQuery(document).ready(function(){
+					var $form = jQuery('#wpbody-content form:first');
+					// var $input = $form.children('input[name="option_page"][value="<?php echo($tag)?>"]:first');
+					// if($input.length){
+						$form.attr('enctype','multipart/form-data');
+						$form.attr('encoding', 'multipart/form-data');
+					// }
+				});
+			</script><?php
+	}
+	
+	/**
+	 * get_last_tab_option_name
+	 */
+	public static function get_last_tab_option_name() {
+		global $pagenow;
+		$page = isset($_GET['page']) ? $_GET['page'] : $pagenow;
+		return '_last-tab_' . $page;
+	}
 }
 
 ?>
