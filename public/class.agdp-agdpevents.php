@@ -795,7 +795,10 @@ class Agdp_Events extends Agdp_Posts {
 		if($value){
 			if( ! $allow_html_in_content )
 				$value = htmlentities($value);
-			$html .= sprintf('<pre>%s</pre>', $value );
+			if( ! $email_mode )
+				$html .= sprintf('<a href="%s"><pre>%s</pre></a>', $url, $value);
+			else
+				$html .= sprintf('<pre>%s</pre>', $value );
 		}
 		$value = get_post_meta($event->ID, 'ev-organisateur', true);
 		if($value){
