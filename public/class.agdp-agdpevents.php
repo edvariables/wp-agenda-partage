@@ -977,7 +977,7 @@ class Agdp_Events extends Agdp_Posts {
 				, 'agdpevents_download'
 				, http_build_query(['data' => $data]) );
 				
-			$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
+			$html .= sprintf('<a href="%s" title="%s"><span class="dashicons-before dashicons-download "></span></a>', $href, esc_attr($title));
 		}
 		
 		//taxonomy_diffusion terms
@@ -995,7 +995,7 @@ class Agdp_Events extends Agdp_Posts {
 					, AGDP_TAG
 					, 'agdpevents_download'
 					, http_build_query(['data' => $data]) );
-				$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
+				$html .= sprintf('<a href="%s" title="%s"><span class="dashicons-before dashicons-download "></span></a>', $href, esc_attr($title));
 			}
 		}
 		$html .= '</div>';
