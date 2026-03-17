@@ -315,7 +315,7 @@ class Agdp_Admin_Edit_Covoiturage extends Agdp_Admin_Edit_Post_Type {
 			'class' => 'readonly' 
 		);
 		if(self::$the_post_is_new)
-			$field['value'] = Agdp::get_secret_code(4, 'num');
+			$field['value'] = Agdp_Covoiturage::get_secret_code();
 		$fields[] = $field;
   
 		// sessionid

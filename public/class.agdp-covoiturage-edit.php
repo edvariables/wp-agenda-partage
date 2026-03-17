@@ -122,7 +122,7 @@ class Agdp_Covoiturage_Edit {
 				return 1;
 				
 			case 'cov-' . AGDP_COVOIT_SECRETCODE :
-				return Agdp::get_secret_code(4, 'num');
+				return Agdp_Covoiturage::get_secret_code();
 			
 			case 'cov-organisateur':			
 				if(($user = wp_get_current_user())
@@ -899,7 +899,7 @@ class Agdp_Covoiturage_Edit {
 		// if( $post && get_post_meta($post->ID, $meta_name, true))
 			// unset($data[$meta_name]);
 		// else {
-			// $data[$meta_name] = Agdp::get_secret_code(6);
+			// $data[$meta_name] = Agdp_Covoiturage::get_secret_code();
 		// }
 		
 		$meta_name = 'cov-sessionid';

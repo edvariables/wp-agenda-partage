@@ -129,7 +129,7 @@ class Agdp_Events_Import extends Agdp_Posts_Import {
 				'ev-phone' => empty($event['phone']) ? '' : trim($event['phone']),
 				AGDP_IMPORT_UID => empty($event['uid']) ? '' : $event['uid'],
 				'ev-date-journee-entiere' => $timeStart ? '' : '1',
-				// 'ev-codesecret' => Agdp::get_secret_code(6),
+				// 'ev-codesecret' => Agdp_Event::get_secret_code(),
 				'_post-source' => $import_source
 			);
 			

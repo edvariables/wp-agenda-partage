@@ -1559,4 +1559,54 @@ abstract class Agdp_Post {
 			}
 		}
 	}
+	
+		
+	/**
+	* Fournit un code aléatoire sur une longueur déterminée.
+	* Utilisé pour les champs AGDP_xxx_SECRETCODE
+	*/
+	public static function get_secret_code( $context = false ){
+		$length = 6;
+		$alphanum = true;
+		
+		if( static::post_type ){
+			$field_id = static::post_type . '_secretcode';
+			$mode = Agdp::get_option( $field_id );	
+			switch( $mode ){
+				case 'const' : //'Code unique pour tous',
+					$constant = Agdp::get_option( $field_id . '-const' );
+					if( $constant )
+						return $constant;
+					
+				case 'alea4n' : // 'Aléatoire (4 chiffres)',
+					$length = 4;
+					$alphanum = 'num';
+					break;
+				case 'alea6s' : //'Aléatoire (6 lettres)',
+					$length = 6;
+					$alphanum = true;
+					break;
+				case 'const/user' : //'Code unique par utilisateur',
+					$length = 4;
+					$alphanum = 'num';
+					//TODO get user ( $context )
+					break;
+				default:
+					switch( static::post_type ){
+						case Agdp_Covoiturage::post_type:
+							$length = 4;
+							$alphanum = 'num';
+							break;
+						case Agdp_Event::post_type:
+						case Agdp_Contact::post_type:
+						case Agdp_Report::post_type:
+						default:
+							$length = 6;
+							$alphanum = true;
+							break;
+					}
+			}
+		}
+		return Agdp::get_secret_code($length, $alphanum);
+	}
 }

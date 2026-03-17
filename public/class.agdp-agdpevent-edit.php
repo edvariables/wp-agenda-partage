@@ -711,7 +711,8 @@ class Agdp_Event_Edit {
 		if( $post && get_post_meta($post->ID, $meta_name, true))
 			unset($data[$meta_name]);
 		else {
-			$data[$meta_name] = Agdp::get_secret_code(6);
+			$field_id = 'agdpevent_secretcode';
+			$data[$meta_name] = Agdp_Event::get_secret_code( $post );
 		}
 		
 		$meta_name = 'ev-sessionid';

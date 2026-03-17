@@ -455,6 +455,21 @@ class Agdp_Admin_Options {
 			);
 			
 			// 
+			$field_id = 'agdpevent_secretcode';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_agdpevent_secretcode_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+				]
+			);
+		
+			
+			// 
 			$field_id = 'add_content_in_' . Agdp_Event::post_type;
 			add_settings_field(
 				$field_id, 
@@ -898,6 +913,34 @@ class Agdp_Admin_Options {
 	}
 	
 	/**
+	 * agdp_agdpevent_secretcode_cb
+	 */
+	public static function agdp_agdpevent_secretcode_cb( $args ){
+					
+		$option_id = $args['label_for'];
+		$secretcode_mode = Agdp::get_option($option_id);
+		?><select name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>]"
+		onchange="if(this.value === 'const') jQuery(this).next('.unique_secretcode').show(); else  jQuery(this).next('.unique_secretcode').hide();"><?php
+			foreach( [
+				'' => 'Aléatoire',
+				'alea4n' => 'Aléatoire (4 chiffres)',
+				'alea6s' => 'Aléatoire (6 lettres)',
+				'const' => 'Code unique pour tous',
+				'const/user' => 'Code unique par utilisateur',
+			] as $key => $label )
+				echo sprintf('<option value="%s" %s>%s</option>'
+				, $key
+				, selected($secretcode_mode, $key)
+				, $label);
+		?></select><?php
+		$value = Agdp::get_option($option_id . '-const');
+		?><span class="unique_secretcode" <?php if( $secretcode_mode !== 'const') echo(' style="display: none"');?>>
+			<input name="<?php echo AGDP_TAG;?>[<?php echo esc_attr( $option_id ); ?>-const]" value="<?php echo $value?>">
+		</span>
+		<?php
+	}
+	
+	/**
 	 * agdp_import_ics_cb
 	 */
 	public static function agdp_import_ics_cb( $args ){
@@ -1338,6 +1381,7 @@ class Agdp_Admin_Options {
 			'allow_html_in_' . Agdp_Covoiturage::post_type,
 			'allow_html_in_' . Agdp_Contact::post_type,
 			'can_generate_packages',
+			'dashboard_diagram',
 			
 		] as $option ){
 			

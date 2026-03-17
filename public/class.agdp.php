@@ -574,9 +574,9 @@ class Agdp {
 		
 	/**
 	* Fournit un code aléatoire sur une longueur déterminée.
-	* Utilisé pour les champs AGDP_EVENT_SECRETCODE
+	* Utilisé pour les champs AGDP_xxx_SECRETCODE
 	*/
-	public static function get_secret_code ($length = 6, $alphanum = true){
+	public static function get_secret_code($length = 6, $alphanum = true){
 		$numeric = !$alphanum || str_starts_with( $alphanum, 'num');
 		if ($length < 1)
 			$length = 1;
