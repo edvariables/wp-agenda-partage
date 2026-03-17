@@ -8,7 +8,7 @@
 	list-style: none;
 }
 .agdp-agdpevents-list > ul {
-	padding-bottom: 1em;
+	padding-bottom: 0em;
 }
  
 .agdp-agdpevents-list > ul > li {
@@ -168,6 +168,15 @@ body.colors-dark .toggle-trigger.month-title {
 .agdp-agdpevents-list > ul > li .footer .trigger-collapser,
 .agdp-agdpevents-list .toggle-trigger {
 	cursor: pointer;
+}
+
+.agdp-agdpevents-list .download_links {
+	float: left;
+}
+.agdp-agdpevents-list .download_links > label:first-of-type {
+	font-size: smaller;
+	font-weight: 501;
+	margin-bottom: 0em;
 }
 
 .agdp-agdpevents-list-header {

@@ -955,23 +955,32 @@ class Agdp_Events extends Agdp_Posts {
 		return $html;
 	}
 	
+	/**
+	 * download_links
+	 */
 	public static function download_links(){
-		$html = '';
-		$data = [
-			'file_format' => 'ics'
-		];
-		$title = 'Télécharger les évènements au format ICS';
-		if( count($_GET) && self::$filters_summary ){
-			$title .= ' filtrés (' . self::$filters_summary . ')';
-			$data['filters'] = $_GET;
-		}
-		$href = sprintf('/wp-admin/admin-ajax.php/?action=%s_%s_action&%s'
-			, AGDP_TAG
-			, 'agdpevents_download'
-			, http_build_query(['data' => $data]) );
-		$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
-		//$html .= Agdp::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data, $href);
+		$html = '<div class="download_links">';
+		$html .= '<label>téléchargements</label>';
 		
+		// .ICS
+		if( true){
+			$data = [
+				'file_format' => 'ics'
+			];
+			$title = 'Télécharger les évènements au format ICS';
+			if( count($_GET) && self::$filters_summary ){
+				$title .= ' filtrés (' . self::$filters_summary . ')';
+				$data['filters'] = $_GET;
+			}
+			$href = sprintf('/wp-admin/admin-ajax.php/?action=%s_%s_action&%s'
+				, AGDP_TAG
+				, 'agdpevents_download'
+				, http_build_query(['data' => $data]) );
+				
+			$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
+		}
+		
+		//taxonomy_diffusion terms
 		$meta_name = 'download_link';
 		foreach(Agdp_Event::get_all_terms(Agdp_Event::taxonomy_diffusion) as $term_id => $term){
 			$file_format = get_term_meta($term->term_id, $meta_name, true);
@@ -987,9 +996,9 @@ class Agdp_Events extends Agdp_Posts {
 					, 'agdpevents_download'
 					, http_build_query(['data' => $data]) );
 				$html .= sprintf('<a href="%s"><span class="dashicons-before dashicons-download "></span></a>', $href);
-				//$html .= Agdp::get_ajax_action_link(false, ['agdpevents','download_file'], 'download', '', $title, false, $data, $href);
 			}
 		}
+		$html .= '</div>';
 		return $html;
 	}
 
