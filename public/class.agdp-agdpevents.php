@@ -796,7 +796,7 @@ class Agdp_Events extends Agdp_Posts {
 			if( ! $allow_html_in_content )
 				$value = htmlentities($value);
 			if( ! $email_mode )
-				$html .= sprintf('<a href="%s"><pre>%s</pre></a>', $url, $value);
+				$html .= sprintf('<a href="%s" target="_blank"><pre>%s</pre></a>', $url, $value);
 			else
 				$html .= sprintf('<pre>%s</pre>', $value );
 		}
