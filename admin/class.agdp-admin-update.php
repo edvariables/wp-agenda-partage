@@ -80,7 +80,7 @@ class Agdp_Admin_Update {
 		if( $result === null )
 			$result = '';
 		if( $verbose ){
-			echo sprintf('<pre>%s</pre>', $result);
+			echo sprintf('<pre><code>%s</code></pre>', $result);
 		}
 		return $result;
 	}
