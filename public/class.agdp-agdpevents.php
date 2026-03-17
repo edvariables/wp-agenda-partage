@@ -802,23 +802,18 @@ class Agdp_Events extends Agdp_Posts {
 			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
 		}
 		
-		$email = false;
+		$phone = get_post_meta($event->ID, 'ev-phone', true);
+		if($phone){
+			$html .= sprintf('<div class="ev-phone">Téléphone : %s</div>'
+				,  antispambot($phone) );
+		}
+		
 		$show = get_post_meta($event->ID, 'ev-email-show', true);
 		if($show){
 			$email = get_post_meta($event->ID, 'ev-email', true);
-		}
-		
-		$phone = get_post_meta($event->ID, 'ev-phone', true);
-		if($phone){
-			$html .= sprintf('<div class="ev-phone %s">Téléphone : %s</div>'
-				, $email ? ' display_inline_block' : ''
-				,  antispambot($phone) );
 			if($email){
 				$html .= sprintf('<div class="ev-email display_inline_block">Email : %s</div>',  antispambot($email) );
 			}
-		}
-		elseif($email){
-			$html .= sprintf('<div class="ev-email">Email : %s</div>',  antispambot($email) );
 		}
 		
 		$value = get_post_meta($event->ID, 'ev-siteweb', true);
