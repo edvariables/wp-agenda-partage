@@ -1123,7 +1123,9 @@ class Agdp_Event_Edit {
 				if( ! $url ){
 					break;
 				}
-				$url = preg_replace('/^(http)(s)??/', '$1s', $url );
+				if( substr($url, 0, strlen('http')) === 'http'
+				&& $url[ strlen('http') ] !== 's' )
+					$url = 'https' . substr( $url, strlen('http') );
 				return $url;
 				
 			default:

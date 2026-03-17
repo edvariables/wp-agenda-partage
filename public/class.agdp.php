@@ -301,7 +301,7 @@ class Agdp {
 			$queried_object_type = $queried_object->post_type;
 		}
 		else {
-			$current_url = "http://" . ( empty($_SERVER['HTTP_HOST']) ? '' : $_SERVER['HTTP_HOST']) . $_SERVER['REQUEST_URI'];
+			$current_url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 			$queried_object_id = url_to_postid(set_url_scheme($current_url));
 		}
 		if( $queried_object_id ){
