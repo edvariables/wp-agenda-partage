@@ -799,12 +799,12 @@ class Agdp_Events extends Agdp_Posts {
 		}
 		$value = get_post_meta($event->ID, 'ev-organisateur', true);
 		if($value){
-			$html .= sprintf('<div>Organisé par : %s</div>',  htmlentities($value) );
+			$html .= sprintf('<div class="ev-organisateur"><span>Organisé par : </span><span>%s</span></div>',  htmlentities($value) );
 		}
 		
 		$phone = get_post_meta($event->ID, 'ev-phone', true);
 		if($phone){
-			$html .= sprintf('<div class="ev-phone">Téléphone : %s</div>'
+			$html .= sprintf('<div class="ev-phone"><span>Téléphone : </span><span>%s</span></div>'
 				,  antispambot($phone) );
 		}
 		
@@ -812,7 +812,14 @@ class Agdp_Events extends Agdp_Posts {
 		if($show){
 			$email = get_post_meta($event->ID, 'ev-email', true);
 			if($email){
-				$html .= sprintf('<div class="ev-email display_inline_block">Email : %s</div>',  antispambot($email) );
+				$alink = sprintf('<a href="mailto:%s?body=Bonjour, A propos de %s (%s), &subject=A propos de %s">%s</a>',
+					esc_attr($email),
+					esc_attr($title),
+					esc_attr($url),
+					esc_attr($title),
+					antispambot($email)
+				);
+				$html .= sprintf('<div class="ev-email"><span>Email : </span><span>%s</span></div>',  $alink );
 			}
 		}
 		
