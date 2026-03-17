@@ -827,6 +827,7 @@ abstract class Agdp_Posts_Export {
 			$options = [];
 		$include_terms = isset($options['include_terms']) ? $options['include_terms'] : false;
 		
+		// Source data, managed in Agdp_Admin_Posts_Import::agdp_import_post_replace_source
 		$source_data = [
 			'url'=> site_url(),
 			'name'=> get_bloginfo('name', 'raw'),

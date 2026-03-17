@@ -359,6 +359,7 @@ class Agdp_Admin_Posts_Import {
 				// );
 			return false;
 		}
+		
 		$post_type = $data['post']['post_type'];
 		if( ! Agdp_Admin_Edit_Post_Type::has_cap( 'import', $post_type ) ){
 				echo sprintf( '<div class="error">Le type %s ne peut pas être importé.<pre>%s</pre></div>'
@@ -379,7 +380,17 @@ class Agdp_Admin_Posts_Import {
 			'post_name'
 		 ] as $key){
 			unset($data['post'][$key]);
-		 }
+		}
+		
+		//Replace source url and name
+		foreach([ 'post_content',
+			'post_name'
+		 ] as $key){
+			if( ! empty($data['post'][$key]) ){
+				$data['post'][$key] = self::agdp_import_post_replace_source( $data, $data['post'][$key] );
+			}
+		}
+		
 		//post_parent 
 		if( ! empty($data['post']['post_parent']) ){
 			//TODO il y a un bug avec des mises à jour avec parent foireux
@@ -389,6 +400,7 @@ class Agdp_Admin_Posts_Import {
 			else
 				unset($data['post']['post_parent']);
 		}
+		
 		// metas in meta_input
 		if( ! empty($data['metas']) ){
 			foreach($data['metas'] as $meta_key => $meta_value){
@@ -397,8 +409,11 @@ class Agdp_Admin_Posts_Import {
 					if( is_string($meta_value) ){
 						if( is_serialized( $meta_value ) )
 							$meta_value = @unserialize( trim( $meta_value ) );
-						else
+						else {
 							$meta_value = addslashes( $meta_value );
+							//Replace source url and name
+							$meta_value = self::agdp_import_post_replace_source( $data, $meta_value );
+						}
 					}
 					$data['metas'][$meta_key] = $meta_value;
 				}
@@ -600,6 +615,25 @@ class Agdp_Admin_Posts_Import {
 			);
 		}
 		return $new_post_id;
+	}
+
+	/**
+	 * During import, replaces site url and name
+	 */
+	private static function agdp_import_post_replace_source( $data, $value ) {
+		if( empty( $data['source'] )
+		 || ! $value
+		 || ! is_string($value) )
+			return $value;
+		
+		$local_data = [
+			'url'=> site_url(),
+			'name'=> get_bloginfo('name', 'raw'),
+		];
+		
+		$value = str_replace( $data['source']['url'], $local_data['url'], $value );
+		$value = str_replace( $data['source']['name'], $local_data['name'], $value );
+		return $value;
 	}
 	
 	/**
