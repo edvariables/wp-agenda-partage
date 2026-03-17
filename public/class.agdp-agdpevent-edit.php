@@ -184,6 +184,7 @@ class Agdp_Event_Edit {
 					'ev-phone',
 					'ev-organisateur',
 					'ev-email',
+					'ev-email-show',
 					'ev-message-contact',
 					'attachments']
 					as $meta_name){
