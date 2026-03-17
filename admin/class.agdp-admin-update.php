@@ -29,7 +29,7 @@ class Agdp_Admin_Update {
 	 * Update du plugin via GIT
 	 */
 	public static function git_form() {
-		if ( ! current_user_can( 'manage_network_plugins' ) ) 
+		if ( ! current_user_can( 'manage_options' ) ) 
 			die( 'Accès non autorisé' );
 		
 		echo sprintf('<h1>Mise à jour de l\'Agenda partagé</h1>' );
@@ -42,6 +42,10 @@ class Agdp_Admin_Update {
 		if( $is_status = empty($_REQUEST['action']) ){
 			echo sprintf('<h2>Etat courant</h2>' );
 			$result = self::git_exec('status');
+			if( ! $result ){
+				echo('<b class="alerte">Git ne semble pas installé sur votre serveur</b>');
+				return;
+			}
 		} else {
 			echo sprintf('<h2>Mise à jour</h2>' );
 			$result = self::git_exec('pull');
@@ -65,18 +69,19 @@ class Agdp_Admin_Update {
 	 * Exec git cmd
 	 */
 	private static function git_exec( string $params, bool $verbose = true) {
-		if ( ! current_user_can( 'manage_network_plugins' ) ) 
+		if ( ! current_user_can( 'manage_options' ) ) 
 			die( 'Accès non autorisé' );
 		
 		$cmd = sprintf('git -C %s %s', AGDP_PLUGIN_DIR, $params);
 			
 		if( $verbose )
-			echo sprintf('<label>%s</label>', $cmd );
+			echo sprintf('<label><code>&gt; %s</code></label>', $cmd );
 		$result = shell_exec( $cmd );
 		if( $result === null )
 			$result = '';
-		elseif( $verbose )
+		if( $verbose ){
 			echo sprintf('<pre>%s</pre>', $result);
+		}
 		return $result;
 	}
 	
@@ -84,7 +89,7 @@ class Agdp_Admin_Update {
 	 * Cancel files modifications as user confirmed in form (needed before git pull)
 	 */
 	private static function git_discard_changes() {
-		if ( ! current_user_can( 'manage_network_plugins' ) ) 
+		if ( ! current_user_can( 'manage_options' ) ) 
 			die( 'Accès non autorisé' );
 		
 		$discard_changes = empty($_POST['discard_changes']) ? [] : $_POST['discard_changes'];
