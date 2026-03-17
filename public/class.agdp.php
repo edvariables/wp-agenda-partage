@@ -6,10 +6,15 @@ class Agdp {
 		'Contact Form 7'     => 'contact-form-7/wp-contact-form-7.php'
 	);
 	
+	private static $option_labels = false; //init in get_option_labels()
+	
 	public static $skip_mail = false;
 	
 	private static $options_cache = false;
 
+	/**
+	 * admin_init()
+	 **/
 	public static function admin_init() {
 		if(! class_exists('Agdp_Admin')){
 			require_once( AGDP_PLUGIN_DIR . '/admin/class.agdp-admin.php' );
@@ -17,6 +22,9 @@ class Agdp {
 		}
 	}
 
+	/**
+	 * init()
+	 **/
 	public static function init() {
 		self::update_db();//TODO : trop fréquent
 		self::init_includes();
@@ -27,6 +35,9 @@ class Agdp {
 		do_action( 'agendapartage-init' );
 	}
 
+	/**
+	 * init_includes()
+	 **/
 	public static function init_includes() {
 		
 		require_once( AGDP_PLUGIN_DIR . '/public/class.agdp-wpdb.php' );
@@ -419,93 +430,65 @@ class Agdp {
 	/**
 	 * Retourne le libellé  d'un paramétrage.
 	 */
-	public static function get_option_label( $name  ) {
-		switch($name){
-			case 'admin_message_contact_form_id':
-				return __( 'Message de la part de l\'administrateur', AGDP_TAG );
-			case 'admin_nl_post_id':
-				return __( 'Lettre-info des statistiques d\'administration', AGDP_TAG );
+	public static function get_option_label( $name ) {
+		$option_labels = static::get_option_labels();
+		if( isset( $option_labels[ $name ] ) )
+			return $option_labels[ $name ];
+		return "[{$name}]";
+	}
+
+	/**
+	 * Retourne les libellés  des paramétres.
+	 */
+	public static function get_option_labels() {
+		if( ! self::$option_labels )
+			self::$option_labels = [
+				'blog_presentation_page_id' => __( 'Page "Présentation du site"', AGDP_TAG ),
+				'admin_message_contact_form_id'=> __( 'Message de la part de l\'administrateur', AGDP_TAG ),
+				'admin_nl_post_id' => __( 'Lettre-info des statistiques d\'administration', AGDP_TAG ),
+				'agdpforum_subscribe_form_id' => __( 'Formulaire générique d\'abonnement à un forum', AGDP_TAG ),
 				
-			case 'agdpforum_subscribe_form_id':
-				return __( 'Formulaire générique d\'abonnement à un forum', AGDP_TAG );
+				'newsletter_subscribe_form_id' => __( 'Formulaire de lettre-info', AGDP_TAG ),
+				'events_nl_post_id' => __( 'Lettre-info des évènements à diffuser', AGDP_TAG ),
+				'newsletter_subscribe_page_id' => __( 'Page d\'inscription à la lettre-info', AGDP_TAG ),
 				
-			case 'newsletter_subscribe_form_id':
-				return __( 'Formulaire de lettre-info', AGDP_TAG );
-			case 'events_nl_post_id':
-				return __( 'Lettre-info des évènements à diffuser', AGDP_TAG );
-			case 'newsletter_subscribe_page_id':
-				return __( 'Page d\'inscription à la lettre-info', AGDP_TAG );
-			
+				'agdpcontact_managed' => __( 'Gestion de l\'annuaire et des contacts', AGDP_TAG ),
+				'contact_page_id' => __( 'Page "Ecrivez-nous"', AGDP_TAG ),
+				'contact_form_id' => __( 'Formulaire "Ecrivez-nous"', AGDP_TAG ),
+				'agdpcontact_edit_form_id' => __( 'Formulaire d\'ajout et de modification de contact', AGDP_TAG ),
+				'agdpcontact_message_contact_form_id' => __( 'Message à un contact de l\'annuaire', AGDP_TAG ),
+				'new_agdpcontact_page_id' => __( 'Page "Ajouter un contact"', AGDP_TAG ),
 				
-			case 'agdpcontact_managed':
-				return __( 'Gestion de l\'annuaire et des contacts', AGDP_TAG );
-			case 'contact_page_id':
-				return __( 'Page "Ecrivez-nous"', AGDP_TAG );
-			case 'contact_form_id':
-				return __( 'Formulaire "Ecrivez-nous"', AGDP_TAG );
-			
-			
-			case 'agdpcontact_edit_form_id':
-				return __( 'Formulaire d\'ajout et de modification de contact', AGDP_TAG );
-			case 'agdpcontact_message_contact_form_id':
-				return __( 'Message à un contact de l\'annuaire', AGDP_TAG );
-			case 'new_agdpcontact_page_id':
-				return __( 'Page "Ajouter un contact"', AGDP_TAG );
+				'agdpevent_edit_form_id' => __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG ),
+				'agdpevent_message_contact_form_id' => __( 'Message aux organisateurs dans les pages des évènements', AGDP_TAG ),
+				'agdpevent_import_ics' => __( 'Importation d\'un fichier ICS', AGDP_TAG ),
+				'agenda_page_id' => __( 'Page contenant l\'agenda', AGDP_TAG ),
+				'new_agdpevent_page_id' => __( 'Page "Ajouter un évènement"', AGDP_TAG ),			
+				'agdpevents_nl_diffusion_term_id' => __( 'Diffusion "Lettre-info"', AGDP_TAG ),//Agdp_Events::newsletter_diffusion_term_id
+				'agdpevent_secretcode' => __( 'Codes secrets', AGDP_TAG ),
 				
-			
-			case 'agdpevent_edit_form_id':
-				return __( 'Formulaire d\'ajout et de modification d\'évènement', AGDP_TAG );
-			case 'agdpevent_message_contact_form_id':
-				return __( 'Message aux organisateurs dans les pages des évènements', AGDP_TAG );
-			case 'agdpevent_import_ics':
-				return __( 'Importation d\'un fichier ICS', AGDP_TAG );
-			case 'agenda_page_id':
-				return __( 'Page contenant l\'agenda', AGDP_TAG );
-			case 'new_agdpevent_page_id':
-				return __( 'Page "Ajouter un évènement"', AGDP_TAG );
-			case 'blog_presentation_page_id':
-				return __( 'Page "Présentation du site"', AGDP_TAG );
-			case 'agdpevents_nl_diffusion_term_id'://Agdp_Events::newsletter_diffusion_term_id
-				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
+				'covoiturage_managed' => __( 'Gestion du covoiturage', AGDP_TAG ),
+				'covoiturage_edit_form_id' => __( 'Formulaire d\'ajout et de modification de covoiturage', AGDP_TAG ),
+				'new_covoiturage_page_id' => __( 'Page "Ajouter un covoiturage"', AGDP_TAG ),
+				'covoiturages_page_id' => __( 'Page contenant les covoiturages', AGDP_TAG ),
+				'covoiturages_nl_post_id' => __( 'Lettre-info des covoiturages à diffuser', AGDP_TAG ),
+				'covoiturages_nl_diffusion_term_id' => __( 'Diffusion "Lettre-info"', AGDP_TAG ),//Agdp_Covoiturages =>  => newsletter_diffusion_term_id
 				
-			case 'covoiturage_managed':
-				return __( 'Gestion du covoiturage', AGDP_TAG );
-			case 'covoiturage_edit_form_id':
-				return __( 'Formulaire d\'ajout et de modification de covoiturage', AGDP_TAG );
-			case 'new_covoiturage_page_id':
-				return __( 'Page "Ajouter un covoiturage"', AGDP_TAG );
-			case 'covoiturages_page_id':
-				return __( 'Page contenant les covoiturages', AGDP_TAG );
-			case 'covoiturages_nl_post_id':
-				return __( 'Lettre-info des covoiturages à diffuser', AGDP_TAG );
-			case 'covoiturages_nl_diffusion_term_id'://Agdp_Covoiturages::newsletter_diffusion_term_id
-				return __( 'Diffusion "Lettre-info"', AGDP_TAG );
+				'agdpcontact_need_validation' => __( 'Les nouveaux contacts doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG ),
+				'agdpevent_need_validation' => __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG ),
+				'covoiturage_need_validation' => __( 'Les nouveaux covoiturages doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG ),
+					
+				'allow_html_in_' . Agdp_Event::post_type => __( 'Autoriser le Html dans le contenu', AGDP_TAG ),
+				'allow_html_in_' . Agdp_Covoiturage::post_type => __( 'Autoriser le Html dans le contenu', AGDP_TAG ),
+				'allow_html_in_' . Agdp_Contact::post_type => __( 'Autoriser le Html dans le contenu', AGDP_TAG ),
+					
+				'disable_sitemaps' => __( 'Désactivation des sitemaps', AGDP_TAG ),
+					
+				'can_generate_packages' => __( 'Peut générer les packages', AGDP_TAG ),
 				
-			case 'agdpcontact_need_validation':
-				return __( 'Les nouveaux contacts doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
-			case 'agdpevent_need_validation':
-				return __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
-			case 'covoiturage_need_validation':
-				return __( 'Les nouveaux covoiturages doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG );
-				
-			case 'allow_html_in_' . Agdp_Event::post_type :
-				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
-			case 'allow_html_in_' . Agdp_Covoiturage::post_type :
-				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
-			case 'allow_html_in_' . Agdp_Contact::post_type :
-				return __( 'Autoriser le Html dans le contenu', AGDP_TAG );
-				
-			case 'disable_sitemaps':
-				return __( 'Désactivation des sitemaps', AGDP_TAG );
-				
-			case 'can_generate_packages':
-				return __( 'Peut générer les packages', AGDP_TAG );
-				
-			case 'dashboard_diagram':
-				return __( 'Affiche l\'arborescence du site dans le tableau de bord', AGDP_TAG );
-			default:
-				return "[{$name}]";
-		}
+				'dashboard_diagram' => __( 'Affiche l\'arborescence du site dans le tableau de bord', AGDP_TAG ),
+			];
+		return self::$option_labels;
 	}
 
 	/**
