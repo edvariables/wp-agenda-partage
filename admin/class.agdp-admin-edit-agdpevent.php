@@ -183,6 +183,9 @@ class Agdp_Admin_Edit_Event extends Agdp_Admin_Edit_Post_Type {
 		}
 	}
 
+	/**
+	 * get_metabox_all_fields
+	 */
 	public static function get_metabox_all_fields(){
 		return array_merge(
 			// self::get_metabox_titre_fields(),
@@ -201,6 +204,9 @@ class Agdp_Admin_Edit_Event extends Agdp_Admin_Edit_Post_Type {
 		// );
 	// }	
 
+	/**
+	 * get_metabox_dates_fields
+	 */
 	public static function get_metabox_dates_fields(){
 		return array(
 			array('name' => 'ev-date-debut',
@@ -228,6 +234,9 @@ class Agdp_Admin_Edit_Event extends Agdp_Admin_Edit_Post_Type {
 		);
 	}
 
+	/**
+	 * get_metabox_description_fields
+	 */
 	public static function get_metabox_description_fields(){
 		
 		return array(
@@ -249,6 +258,9 @@ class Agdp_Admin_Edit_Event extends Agdp_Admin_Edit_Post_Type {
 		);
 	}	
 
+	/**
+	 * get_metabox_organisateur_fields
+	 */
 	public static function get_metabox_organisateur_fields(){
 
 		$field_show = array(
@@ -291,7 +303,7 @@ class Agdp_Admin_Edit_Event extends Agdp_Admin_Edit_Post_Type {
 			'class' => 'readonly' 
 		);
 		if(self::$the_post_is_new)
-			$field['value'] = Agdp::get_secret_code(6);
+			$field['value'] = Agdp_Event::get_secret_code( );
 		$fields[] = $field;
   
 		// sessionid

@@ -855,7 +855,7 @@ class Agdp_Covoiturage_Edit {
 						$data[$field] = false;
 				}
 			}
-			debug_log( __FUNCTION__, $inputs);
+			
 			//categories, communes et diffusions
 			$tax_terms = [];
 			foreach( Agdp_Covoiturage_Post_type::get_taxonomies() as $tax_name => $taxonomy){
@@ -895,12 +895,15 @@ class Agdp_Covoiturage_Edit {
 		$data['cov-organisateur-show'] = 1;//TODO
 		$data['cov-email-show'] = 0;//TODO
 		
-		// $meta_name = 'cov-'.AGDP_COVOIT_SECRETCODE;
-		// if( $post && get_post_meta($post->ID, $meta_name, true))
-			// unset($data[$meta_name]);
-		// else {
-			// $data[$meta_name] = Agdp_Covoiturage::get_secret_code();
-		// }
+		$meta_name = 'cov-'.AGDP_COVOIT_SECRETCODE;
+		if( $post && get_post_meta($post->ID, $meta_name, true))
+			unset($data[$meta_name]);
+		else {
+			$data[$meta_name] = Agdp_Covoiturage::get_secret_code( [
+				'user_email' => $data['cov-email'],
+				'post' => $post,
+			] );
+		}
 		
 		$meta_name = 'cov-sessionid';
 		if( $post && get_post_meta($post->ID, $meta_name, true))

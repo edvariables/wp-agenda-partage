@@ -1587,9 +1587,28 @@ abstract class Agdp_Post {
 					$alphanum = true;
 					break;
 				case 'const/user' : //'Code unique par utilisateur',
+					
+					if( is_array($context) ){
+						if( ! empty($context['user_email']) ){
+							$user = get_user_by( 'email', $context['user_email'] );
+							if( $user && $user->ID )
+								$user_ID = $user->ID;
+						}	
+					}
+					if( empty($user_ID)
+					&& ($user = wp_get_current_user())
+					&& $user->ID){
+						$user_ID = $user->ID;
+					}
+					
+					if( ! empty($user_ID) ){
+						$constant = get_user_meta( $user_ID, 'agdp_secretcode', true );
+						if( $constant )
+							return $constant;
+					}
 					$length = 4;
 					$alphanum = 'num';
-					//TODO get user ( $context )
+					
 					break;
 				default:
 					switch( static::post_type ){

@@ -459,15 +459,14 @@ class Agdp_Admin_Options {
 			add_settings_field(
 				$field_id, 
 				Agdp::get_option_label($field_id),
-				array(__CLASS__, 'agdp_agdpevent_secretcode_cb'),
+				array(__CLASS__, 'agdp_posts_secretcode_cb'),
 				AGDP_TAG,
 				$section_id,
 				[
 					'label_for' => $field_id,
 					'class' => 'agdp_row',
 				]
-			);
-		
+			);		
 			
 			// 
 			$field_id = 'add_content_in_' . Agdp_Event::post_type;
@@ -664,6 +663,20 @@ class Agdp_Admin_Options {
 					'label' => 'Autoriser',
 					'class' => 'agdp_row',
 					'input_type' => 'checkbox'
+				]
+			);
+			
+			// 
+			$field_id = 'covoiturage_secretcode';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_posts_secretcode_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
 				]
 			);
 		}
@@ -913,9 +926,9 @@ class Agdp_Admin_Options {
 	}
 	
 	/**
-	 * agdp_agdpevent_secretcode_cb
+	 * agdp_posts_secretcode_cb
 	 */
-	public static function agdp_agdpevent_secretcode_cb( $args ){
+	public static function agdp_posts_secretcode_cb( $args ){
 					
 		$option_id = $args['label_for'];
 		$secretcode_mode = Agdp::get_option($option_id);

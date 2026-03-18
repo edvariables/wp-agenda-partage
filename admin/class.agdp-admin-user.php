@@ -246,6 +246,8 @@ class Agdp_Admin_User {
 		$user_contact_method['address2'] = __( 'Adresse (suite)', AGDP_TAG );
 */
 		$user_contact_method['city'] = __( 'Code postal et commune', AGDP_TAG );
+		
+		$user_contact_method['agdp_secretcode'] = __( 'Code secret personnel', AGDP_TAG );
 		return $user_contact_method;
 
 	}

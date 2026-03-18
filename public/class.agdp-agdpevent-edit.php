@@ -700,7 +700,7 @@ class Agdp_Event_Edit {
 		}
 
 		if( ! isset($data['ev-email-show']) )
-			$data['ev-email-show'] = '';
+			$data['ev-email-show'] = 0;
 		
 		if( empty( $data['ev-user-email'] ) )
 			$data['ev-user-email'] = $data['ev-email'];
@@ -712,7 +712,10 @@ class Agdp_Event_Edit {
 			unset($data[$meta_name]);
 		else {
 			$field_id = 'agdpevent_secretcode';
-			$data[$meta_name] = Agdp_Event::get_secret_code( $post );
+			$data[$meta_name] = Agdp_Event::get_secret_code( [
+				'user_email' => $data['ev-user-email'],
+				'post' => $post,
+			] );
 		}
 		
 		$meta_name = 'ev-sessionid';

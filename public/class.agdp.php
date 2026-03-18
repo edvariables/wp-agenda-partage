@@ -473,6 +473,7 @@ class Agdp {
 				'covoiturages_page_id' => __( 'Page contenant les covoiturages', AGDP_TAG ),
 				'covoiturages_nl_post_id' => __( 'Lettre-info des covoiturages à diffuser', AGDP_TAG ),
 				'covoiturages_nl_diffusion_term_id' => __( 'Diffusion "Lettre-info"', AGDP_TAG ),//Agdp_Covoiturages =>  => newsletter_diffusion_term_id
+				'covoiturage_secretcode' => __( 'Codes secrets', AGDP_TAG ),
 				
 				'agdpcontact_need_validation' => __( 'Les nouveaux contacts doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG ),
 				'agdpevent_need_validation' => __( 'Les nouveaux évènements doivent être validés par email (sauf utilisateur connecté)', AGDP_TAG ),
