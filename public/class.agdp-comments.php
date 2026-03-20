@@ -48,11 +48,16 @@ class Agdp_Comments {
 			'hierarchical' => 'threaded',
 			
 			'orderby' => [
-				$sort_date_field => 'DESC'
+				// $sort_date_field => 'DESC'
 			],
 			
 			'number' => self::$default_comments_per_page
 		);
+		if( is_array($sort_date_field) )
+			foreach($sort_date_field as $sort_date_field_u)
+				self::$default_comments_query['orderby'][ $sort_date_field_u ] = 'DESC';
+		else
+			self::$default_comments_query['orderby'][ $sort_date_field ] = 'DESC';
 
 	}
 	
@@ -129,6 +134,12 @@ class Agdp_Comments {
 			// $sort_date_field = Agdp_Forum::get_forum_sort_date_field($page);
 			// if( ! $sort_date_field )
 				// $sort_date_field = 'comment_date';
+			// if( is_array($sort_date_field) )
+				// foreach($sort_date_field as $sort_date_field_u)
+					// $query['orderby'][ $sort_date_field_u ] = 'DESC';
+			// else
+				// $query['orderby'][ $sort_date_field ] = 'DESC';
+
 			// $query['orderby'][$sort_date_field] = 'DESC';
 		}
 		$comments = self::get_comments($query);
@@ -255,7 +266,11 @@ class Agdp_Comments {
 			$sort_date_field = Agdp_Forum::get_forum_sort_date_field($page);
 			if( ! $sort_date_field )
 				$sort_date_field = 'comment_date';
-			$options['orderby'][$sort_date_field] = 'ASC';
+			if( is_array($sort_date_field) )
+				foreach($sort_date_field as $sort_date_field_u)
+					$options['orderby'][ $sort_date_field_u ] = 'ASC';
+			else
+				$options['orderby'][ $sort_date_field ] = 'ASC';
 		}
 		$option_ajax = (bool)$options['ajax'];
 		
@@ -343,7 +358,7 @@ class Agdp_Comments {
 		$html .= '</div>' . $content;
 		
 		//summary
-		if( $add_summary ){
+		if( $add_summary && count($all_messages) > 1 ){
 			$options['summary'] = $add_summary;
 			$summary = sprintf('<div class="agdp-agdpforummsgs agdp-agdpforummsgs-summary agdp-agdpforummsgs-%s">', $options['mode']);
 			$summary .= sprintf('<ul>Au sommaire, %d message%s :', count($all_messages), count($all_messages) > 1 ? 's' : '' );
