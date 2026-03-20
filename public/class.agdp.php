@@ -970,13 +970,20 @@ class Agdp {
 				if(is_user_logged_in()){					
 					$url = wp_logout_url($url);
 					$label = 'Se déconnecter';
+					// $dropdown_svg = '<svg class="icon icon-angle-down" aria-hidden="true" role="img"> <use href="#icon-angle-down" xlink:href="#icon-angle-down"></use> </svg>';
+					// $dropdown_btn = '<button class="dropdown-toggle" aria-expanded="false"><svg class="icon icon-angle-down" aria-hidden="true" role="img"> <use href="#icon-angle-down" xlink:href="#icon-angle-down"></use> <span class="svg-fallback icon-angle-down"></span></svg><span class="screen-reader-text">Ouvrir le sous-menu</span></button>';
+					$items .= sprintf('<li><a href="%s">%s</a>', $url, $label/* , $dropdown_svg, $dropdown_btn */);
+						$url = get_edit_profile_url();
+						$label = 'Mon compte';
+						$items .= sprintf('<ul class="sub-menu"><li><a href="%s">%s</a></li></ul>', $url, $label);
+					$items .= '</li>';
 				}
 				else{
 					$url = wp_login_url($url);
 					$label = 'Se connecter';
-				}
 				
-				$items .= sprintf('<li><a href="%s">%s</a></li>', $url, $label);
+					$items .= sprintf('<li><a href="%s">%s</a></li>', $url, $label);
+				}
 			}
 		}
 		return $items;
