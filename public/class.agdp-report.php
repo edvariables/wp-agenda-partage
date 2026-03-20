@@ -522,7 +522,7 @@ class Agdp_Report extends Agdp_Post {
 								}
 							}
 							
-							$var_name = sprintf('@_%s_%s', $variable, Agdp::get_secret_code(6));
+							$var_name = sprintf('@_%s_%s', $variable, Agdp_Report::get_secret_code());
 							$sql = sprintf("SET %s = CAST(\"%s\" AS JSON);\n%s", 
 								$var_name,
 								str_replace("\n", '', addslashes( $variable_value )),

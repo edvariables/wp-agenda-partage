@@ -24,6 +24,8 @@ class Agdp_Event extends Agdp_Post {
 
 	const secretcode_argument = AGDP_EVENT_SECRETCODE;
 	const field_prefix = 'ev-';
+	
+	const user_email_metakey = 'ev-user-email';
 
 	const postid_argument = AGDP_ARG_EVENTID;
 	const posts_page_option = 'agenda_page_id';

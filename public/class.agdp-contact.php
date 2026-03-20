@@ -18,6 +18,7 @@ class Agdp_Contact extends Agdp_Post {
 	const shortcode = self::post_type;
 	
 	const field_prefix = 'cont-';
+	const user_email_metakey = 'cont-email'; //?
 	
 	const icon = 'businessperson';
 

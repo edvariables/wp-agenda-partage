@@ -141,7 +141,7 @@ class Agdp_Contact_Edit {
 				return self::get_contact_edit_content_forbidden( $post );
 			}
 			$contact_exists = ! $duplicate_from_id;
-			$meta_name = 'cont-email' ;
+			$meta_name = 'cont-email';
 			$email = Agdp_Contact::get_post_meta($post_id, $meta_name, true, false);
 			
 			/*if(!$email) {

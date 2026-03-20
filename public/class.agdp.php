@@ -488,6 +488,8 @@ class Agdp {
 				'can_generate_packages' => __( 'Peut générer les packages', AGDP_TAG ),
 				
 				'dashboard_diagram' => __( 'Affiche l\'arborescence du site dans le tableau de bord', AGDP_TAG ),
+				
+				'agdp_comment_secretcode' => __( 'Codes secrets des commentaires', AGDP_TAG ),
 			];
 		return self::$option_labels;
 	}

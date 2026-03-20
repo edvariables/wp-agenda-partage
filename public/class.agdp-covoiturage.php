@@ -21,6 +21,7 @@ class Agdp_Covoiturage extends Agdp_Post {
 
 	const secretcode_argument = AGDP_COVOIT_SECRETCODE;
 	const field_prefix = 'cov-';
+	const user_email_metakey = 'cov-email';
 	
 	const icon = 'car';
 

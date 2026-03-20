@@ -150,7 +150,7 @@ class Agdp_Comment {
 			
 			$user_email = $current_user->user_email;
 			if( is_email($user_email)
-			 && $user_email == $comment->comment_author_email ){
+			 && $user_email === $comment->comment_author_email ){
 				return true;
 			}
 		}

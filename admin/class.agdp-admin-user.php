@@ -8,6 +8,9 @@ class Agdp_Admin_User {
 	public static function init_hooks() {
 		//Add custom user contact Methods
 		add_filter( 'user_contactmethods', array( __CLASS__, 'custom_user_contact_methods' ), 10, 2);
+
+		$field = 'agdp_secretcode';
+		add_filter( "user_{$field}_label", array( __CLASS__, 'on_agdp_secretcode_label' ), 20, 1);
 		
 		if( ! is_network_admin()
 		&& ( basename($_SERVER['PHP_SELF']) === 'profile.php' 
@@ -58,7 +61,6 @@ class Agdp_Admin_User {
 				$custom_meta[$meta_key] = $_POST[$meta_key];
 		}
 		
-		
 		$pages = Agdp_Mailbox::get_pages_dispatches();
 		foreach( $pages as $page_id => $dispatches ){
 			if( ! $page_id )
@@ -67,6 +69,8 @@ class Agdp_Admin_User {
 			if( array_key_exists($meta_key, $_POST))
 				$custom_meta[$meta_key] = $_POST[$meta_key];
 		}
+		
+		self::on_agdp_secretcode_submit($user);
 		
 		return $custom_meta;
 	}
@@ -233,7 +237,6 @@ class Agdp_Admin_User {
 
 	// Register User Contact Methods
 	public static function custom_user_contact_methods( $user_contact_method, $user ) {
-
 /*		$user_contact_method['email3'] = __( 'Autre email', AGDP_TAG );
 
 		$user_contact_method['tel'] = __( 'Téléphone', AGDP_TAG );
@@ -253,6 +256,91 @@ class Agdp_Admin_User {
 	}
 	
 	/**
+	 * Insère un <input checkbox> associé au code secret constant : Appliquer aux anciens
+	 */
+	public static function on_agdp_secretcode_label($desc){
+		$input = sprintf('%s</label><label class="agdp_secretcode_update"><br>'
+					. '<input type="checkbox" name="agdp_secretcode_update">Appliquer aux anciens',
+			$desc);
+		return $input;
+	}
+	
+	/**
+	 * Ajoute un champ associé au code secret constant : Appliquer aux anciens
+	 */
+	public static function on_agdp_secretcode_submit($user){
+		$meta_key = 'agdp_secretcode';
+		if( empty( $_POST[$meta_key] ) )
+			return;
+		if( empty( $_POST[$meta_key . '_update'] ) )
+			return;
+		$secretcode = $_POST[$meta_key];
+		
+		global $wpdb;
+			
+		foreach( [
+			Agdp_Event::post_type,
+			Agdp_Covoiturage::post_type,
+			Agdp_Contact::post_type,
+			'agdp_comment',
+		] as $post_type ){
+			
+			$field_id = $post_type . '_secretcode';
+			if( Agdp::get_option( $field_id ) !== 'const/user' )
+				continue;
+			
+			$email = $user->user_email;
+			// debug_log(__FUNCTION__, 'const/user'/* , $user */, $post_type, $field_id, $secretcode, $email);
+			
+			if( 'agdp_comment' === $post_type ){
+				$secretcode_metakey = Agdp_Comment::field_prefix . Agdp_Comment::secretcode_argument;
+				$sql = "UPDATE $wpdb->commentmeta meta"
+					. "\n INNER JOIN $wpdb->comments comment ON meta.comment_id = comment.comment_ID"
+					. "\n SET meta_value = '$secretcode'"
+					. "\n WHERE meta_key = '{$secretcode_metakey}'"
+					. "\n AND comment.comment_author_email = '$email'"
+				;
+				// $sql = "SELECT COUNT(*)"
+					// . "\n FROM $wpdb->commentmeta meta"
+					// . "\n INNER JOIN $wpdb->comments comment ON meta.comment_id = comment.comment_ID"
+					// . "\n WHERE meta_key = '{$secretcode_metakey}'"
+					// . "\n AND comment.comment_author_email = '$email'";
+				// ;
+			}
+			else{
+				$abstracted_class = Agdp_Post::abstracted_class($post_type);
+				$secretcode_metakey = $abstracted_class::field_prefix . $abstracted_class::secretcode_argument;
+				$user_email_metakey = $abstracted_class::user_email_metakey;
+				if( ! $user_email_metakey )
+					continue;
+				$sql = "UPDATE $wpdb->postmeta meta"
+					. "\n INNER JOIN $wpdb->postmeta email"
+						. "\n ON meta.post_id = email.post_id"
+						. "\n AND email.meta_key = '{$user_email_metakey}'"
+					. "\n SET meta.meta_value = '$secretcode'"
+					. "\n WHERE meta.meta_key = '{$secretcode_metakey}'"
+					. "\n AND email.meta_value = '{$email}'"
+				;
+				// $sql = "SELECT COUNT(*)"
+					// . "\n FROM $wpdb->postmeta meta"
+					// . "\n INNER JOIN $wpdb->postmeta email"
+						// . "\n ON meta.post_id = email.post_id"
+						// . "\n AND email.meta_key = '{$user_email_metakey}'"
+					// . "\n WHERE meta.meta_key = '{$secretcode_metakey}'"
+					// . "\n AND email.meta_value = '{$email}'"
+				// ;
+			}
+			$dbresults = $wpdb->query( $sql );
+			// $dbresults = $wpdb->get_results($sql);
+			// if( is_a($dbresults, 'WP_Error') )
+				// throw $dbresults;
+			
+			// debug_log(__FUNCTION__, $secretcode_metakey, $sql, $dbresults);
+		}
+	}
+
+	
+	/**
 	 * Exécution ajax
 	 */
 	public static function user_action_remove_mailing($data){
@@ -261,6 +349,4 @@ class Agdp_Admin_User {
 			return "js:jQuery(this).parents('li:first').remove();";
 		return "Echec de suppression de l'information.";
 	}
-
-
 }

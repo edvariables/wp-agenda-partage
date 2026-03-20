@@ -13,6 +13,8 @@ abstract class Agdp_Post {
 	const taxonomy_city = false;//Must override
 	const secretcode_argument = false; //Must override
 	const field_prefix = false; //Must override
+	
+	const user_email_metakey = false; //Must override
 
 	const postid_argument = false; //Must override
 	const posts_page_option = false; //Must override

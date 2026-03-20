@@ -791,6 +791,20 @@ class Agdp_Admin_Options {
 					'input_type' => 'checkbox'
 				]
 			);
+			
+			// 
+			$field_id = 'agdp_comment_secretcode';
+			add_settings_field(
+				$field_id, 
+				Agdp::get_option_label($field_id),
+				array(__CLASS__, 'agdp_posts_secretcode_cb'),
+				AGDP_TAG,
+				$section_id,
+				[
+					'label_for' => $field_id,
+					'class' => 'agdp_row',
+				]
+			);
 		}
 		
 		// register a new section in the "agendapartage" page
