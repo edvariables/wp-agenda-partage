@@ -988,3 +988,4 @@ class Agdp_Event extends Agdp_Post {
 		wp_die();
 	}
 }
+?>

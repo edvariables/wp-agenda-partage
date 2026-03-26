@@ -765,6 +765,12 @@ class Agdp_Events extends Agdp_Posts {
 			, esc_attr( json_encode(['id'=> $event->ID, 'date' => $date_debut]) )
 		);
 		
+		if( ! $email_mode ){
+			$image = Agdp_Event::get_image( $event, 'tiny' );
+			if( $image )
+				$html .= sprintf('<div class="post-image">%s</div>', $image);
+		}
+		
 		$title = $event->post_title;
 		$localisation = Agdp_Event::get_event_localisation_and_cities($event->ID);
 		$dates = Agdp_Event::get_event_dates_text($event->ID, false);
@@ -1072,3 +1078,4 @@ class Agdp_Events extends Agdp_Posts {
 		}
 	}
 }
+?>

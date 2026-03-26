@@ -1486,7 +1486,6 @@ abstract class Agdp_Post {
 			
 		return $html;
 	}
-
 	
 	/**
 	 * Affichage des attachments
@@ -1535,6 +1534,65 @@ abstract class Agdp_Post {
 				$html = '<ul class="attachments">' . $html . '</ul>';
 		}
 		return $html;
+	}
+	
+	/**
+	 * Affichage de l'image
+	 * TODO get_the_post_thumbnail()
+	 */
+	public static function get_image($post, $size = 'tiny'){
+		if( is_string($size) ){
+			switch( $size ){
+				case 'tiny' :
+					$width = 64;
+					break;
+				case 'small' :
+					$width = 128;
+					break;
+				case 'normal' :
+					$width = '';
+					break;
+			}
+		}
+		elseif( is_array($size) ){
+			$with = $size[0];
+		}
+		else {
+			$with = '';
+		}
+		$attachments = get_post_meta($post->ID, 'attachments', true);
+		if($attachments){
+			if( is_string($attachments) )
+				$attachments = [ $attachments ];
+			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
+				$attachments = $attachments[0];
+			foreach($attachments as $attachment){
+				if( ! file_exists($attachment) )
+					continue;
+				
+				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
+				$url = upload_file_url( $attachment );
+				$file_action = 'Télécharger';
+				switch($extension){
+					case 'png':
+					case 'jpg':
+					case 'jpeg':
+					case 'bmp':
+					case 'tiff':
+						//Vérifie que l'image n'est pas déjà intégré dans le message
+						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
+						// debug_log( __FUNCTION__, $url, $pattern, $post->post_content);
+						$matches = [];
+						if( ! preg_match( $pattern, $post->post_content, $matches ) ){
+							$html = sprintf('<img src="%s" width="%dpx"/>', $url, $width);
+							return $html;
+						}
+						break;
+					default:
+						continue 2;
+				}
+			}
+		}
 	}
 	
 	
