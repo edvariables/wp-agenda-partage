@@ -102,9 +102,6 @@ body.colors-dark .agdpevent.post-status-pending {
 	margin-top: 3px;
 	margin-bottom: 6px;
 }
-.agdp-agdpevents-list > ul > li .agdpevent {
-	padding-right: 64px;
-}
 .agdp-agdpevents-list > ul > li .agdpevent-categories,
 .agdp-agdpevents-list > ul > li .agdpevent-cities {
 	font-size: smaller;
@@ -125,11 +122,14 @@ body.colors-dark .agdpevent.post-status-pending {
 .agdp-agdpevents-list > ul > li .ev-organisateur > span:first-of-type {
 	font-size: 95%;
 }
+.agdp-agdpevents-list > ul > li .agdpevent {
+	padding-right: 64px;
+}
 .agdp-agdpevents-list > ul > li .post-image {
 	float: right;
 	position: relative;
 	top: 32px;
-	right: -64px;
+	right: -48px;
 }
   
 .agdp-agdpevents-list > ul > li .ev-siteweb a {

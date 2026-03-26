@@ -768,7 +768,7 @@ class Agdp_Events extends Agdp_Posts {
 		if( ! $email_mode ){
 			$image = Agdp_Event::get_image( $event, 'tiny' );
 			if( $image )
-				$html .= sprintf('<div class="post-image">%s</div>', $image);
+				$html .= sprintf('<div class="post-image"><a href="%s">%s</a></div>', $url, $image);
 		}
 		
 		$title = $event->post_title;

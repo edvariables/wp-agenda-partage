@@ -1544,7 +1544,7 @@ abstract class Agdp_Post {
 		if( is_string($size) ){
 			switch( $size ){
 				case 'tiny' :
-					$width = 64;
+					$width = 48;
 					break;
 				case 'small' :
 					$width = 128;
@@ -1555,10 +1555,10 @@ abstract class Agdp_Post {
 			}
 		}
 		elseif( is_array($size) ){
-			$with = $size[0];
+			$width = $size[0];
 		}
 		else {
-			$with = '';
+			$width = '';
 		}
 		$attachments = get_post_meta($post->ID, 'attachments', true);
 		if($attachments){
