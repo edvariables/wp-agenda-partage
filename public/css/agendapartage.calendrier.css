@@ -125,15 +125,15 @@ body.colors-dark .agdpevent.post-status-pending {
 .agdp-agdpevents-list > ul > li .agdpevent {
 	padding-right: 64px;
 }
-.agdp-agdpevents-list > ul > li .post-image {
+/* .agdp-agdpevents-list > ul > li .post-image {
 	float: right;
 	position: relative;
 	top: 32px;
 	right: -48px;
-}
-.agdp-agdpevents-list > ul > li .post-image > a > img {
+} */
+.agdp-agdpevents-list > ul > li a.post-image > img {
   box-shadow: 0 0 0 0px #fff;
-  max-height: 64px;
+  max-height: 72px;
 }
 
 .agdp-agdpevents-list > ul > li .ev-siteweb a {

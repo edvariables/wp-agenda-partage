@@ -738,11 +738,16 @@ class Agdp_Events extends Agdp_Posts {
 		$html = '';
 		
 		if( ! $email_mode ){
+			$image = Agdp_Event::get_image( $event, 'tiny' );
+			if( $image )
+				$link = sprintf('<a class="post-image" href="%s">%s</a>', $url, $image);
+			else
+				$link = sprintf('<a href="%s">%s</a>', $url, Agdp::icon('media-default'));
+		
 			$html .= sprintf(
-					'<div class="show-post post-status-%s"><a href="%s">%s</a></div>'
+					'<div class="show-post post-status-%s">%s</div>'
 				, $event->post_status
-				, $url
-				, Agdp::icon('media-default')
+				, $link
 			);
 			if( $event->post_status === 'pending' ){
 				$html .= sprintf('<div class="approve-post">%s</div>'
@@ -765,11 +770,6 @@ class Agdp_Events extends Agdp_Posts {
 			, esc_attr( json_encode(['id'=> $event->ID, 'date' => $date_debut]) )
 		);
 		
-		if( ! $email_mode ){
-			$image = Agdp_Event::get_image( $event, 'tiny' );
-			if( $image )
-				$html .= sprintf('<div class="post-image"><a href="%s">%s</a></div>', $url, $image);
-		}
 		
 		$title = $event->post_title;
 		$localisation = Agdp_Event::get_event_localisation_and_cities($event->ID);
