@@ -127,11 +127,12 @@ class Agdp_Newsletter {
  	/***********
 	 * the_content()
 	 */
- 	public static function the_content( $content  ) {
+ 	public static function the_content( $content ) {
  		global $post;
 		if( $post && $post->post_type === static::post_type ){
-			return get_the_content( null, false, $post )
-				 . "\n" . self::get_the_signature( $post );
+			if( empty($content) )
+				$content = get_the_content( null, false, $post );
+			$content .= "\n" . self::get_the_signature( $post );
 		}
 		return $content;
 	}
