@@ -131,7 +131,11 @@ body.colors-dark .agdpevent.post-status-pending {
 	top: 32px;
 	right: -48px;
 }
-  
+.agdp-agdpevents-list > ul > li .post-image > a > img {
+  box-shadow: 0 0 0 0px #fff;
+  max-height: 64px;
+}
+
 .agdp-agdpevents-list > ul > li .ev-siteweb a {
 	text-decoration: underline;
 }
