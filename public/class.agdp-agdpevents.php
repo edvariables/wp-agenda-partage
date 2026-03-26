@@ -856,7 +856,7 @@ class Agdp_Events extends Agdp_Posts {
 				|| ($user_name = $creator->get('user_login'))){
 					$created_by = ', modifié';
 					if( $user_name !== 'Abonné' )
-						$created_by .= 'par <a>' . $user_name . '</a>';
+						$created_by .= ' par <a>' . $user_name . '</a>';
 				}
 			}
 		}
