@@ -1544,10 +1544,10 @@ abstract class Agdp_Post {
 		if( is_string($size) ){
 			switch( $size ){
 				case 'tiny' :
-					$width = 48;
+					$width = AGDP_IMG_TINY_MAX_WIDTH;
 					break;
 				case 'small' :
-					$width = 128;
+					$width = AGDP_IMG_SMALL_MAX_WIDTH;
 					break;
 				case 'normal' :
 					$width = '';

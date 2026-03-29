@@ -284,7 +284,7 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 	if( $max_width === null )
 		$max_width = AGDP_IMG_MAX_WIDTH;
 	if( $max_height === null )
-		$max_height = AGDP_IMG_MAX_HEIGHT;
+		$max_height = $max_width * AGDP_IMG_MAX_HEIGHT/AGDP_IMG_MAX_WIDTH;
 	if( $max_width === 0
 	|| $max_height === 0
 	|| ! file_exists( $filename) )

@@ -276,7 +276,13 @@ class Agdp_Admin_Edit_Newsletter extends Agdp_Admin_Edit_Post_Type {
 		$fields[] = array('name' => $meta_name,
 						'label' => __('Source des données', AGDP_TAG),
 						'input' => 'select',
-						'values' => $sources
+						'values' => $sources,
+						'fields' => [
+							array('name' => $meta_name . '_include_children',
+								'label' => __('inclure les sous-forums', AGDP_TAG),
+								'input' => 'checkbox',
+							),
+						],
 		);
 		
 		

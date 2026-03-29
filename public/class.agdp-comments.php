@@ -53,6 +53,7 @@ class Agdp_Comments {
 			
 			'number' => self::$default_comments_per_page
 		);
+		
 		if( is_array($sort_date_field) )
 			foreach($sort_date_field as $sort_date_field_u)
 				self::$default_comments_query['orderby'][ $sort_date_field_u ] = 'DESC';
@@ -88,11 +89,16 @@ class Agdp_Comments {
 				
 				unset($query['meta_query']);
 			}
+			
+			if( isset($query['post__in'])
+			&& isset($query['post_id']) )
+				unset($query['post_id']);
+			
 			$all = array_merge($all, $query);
 		}
 		// var_dump($all);
 		// echo "</div>";
-		// debug_log('get_comments_query', $all);
+		// debug_log( __FUNCTION__, $all);
 		return $all;
 		
 	}
@@ -142,6 +148,15 @@ class Agdp_Comments {
 
 			// $query['orderby'][$sort_date_field] = 'DESC';
 		}
+		
+		
+		if( ! empty($options['include_children']) ){
+			foreach( $options['include_children'] as $forum )
+				$post_IDs[] = $forum[1];
+			if( count($post_IDs) > 1 )
+				$query['post__in'] = $post_IDs;
+		}
+		
 		$comments = self::get_comments($query);
 		
 		return $comments;
@@ -187,6 +202,17 @@ class Agdp_Comments {
 	 * Return array($week => $count)
 	 */
 	public static function get_comments_weeks( $page, $options = false ){
+		
+		$post_IDs = [];
+		if( ! empty($options['include_children']) ){
+			foreach( $options['include_children'] as $forum )
+				$post_IDs[] = $forum[1];
+			if( count($post_IDs) <= 1 )
+				$post_IDs = false;
+			else
+				$post_IDs = implode( ',', $post_IDs );
+		}
+		
 		global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$status_meta_alias = 'comm_meta_status';
@@ -208,8 +234,12 @@ class Agdp_Comments {
 				LEFT JOIN {$blog_prefix}commentmeta {$status_meta_alias}
 					ON comments.comment_ID = {$status_meta_alias}.comment_id
 					AND {$status_meta_alias}.meta_key = 'status'
-				WHERE comment_post_ID = {$page->ID}
-					AND comment_date > {$since_date}
+		";
+		if( ! $post_IDs )
+			$sql .= "\nWHERE comment_post_ID = {$page->ID}";
+		else
+			$sql .= "\nWHERE comment_post_ID IN ({$post_IDs})";
+		$sql .= "\nAND comment_date > {$since_date}
 					AND comment_type = 'comment'
 					AND comment_approved = '1'
 					AND ({$status_meta_alias}.meta_value IS NULL OR {$status_meta_alias}.meta_value != 'ended')

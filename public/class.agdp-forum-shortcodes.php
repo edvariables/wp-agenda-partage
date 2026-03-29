@@ -314,8 +314,10 @@ class Agdp_Forum_Shortcodes {
 		$page = Agdp_Forum::get_page();
 		if( ! $page )
 			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).']. Page courante inconnue.</div>';
-		if( $page->post_type === Agdp_Newsletter::post_type )
+		if( $page->post_type === Agdp_Newsletter::post_type ){
+			$newsletter = $page;
 			$page = Agdp_Newsletter::get_forum_of_newsletter( $page );
+		}
 		if( ! $page
 		 || ! ( $mailbox = Agdp_Mailbox::get_mailbox_of_page($page) ) ){
 			return '<div class="error">Impossible de retrouver le forum via ['.$shortcode.' '.print_r($atts, true).'] inconnu.</div>';
@@ -337,7 +339,14 @@ class Agdp_Forum_Shortcodes {
 			] as $option_in =>  $option_key )
 			if(array_key_exists($option_in, $atts))
 				$options[$option_key] = $atts[$option_in];
-			
+		
+		if( empty($newsletter) )
+			$newsletter = Agdp_Newsletter::get_newsletter( $page );
+		if( ! empty($newsletter) ){
+			$forums = Agdp_Newsletter::get_content_sources( $newsletter, true );
+			if( count($forums) > 1 )
+				$options['include_children'] = $forums;
+		}
 		
 		switch($shortcode){
 			case 'agdpforum-messages-list':

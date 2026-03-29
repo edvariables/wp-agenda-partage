@@ -301,6 +301,40 @@ class Agdp_Newsletter {
 	}
 	
 	/**
+	 * Retourne les sources de données du contenu de la newsletter.
+	 * Retourne un tableau de type de post (adgpevent, covoiturage) ou forum.{id} ou 'agdpstats'
+	 */
+	public static function get_content_sources($newsletter_id, $explode = false){
+		if( is_a($newsletter_id, 'WP_Post') )
+			$newsletter_id = $newsletter_id->ID;
+		
+		$sources = [];
+		
+		$meta_name = 'source';
+		$source = get_post_meta( $newsletter_id, $meta_name, true);
+		$sources[] = $source;
+		$source = explode('.', $source);
+		
+		if( count($source) > 1 ){
+			$meta_name = 'source_include_children';
+			$include_children = get_post_meta( $newsletter_id, $meta_name, true);
+			if( $include_children ){
+				foreach( Agdp_Page::get_pages( $source[1] ) as $page ){
+					$nl = Agdp_Page::get_page_main_newsletter( $page );
+					if( ! $nl
+					|| $nl->ID === $newsletter_id )
+						$sources[] = $page->post_type . '.' . $page->ID;
+				}
+			}
+		}
+		if( $explode ){
+			foreach( $sources as $index => $source )
+				$sources[ $index ] = explode('.', $source);
+		}
+		return $sources;
+	}
+	
+	/**
 	 * Retourne la page source de données du contenu de la newsletter.
 	 */
 	public static function get_content_source_page($newsletter_id){
