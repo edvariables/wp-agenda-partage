@@ -710,7 +710,10 @@ jQuery( function( $ ) {
 			var $actionElnt = $(this);
 			var title = $actionElnt.parents('article:first').find('.comment-content .comment-title').text();
 			title = 'Re: ' + title;
-			$('#respond')
+			
+			var $respond = $('#respond');
+			$respond
+				.attr('_visible_before', $respond.is(':visible') ? '1' : '')
 				.trigger('forum_clear_respond')
 				.find('.comment-form-title input')
 					.val(title)
@@ -783,7 +786,8 @@ jQuery( function( $ ) {
 		// Nettoyage des champs du formulaire de commentaire
 		$body.on('forum_clear_respond', function(e){
 			var $actionElnt = $(this);
-			$('#respond')
+			var $respond = $('#respond');
+			$respond
 				.removeClass('forum-comment-edit')
 				.find('.comment-form-title input, .comment-form-comment textarea')
 					.val('')
@@ -795,6 +799,8 @@ jQuery( function( $ ) {
 					.val('Enregistrer')
 					.end()
 			;
+			if( ! $respond.attr('_visible_before') )
+				$respond.hide();
 		});
 	});
 });

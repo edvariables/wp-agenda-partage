@@ -751,7 +751,7 @@ class Agdp_Comments {
 
 				$html .= sprintf(
 					'<td class="comment-edit"><a href="%s">'
-						.'Afficher le message'
+						.'Afficher le message' // (et vérifier qu\'il est toujours d\'actualité)
 						. ($email_mode  ? '' : Agdp::icon('media-default'))
 						.'</a>'
 					.'</td>'
