@@ -893,7 +893,7 @@ abstract class Agdp_Posts_Export {
 			if( $post_terms )
 				$post_data['terms'] = $post_terms;
 			
-			$post_data = apply_filters( AGDP_TAG . '_export_object_' . $post_type, $post_id, $post_data );
+			$post_data = apply_filters( AGDP_TAG . '_export_object_' . $post_type, $post_data, $post_id );
 			
 			if( $post_data )
 				$data[] = $post_data;

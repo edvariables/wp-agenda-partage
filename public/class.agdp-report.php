@@ -2302,7 +2302,7 @@ class Agdp_Report extends Agdp_Post {
 	/**
 	 * Hook d'export comme object (pour package)
 	 */
-	public static function on_export_object( $post_id, $post_data ){
+	public static function on_export_object( $post_data, $post_id ){
 		if( ! empty($post_data['metas']) ){
 			$metas = $post_data['metas'];
 			if( ! empty($metas['sql_variables'])){
