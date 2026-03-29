@@ -90,12 +90,15 @@ class Agdp_Comments {
 				unset($query['meta_query']);
 			}
 			
-			if( isset($query['post__in'])
-			&& isset($query['post_id']) )
-				unset($query['post_id']);
-			
 			$all = array_merge($all, $query);
 		}
+			
+		if( isset($all['post__in'])
+		&& isset($all['post_id']) ){
+			unset($all['post_id']);
+			$all['orderby'] = array_merge( ['post_id', 'ASC'], $all['orderby'] );
+		}
+		
 		// var_dump($all);
 		// echo "</div>";
 		// debug_log( __FUNCTION__, $all);
@@ -576,7 +579,22 @@ class Agdp_Comments {
 				$html .= sprintf('<p class="alerte no-messages">%s</p>', __('Aucun message trouvé', AGDP_TAG));
 			}
 			else {
+				$post_ids = [];
 				foreach($messages as $message){
+					if( ! in_array( $message->comment_post_ID, $post_ids ) )
+						$post_ids[] = $message->comment_post_ID;
+				}
+				if( count($post_ids) <= 1 )
+					$post_ids = false;
+					
+				$post_id = false;
+				foreach($messages as $message){
+					if( $post_ids
+					&& $post_id !== $message->comment_post_ID ){
+						$post_id = $message->comment_post_ID;
+						$forum = get_post( $post_id );
+						$html .= '<h4>' . $forum->post_title . '</h4>';
+					}
 					$html .= '<li>' . self::get_list_item_html($message, $options) . '</li>';
 				}
 				
