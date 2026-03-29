@@ -712,8 +712,9 @@ jQuery( function( $ ) {
 			title = 'Re: ' + title;
 			
 			var $respond = $('#respond');
+			if( ! $respond.attr('_visible_before') )
+				$respond.attr('_visible_before', $respond.is(':visible') ? 'y' : 'n');
 			$respond
-				.attr('_visible_before', $respond.is(':visible') ? '1' : '')
 				.trigger('forum_clear_respond')
 				.find('.comment-form-title input')
 					.val(title)
@@ -732,6 +733,7 @@ jQuery( function( $ ) {
 		$body.on('click', '#cancel-comment-reply-link', function(e) {
 			$('#respond')
 				.trigger('forum_clear_respond')
+				.removeAttr('_visible_before')
 			;
 		});
 		
@@ -799,7 +801,7 @@ jQuery( function( $ ) {
 					.val('Enregistrer')
 					.end()
 			;
-			if( ! $respond.attr('_visible_before') )
+			if( $respond.attr('_visible_before') !== 'y' )
 				$respond.hide();
 		});
 	});
