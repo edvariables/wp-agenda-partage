@@ -100,28 +100,6 @@ class Agdp_Admin_Packages {
 	}
 	
 	/**
-	 * import_form
-	 */
-	 public static function import_form() {
-		 
-		if( ! empty($_POST['packages_form_submit']) ){
-			self::submit_packages_form();
-			self::generate_packages();
-		}
-		
-		echo sprintf('<form id="agdppackages" method="POST">');
-		
-		foreach( self::get_packageable_post_types() as $post_type ){
-			self::generate_form_post_type( $post_type );
-		}
-		
-		echo sprintf('<div><input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large"></div>'
-			, 'Générer le package');
-			
-		echo '</form>';
-	}
-	
-	/**
 	 * current_user_can
 	 */
 	 public static function current_user_can( $action ) {
@@ -168,24 +146,32 @@ class Agdp_Admin_Packages {
 		// }
 		 
 		
-		if( ! empty($_POST['packages_form_submit']) ){
+		if( ! empty($_POST['packages_form_submit'])
+		 || ! empty($_POST['packages_download_form_submit']) ){
 			self::submit_packages_form();
-			if( Agdp::get_option('can_generate_packages') )
+			if( ! empty($_POST['packages_download_form_submit']) ){
+				$data = self::generate_packages( 'data' );
+				$data = json_encode($data, /* JSON_PRETTY_PRINT |*/ JSON_OBJECT_AS_ARRAY | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+				echo sprintf('<textarea style="width: 100%%;" rows="2">%s</textarea>', htmlspecialchars($data) );				
+			}
+			elseif( Agdp::get_option('can_generate_packages') ){
 				self::generate_packages();
+			}
 		}
 		
-		echo sprintf('<form id="agdppackages" method="POST">');
-		
-		if( self::current_user_can_generate() ){
-			echo sprintf('<ul><li class="agdppackages-post_type">'
-					. '<input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large">'
-					. '</li>'
-				, 'Générer');
-		}
-		
-		foreach( self::get_packageable_post_types() as $post_type ){
-			self::generate_form_post_type( $post_type );
-		}
+		echo '<form id="agdppackages" method="POST"><ul>';
+			echo '<li class="agdppackages-post_type">';
+				if( self::current_user_can_generate() ){
+					echo sprintf('<input type="submit" name="packages_form_submit" value="%s" class="button button-primary button-large"><br>'
+						, 'Générer');
+				}
+				echo sprintf('<input type="submit" name="packages_download_form_submit" value="%s" class="agdp-ajax-action button button-primary button-large">'
+					, 'Copier les données');
+			echo '</li>';
+			
+			foreach( self::get_packageable_post_types() as $post_type ){
+				self::generate_form_post_type( $post_type );
+			}
 		
 		echo '</ul></form>';
 	}
@@ -407,15 +393,23 @@ class Agdp_Admin_Packages {
 	/**
 	 * generate_packages
 	 */
-	private static function generate_packages( ) {
+	private static function generate_packages( $returns = 'html' ) {
 		
-		echo sprintf('<div class="agdppackages"><h2>Packages</h2>');
+		if( $returns !== 'data' ){
+			echo sprintf('<div class="agdppackages"><h2>Packages</h2>');
 		
-		self::delete_packages();
+			self::delete_packages();
+		}
 		
-		foreach( self::get_packageable_post_types() as $post_type )
-			self::generate_post_type_package($post_type);
+		$all_data = [];
+		foreach( self::get_packageable_post_types() as $post_type ){
+			$data = self::generate_post_type_package($post_type, $returns);
+			if( $data )
+				$all_data = array_merge( $all_data, $data );
+		}
 		
+		if( $returns === 'data' )
+			return $all_data;
 		echo '</div>';
 	}
 	
@@ -438,7 +432,7 @@ class Agdp_Admin_Packages {
 	/**
 	 * generate_post_type_package
 	 */
-	private static function generate_post_type_package( $post_type ) {
+	private static function generate_post_type_package( $post_type, $returns = 'html' ) {
 		
 		$meta_key = '_is_package_root';
 		//posts existants avec _is_package_root
@@ -466,10 +460,11 @@ class Agdp_Admin_Packages {
 		} else 
 			$terms = false;
 		
-		echo sprintf('<div class="agdppackages-post_type" post_type="%s"><h3>%s</h3><ul>'
-			, $post_type
-			, $post_type
-		);
+		if( $returns !== 'data' )
+			echo sprintf('<div class="agdppackages-post_type" post_type="%s"><h3>%s</h3><ul>'
+				, $post_type
+				, $post_type
+			);
 
 		$post_ids = Agdp_Posts::get_posts_and_descendants( $post_type, 'publish', $root_posts);
 		$posts = get_posts([ 'include'=>$post_ids, 'post_type'=>$post_type ]);
@@ -478,15 +473,19 @@ class Agdp_Admin_Packages {
 			if( $max_update < $post->post_modified_gmt )
 				$max_update = $post->post_modified_gmt;
 		}
+		
 		$file_name = self::get_post_type_package_file( $post_type, $max_update );
 		
-		echo sprintf('<h4>%s</h4>', $file_name);
+		if( $returns !== 'data' )
+			echo sprintf('<h4>%s</h4>', $file_name);
 		
 		$options = [];
 		if( $terms )
 			$options[ 'include_terms' ] = $terms;
 		
 		$data = Agdp_Posts_Export::export_posts_object( $posts, $options );
+		if( $returns === 'data' )
+			return $data;
 		if( $data ){
 			$data = json_encode($data, JSON_OBJECT_AS_ARRAY | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 			// $data = serialize( json_decode($data) );//remove object reference
@@ -500,20 +499,22 @@ class Agdp_Admin_Packages {
 		
 		$url = wp_nonce_url( '/wp-admin/admin.php?page=agendapartage-import', Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0) );
 		// $nonce_name = Agdp_Admin_Edit_Post_Type::get_nonce_name( 'import', 0 );
-		echo sprintf('<form action="%s" method="POST">'
-			// . '<input type="hidden" name="%s" value="%s">'
-			. '<input type="hidden" name="import-agdppackage" value="1">'
-			. '<input type="hidden" name="agdppackage-post_type" value="%s">'
-			. '<button type="send"><span class="dashicons-before dashicons-database-import"></span>Importer le package</button>'
-			. '</form>'
-			, $url
-			// , $$nonce_name
-			, $post_type
-		);
+		if( $returns !== 'data' ){
+			echo sprintf('<form action="%s" method="POST">'
+				// . '<input type="hidden" name="%s" value="%s">'
+				. '<input type="hidden" name="import-agdppackage" value="1">'
+				. '<input type="hidden" name="agdppackage-post_type" value="%s">'
+				. '<button type="send"><span class="dashicons-before dashicons-database-import"></span>Importer le package</button>'
+				. '</form>'
+				, $url
+				// , $$nonce_name
+				, $post_type
+			);
 		
-		echo sprintf('<textarea style="width: 100%%;" rows="2">%s</textarea>', htmlspecialchars($data) );
+			echo sprintf('<textarea style="width: 100%%;" rows="2">%s</textarea>', htmlspecialchars($data) );
 
-		echo '</ul></div>';
+			echo '</ul></div>';
+		}
 	}
 
 }
