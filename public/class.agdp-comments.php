@@ -10,6 +10,7 @@ class Agdp_Comments {
 	public static $default_comments_query = [];
 	
 	private static $default_comments_per_page = 30;
+	private static $default_comments_per_mail = 60;
 	
 	private static $filters_summary = null;
 
@@ -45,7 +46,11 @@ class Agdp_Comments {
 			'post_id' => $page->ID,
 			'comment_type' => 'comment',
 			'status' => '1',
-			'hierarchical' => 'threaded',
+			
+			// 'hierarchical' => 'threaded',			
+			//Tous, sans s'occuper de la hiérarchie
+			'hierarchical' => false,
+			'parent' => '',
 			
 			'orderby' => [
 				// $sort_date_field => 'DESC'
@@ -116,13 +121,35 @@ class Agdp_Comments {
 		$date_min = $dates['start'];
 		$date_max = $dates['end'];
 		
+		return self::get_period_comments( $date_min, $date_max, $options );
+	}
+	
+	/**
+	 * Recherche des messages d'une periode donnée
+	 */
+	public static function get_period_comments($date_min, $date_max, $options = false){
+		if( is_string($date_min) && preg_match( '/^\d{4}-\d{2}$/', $date_min ) ){
+			$dates = get_week_dates(substr($date_min, 0,4), substr($date_min, 5,2));
+			$date_min = $dates['start'];
+		}
+		if( is_string($date_max) && preg_match( '/^\d{4}-\d{2}$/', $date_max ) ){
+			$dates = get_week_dates(substr($date_max, 0,4), substr($date_max, 5,2));
+			$date_max = $dates['end'];
+		}
+		elseif( ! $date_max )
+			$date_max = date('Y-m-d',strtotime("+1 day"));
+			
 		if( is_array($options) && ! empty($options['since']) )
 			$since_date = $options['since'];
 		else
-			$since_date = false;
+			$since_date = date('Y-m-d',strtotime("-1 month"));
 		if( $since_date
-		 && $since_date > $date_min )
+		 && ( ! $date_min
+			|| $since_date > $date_min )
+		)
 			$date_min = $since_date;
+		if( ! $date_min )
+			throw new Exception('Date minimale non fournie');
 		
 		$query = array(
 			'date_query' => [
@@ -152,7 +179,11 @@ class Agdp_Comments {
 			// $query['orderby'][$sort_date_field] = 'DESC';
 		}
 		
+		$for_email = is_array($options) && ! empty($options['mode']) && ( $options['mode'] === 'email' );
+		if( $for_email )
+			$query['number'] = self::$default_comments_per_mail;
 		
+		//Include page children (sub forums)
 		if( ! empty($options['include_children']) ){
 			foreach( $options['include_children'] as $forum )
 				$post_IDs[] = $forum[1];
@@ -161,7 +192,7 @@ class Agdp_Comments {
 		}
 		
 		$comments = self::get_comments($query);
-		
+	
 		return $comments;
     }
 	
@@ -175,10 +206,66 @@ class Agdp_Comments {
         $the_query = new WP_Comment_Query( $query );
 		remove_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10);
 		
-		// debug_log( __FUNCTION__, $query, $the_query->comments);
+		// debug_log( __FUNCTION__, $query/* , $the_query->comments */);
 		
-		return $the_query->comments; 
+		if( ! is_array($the_query->comments) )
+			return $the_query->comments;
+		$comments = self::get_comments_hierarchy( $the_query->comments );
+		return $comments; 
     }
+	
+	/**
+	 * Génère la hierarchie des commentaires et des réponses.
+	 * Marque les commentaires parents par ->child_needs = true, si ils ont été uniquement ajouté en tant que parents;
+	 */
+	private static function get_comments_hierarchy( $comments ){
+		
+		$comment_ids = [];
+		foreach( $comments as $comment ){
+			$comment_ids[ $comment->comment_ID.'' ] = $comment;
+		}
+		$_comments = [];
+		foreach( $comment_ids as $comment ){
+			if( $comment->comment_parent ){
+				//Fill hierarchy
+				$comment_child = $comment;
+				while( $comment_child->comment_parent ){
+					if( ! empty( $comment_ids[ $comment_child->comment_parent.'' ] ) ){
+						$comment_parent = $comment_ids[ $comment_child->comment_parent.'' ];
+						$comment_parent->add_child( $comment_child );
+						break;
+					}
+					$comment_parent = get_comment( $comment_child->comment_parent );
+					if( ! $comment_parent ){
+						$_comments[ $comment_child->comment_ID.'' ] = $comment_child;
+						break;
+					}
+					$comment_parent->child_needs = true;
+					
+					$comment_parent->add_child( $comment_child );
+					
+					$comment_ids[ $comment_parent->comment_ID.'' ] = $comment_parent;
+					
+					if( ! $comment_parent->comment_parent ){
+						$_comments[ $comment_parent->comment_ID.'' ] = $comment_parent;
+						break;
+					}
+					
+					//loop
+					$comment_child = $comment_parent;
+				}
+				if( ! empty( $comment_ids[ $comment->comment_parent.'' ] ) ){
+					continue;
+				}
+			}
+			$_comments[ $comment->comment_ID.'' ] = $comment;
+		}
+		return $_comments; 
+    }
+	
+	/**
+	 * on_get_comments_clauses_cb
+	 */
 	public static function on_get_comments_clauses_cb($clauses, $query){
 		global $wpdb;
 		// debug_log('on_get_comments_clauses_cb', $clauses);
@@ -295,6 +382,7 @@ class Agdp_Comments {
 				'mode' => 'list' //list|email|text|calendar|TODO...
 			), $options);
 		$options = self::filter_anteriority_option($options, ANTERIORITY_ALL);
+		
 		$for_email = $options['mode'] == 'email';
 		if( $for_email ){
 			$options['ajax'] = false;
@@ -307,88 +395,106 @@ class Agdp_Comments {
 			else
 				$options['orderby'][ $sort_date_field ] = 'ASC';
 		}
+		
 		$option_ajax = (bool)$options['ajax'];
 		
-		$weeks = self::get_comments_weeks( $page, $options );
-		if(isset($options['months']) && ($options['months'] !== ANTERIORITY_ALL) && ($options['months'] > 0) && count($weeks) > $options['months']*4)
-			$weeks = array_slice($weeks, 0, $options['months'] * 4, true);
-		elseif(isset($options['weeks']) && $options['weeks'] > 0 && count($weeks) > $options['weeks'])
-			$weeks = array_slice($weeks, 0, $options['weeks'], true);
-		elseif(isset($options['days']) && $options['days'] > 0 && count($weeks) > 1)
-			$weeks = array_slice($weeks, 0, 1, true);
-		elseif(isset($options['hours']) && $options['hours'] > 0 && count($weeks) > 1)
-			$weeks = array_slice($weeks, 0, 1, true);
-		
-		$messages_count = 0;
-		$weeks_count = 0;
-		foreach($weeks as $week => $week_messages_count) {
-			$messages_count += $week_messages_count;
-			$weeks_count++;
-			if($messages_count >= $options['max_messages']){
-				break;
+		$use_weeks = false;
+		if( $use_weeks ){
+			$weeks = self::get_comments_weeks( $page, $options );
+			if(isset($options['months']) && ($options['months'] !== ANTERIORITY_ALL) && ($options['months'] > 0) && count($weeks) > $options['months']*4)
+				$weeks = array_slice($weeks, 0, $options['months'] * 4, true);
+			elseif(isset($options['weeks']) && $options['weeks'] > 0 && count($weeks) > $options['weeks'])
+				$weeks = array_slice($weeks, 0, $options['weeks'], true);
+			elseif(isset($options['days']) && $options['days'] > 0 && count($weeks) > 1)
+				$weeks = array_slice($weeks, 0, 1, true);
+			elseif(isset($options['hours']) && $options['hours'] > 0 && count($weeks) > 1)
+				$weeks = array_slice($weeks, 0, 1, true);
+			
+			$messages_count = 0;
+			$weeks_count = 0;
+			foreach($weeks as $week => $week_messages_count) {
+				$messages_count += $week_messages_count;
+				$weeks_count++;
+				if($messages_count >= $options['max_messages']){
+					break;
+				}
 			}
+			
+			if( $messages_count === 0)
+				return false;
 		}
 		
-		if( $messages_count === 0)
-			return false;
-		
 		$html = sprintf('<div class="agdp-agdpforummsgs agdp-agdpforummsgs-%s">', $options['mode']);
-			
-		$not_empty_week_index = 0;
-		$messages_count = 0;
 		
-		$html .= '<ul>';
-		$all_messages = [];
 		if( $add_summary = empty( $options['summary'] ) ? false : $options['summary'] )
 			unset($options['summary']);
 		
-		foreach($weeks as $week => $week_messages_count) {
+		if( ! $use_weeks ){
+			$all_messages = $messages = self::get_period_comments( null, null, $options );
+			if( ! $messages )
+				return false;
 			
-			$week_dates = get_week_dates(substr($week, 0,4), substr($week, 5,2));
-			if( substr($week_dates['start'], 5,2) === substr($week_dates['end'], 5,2)){
-				$week_dates['start'] = wp_date('j', strtotime($week_dates['start']));
-				$week_dates['end'] = wp_date('j F Y', strtotime($week_dates['end']));
-			}
-			else {
-				$week_dates['start'] = wp_date('j F', strtotime($week_dates['start']));
-				$week_dates['end'] = wp_date('j F Y', strtotime($week_dates['end']));
-			}
-			if(trim(substr($week_dates['start'], 0,2)) == '1')
-				$week_dates['start'] = '1er ' . substr($week_dates['start'],3);
-			if(trim(substr($week_dates['end'], 0,2)) == '1')
-				$week_dates['end'] = '1er ' . substr($week_dates['end'],3);
-			
-			$week_label = sprintf('du %s au %s', $week_dates['start'], $week_dates['end']);
-			
-			if( $for_email )
-				$html .= sprintf(
-					'<li><div class="week-title toggle-trigger active"></div><ul id="week-%s" class="agdpforummsgs-week toggle-container">'
-					, $week
-				);
-			else
-				$html .= sprintf(
-					'<li><div class="week-title toggle-trigger %s %s">%s <span class="nb-items">(%d)</span></div>
-					<ul id="week-%s" class="agdpforummsgs-week toggle-container">'
-					, $week_messages_count === 0 ? 'no-items' : ''
-					, $week_messages_count ? 'active' : ''
-					, $week_label
-					, $week_messages_count
-					, $week
-				);
-			if( $week_messages_count){
-				$messages = self::get_week_comments( $week, $options );
-				$all_messages = array_merge( $all_messages, $messages );
-				$html .= self::get_week_comments_list_html( $week, $options, $messages );
-			}
-		
-			$html .= '</ul></li>';
-			
-			if($week_messages_count > 0)
-				$not_empty_week_index++;
-			$messages_count += $week_messages_count;
+			$html .= '<ul>';
+			$html .= self::get_comments_list_html( $options, $messages );
+			$html .= '</ul>';
 		}
-		
-		$html .= '</ul>';
+		else {
+			
+			$not_empty_week_index = 0;
+			$messages_count = 0;
+			
+			$all_messages = [];
+			
+			$html .= '<ul>';
+			
+			foreach($weeks as $week => $week_messages_count) {
+				
+				$week_dates = get_week_dates(substr($week, 0,4), substr($week, 5,2));
+				if( substr($week_dates['start'], 5,2) === substr($week_dates['end'], 5,2)){
+					$week_dates['start'] = wp_date('j', strtotime($week_dates['start']));
+					$week_dates['end'] = wp_date('j F Y', strtotime($week_dates['end']));
+				}
+				else {
+					$week_dates['start'] = wp_date('j F', strtotime($week_dates['start']));
+					$week_dates['end'] = wp_date('j F Y', strtotime($week_dates['end']));
+				}
+				if(trim(substr($week_dates['start'], 0,2)) == '1')
+					$week_dates['start'] = '1er ' . substr($week_dates['start'],3);
+				if(trim(substr($week_dates['end'], 0,2)) == '1')
+					$week_dates['end'] = '1er ' . substr($week_dates['end'],3);
+				
+				$week_label = sprintf('du %s au %s', $week_dates['start'], $week_dates['end']);
+				
+				if( $for_email )
+					$html .= sprintf(
+						'<li><div class="week-title toggle-trigger active"></div><ul id="week-%s" class="agdpforummsgs-week toggle-container">'
+						, $week
+					);
+				else
+					$html .= sprintf(
+						'<li><div class="week-title toggle-trigger %s %s">%s <span class="nb-items">(%d)</span></div>
+						<ul id="week-%s" class="agdpforummsgs-week toggle-container">'
+						, $week_messages_count === 0 ? 'no-items' : ''
+						, $week_messages_count ? 'active' : ''
+						, $week_label
+						, $week_messages_count
+						, $week
+					);
+				if( $week_messages_count){
+					$messages = self::get_week_comments( $week, $options );
+					$all_messages = array_merge( $all_messages, $messages );
+					$html .= self::get_week_comments_list_html( $week, $options, $messages );
+				}
+			
+				$html .= '</ul></li>';
+				
+				if($week_messages_count > 0)
+					$not_empty_week_index++;
+				$messages_count += $week_messages_count;
+			}
+			
+			$html .= '</ul>';
+		}
 		
 		$html .= '</div>' . $content;
 		
@@ -510,18 +616,24 @@ class Agdp_Comments {
 
 .agdp-agdpforummsgs-summary  {
 	border-bottom: gray 1px solid;
-	margin-bottom: 1em;
+	margin-bottom: 2em;
 	margin-top: 0.5em;
 } 
 .agdp-agdpforummsgs-summary .a-li {
 	font-size: smaller;
 } 
 .footer {
-	border-bottom: solid gray 2px;
 	margin-bottom: 2em;
+}
+div:not(.has-children) > .footer {
+	border-bottom: solid gray 2px;
+	margin-bottom: 1em;
 }
 .a-ul img {
   max-width: 200px;
+}
+.a-ul .a-ul {
+  margin-left: 2em;
 }
 '
 			. '</style>';
@@ -571,6 +683,16 @@ class Agdp_Comments {
 		
 		if( ! $messages )
 			$messages = self::get_week_comments($week, $options);
+		return self::get_comments_list_html($options = false, $messages = false);
+	}
+		
+	/**
+	* Rendu Html des messages sous forme de liste
+	*/
+	public static function get_comments_list_html($options = false, $messages = false){
+		
+		if( ! $messages )
+			return false;
 		
 		if(is_wp_error( $messages)){
 			$html = sprintf('<p class="alerte no-messages">%s</p>%s', __('Erreur lors de la recherche de messages.', AGDP_TAG), var_export($messages, true));
@@ -578,7 +700,7 @@ class Agdp_Comments {
 		elseif($messages){
 			$html = '';
 			if(count($messages) === 0){
-				$html .= sprintf('<p class="alerte no-messages">%s</p>', __('Aucun message trouvé', AGDP_TAG));
+				$html .= sprintf('<p class="alerte no-messages">%s (%s)</p>', __('Aucun message trouvé', AGDP_TAG), $week);
 			}
 			else {
 				$post_ids = [];
@@ -590,10 +712,18 @@ class Agdp_Comments {
 					$post_ids = false;
 					
 				$post_id = false;
+				$comment_parent_id = false;
 				foreach($messages as $message){
 					if( $post_ids
 					&& $post_id !== $message->comment_post_ID ){
 						$post_id = $message->comment_post_ID;
+						$comment_parent_id = false;
+						$forum = get_post( $post_id );
+						$html .= '<h4>' . $forum->post_title . '</h4>';
+					}
+					if( $message->comment_parent
+					&& $comment_parent_id !== $message->comment_parent ){
+						$comment_parent_id = $message->comment_parent;
 						$forum = get_post( $post_id );
 						$html .= '<h4>' . $forum->post_title . '</h4>';
 					}
@@ -608,9 +738,9 @@ class Agdp_Comments {
 				}
 			}
 		}
-		else{
-				$html = sprintf('<p class="alerte no-messages">%s</p>', __('Aucun message trouvé', AGDP_TAG));
-			}
+		else {
+			$html = sprintf('<p class="alerte no-messages">%s (%s)</p>', __('Aucun message trouvé', AGDP_TAG), $week);
+		}
 			
 		return $html;
 	}
@@ -623,6 +753,8 @@ class Agdp_Comments {
 		$summary_dest = is_array($options) && isset($options['summary']) && $options['summary'];
 		$hide_author_email = /* $email_mode &&  */is_array($options) && isset($options['hide_author_email']) && $options['hide_author_email'];
 			
+		$exists_for_children = ! empty( $comment->child_needs ); //ce commentaire n'est là que pour ses enfants
+		
 		$date_debut = $comment->comment_date;
 		
 		$url = get_comment_link( $comment );
@@ -656,15 +788,26 @@ class Agdp_Comments {
 			, $heure_debut ? ' à ' . $heure_debut : ''
 			, htmlentities($title));
 		
+		$children = $comment->get_children();
+		
+		/* TODO il faut compter les descendants en profondeur et ! exists_for_children
+		if( $summary_dest && $children ){
+			$s = count($children) > 1 ? 's' : '';
+			$html .= sprintf('<div class="children">&gt; %d réponse%s récente%s</div>', count($children), $s, $s);
+		} */
+		
 		$html .= '</div>';
 		
 		if( $summary_dest ){
-		
+			return $html;
 		}
-		else {
-			$html .= '<div class="toggle-container">';
-			
-			
+		
+		$html .= sprintf('<div class="toggle-container %s">'
+			, count($children) > 0 ? 'has-children' : ''
+		);
+		
+		if( ! $exists_for_children ){
+				
 			$value = $comment->comment_content;
 			if($value){
 				$value = preg_replace('/\n[\s\n]+/', "\n", $value);
@@ -719,12 +862,14 @@ class Agdp_Comments {
 			}
 			
 			$html .= Agdp_Comment::get_attachments_links($comment);
-			
-			$show_author_email = Agdp_Forum::get_property('comment_author_email');
-			if( $show_author_email === 'M' ){
-				//TODO s'assurer que les destinataires sont bien tous membres
-			}
-			
+		}
+		
+		$show_author_email = Agdp_Forum::get_property('comment_author_email');
+		if( $show_author_email === 'M' ){
+			//TODO s'assurer que les destinataires sont bien tous membres
+		}
+		
+		if( ! $exists_for_children ){
 			$value = $comment->comment_author;
 			if($value){
 				if( $show_author_email
@@ -739,9 +884,9 @@ class Agdp_Comments {
 				else
 					$html .= sprintf('<div>Publié par : %s</div>',  htmlentities($value) );
 			}
-			
+		
 			$html .= date_diff_text($comment->comment_date, true, '<div class="created-since">', '</div>');
-			
+	
 			$html .= '<div class="footer">';
 					
 				$html .= '<table><tbody><tr>';
@@ -750,7 +895,7 @@ class Agdp_Comments {
 					$html .= '<td class="trigger-collapser"><a href="#replier">'
 						.Agdp::icon('arrow-up-alt2')
 						.'</a></td>';
-
+					
 				$html .= sprintf(
 					'<td class="comment-edit"><a href="%s">'
 						.'Afficher le message' // (et vérifier qu\'il est toujours d\'actualité)
@@ -758,13 +903,22 @@ class Agdp_Comments {
 						.'</a>'
 					.'</td>'
 					, $url);
-					
+			
 				$html .= '</tr></tbody></table>';
 				
 			$html .= '</div>';
-			
-			$html .= '</div>';
 		}
+		
+		if( $children = $comment->get_children() ){
+			// $s = count($children) > 1 ? 's' : '';
+			// $html .= sprintf('<ul><i>Réponse%s récente%s</h5>', $s, $s);
+			$html .= '<ul>';
+			foreach( $children as $child ){
+				$html .= '<li>' . self::get_list_item_html($child, $options) . '</li>';
+			}
+			$html .= '</ul>';
+		}
+		$html .= '</div>';
 		
 		return $html;
 	}

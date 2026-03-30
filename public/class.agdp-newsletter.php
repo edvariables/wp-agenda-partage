@@ -1916,6 +1916,9 @@ class Agdp_Newsletter {
 					$headers[] = sprintf('Bcc: %s', trim($email));
 				//$headers[] = sprintf('Bcc: %s', $bcc);
 			}
+			// Debug pour spam chez Free
+			// $email = 'nospam@nospam.proxad.net';
+			// $headers[] = sprintf('Bcc: %s', trim($email));
 			
 			$headers[] = sprintf('From: %s', self::get_mail_sender());
 			$headers[] = sprintf('Reply-to: %s', self::get_replyto_mail_sender());
