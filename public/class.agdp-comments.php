@@ -96,7 +96,7 @@ class Agdp_Comments {
 		if( isset($all['post__in'])
 		&& isset($all['post_id']) ){
 			unset($all['post_id']);
-			$all['orderby'] = array_merge( ['post_id' => 'ASC'], $all['orderby'] );
+			$all['orderby'] = array_merge( ['comment_post_ID' => 'ASC'], $all['orderby'] );
 		}
 		
 		// var_dump($all);
@@ -174,6 +174,8 @@ class Agdp_Comments {
 		add_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10, 2);
         $the_query = new WP_Comment_Query( $query );
 		remove_filter( 'comments_clauses', array(__CLASS__, 'on_get_comments_clauses_cb' ), 10);
+		
+		// debug_log( __FUNCTION__, $query, $the_query->comments);
 		
 		return $the_query->comments; 
     }
@@ -767,4 +769,4 @@ class Agdp_Comments {
 		return $html;
 	}
 	
-}
+}?>
