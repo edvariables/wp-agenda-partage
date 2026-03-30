@@ -1,0 +1,262 @@
+<?php 
+/**
+ * AgendaPartage Admin -> Forum
+ * Custom post type for WordPress in Admin UI.
+ * 
+ * Capabilities
+ * Colonnes de la liste des mailboxes
+ * Dashboard
+ *
+ * Voir aussi Agdp_Forum
+ */
+class Agdp_Admin_Forum {
+
+	public static function init() {
+
+		self::init_hooks();
+		
+	}
+
+	public static function init_hooks() {
+		//add custom columns for list view
+		add_filter( 'manage_' . Agdp_Forum::post_type . '_posts_columns', array( __CLASS__, 'manage_columns' ) );
+		add_action( 'manage_' . Agdp_Forum::post_type . '_posts_custom_column', array( __CLASS__, 'manage_custom_columns' ), 10, 2 );
+		add_filter( 'manage_edit-' . Agdp_Forum::post_type . '_sortable_columns', array( __CLASS__, 'manage_sortable_columns' ) );
+		if(basename($_SERVER['PHP_SELF']) === 'edit.php'
+		&& isset($_GET['post_type']) && $_GET['post_type'] === Agdp_Page::post_type){
+			add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts'), 10, 1);
+			add_action( 'manage_posts_extra_tablenav', array( __CLASS__, 'on_manage_posts_extra_tablenav'), 10, 1);
+		}
+
+		add_action( 'wp_dashboard_setup', array(__CLASS__, 'add_dashboard_widgets'), 10 ); //dashboard
+	}
+	
+	/**
+	 * Pots list view
+	 */
+	public static function manage_columns( $columns ) {
+		$new_columns = [];
+		foreach($columns as $key=>$column){
+			$new_columns[$key] = $column;
+			unset($columns[$key]);
+			if($key === 'title')
+				break;
+		}
+		$new_columns[Agdp_Forum::tag] = __( 'Forum', AGDP_TAG );
+		return array_merge($new_columns, $columns);
+	}
+	/**
+	*/
+	public static function manage_custom_columns( $column, $post_id ) {
+		switch ( $column ) {
+			case Agdp_Forum::tag :
+				if( ! ( $mailbox = Agdp_Mailbox::get_mailbox_of_page( $post_id ) ) ){
+					echo sprintf('<div class="row-actions"><span class="edit"><a href="/wp-admin/post.php?post=%d&action=edit&%s=1">Activer un forum</a></span></div>',
+						$post_id, Agdp_Forum::tag
+					);
+					return;
+				}
+				
+				$is_suspended = Agdp_Mailbox::is_suspended( $mailbox );
+				
+				if( is_a($mailbox, 'WP_Post') ){
+					echo sprintf('<a href="/wp-admin/post.php?post=%d&action=edit">%s%s</a>'
+						, $mailbox->ID
+						, $mailbox->post_title
+						, $is_suspended ? ' ' . Agdp::icon('warning', 'Suspendu !') : ''
+					);
+					$mailbox_id = $mailbox->ID;
+				}
+				else {
+					$mailbox_id = $mailbox;
+					if( $mailbox_id === AUTO_MAILBOX )
+						echo '(interne)';
+				}
+				$emails = '';
+				foreach( Agdp_Mailbox::get_emails_dispatch( $mailbox_id, $post_id ) as $email => $dispatch ){
+					$emails .= '<br>';
+					$emails .= sprintf('%s (%s)'
+						, $email
+						, $dispatch['rights'] . ($dispatch['moderate'] && ! in_array($dispatch['rights'], ['X', 'M']) ? ' - modéré' : ''));
+				}
+				if( $emails )
+					echo sprintf('%s', $emails);
+				
+				break;
+			default:
+				break;
+		}
+	}
+	public static function manage_sortable_columns( $columns ) {
+		$columns[Agdp_Forum::tag] = Agdp_Forum::tag;
+		return $columns;
+	}
+	/**
+	 * Sort custom column
+	 */
+	public static function on_pre_get_posts( $query ) {
+		global $wpdb;
+		if(empty($query->query_vars)
+		|| empty($query->query_vars['orderby']))
+			return;
+		switch( $query->query_vars['orderby']) {
+			case Agdp_Forum::tag:
+				$query->set('meta_key', AGDP_PAGE_META_MAILBOX);  
+				$query->set('orderby','meta_value'); 
+				break;
+		}
+	}
+	
+	/**
+	 * Init on_manage_posts_extra_tablenav
+	 */
+	public static function on_manage_posts_extra_tablenav( $which ){
+		echo '<div class="alignleft actions '.AGDP_TAG.'-posts-edit">';
+		foreach([
+			'blog_presentation_page_id' => [ 'title' => 'Présentation' ],
+			'contact_page_id' => [ 'title' => 'Contactez-nous', 'icon' => 'email'],
+			'newsletter_subscribe_page_id' => [ 'title' => 'Lettres-infos', 'icon' => Agdp_Newsletter::icon ],
+			'agenda_page_id' => [ 'title' => 'Agenda', 'icon' => Agdp_Event::icon ],
+			'new_agdpevent_page_id' => [ 'title' => 'Nouvel évènement', 'icon' => Agdp_Event::icon ],
+			'covoiturages_page_id' => [ 'title' => 'Covoiturages', 'icon' => Agdp_Covoiturage::icon ],
+			'new_covoiturage_page_id' => [ 'title' => 'Nouveau covoiturage', 'icon' => Agdp_Covoiturage::icon ],
+		] as $option => $option_data ){
+			if( $page_id = Agdp::get_option( $option ) ){
+				$icon = empty($option_data['icon']) ? 'admin-page' : $option_data['icon'];
+				$page_title = sprintf('<span class="dashicons-before dashicons-%s"></span>%s'
+					,$icon
+					, $option_data['title'] );
+				$menu_slug = sprintf('post.php?post=%d&action=edit', $page_id);
+				echo /* sprintf */( "<a href=\"$menu_slug\">$page_title</a>");
+			}
+		}
+		echo '</div>';
+	}
+	
+	/**
+	 * Init dashboard_widgets
+	 */
+	public static function add_dashboard_widgets() {
+	    global $wp_meta_boxes;
+		if( ! current_user_can('moderate_comments') ){
+			$comments = self::get_my_comments();
+			if( count($comments) ) {
+				add_meta_box( 'dashboard_my_comments',
+					__('Mes messages', AGDP_TAG),
+					array(__CLASS__, 'dashboard_my_comments_cb'),
+					'dashboard',
+					'normal',
+					'high',
+					array('comments' => $comments) );
+			}
+			$comments = self::get_my_forums_comments();
+			if( count($comments) ) {
+				add_meta_box( 'dashboard_my_comments',
+					__('Les derniers messages', AGDP_TAG),
+					array(__CLASS__, 'dashboard_my_comments_cb'),
+					'dashboard',
+					'normal',
+					'high',
+					array('comments' => $comments) );
+			}
+		}
+	}
+
+	/**
+	 * Callback
+	 */
+	public static function dashboard_my_comments_cb($post , $widget) {
+		$comments = $widget['args']['comments'];
+		$forums = [];
+		$edit_url = current_user_can('edit_posts');
+		?><ul><?php
+		foreach($comments as $comment){
+			echo '<li>';
+			?><header class="entry-header"><?php 
+				if( ! isset($forums[$comment->comment_post_ID.'']) )
+					$forums[$comment->comment_post_ID.''] = get_post($comment->comment_post_ID);
+				$forum = $forums[$comment->comment_post_ID.''];
+				$url = get_edit_comment_link($comment->comment_ID);
+				echo sprintf( '<h3 class="entry-title"><a href="%s">%s</a> dans <a href="%s">%s</a></h3>'
+					, $url, $comment->comment_title, get_post_permalink($forum->ID), $forum->post_title );
+				$the_date = $comment->comment_date;
+				$html = sprintf('<span>ajouté le %s</span>', $the_date) ;
+				if($comment->comment_approved != 1)
+					$html .= sprintf('<br><b>%s</b>', Agdp::icon( 'warning', 'en attente de modération')) ;		
+				echo sprintf( '<cite>%s</cite>', $html);		
+			?></header><?php
+			echo '<hr></li>';
+			
+		}
+		?></ul><?php
+	}
+	/**
+	 * Init
+	 */
+	public static function get_my_comments($num_comments = 5) {
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+	    $current_user = wp_get_current_user();
+		$user_id = $current_user->ID;
+		$user_email = $current_user->user_email;
+		
+		$sql = "SELECT comment.comment_post_ID, comment.comment_ID, post.post_title, post.post_name"
+			. ", comment.comment_approved"
+			. ", comment_title.meta_value AS comment_title, IFNULL(comment_send_date.meta_value, comment.comment_date) AS comment_date"
+			. "\n FROM {$blog_prefix}posts post"
+			. "\n INNER JOIN {$blog_prefix}comments comment"
+			. "\n ON comment.comment_post_ID = post.ID"
+			. "\n INNER JOIN {$blog_prefix}commentmeta comment_title"
+			. "\n ON comment_title.comment_id = comment.comment_ID"
+			. "\n AND comment_title.meta_key = 'title'"
+			. "\n LEFT JOIN {$blog_prefix}commentmeta comment_send_date"
+			. "\n ON comment_send_date.comment_id = comment.comment_ID"
+			. "\n AND comment_send_date.meta_key = 'send_date'"
+			. "\n WHERE post.post_type = '".Agdp_Forum::post_type."'"
+			. "\n AND post.post_status = 'publish'"
+			. "\n AND comment.comment_approved IN ('0','1')"
+			. "\n AND comment.comment_author_email = '{$user_email}'"
+			. "\n ORDER BY IFNULL(comment_send_date.meta_value, comment.comment_date) DESC"
+			. "\n LIMIT {$num_comments}"
+			;
+		$dbresults = $wpdb->get_results($sql);
+		if( is_a($dbresults, 'WP_Error') )
+			throw $dbresults;
+		return $dbresults;
+	}
+	/**
+	 * Init
+	 */
+	public static function get_my_forums_comments($num_comments = 5, $days_left = 7) {
+		global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+	    $current_user = wp_get_current_user();
+		$user_id = $current_user->ID;
+		$blog_id = get_current_blog_id();
+		$days_left_date = date('Y-m-d', strtotime( "- $days_left Day"));
+		$sql = "SELECT comment.comment_post_ID, comment.comment_ID, post.post_title, post.post_name"
+			. ", comment.comment_approved"
+			. ", comment_title.meta_value AS comment_title, comment.comment_date"
+			. "\n FROM {$blog_prefix}posts post"
+			. "\n INNER JOIN {$blog_prefix}usermeta subscription"
+			. "\n ON subscription.user_id = {$user_id}"
+			. "\n AND subscription.meta_key = CONCAT('agdpforum_subscr_{$blog_id}_', post.ID)"
+			. "\n INNER JOIN {$blog_prefix}comments comment"
+			. "\n ON comment.comment_post_ID = post.ID"
+			. "\n INNER JOIN {$blog_prefix}commentmeta comment_title"
+			. "\n ON comment_title.comment_id = comment.comment_ID"
+			. "\n AND comment_title.meta_key = 'title'"
+			. "\n WHERE post.post_type = '".Agdp_Forum::post_type."'"
+			. "\n AND post.post_status = 'publish'"
+			. "\n AND comment.comment_approved = '1'"
+			. "\n AND comment.comment_date >= '{$days_left_date}'"
+			. "\n ORDER BY comment.comment_date DESC"
+			. "\n LIMIT {$num_comments}"
+			;
+		$dbresults = $wpdb->get_results($sql);
+		if( is_a($dbresults, 'WP_Error') )
+			throw $dbresults;
+		return $dbresults;
+	}
+}
+?>

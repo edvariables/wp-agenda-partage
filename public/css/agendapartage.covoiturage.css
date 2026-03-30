@@ -1,0 +1,239 @@
+/**
+ * ED20230212
+ * Feuille de styles pour les calendriers et listes de covoiturages dans l'Agenda partagé
+ */
+
+
+.agdp-covoiturages-list ul {
+	padding-bottom: 1em;
+	list-style: none;
+}
+ 
+.agdp-covoiturages-list > ul > li {
+	padding-bottom: 1em;
+}
+ 
+.agdp-covoiturages-list > ul > li .toggle-trigger.no-items {
+	background-image: url('../images/toggle-minus.png');
+	color: #738080;
+}
+body.colors-dark .agdp-covoiturages-list > ul > li .toggle-trigger.no-items {
+	color: #8c7f7f;
+}
+ 
+.agdp-covoiturages-list > ul > li .nb-items {
+	font-size: smaller;
+	color: #8c7f7f;
+	vertical-align: top;
+}
+body.colors-dark .agdp-covoiturages-list > ul > li .nb-items {
+	color: #738080;
+}
+
+.agdp-covoiturages-list > ul > li > .toggle-container .toggle-container {
+	border-bottom: 1px solid gray;
+	margin-bottom: 1em;
+	margin-right: -8px;
+	padding-bottom: 0px;
+}
+
+.agdp-covoiturages-list > ul > li .agdp-scrolled-to,
+.agdp-covoiturages-list > ul > li .agdp-scrolled-to + .toggle-container {
+	background-color: #ddddd0;
+}
+body.colors-dark .agdp-covoiturages-list > ul > li .agdp-scrolled-to,
+body.colors-dark .agdp-covoiturages-list > ul > li .agdp-scrolled-to + .toggle-container {
+	background-color: #373733;
+}
+.agdp-covoiturages-list .toggle-trigger {
+	border-radius: 2px;
+	background-color: #d7d7d7;
+}
+body.colors-dark .agdp-covoiturages-list .toggle-trigger {
+	background-color: #272727;
+}
+
+.agdp-covoiturages-list > ul > li > .toggle-container {
+	border-radius: 2mpx;
+	padding: 2px 0px;
+	margin-left: 10px;
+}
+.agdp-covoiturages-list > ul > li .show-post {
+	position:relative;
+}
+.agdp-covoiturages-list > ul > li .show-post a {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+}
+
+.agdp-covoiturages-list .agdp-agdpevents-list {
+	margin-top: 1em;
+}
+.agdp-covoiturages-list .covoiturage.toggle-trigger .agdpevents  {
+	margin-top: 0.7em;
+	font-size: smaller;
+}
+
+
+.agdp-covoiturages-list a {
+  box-shadow: none !important;
+}
+
+.agdp-covoiturages-list > ul ul > li {
+	margin-top: 3px;
+	margin-bottom: 6px;
+}
+.agdp-covoiturages-list > ul > li .covoiturage-categories,
+.agdp-covoiturages-list > ul > li .covoiturage-cities {
+	font-size: smaller;
+}
+.agdp-covoiturages-list > ul > li .covoiturage-cities {
+	display: inline-block;
+	margin-left: 1em;
+}
+.agdp-covoiturages-list > ul > li .dates {
+	font-weight: bold;
+}
+.agdp-covoiturages-list > ul > li pre {
+	white-space: pre-wrap;
+}
+.agdp-covoiturages-list > ul > li .cov-siteweb a {
+	text-decoration: underline;
+}
+.agdp-covoiturages-list > ul > li .created-since {
+	text-align: right;
+	font-style: italic;
+	font-size: smaller;
+}
+
+.agdp-covoiturages-list .show-more {
+	font-style: italic;
+}
+.toggle-trigger.month-title {
+	font-variant:  small-caps;
+	font-weight: bold;
+	font-size: larger;
+	background-color: #e1e9f7;
+	padding-top: 10px;
+}
+body.colors-dark .toggle-trigger.month-title {
+	background-color: rgb(51, 51, 51);
+}
+
+.toggle-trigger.month-title::first-letter {
+	text-transform: uppercase  ;
+}
+.agdp-covoiturages-list > ul > li .footer, .agdp-covoiturages-list > ul > li .footer table {
+	font-size: 90%;
+	margin-top: 1em;
+    width: 100%;
+}
+.agdp-covoiturages-list > ul > li .footer table tr{
+    border: none;
+}
+.agdp-covoiturages-list > ul > li .footer table td{
+    white-space: nowrap;
+    border: none;
+}
+.agdp-covoiturages-list > ul > li .footer td.post-edit {
+	width: 1px;/*Ajuste la cellule*/
+	padding-right: 14px;
+}
+.agdp-covoiturages-list > ul > li .footer .trigger-collapser,
+.agdp-covoiturages-list .toggle-trigger {
+	cursor: pointer;
+}
+
+.agdp-covoiturages-list-header {
+	margin-bottom: 2em;
+}
+.agdp-covoiturages-list-header table {
+	margin: 0;
+}
+.agdp-covoiturages-list-header table tr,
+.agdp-covoiturages-list-header table th {
+	border: none;
+}
+.agdp-covoiturages-list-header table th {
+	width: 1px; /* autosize */
+	padding-right: 1em;
+	overflow-wrap: break-word;
+}
+.agdp-covoiturages-list-header table td {
+	text-align: right;
+}
+.agdp-covoiturages-list-header .toggle-trigger {
+	font-size: smaller;
+}
+.agdp-covoiturages-list-header form {
+	background-color: #dddddd;
+}
+body.colors-dark .agdp-covoiturages-list-header form {
+	background-color: #373733;
+}
+.agdp-covoiturages-list-header form input[type="submit"] {
+	float: right;
+	font-size: smaller;
+}
+.agdp-covoiturages-list-header form select {
+	height: 5em;
+	font-size: smaller;
+}
+.agdp-covoiturages-list-header form input[type="checkbox"] {
+	margin-right: 0.2em;
+}
+.agdp-covoiturages-list-header form label {
+	font-size: smaller;
+	font-weight: normal;
+	display: inline-block;
+	margin-right: 1em;
+	white-space: nowrap;
+}
+.agdp-covoiturages-list-header form label[for] {
+	font-weight: bold;
+	display: block;
+}
+
+.agdp-covoiturages-email *, .aevs-email * {
+	background-color: #FFFFFF ;
+	color: #000000 !important;
+}
+body.colors-dark .agdp-covoiturages-email *, body.colors-dark .aevs-email * {
+	background-color: #FFFFFF;
+	color: #000000 !important;
+}
+
+.agdp-covoiturages .cov-date-jour-num {
+	font-weight: bold;
+	font-size: larger;
+	padding: 0 3px 0 3px;
+}
+
+.agdp-covoiturages .cov-periodiques {
+	background-color: #dba526;
+}
+
+.agdp-covoiturages .cov-periodiques-link {
+	font-family: Courier;
+	margin-top: 3px;
+	margin-bottom: 1em;
+}
+
+/* Covoiturage */
+.cov-periodiques p {
+	margin-bottom: 0px;
+}
+form .if-cov-periodique {
+	display: none;
+}
+form.is-cov-periodique .if-not-cov-periodique {
+	display: none;
+}
+form.is-cov-periodique .if-cov-periodique {
+	display: initial;
+}
+
+p.covoiturage-add + p.covoiturage-add {
+	display: none;
+}
