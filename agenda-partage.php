@@ -66,8 +66,8 @@ define( 'AGDP_SORT_DATE_FIELD', 'sort_date_field' );
 define( 'AGDP_WPCF7_RADIO_NO_CHANGE', '(no_change)');
 define( 'AGDP_JS_SKIP_FIELD', '_js_skip_field');
 
-define( 'AGDP_IMG_MAX_WIDTH', 400);
-define( 'AGDP_IMG_MAX_HEIGHT', 400);
+define( 'AGDP_IMG_MAX_WIDTH', 600);
+define( 'AGDP_IMG_MAX_HEIGHT', 800);
 define( 'AGDP_IMG_TINY_MAX_WIDTH', 48);
 define( 'AGDP_IMG_TINY_MAX_HEIGHT', 72);
 define( 'AGDP_IMG_SMALL_MAX_WIDTH', 128);
