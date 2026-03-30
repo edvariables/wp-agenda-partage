@@ -96,7 +96,7 @@ class Agdp_Comments {
 		if( isset($all['post__in'])
 		&& isset($all['post_id']) ){
 			unset($all['post_id']);
-			$all['orderby'] = array_merge( ['post_id', 'ASC'], $all['orderby'] );
+			$all['orderby'] = array_merge( ['post_id' => 'ASC'], $all['orderby'] );
 		}
 		
 		// var_dump($all);
