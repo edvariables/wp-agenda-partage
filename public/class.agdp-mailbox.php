@@ -1562,6 +1562,9 @@ class Agdp_Mailbox {
 					}
 					if( count($data) > 1 ){
 						if( $data[1] === 'DELETE' ){
+							
+							self::remove_image_alts( $item_id, $post_type, $data[0]);
+							
 							if( file_exists($data[0]) )
 								unlink($data[0]);
 							continue;
@@ -1573,8 +1576,12 @@ class Agdp_Mailbox {
 					$commentdata['comment_meta']['attachments'] = $attachments;
 				}
 				else {
-					$commentdata['post_meta']['attachments'] = $attachments;
-					update_post_meta( $item_id, 'attachments', $attachments );
+					if( ! $attachments ){
+						unset( $commentdata['post_meta']['attachments'] );
+						delete_post_meta( $item_id, 'attachments' );
+					}
+					else
+						update_post_meta( $item_id, 'attachments', $attachments );
 				}
 			}
 			unset($posted_data['attachments']);
@@ -1605,6 +1612,7 @@ class Agdp_Mailbox {
 						$files = $commentdata['comment_meta']['attachments'];
 					else
 						$files = get_comment_meta($is_update, 'attachments', false);
+					$images_alt = get_comment_meta($is_update, 'images_alt', true);
 				}
 				else {
 					if( $commentdata && isset($commentdata['post_meta']) && ! empty($commentdata['post_meta']['attachments'] ) ){
@@ -1613,9 +1621,10 @@ class Agdp_Mailbox {
 					}
 					else{
 						$files = get_post_meta($item_id, 'attachments', false);
-						debug_log(__FUNCTION__, "get_post_meta attachments");
+						// debug_log(__FUNCTION__, "get_post_meta attachments");
 					}
-					debug_log(__FUNCTION__, '$files', $files);
+					$images_alt = get_post_meta($item_id, 'images_alt', true);
+					// debug_log(__FUNCTION__, '$files', $files);
 				}
 				
 				if( ! $files )
@@ -1630,6 +1639,10 @@ class Agdp_Mailbox {
 			else
 				$files = [];
 			
+			if( ! isset($images_alt)
+			 || ! is_array($images_alt) )
+				$images_alt = [];
+			
 			foreach( $uploaded_files['attachment_add'] as $upfile ){
 				$file = path_join( $dest_dir, basename($upfile) );
 				$index = 1;
@@ -1638,15 +1651,92 @@ class Agdp_Mailbox {
 				}
 				rename( $upfile, $file );
 				$files[] = $file;
+
+				$image_alts = self::generate_image_alts( $file, $post_type );
+				if( $image_alts ){
+					$images_alt[ basename($file) ] = $image_alts;
+				}
 			}
 			
 			if( $post_type === 'comment' ){
 				if( isset($posted_data['attachment_add']) )
 					unset($posted_data['attachment_add']);
-				$commentdata['comment_meta']['attachments'] = $files;
+				if( ! $files )
+					unset($commentdata['comment_meta']['attachments']);
+				else {
+					$commentdata['comment_meta']['attachments'] = $files;
+					if( $images_alt )
+						$commentdata['comment_meta']['images_alt'] = $images_alt;
+				}
 			}
 			else {
-				update_post_meta( $item_id, 'attachments', $files );
+				if( ! $files ){
+					delete_post_meta( $item_id, 'attachments' );
+					delete_post_meta( $item_id, 'images_alt' );
+				}
+				else{
+					update_post_meta( $item_id, 'attachments', $files );
+					if( $images_alt )
+						update_post_meta( $item_id, 'images_alt', $images_alt );
+				}
+			}
+		}
+	}
+	
+	/*
+	 * generate_image_alts
+	 */
+	public static function generate_image_alts( $filename, $post_type ){ 
+		$image_alts = [];
+		
+		$filename_original = $filename;
+		
+		$filename = image_reduce($filename_original, AGDP_IMG_MAX_WIDTH, AGDP_IMG_MAX_HEIGHT, true );
+		if( $filename_original !== $filename )
+			$image_alts['normal'] = $filename;
+		
+		//Agdp_Event : tiny
+		if( $post_type === Agdp_Event::post_type ){
+			$filename = image_reduce($filename_original, AGDP_IMG_TINY_MAX_WIDTH, AGDP_IMG_TINY_MAX_HEIGHT, true );
+			if( $filename_original !== $filename )
+				$image_alts['tiny'] = $filename;
+		}
+			
+		return $image_alts;
+	}
+	
+	/*
+	 * remove_image_alts
+	 */
+	public static function remove_image_alts( $item_id, $post_type, $filename ){ 
+		if( $post_type === 'comment' ){
+			$images_alt = get_comment_meta($item_id, 'images_alt', true);
+		}
+		else {
+			$images_alt = get_post_meta($item_id, 'images_alt', true);
+		}
+		
+		if( ! isset($images_alt[ basename( $filename ) ]) )
+			return;
+		foreach( $images_alt[ basename( $filename ) ] as $image )
+			unlink( $image );
+		
+		unset( $images_alt[ basename( $filename ) ] );
+		
+		if( $post_type === 'comment' ){
+			if( ! $images_alt ){
+				delete_comment_meta( $item_id, 'images_alt' );
+			}
+			else{
+				update_comment_meta( $item_id, 'images_alt', $images_alt );
+			}
+		}
+		else {
+			if( ! $images_alt ){
+				delete_post_meta( $item_id, 'images_alt' );
+			}
+			else{
+				update_post_meta( $item_id, 'images_alt', $images_alt );
 			}
 		}
 	}

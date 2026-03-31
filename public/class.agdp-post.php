@@ -1499,6 +1499,7 @@ abstract class Agdp_Post {
 				$attachments = [ $attachments ];
 			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
 				$attachments = $attachments[0];
+			$images_alt = get_post_meta($post->ID, 'images_alt', true);
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;
@@ -1512,12 +1513,21 @@ abstract class Agdp_Post {
 					case 'jpeg':
 					case 'bmp':
 					case 'tiff':
+						if( $images_alt
+						&& isset($images_alt[ basename($attachment) ])
+						&& isset($images_alt[ basename($attachment) ]['normal'])
+						){
+							$image_alt = $images_alt[ basename($attachment) ]['normal'];
+							$url_alt = upload_file_url( $image_alt );
+						}
+						else
+							$url_alt = $url;
 						//Vérifie que l'image n'est pas déjà intégré dans le message
-						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
+						$pattern = sprintf('/\<img\s[^>]*src="(%s|%s)"/', preg_quote($url, '/'), preg_quote($url_alt, '/'));
 						// debug_log( __FUNCTION__, $url, $pattern, $post->post_content);
 						$matches = [];
 						if( ! preg_match( $pattern, $post->post_content, $matches ) )
-							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url);
+							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url_alt);
 						break;
 					case 'mp3' :
 						$file_action = 'Ecouter';
@@ -1537,8 +1547,52 @@ abstract class Agdp_Post {
 	}
 	
 	/**
+	 * Retourne les images parmi les attachments
+	 */
+	public static function get_images($post, $max_images = -1){
+		$images = [];
+		$attachments = get_post_meta($post->ID, 'attachments', true);
+		if($attachments){
+			if( is_string($attachments) )
+				$attachments = [ $attachments ];
+			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
+				$attachments = $attachments[0];
+			foreach($attachments as $attachment){
+				if( ! file_exists($attachment) )
+					continue;
+				
+				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
+				switch($extension){
+					case 'png':
+					case 'jpg':
+					case 'jpeg':
+					case 'bmp':
+					case 'tiff':
+						$url = upload_file_url( $attachment );
+						//Vérifie que l'image n'est pas déjà intégré dans le message
+						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
+						// debug_log( __FUNCTION__, $url, $pattern, $post->post_content);
+						$matches = [];
+						if( ! preg_match( $pattern, $post->post_content, $matches ) ){
+							$images[] = $attachment;
+							if( $max_images >= 0 && count( $images ) >= $max_images )
+								return $images;
+						}
+						break;
+					default:
+						continue 2;
+				}
+			}
+		}
+		return $images;
+	}
+	
+	/**
 	 * Affichage de l'image
 	 * TODO get_the_post_thumbnail()
+	 * Parameters
+	 * $post
+	 * $size = 'tiny|normal|small|original'
 	 */
 	public static function get_image($post, $size = 'tiny'){
 		if( is_string($size) ){
@@ -1560,38 +1614,21 @@ abstract class Agdp_Post {
 		else {
 			$width = '';
 		}
-		$attachments = get_post_meta($post->ID, 'attachments', true);
-		if($attachments){
-			if( is_string($attachments) )
-				$attachments = [ $attachments ];
-			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
-				$attachments = $attachments[0];
-			foreach($attachments as $attachment){
-				if( ! file_exists($attachment) )
-					continue;
-				
-				$extension = strtolower(pathinfo($attachment, PATHINFO_EXTENSION));
-				$url = upload_file_url( $attachment );
-				$file_action = 'Télécharger';
-				switch($extension){
-					case 'png':
-					case 'jpg':
-					case 'jpeg':
-					case 'bmp':
-					case 'tiff':
-						//Vérifie que l'image n'est pas déjà intégré dans le message
-						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
-						// debug_log( __FUNCTION__, $url, $pattern, $post->post_content);
-						$matches = [];
-						if( ! preg_match( $pattern, $post->post_content, $matches ) ){
-							$html = sprintf('<img src="%s" width="%dpx"/>', $url, $width);
-							return $html;
-						}
-						break;
-					default:
-						continue 2;
+		$images = self::get_images($post, 1);
+		foreach($images as $image){
+			if( $size !== 'original' ){
+				$images_alt = get_post_meta( $post->ID, 'images_alt', true );
+				if( $images_alt
+				&& isset($images_alt[ basename( $image ) ]) ){
+					$image_alts = $images_alt[ basename( $image ) ];
+					if( isset($image_alts[ $size ]) )
+						$image = $image_alts[ $size ];
 				}
 			}
+			$url = upload_file_url( $image );
+			
+			$html = sprintf('<img src="%s" width="%dpx"/>', $url, $width);
+			return $html;
 		}
 	}
 	
@@ -1603,6 +1640,8 @@ abstract class Agdp_Post {
 		
 		if( ! in_array( $post->post_type, self::$post_types ) )
 			return;
+		
+		$path = false;
 		
 		$attachments = get_post_meta($post_id, 'attachments', true);
 		
@@ -1616,8 +1655,24 @@ abstract class Agdp_Post {
 				if( ! file_exists($attachment) )
 					continue;
 				unlink($attachment);
+				if( ! $path )
+					$path = dirname($attachment);
 			}
 		}
+		
+		$images_alt = get_post_meta($post_id, 'images_alt', true);
+		if($images_alt){
+			foreach($images_alt as $image_alts){
+				foreach($image_alts as $image_alt){
+					if( ! file_exists($image_alt) )
+						continue;
+					unlink($image_alt);
+				}
+			}
+		}
+		
+		if( $path )
+			remove_empty_dir($path, true);
 	}
 	
 		

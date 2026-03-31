@@ -491,6 +491,9 @@ class Agdp_Comment {
 				$attachments = [ $attachments ];
 			elseif( is_array($attachments) && count($attachments) && is_array($attachments[0]) )
 				$attachments = $attachments[0];
+			
+			$images_alt = get_comment_meta($comment->comment_ID, 'images_alt', true);
+			
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;
@@ -504,12 +507,22 @@ class Agdp_Comment {
 					case 'jpeg':
 					case 'bmp':
 					case 'tiff':
+						if( $images_alt
+						&& isset($images_alt[ basename($attachment) ])
+						&& isset($images_alt[ basename($attachment) ]['normal'])
+						){
+							$image_alt = $images_alt[ basename($attachment) ]['normal'];
+							$url_alt = upload_file_url( $image_alt );
+						}
+						else
+							$url_alt = $url;
+						
 						//Vérifie que l'image n'est pas déjà intégré dans le message
-						$pattern = sprintf('/\<img\s[^>]*src="%s"/', preg_quote($url, '/'));
+						$pattern = sprintf('/\<img\s[^>]*src="(%s|%s)"/', preg_quote($url, '/'), preg_quote($url_alt, '/'));
 						// debug_log( __FUNCTION__, $url, $pattern, $comment->comment_content);
 						$matches = [];
 						if( ! preg_match( $pattern, $comment->comment_content, $matches ) )
-							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url);
+							$html .= sprintf('<li><a href="%s"><img src="%s"/></a></li>', $url, $url_alt);
 						break;
 					case 'mp3' :
 						$file_action = 'Ecouter';
@@ -804,7 +817,9 @@ class Agdp_Comment {
 	 * Supprime les fichiers attachés
 	 */
 	public static function on_delete_comment($comment_id, $comment) {
-
+		
+		$path = false;
+		
 		$attachments = get_comment_meta($comment_id, 'attachments', true);
 		
 		if($attachments){
@@ -816,9 +831,24 @@ class Agdp_Comment {
 			foreach($attachments as $attachment){
 				if( ! file_exists($attachment) )
 					continue;
+				if( ! $path )
+					$path = dirname($attachment);
 				unlink($attachment);
 			}
 		}
+		
+		$images_alt = get_comment_meta($comment_id, 'images_alt', true);
+		if($images_alt){
+			foreach($images_alt as $image_alts)
+				foreach($image_alts as $image_alt){
+					if( ! file_exists($image_alt) )
+						continue;
+					unlink($image_alt);
+				}
+		}
+		
+		if( $path )
+			remove_empty_dir($path, true);
 	}
 	
 	/**

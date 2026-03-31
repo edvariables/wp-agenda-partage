@@ -207,6 +207,7 @@ class Agdp_Mailbox_IMAP {
 			$filename = $attachment->file_path;
 			if ( ! file_exists( $filename ) )
 				continue;
+			
 			$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 			switch($extension){
 				case 'exe':
@@ -221,7 +222,7 @@ class Agdp_Mailbox_IMAP {
 					continue 2;
 			}
 			
-			$filename = image_reduce($filename, AGDP_IMG_MAX_WIDTH, AGDP_IMG_MAX_HEIGHT, false );
+			// $filename = image_reduce($filename, AGDP_IMG_MAX_WIDTH, AGDP_IMG_MAX_HEIGHT, true );
 			
 			chmod( $filename, 0644 );
 			

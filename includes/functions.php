@@ -97,7 +97,6 @@ function debug_log(...$messages){
 	file_put_contents(debug_log_file(), $data, FILE_APPEND);
 }
 
-
 /**
  * Delete a directory and all files in it
  */
@@ -117,6 +116,37 @@ function rrmdir($src) {
     }
     closedir($dir);
     rmdir($src);
+}
+
+/**
+ * Delete a directory if it's empty
+ */
+function remove_empty_dir($src, $remove_empty_parent = false) {
+    $dir = opendir($src);
+    if( is_dir_empty($src) ){
+		closedir($dir);
+		rmdir($src);
+		if( $remove_empty_parent )
+			remove_empty_dir(dirname($src), $remove_empty_parent);
+		return true;
+	}
+    closedir($dir);
+}
+
+/**
+ * Checks if a directory is empty
+ */
+function is_dir_empty($dir) {
+  if (!is_readable($dir)) return null; 
+  $handle = opendir($dir);
+  while (false !== ($entry = readdir($handle))) {
+    if ($entry !== '.' && $entry !== '..') { 
+      closedir($handle); // <-- always clean up! Close the directory stream
+      return false;
+    }
+  }
+  closedir($handle); // <-- always clean up! Close the directory stream
+  return true;
 }
 
 /**
@@ -279,6 +309,11 @@ function html_inner_body($html, $wrapper = 'message', $wrapper_class = false){
 
 /**
  * Retourne le fichier après en avoir réduit la taille
+ *
+ * Parameters :
+ * $filename
+ * $max_width, $max_height
+ * $new_file BOOL | STRING
  */
 function image_reduce($filename, $max_width = null, $max_height = null, $new_file = false){
 	if( $max_width === null )
@@ -360,10 +395,12 @@ function image_reduce($filename, $max_width = null, $max_height = null, $new_fil
 		return $filename;
 
 	if( $new_file ){
+		if( ! is_string($new_file) )
+			$new_file = sprintf( '%dx%d', $new_width, $new_height);
 		$new_file = sprintf('%s/%s-%s.%s'
 			, $path_parts['dirname']
 			, $path_parts['filename']
-			, sprintf( '%dx%d', $new_height, $new_width)
+			, $new_file
 			, $path_parts['extension']
 		);
 		if( file_exists($new_file) )
