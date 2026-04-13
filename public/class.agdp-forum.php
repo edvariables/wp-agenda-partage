@@ -1074,7 +1074,7 @@ FROM {$blog_prefix}comments comment
 WHERE comment.comment_post_ID = $page_id";
 		$results = $wpdb->get_results( $sql );
 		if( ! $results
-		|| $results[0]->counter === 0 )
+		|| $results[0]->counter == 0 )
 			return '';
 		$elapsed = date_diff_text( $results[0]->max_date, true );
 		return sprintf('(%d, %s)', $results[0]->counter, $elapsed);
