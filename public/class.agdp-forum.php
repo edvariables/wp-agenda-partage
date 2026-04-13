@@ -1056,7 +1056,8 @@ class Agdp_Forum extends Agdp_Page {
 			return $item_output;
 		
 		$data = self::get_forum_last_modifs( $item->object_id );
-		
+		if( $data )
+			$data = "<small>$data</small>";
 		$item_output = str_replace( '[forum]', $data, $item_output );
 		
 		return $item_output;
