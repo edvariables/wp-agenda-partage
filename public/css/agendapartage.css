@@ -611,3 +611,11 @@ article.covoiturage ul.attachments {
 .attachments_manager .attachment.deleted .tools .delete {
 	color: red;
 }
+
+
+.menu-item a > .forum-data {
+	font-size: smaller;
+}
+.menu-item .menu-item a > .forum-data {
+	margin-left: 2em;
+}

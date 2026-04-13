@@ -1049,15 +1049,14 @@ class Agdp_Forum extends Agdp_Page {
 
 	/**
 	 * on_walker_nav_menu_start_el
+	 * Remplace [forum] par le nbre de ocmmentaires et le délai de dernière modification
 	 */
 	public static function on_walker_nav_menu_start_el( $item_output, $item, $depth, $args ) {
 		if( $item->object !== 'page' 
 		|| strpos( $item_output, '[forum]' ) === false )
 			return $item_output;
 		
-		$data = self::get_forum_last_modifs( $item->object_id );
-		if( $data )
-			$data = "<small>$data</small>";
+		$data = self::get_menu_forum_last_modifs( $item->object_id );
 		$item_output = str_replace( '[forum]', $data, $item_output );
 		
 		return $item_output;
@@ -1066,7 +1065,7 @@ class Agdp_Forum extends Agdp_Page {
 	/**
 	 * get_forum_last_modifs
 	 */
-	public static function get_forum_last_modifs( $page_id ) {
+	private static function get_menu_forum_last_modifs( $page_id ) {
 	    global $wpdb;
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$sql = "SELECT MAX(comment_date) AS max_date, COUNT(comment_ID) AS counter
@@ -1076,8 +1075,16 @@ WHERE comment.comment_post_ID = $page_id";
 		if( ! $results
 		|| $results[0]->counter == 0 )
 			return '';
-		$elapsed = date_diff_text( $results[0]->max_date, true );
-		return sprintf('(%d, %s)', $results[0]->counter, $elapsed);
+			
+		$datetime = date_create_immutable_from_format( 'Y-m-d H:i:s', $results[0]->max_date, wp_timezone() );
+		$old_date = $datetime->getTimestamp();
+		$now = time();
+		$laps = dateDiff($now, $old_date);
+		if( $laps['day'] > 31 )
+			$elapsed = '';
+		else
+			$elapsed = date_diff_text( $results[0]->max_date, true );
+		return sprintf('<span class="forum-data">(%d%s%s)</span>', $results[0]->counter, $elapsed ? ', ' : '', $elapsed);
 	}
 	
 }
