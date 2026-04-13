@@ -1070,7 +1070,8 @@ class Agdp_Forum extends Agdp_Page {
 		$blog_prefix = $wpdb->get_blog_prefix();
 		$sql = "SELECT MAX(comment_date) AS max_date, COUNT(comment_ID) AS counter
 FROM {$blog_prefix}comments comment
-WHERE comment.comment_post_ID = $page_id";
+WHERE comment.comment_post_ID = $page_id
+AND comment_approved = '1'";
 		$results = $wpdb->get_results( $sql );
 		if( ! $results
 		|| $results[0]->counter == 0 )
