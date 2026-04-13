@@ -1,0 +1,323 @@
+/**
+ * Feuille de styles pour Agdp mode Admin, edit Report
+ */
+ 
+#agdp_report-variables .cursor_pointer {
+	cursor: wait;
+}
+#agdp_report-variables label[for="sql_variables"] {
+	font-weight: bold;
+	text-decoration: underline;
+}
+#agdp_report-variables .sql_variable > label:first-child {
+	min-width: 12em;
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 8px;
+	font-family: "Courier New", monospace;
+}
+#agdp_report-variables .sql_variable > label:not(:first-child) {
+	margin-right: 9px;
+}
+#agdp_report-variables .sql_variable {
+	margin-bottom: 0.6em;
+}
+#agdp_report-variables .sql_variable .var_edit {
+	margin-right: 0.6em;
+	opacity: 50%;
+}
+#agdp_report-variables .sql_variable .var_edit:hover {
+	opacity: inherit;
+}
+#agdp_report-variables .sql_variable .input-helper {
+	margin-left: 0.3em;
+	opacity: 80%;
+}
+#agdp_report-variables .sql_variable .var_edit,
+#agdp_report-variables .sql_variable .input-helper {
+  position: relative;
+  top: 3px;
+}
+
+#agdp_report-variables .sql_variable input[type="number"] {
+	width: 5em;
+}
+
+#agdp_report-variables .sql_variable textarea {
+	width: 95%;
+}
+#agdp_report-variables .sql_variable[var_sql_source] {
+	margin-top: 0em;
+	border-top: solid 1px burlywood;
+	padding-top: 1em;
+}
+#agdp_report-variables .sql_variable[var_sql_source] ~ .sql_variable {
+	margin-top: 0.6em;
+	border-top: none;
+	padding-top: 0px;
+}
+
+#agdp_report-variables .var_editor {
+	border: gray 1px solid;
+	margin: 0.5em;
+	padding: 0.5em;
+	display: inline-block;
+}
+#agdp_report-variables .var_editor label,
+.ui-dialog-content.var_editor label {
+	min-width: 4em;
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 8px;
+}
+#agdp_report-variables .var_editor .learn-more,
+.ui-dialog-content.var_editor .learn-more {
+	font-family: "Courier New", monospace;
+	padding-left: 5em;
+	font-size: smaller;
+}
+.ui-dialog.agdpreport-variable .ui-dialog-titlebar  {
+	font-family: "Lucida Console", "Courier New", monospace;
+}
+
+#agdp_report-render textarea {
+  resize: both;
+}
+#agdp_report-render .hide_during_loading.loading {
+  display: none;
+}
+#agdp_report-inputs .sql-helper-variables {
+	padding-top: 0px;
+}
+#agdp_report-inputs .sql-helper-variables > ul {
+	margin-top: 0px;
+}
+#agdp_report-inputs .sql-helper-tables {
+	margin-top: 0px;
+	padding-top: 0px;
+	font-family: "Courier New", monospace;
+}
+#agdp_report-inputs .sql-helper-tables li {
+	display: inline-block;
+	padding-right: 1em;
+	vertical-align: top;
+}
+#agdp_report-inputs .sql-helper-tables a {
+	text-decoration: none;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger > span {
+	display: inline-block;
+	min-width: 2em;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger {
+	display: inline-block;
+	min-width: 2em;
+	opacity: 50%;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger:hover {
+	opacity: inherit;
+}
+#agdp_report-inputs .sql-helper-tables li .toggle-trigger.active + .toggle-container {
+	background-color: lightgray;
+}
+
+/** render **/
+#agdp_report-render .report_toolbar_item {
+	float: right;
+	top: -3em;
+	position: relative;
+	height: 0px;
+}
+#agdp_report-render .report_footer_toolbar.report_toolbar_item {
+	top: 1em;
+}
+#agdp_report-render .report_footer_toolbar.report_toolbar_item label {
+	min-width: inherit;
+}
+
+#agdp_report-render .sql_prepared, .agdpreport.error .sql_prepared {
+	white-space: pre;
+	font-family: "Courier New", monospace;
+	background-color: lightgray;
+	padding: 1em;
+}
+
+#agdp_report-render .agdpreport td {
+	max-height: 8em;
+}
+#agdp_report-render .agdp-metabox-row.report_style_terms {
+	float: right;
+}
+#agdp_report-render .agdp-metabox-row.report_style_terms > div a {
+	opacity: 50%;
+}
+#agdp_report-render .agdp-metabox-row.report_style_terms > div:hover a {
+	opacity: inherit;
+}
+#agdp_report-render .agdp-metabox-row.report_style_terms label {
+	cursor: pointer;
+}
+#agdp_report-render .report_refresh > a {
+  padding-top: 7px;
+  padding-right: 3px;
+  display: inline-block;
+  height: 26px;
+  position: relative;
+  top: -10px;
+}
+
+
+/* #agdp_report-render > .postbox-header {
+	padding-left: 2em;
+} */
+
+#agdp_report-render-menu {
+	text-align: left;
+	padding: 0px 0px 5px 6px;
+	margin: unset;
+	/* float: left; */
+	top: 3px;/* -34px; */
+	position: relative;
+}
+#agdp_report-render-menu + h2.hndle{
+	margin-left: -1em;
+}
+#agdp_report-render-menu.active {
+	text-align: left;
+	position: absolute;
+	background-color: white;
+	border: solid gray 1px;
+	border-radius: 3px;
+	z-index: 1;
+	top: 6px;
+	left: -1px;
+}
+#agdp_report-render-menu > a.toggler {
+	text-decoration: none; 
+	width: 2em;
+	display: inline-block;
+	cursor: pointer;
+}
+#agdp_report-render-menu.active > a.toggler {
+	margin-bottom: 3px;
+	width: 100%;
+}
+#agdp_report-render-menu .report_menu_item {
+	display: none;
+}
+#agdp_report-render-menu.active .report_menu_item {
+	display: block;
+	margin-left: 4px;
+}
+#agdp_report-render-menu.active .report_menu_item.agdp-metabox-subfields {
+	margin-left: 1em;
+}
+#agdp_report-render-menu.active a.report_menu_item  {
+	padding-top: 6px;
+}
+#agdp_report-render-menu.active a {
+	cursor: pointer;
+}
+#agdp_report-render-menu.active .report_menu_item select  {
+	margin-top: 4px;
+}
+
+/* table.agdpreport */
+#agdp_report-render .agdpreport thead > tr.report_table_designer > th input {
+	width: 100%;
+	min-width: 4em;
+}
+#agdp_report-render .agdpreport tr.report_table_designer > *,
+#agdp_report-render .agdpreport caption .report_table_designer {
+	font-family: Courier; 
+	background-color: goldenrod;
+	border: solid 1px;
+	border-color: inherit;
+}
+#agdp_report-render .agdpreport > table > tbody > tr.report_table_designer > * {
+	background-color: #d4ce74;
+}
+#agdp_report-render .agdpreport tr.report_table_designer th {
+	font-weight: normal;
+}
+
+#agdp_report-render .agdpreport > table > caption
+, #agdp_report-render .agdpreport > table > thead
+, #agdp_report-render .agdpreport > table > tfoot  {
+  border-width: 2px;
+  border-style: dotted;
+}
+#agdp_report-render .agdpreport > table > tbody  {
+  border-width: 2px;
+  border-style: dashed;
+}
+#agdp_report-render .agdpreport > table > caption  {
+  border-bottom: none;
+}
+#agdp_report-render .agdpreport > table > caption.error  {
+	white-space: pre;
+	text-align: left;
+}
+#agdp_report-render .agdpreport > table > * > caption.report_table_designer {
+	margin-top: 8px;
+	padding-left: 3px;
+	font-family: Courier;
+	font-style: italic;
+	background-color: #f4fce2;
+	width: 100%;
+	text-align: left;
+	width: 150%;
+	opacity: 85%;
+}
+
+#agdp_report-render .agdpreport tr:not(.report_table_designer) > * {
+	padding-right: 1em;
+}
+#agdp_report-render .agdpreport tr .column-actions {
+	opacity: 50%;
+	float: right;
+	top: -5px;
+	position: relative;
+	right: -14px;
+	white-space: nowrap;
+}
+#agdp_report-render .agdpreport tr column-actions:hover {
+	opacity: 100%;
+}
+#agdp_report-render .agdpreport thead th:first-of-type a.move_column_left,
+#agdp_report-render .agdpreport thead th:last-of-type a.move_column_right {
+	display: none;
+}
+#agdp_report-render .agdpreport > table {
+  min-width: 99%;
+}
+#agdp_report-render .agdpreport > table.error th.hidden,
+#agdp_report-render .agdpreport > table.error td.hidden {
+	display: table-cell;
+}
+#agdp_report-render .agdpreport > table.error th.hidden a.column-action {
+	color: orange;
+}
+#agdp_report-render .agdpreport > table.error > tbody > tr.report_table_designer > td {
+	background-color: red;
+}
+#agdp_report-render .agdpreport > table > tfoot > tr.report_table_designer {
+  text-align: left;
+}
+#agdp_report-render .report_table_designer input.column_class{
+	max-width: 60%;
+}
+#agdp_report-render .toggle-trigger:not(.dashicons-before) {
+  background-size: 12px;
+}
+#agdp_report-render .agdpreport tr.report_table_designer textarea {
+	font-family: "Lucida Console", "Courier New", monospace;
+	font-size: 90%;
+	width: 100%;
+}
+#agdp_report-render .sql_prepared .close-box {
+	float: right;
+	position: relative;
+	top: -1em;
+	right: -1em;
+}
