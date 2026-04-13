@@ -28,6 +28,7 @@ class Agdp_Admin_Menu {
 		add_action('wp_dashboard_setup', array(__CLASS__, 'init_dashboard_widgets') );
 
 		add_action( 'admin_bar_menu', array(__CLASS__, 'on_wp_admin_bar_posts_menu'), 64 );
+
 	}
 
 	/**
@@ -386,6 +387,9 @@ class Agdp_Admin_Menu {
 		echo Agdp::blog_simple_diagram_html();
 	}
 
+	/**
+	 * remove_dashboard_widgets
+	 */
 	// TODO parametrage initiale pour chaque utilisateur
 	public static function remove_dashboard_widgets() {
 	    global $wp_meta_boxes, $current_user;

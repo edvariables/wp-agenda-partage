@@ -78,6 +78,8 @@ class Agdp_Forum extends Agdp_Page {
 		// add_filter('wp_get_nav_menu_items', array(__CLASS__, 'on_wp_get_nav_menu_items'), 10, 3);
 		
 		add_filter('comments_array', array(__CLASS__, 'on_comments_array'), 10, 2);
+		
+		add_filter( 'walker_nav_menu_start_el', array(__CLASS__, 'on_walker_nav_menu_start_el'), 10, 4 );
 	}
 	/*
 	 **/
@@ -1043,6 +1045,38 @@ class Agdp_Forum extends Agdp_Page {
 		}
 		
 		return $html;
+	}
+
+	/**
+	 * on_walker_nav_menu_start_el
+	 */
+	public static function on_walker_nav_menu_start_el( $item_output, $item, $depth, $args ) {
+		if( $item->object !== 'page' 
+		|| strpos( $item_output, '[forum]' ) === false )
+			return $item_output;
+		
+		$data = self::get_forum_last_modifs( $item->object_id );
+		
+		$item_output = str_replace( '[forum]', $data, $item_output );
+		
+		return $item_output;
+	}
+
+	/**
+	 * get_forum_last_modifs
+	 */
+	public static function get_forum_last_modifs( $page_id ) {
+	    global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$sql = "SELECT MAX(comment_date) AS max_date, COUNT(comment_ID) AS counter
+FROM {$blog_prefix}comments comment
+WHERE comment.comment_post_ID = $page_id";
+		$results = $wpdb->get_results( $sql );
+		if( ! $results
+		|| $results[0]->counter === 0 )
+			return '';
+		$elapsed = date_diff_text( $results[0]->max_date, true );
+		return sprintf('(%d, %s)', $results[0]->counter, $elapsed);
 	}
 	
 }
