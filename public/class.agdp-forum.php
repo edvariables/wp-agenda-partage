@@ -26,6 +26,8 @@ class Agdp_Forum extends Agdp_Page {
 	
 	public static $current_forum;
 	public static $current_forum_rights;
+	
+	private static $_cache_forums_comments;
 		
 		
 	public static function init() {
@@ -1049,7 +1051,7 @@ class Agdp_Forum extends Agdp_Page {
 
 	/**
 	 * on_walker_nav_menu_start_el
-	 * Remplace [forum] par le nbre de ocmmentaires et le délai de dernière modification
+	 * Remplace [forum] par le nbre de commentaires et le délai depuis la dernière modification
 	 */
 	public static function on_walker_nav_menu_start_el( $item_output, $item, $depth, $args ) {
 		if( $item->object !== 'page' 
@@ -1064,28 +1066,49 @@ class Agdp_Forum extends Agdp_Page {
 
 	/**
 	 * get_forum_last_modifs
+	 * Compte les commentaires et la date maxi
 	 */
 	private static function get_menu_forum_last_modifs( $page_id ) {
-	    global $wpdb;
-		$blog_prefix = $wpdb->get_blog_prefix();
-		$sql = "SELECT MAX(comment_date) AS max_date, COUNT(comment_ID) AS counter
-FROM {$blog_prefix}comments comment
-WHERE comment.comment_post_ID = $page_id
-AND comment_approved = '1'";
-		$results = $wpdb->get_results( $sql );
-		if( ! $results
-		|| $results[0]->counter == 0 )
+	    $forums_comments = self::get_cache_forums_comments();
+		if( ! $forums_comments
+		 || empty( $forums_comments[ $page_id . '' ] ) )
 			return '';
-			
-		$datetime = date_create_immutable_from_format( 'Y-m-d H:i:s', $results[0]->max_date, wp_timezone() );
+		$forum_comments = $forums_comments[ $page_id . '' ];
+		$datetime = date_create_immutable_from_format( 'Y-m-d H:i:s', $forum_comments->max_date, wp_timezone() );
 		$old_date = $datetime->getTimestamp();
 		$now = time();
 		$laps = dateDiff($now, $old_date);
 		if( $laps['day'] > 31 )
 			$elapsed = '';
 		else
-			$elapsed = date_diff_text( $results[0]->max_date, true );
-		return sprintf('<span class="forum-data">(%d%s%s)</span>', $results[0]->counter, $elapsed ? ', ' : '', $elapsed);
+			$elapsed = date_diff_text( $forum_comments->max_date, true );
+		return sprintf('<span class="forum-data">(%d%s%s)</span>', $forum_comments->counter, $elapsed ? ', ' : '', $elapsed);
+	}
+
+	/**
+	 * get_cache_forums_comments
+	 * Compte les commentaires de tous les forums
+	 */
+	private static function get_cache_forums_comments( ) {
+		if( is_array(self::$_cache_forums_comments) )
+			return self::$_cache_forums_comments;
+		
+	    global $wpdb;
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$sql = "SELECT comment_post_ID, MAX(comment_date) AS max_date, COUNT(comment_ID) AS counter
+FROM {$blog_prefix}comments comment
+WHERE comment_approved = '1'
+GROUP BY comment_post_ID";
+		
+		$results = $wpdb->get_results( $sql );
+		if( ! $results )
+			return self::$_cache_forums_comments = [];
+		
+		$forums_comments = [];
+		foreach( $results as $result )
+			if( $results[0]->counter > 0 )
+				$forums_comments[ $result->comment_post_ID . '' ] = $result;
+		return self::$_cache_forums_comments = $forums_comments;
 	}
 	
 }
