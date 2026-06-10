@@ -11,6 +11,8 @@ class Agdp_Events extends Agdp_Posts {
 	const page_id_option = Agdp_Event::posts_page_option;
 	const newsletter_diffusion_term_id = 'agdpevents_nl_diffusion_term_id';
 	
+	protected static $default_posts_per_page = 99;
+	
 	const icon = 'calendar-alt';
 	
 	private static $initiated = false;
