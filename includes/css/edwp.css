@@ -1,0 +1,51 @@
+
+.edicon {
+	background-image: url(/wp-content/plugins/agenda-partage/includes/css/edicon.png);
+	background-repeat: no-repeat;
+    padding-left: 19px;
+}
+.ed-blank.edicon { background-image: none; }
+
+.ed-Var.edicon, .ed-Var .edicon
+, .ed-App.ed-App, .ed-App .edicon { background-position: -0px 1px; }
+.ed-Type.edicon, .ed-Type .edicon { background-position: -0px -21px; }
+.ed-LibVar.edicon, .ed-LibVar .edicon
+, .ed-VarName.edicon, .ed-VarName .edicon { background-position: -0px -43px; }
+.ed-Name.edicon, .ed-Name .edicon { background-position: -0px -65px; }
+.ed-Add.edicon, .ed-Add .edicon { background-position: -0px -87px; }
+.ed-ReadOnly.edicon, .ed-ReadOnly .edicon { background-position: -0px -109px; }
+.ed-Script.edicon, .ed-Script .edicon { background-position: -0px -131px; }
+.ed-DataTable.edicon, .ed-DataTable .edicon { background-position: -0px -153px; }
+.ed-Plus.edicon, .ed-Plus .edicon { background-position: -22px 1px; }
+.ed-Visual.edicon, .ed-Visual .edicon { background-position: -22px -21px; }
+.ed-Code.edicon, .ed-Code .edicon { background-position: -22px -43px; }
+.ed-EDV.edicon, .ed-EDV .edicon { background-position: -22px -65px; }
+.ed-Button.edicon, .ed-Button .edicon { background-position: -22px -87px; }
+.ed-VisualTrue.edicon, .ed-VisualTrue .edicon { background-position: -22px -109px; }
+.ed-Web.edicon, .ed-Web .edicon { background-position: -22px -131px; }
+.ed-Print.edicon, .ed-Print .edicon { background-position: -22px -153px; }
+.ed-Component.edicon, .ed-Component .edicon { background-position: -44px 1px; }
+.ed-File.edicon, .ed-File .edicon { background-position: -44px -21px; }
+.ed-Password.edicon, .ed-Password .edicon { background-position: -44px -45px; }
+.ed-Object.edicon, .ed-Object .edicon { background-position: -44px -65px; }
+.ed-Array.edicon, .ed-Array .edicon { background-position: -44px -87px; }
+.ed-DateTime.edicon, .ed-DateTime .edicon { background-position: -44px -109px; }
+.ed-Image.edicon, .ed-Image .edicon { background-position: -44px -131px; }
+.ed-DomSys.edicon, .ed-DomSys .edicon { background-position: -44px -153px; }
+.ed-Dom.edicon, .ed-Dom .edicon
+, .ed-Domain.edicon, .ed-Domain .edicon { background-position: -66px 1px; }
+.ed-Select.edicon, .ed-Select .edicon { background-position: -66px -21px; }
+.ed-Link.edicon, .ed-Link .edicon { background-position: -66px -43px; }
+.ed-Button.edicon, .ed-Button .edicon { background-position: -66px -65px; }
+.ed-False.edicon, .ed-False .edicon
+, .ed-Bool.edicon, .ed-Bool .edicon { background-position: -66px -87px; }
+.ed-True.edicon, .ed-True .edicon { background-position: -66px -109px; }
+.ed-Function.edicon, .ed-Function .edicon { background-position: -66px -131px; }
+.ed-Null.edicon, .ed-Null .edicon { background-position: -66px -153px; }
+.ed-Num.edicon, .ed-Num .edicon { background-position: -88px 1px; }
+.ed-String.edicon, .ed-String .edicon
+, .ed-Text.edicon, .ed-Text .edicon { background-position: -88px -21px; }
+.ed-Color.edicon, .ed-Color .edicon { background-position: -88px -43px; }
+.ed-Client.edicon, .ed-Client .edicon { background-position: -88px -65px; }
+.ed-User.edicon, .ed-User .edicon { background-position: -88px -87px; }
+.ed-Minus.edicon, .ed-Minus .edicon { background-position: -88px -109px; }

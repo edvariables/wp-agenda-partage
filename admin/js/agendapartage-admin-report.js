@@ -1,0 +1,1805 @@
+const AGDP_BLOG_PREFIX = '@.';
+
+jQuery( function( $ ) {
+	
+	/**
+	 * agdpreport-edit 
+	 * 
+	 */
+		
+	var input_types = {
+		'text' : { 'label': 'Texte', 'img': 'Text' },
+		'bool' : { 'label': 'Case à cocher', 'img': 'Bool' },
+		'integer' : { 'label': 'Nombre entier', 'img': 'Num' },
+		'float' : { 'label': 'Nombre réel', 'img': 'Num' },
+		'range' : { 'label': 'Entier dans interval', 'img': 'Num' },
+		'date' : { 'label': 'Date', 'img': 'DateTime' },
+		'time' : { 'label': 'Heure', 'img': 'DateTime' },
+		'datetime' : { 'label': 'Date et heure', 'img': 'DateTime' },
+		'select' : { 'label': 'Sélection', 'img': 'Select' },
+		'radio' : { 'label': 'Cases d\'options', 'img': 'Select' },
+		'checkboxes' : { 'label': 'Options multiples', 'img': 'Bool' }, 
+		'password' : { 'label': 'Mot de passe', 'img': 'Password' },
+		'email' : { 'label': 'E-mail', 'img': 'Text' },
+		'longtext' : { 'label': 'Texte long', 'img': 'Text' },
+		'color' : { 'label': 'Couleur', 'img': 'Color' },
+		'tel' : { 'label': 'Téléphone', 'img': 'Text' },
+		'post' : { 'label': 'Article', 'img': 'Visual' },
+		'page' : { 'label': 'Page', 'img': 'Visual' },
+		'forum' : { 'label': 'Forum', 'img': 'Visual' },
+		'newsletter' : { 'label': 'Lettre-info', 'img': 'Visual' },
+		'report' : { 'label': 'Rapport', 'img': 'Visual' },
+		'report_sql' : { 'label': 'Sous-requête SQL', 'img': 'DataTable' },
+		'field' : { 'label': 'Champ de requête', 'img': 'VarName' },
+		'table' : { 'label': 'Table de requête', 'img': 'VarName' },
+		'column' : { 'label': 'Colonne de table de requête', 'img': 'VarName' },
+		'asc_desc' : { 'label': 'Ordre de tri', 'img': 'Selection' },
+	};
+	var input_options_types = ['select', 'radio', 'checkboxes', 'range', 'field', 'table'];
+	
+	var variable_options = ['type', 'options', 'is_private', 'sql_source'];
+	
+	var css_pseudo_classes = ['active', 'any-link', 'auto-fill', 'checked', 'default', 'defined', 'dir', 'disabled', 'empty', 'enabled', 'first', 'first-child', 'first-of-type', 'focus', 'focus-visible', 'focus-within', 'fullscreen', 'has', 'hover', 'in-range', 'indeterminate', 'invalid', 'is', 'lang', 'last-child', 'last-of-type', 'left', 'link', 'modal', 'not', 'nth-child', 'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-child', 'only-of-type', 'optional', 'out-of-range', 'placeholder-shown', 'popover-open', 'read-only', 'read-write', 'required', 'right', 'root', 'scope', 'state', 'target', 'user-invalid', 'user-valid', 'valid', 'visited', 'where'];
+	
+	$( document ).ready(function() {
+						
+		//Init inputs
+		$('#agdp_report-inputs').each(function(e){
+			var $this = $(this);
+			var $sql = $this.find('textarea#sql');
+			var $variables = $('#agdp_report-variables textarea#sql_variables');
+			
+			//Liste de tables
+			$this.on('click', '.sql-helper-tables a', function(e){
+					$sql.get(0).insertAtCaret( $(this).text() );
+				})
+				// .after($('<span class="dashicons-before dashicons-edit"></span>')
+			;
+			//Liste de colonnes
+			$this.on('click', '.table_columns li', function(e){
+				$sql.get(0).insertAtCaret( $(this).text() );
+			});
+			
+		});
+		
+		/********
+		 * variables
+		 **/
+		$('#agdp_report-variables').each(function(e){
+			var $this = $(this);
+			var $inputs = $('#post-body');
+			var $sql = $inputs.find('textarea#sql');
+			var $report_css = $inputs.find('textarea#report_css');
+			var $sql_before_render = $inputs.find('textarea#sql_before_render');
+			var $variables = $this.find('textarea#sql_variables');
+			
+			//on change des sql et css, recalcule les variables
+			$inputs.on('change'
+				, 'textarea#sql, textarea#sql_before_render, textarea#report_css'
+				, refresh_variables);
+			
+			//Affiche les variables
+			refresh_variables.call($sql.get(0), e);
+			
+			//Sauvegarde des variables vers le textarea
+			$this.on('change'
+				, '.var_value', save_vars_values);
+				
+			function save_vars_values(){
+				var var_values = get_variables_values( $variables );
+				$variables.text( JSON.stringify( var_values ) );
+			}
+		
+			//Editeur d'une variable
+			function edit_variable(e){
+				var $input = $(this).parents('.sql_variable:first').find('.var_value:first');
+				var variable = $input.attr('var_name');
+				var var_type = $input.attr('var_type');
+				var var_options = $input.attr('var_options');
+				var $editor = $('.var_editor[var_name="' + variable + '"]:first');
+				if( $editor.length === 0 ){
+					$editor = $('<div class="var_editor"></div>')
+						.attr('var_name', variable)
+					;
+				}
+				else {
+					$editor.empty();
+				}
+				
+				// Selecteur de type
+				var $type = $('<select/>')
+					.appendTo(
+						$('<div class="var_type"><label>Type</label></div>')
+							.appendTo($editor)
+					)
+					.on('change', function(e){
+						$input
+							.attr('var_type', var_type = this.value)
+							.trigger('change')
+						;
+						$options.parent().toggle( input_options_types.includes(this.value) );
+						refresh_variables.call( this );
+					})
+				;
+				for( var type in input_types){
+					var label = input_types[type]['label'];
+					var img = input_types[type]['img'];
+					$type.append('<option value="' + type + '"'
+							+ (var_type == type ? ' selected' : '') + '>'
+							+ '<span class="edwp ed-' + img + '"></span>'//TODO
+							+ label
+						+ '</option>')
+					;
+				}
+				
+				// Options selon le type
+				var option_name = 'options';
+				var helper;
+				var rows = 3;
+				switch( var_type ){
+				case 'range' :
+					rows = 2;
+					helper = '1ère ligne : mini'
+							+ '<br>2nde ligne : maxi'
+							+ '<br>ou une seule ligne : le maxi';
+					break;
+				case 'report_sql' :
+					helper = 'Pour une inclusion dans un IN,'
+						+ '<br>ajoutez le format %IN à la variable.';
+					break;
+				case 'asc_desc':
+					var_options = '';
+					break;
+				default :
+					if( input_options_types.includes(var_type) ){
+						helper = 'Un élément par ligne.'
+								+ '<br>Séparez les valeurs des labels par <code>:</code>';
+					}
+				}
+				
+				// Options
+				var $div_options = $('<div class="var_options"><label>Options</label></div>')
+							.appendTo($editor)
+							.toggle( input_options_types.includes(var_type) );
+				var $options = $('<textarea rows="' + rows + '" spellcheck="false""></textarea>')
+					.attr('option_name', option_name)
+					.appendTo( $div_options )
+					.text(var_options)
+					.on('change', function(e){
+						var option_name = this.getAttribute('option_name');
+						$input
+							.attr('var_' + option_name, this.value)
+							.trigger('change')
+						;
+						refresh_variables.call( this );
+					})
+				;
+				if( helper )
+					$editor.append('<div class="learn-more">' + helper + '</div>');
+				
+				// Options de variables
+				$div_options = $('<div></div>')
+							.appendTo($editor);
+				
+				// for( var i in variable_options ){
+					// if( v = $value.attr('var_' + variable_options[i]) )
+						// data[variable_options[i]] = v;
+					// else if( data[variable_options[i]] !== undefined )
+						// data[variable_options[i]] = undefined;
+				// }
+				//Variable privée
+				option_name = 'is_private';
+				var option_label = 'Variable privée';
+				var option_default_value = 0;
+				var option_value = $input.attr('var_' + option_name);
+				if( option_value === undefined )
+					option_value = option_default_value;
+				else if( option_value === '0' )
+					option_value = 0;
+				var $label = $('<label>' + option_label + '</label>')
+					.attr('title', "La valeur de cette variable ne peut pas être affectée en paramètre du rapport (shortcode ou url).")
+					.appendTo( $div_options );
+				var $option = $('<input type="checkbox">')
+					.attr('option_name', option_name)
+					.prependTo( $label )
+					.prop( "checked", !! option_value)
+					.on('change', function(e){
+						var option_name = this.getAttribute('option_name');
+						var $this = $(this);
+						var value;
+						if( $this.is('[type="checkbox"]') )
+							value = this.checked ? 1 : 0;
+						else
+							value = $this.val();
+						if( value === undefined )
+							value = false;
+						$input
+							.attr('var_' + option_name, value)
+							.trigger('change')
+						;
+						refresh_variables.call( this );
+					})
+				;
+				
+				$editor.dialog({
+					'title': ':' + variable,
+					'close': function(e){ $editor.remove(); },
+				})
+					.dialog( "widget" )
+						.addClass("agdpreport-variable")
+						.find('.ui-dialog-title:first')
+							.prepend( edicon( var_type ) )
+				;
+				
+				return false;
+			}
+			$this.on('click', '.var_edit', edit_variable);
+
+			//refresh_variables
+			function refresh_variables(){
+				var $this = $(this);
+				if( $this.is('.var_editor :input') ){
+					var $editor = $this.parents('.var_editor:first');
+					var current_variable = $editor.attr('var_name');
+				}
+				var var_source_flags = {
+					'report_css': "[* ** flag_report_css * **]",
+					'sql_before_render': "[* ** flag_sql_before_render * **]",
+				};
+				var sql = $sql.val()
+				 + "\n"
+				 + var_source_flags['report_css'] + "\n"
+				 + $report_css.val()
+				 + "\n"
+				 + var_source_flags['sql_before_render'] + "\n"
+				 + $sql_before_render.val()
+				 ;
+				
+				//comments
+				var pattern = "(\\/\\*[\s\S]+\\*\\/)"; 
+				sql = sql.replaceAll( new RegExp(pattern, "g"), ' ' );
+				
+				//strings
+				pattern = '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/';//"\"([^\"]+)\""; //TODO simple quote
+				sql = sql.replaceAll( new RegExp(pattern, "sg"), '""' );
+				
+				// position des flags
+				var var_source_flag_pos = [];
+				for(var var_source in var_source_flags){
+					var_source_flag_pos[var_source] = sql.indexOf( var_source_flags[var_source] );
+					if( var_source_flag_pos[var_source] === -1 ) var_source_flag_pos[var_source] = sql.length;
+				}
+				
+				//Valeurs actuelles des variables
+				var var_values = get_input_jso.call( $variables );
+				var var_values_saved = var_values;
+				
+				//container
+				$container = $variables.nextAll('.sql_variables_wrap:first');
+					if( $container.length === 0 )
+						$container = $('<div class="sql_variables_wrap"></div>').appendTo( $variables.parent() );
+					else
+						$container.html('');
+					
+				//Variables présentes dans la requête
+				var allowed_format = '(?:[1-9][0-9]*[$])?[-+0-9]*(?: |0|\'.)?[-+0-9]*(?:\.[0-9]+)?';
+				pattern = "\(?<!\\\\):([a-zA-Z_][a-zA-Z0-9_]*)(%("+allowed_format+")?[sdfFiIKJ][NLRT]?)?";
+				var matches = sql.matchAll( new RegExp(pattern, "g") );
+				if( matches )
+					matches = matches.toArray();
+				if( matches && matches.length > 0 ){
+					var variables = {};
+					var index = 0;
+					for(var i in matches){
+						var variable = matches[i][1];
+						if( ! variables[variable] ){
+							if( variables[variable] === undefined )
+								variables[variable] = {};
+							var value = var_values[variable];//get_post_meta( $report_id, $meta_key, true );
+							if( typeof value === 'object' )
+								variables[variable] = value;
+							if( matches[i][2] )
+								variables[variable]['format'] = matches[i][2];
+							
+							//sql_source en fonction de la position
+							for(var var_source in var_source_flags){
+								if( var_source_flag_pos[var_source] < sql.indexOf( ':' + variable ) ){
+									variables[variable]['sql_source'] = var_source;
+									variables[variable]['is_private'] = 1;
+									break;
+								}
+							}
+							if( variables[variable]['sql_source'] === 'report_css'
+							&& css_pseudo_classes.indexOf( variable ) >= 0 ){
+								variables[variable] = undefined;
+							}
+							
+							delete var_values_saved[variable] ;
+						}
+					}
+					
+					//Affichage des variables
+					for(var variable in variables){
+						if( variables[variable] === undefined )
+							continue;
+						var value, type, options;
+						if( variables[variable] ){
+							value = variables[variable]['value'];
+							type = variables[variable]['type'];
+							if( options = variables[variable]['options'] )
+								options = options.split('\n');
+						}
+						else {
+							value = type = options = undefined;
+						}
+						if( options === undefined )
+							options = [];
+						//create input
+						var $input;
+						switch(type){
+							case 'table' :
+								if( ! options || options.length === 0 )
+									options = ['posts', 'postmeta', 'comments', 'commentmeta', 'terms', 'termmeta', 'users', 'usermeta', ''];
+							case 'field' :
+							case 'column' :
+								$input = $('<select></select>');
+								if( ! options || options.length === 0 )
+									options = get_sql_columns;
+								
+								$input = add_input_options($input, options, variable, value);
+								break;
+							case 'select' :
+								$input = $('<select></select>');
+								$input = add_input_options($input, options, variable, value);
+								break;
+							case 'bool' :
+							case 'boolean' :
+							case 'checkbox' :
+								$input = $('<input type="checkbox">')
+									.prop( "checked", value );
+								break;
+							case 'radio' :
+								$input = $('<input type="radio">');
+								$input = add_input_options($input, options, variable, value);
+								break;
+							case 'checkboxes' :
+								if( value && typeof value === "string" )
+									value = value.split('\n');
+								$input = $('<input type="checkbox">');
+								$input = add_input_options($input, options, variable, value);
+								break;
+							case 'integer' :
+							case 'number' :
+								$input = $('<input type="number">')
+									.val( value );
+								break;
+							case 'decimal' :
+							case 'float' :
+								$input = $('<input type="float">')
+									.val( value );
+								break;
+							case 'range' :
+								var min = 0;
+								var max = 100;
+								if( typeof options === 'object' ){
+									if( options.length > 1 ){
+										min = options[0];
+										max = options[1];
+									}
+									else {
+										max = options[0];
+									}
+								}
+								else if( jQuery.isNumeric( options ) )
+									max = options;
+								$input = $('<input type="range" min="' + min + '" max="' + max + '">')
+									.val( value );
+								break;
+							case 'date' :
+								$input = $('<input type="date">')
+									.val( value );
+								break;
+							case 'datetime' :
+								$input = $('<input type="datetime-local">')
+									.val( value );
+								break;
+							case 'time' :
+							case 'hour' :
+								$input = $('<input type="time">')
+									.val( value );
+								break;
+							case 'post' :
+							case 'page' :
+							case 'forum' :
+							case 'newsletter' :
+							case 'report' :
+							case 'report_sql' :
+								var options = {};
+								var post_type;
+								
+								switch(type){
+									case 'post' :
+										post_type = 'post';
+										break;
+									case 'page' :
+									case 'forum' :
+										post_type = 'page';
+										break;
+									case 'newsletter' :
+										post_type = 'agdpnl';
+										break;
+									case 'report' :
+									case 'report_sql' :
+										post_type = 'agdpreport';
+										break;
+								}
+								$input = $('<select></select>');
+								//Ajax asynchronous fill
+								if( ! value ){ //chargement asynchrone lors du mousedown
+									value = '';
+									$input = add_input_options($input, admin_report_get_posts, variable, value
+										, [ post_type, options, add_input_options,
+											{ 	'variable' : variable,
+												'value' : value,
+												'$input' : $input,
+											}
+										]);
+								}
+								else { //chargement asynchrone, maintenant
+									$input.append($('<option selected>' + value + '</option>').attr('value', value));//temporairement
+									admin_report_get_posts( post_type, options, add_input_options, { '$input': $input, 'variable': variable, 'value': value } );
+								}
+								$input.on('change', function(e){
+									var $this = $(this);
+									$this.next('.input-helper').remove();
+									if( this.value )
+										$this.after('<a class="input-helper" href="/wp-admin/post.php?post=' + this.value + '&action=edit">'
+												+ '<span class="dashicons-before dashicons-edit-page"></span></a>')
+									;
+								});
+								options = false;
+								break;
+							case 'asc_desc' :
+								$input = $('<select></select>');
+								$input = add_input_options($input, {ASC: 'Croissant', DESC: 'Décroissant'}, variable, value);
+								break;
+							case 'longtext' :
+								$input = $('<textarea spellcheck="false"></textarea>')
+									.val( value );
+							
+								break;
+							default:
+								if( type === undefined )
+									type = '';
+								$input = $('<input type="' + type + '"/>')
+									.val( value );
+						}
+						if( ! options
+						 || typeof options === "function")
+							options = '';
+						else if( typeof options === "object" ){
+							if( options.join !== undefined )
+								options = options.join('\n');
+							else
+								options = Object.keys(options).join('\n');
+						}
+						
+						$input
+							.addClass( 'var_value' )
+							.attr( 'var_name', variable )
+							.attr( 'var_type', type )
+							.attr( 'var_options', options )
+						;
+						
+						var is_private;
+						if( variables[variable]['is_private'] == 1 )
+							is_private = { icon : 'Password'
+									, title : "Variable privée" };
+						else
+							is_private = { icon : 'blank'
+									, title : "Variable publique" };
+						
+						var $sql_variable = $('<div class="sql_variable"></div>')
+							.append( $('<label>:' + variable + '</label>')
+										.prepend(edicon( type ))
+										.prepend(edicon( '', is_private['icon'], is_private['title'] ))
+								   )
+							.append('<a class="var_edit" href=""><span class="dashicons-before dashicons-edit"></span></a>')
+							.append($input)
+							.appendTo( $container )
+						;
+						
+						// Options de variable
+						for( var i in variable_options ){
+							var option_name = variable_options[i];
+							if( option_name === 'type' )
+								continue;
+							var option_value = variables[variable][option_name];
+							if( option_value ){
+								$input.attr( 'var_' + option_name, option_value );
+								$sql_variable.attr( 'var_' + option_name, option_value );
+							}
+						}
+						
+						$input.trigger('change');
+					}
+					
+					if( current_variable ){
+						//click sur l'édition de la variable
+						$('.var_value[var_name="' + current_variable + '"]')
+							.parents('.sql_variable:first')
+								.find('.var_edit')
+									.trigger('click');
+					}
+				}
+				else {
+					$container.html('<small>(aucune variable)</small>');
+				}
+				
+				//Variables restantes
+				var $notice = $('<ul class="unused_variables"><label>Variables non utilisées</label></ul>');
+				var counter = 0;
+				for(var variable in var_values_saved){
+					if( variable === undefined ) continue;
+					if( value = var_values_saved[variable]['value'] )
+						value = '= ' + value;
+					if( value === undefined ) value = '';
+					if( ( options = var_values_saved[variable]['options'] ) && options.length > 50 )
+						options = options.substr(0, 50) + '...';
+					else if( options === undefined ) options = '';
+					if( options ) options = '(' + options + ')';
+					if( value && options ) value += ', ';
+					$notice
+						.append('<li class="sql_variable unused"><label><var>' + variable + '</var></label><code>'+ value + options+'</code></li>');
+					counter++;
+				}
+				if( counter ){
+					$notice.prepend( $('<a class="delete"><span class="dashicons-before dashicons-trash"></span></a>')
+						.on('click', function(){
+							save_vars_values.apply(this);
+							$notice.remove();
+							return false;
+						})
+					);
+					$container.append($notice);
+				}
+			};
+		
+			//get_posts
+			function admin_report_get_posts( post_type, options, callback, callback_options ){
+				if( options && options['clear_cache']
+				 || ! admin_report_get_posts._cache)
+					admin_report_get_posts._cache = {};
+					
+				if( ! options ) options = {};
+				options['post_type'] = post_type;
+					
+				if( admin_report_get_posts._cache[post_type] ){ //cache
+					if( callback ){
+						if( callback === add_input_options )
+							return callback.call( this, callback_options['$input'], admin_report_get_posts._cache[post_type], callback_options['variable'], callback_options['value']);
+						else
+							return callback.call( this, admin_report_get_posts._cache[post_type], callback_options );
+					}
+					return admin_report_get_posts._cache[post_type];
+				}
+				if( callback_options['$input'] )
+					callback_options['$input'].addClass('cursor_pointer');
+				
+				//Ajax request
+				var data = {
+					action : "agendapartage_posts_action",
+					method : "get_posts",
+					contentType: "application/json; charset=utf-8",
+					data: JSON.stringify(options) //needs stripslashes() at server side
+				};
+				jQuery.ajax({
+					url : agdp_ajax.ajax_url,
+					method : 'POST',
+					data : Object.assign(data, {
+						_nonce : agdp_ajax.check_nonce
+					}),
+					success : function( response ) {
+						admin_report_get_posts._cache[post_type] = response;
+						if( response[''] === undefined )
+							response[''] = '';
+						if( callback === add_input_options )
+							callback.call( this, callback_options['$input'], response, callback_options['variable'], callback_options['value']);
+						else
+							callback.call( this, response, callback_options );
+						
+						if( callback_options['$input'] )
+							callback_options['$input'].removeClass('cursor_pointer');
+						
+					},
+					fail : function( response ){
+						console.log( "agdp-admin-report.js / ajax.get_posts : \n" + response );
+					}
+				});
+				return false;
+			}
+			////////////////////
+			// add_input_options
+			function add_input_options($input, options, variable, value, callback_options){
+				var value_found = false;
+				var $last_input = $input;
+				
+				if( typeof options === 'function' ){
+					if( $input.is('select') ){
+						//async load on mousedown
+						$input.on('mousedown', function(){
+							if( typeof options !== 'function' )
+								return;
+							if( ! callback_options )
+								callback_options = [];
+							var callback = options;
+							options = callback.apply( $input, callback_options );
+							if( options && options.jquery )
+								return;
+							add_input_options($input, options, variable, value);
+						});
+					}
+					else
+						options = options.call($input);
+				}
+				
+				$input.html('');
+				
+				if( typeof options === 'object' ){
+					var is_associative = options.join === undefined;
+					for(var i in options){
+						var opt, label;
+						if( is_associative /* ! jQuery.isNumeric( i ) */ ){
+							opt = i;
+							label = options[i];
+						}
+						else {
+							opt = options[i];
+							var separator = opt.indexOf(':');
+							if( separator >= 0 ){
+								label = opt.substr(separator+1).trim();
+								opt = separator ? opt.substr(0, separator).trim() : '';
+							}
+							else
+								label = opt;
+						}
+						var select_option = false;
+						if( typeof value === 'object' ){
+							if( value.indexOf( opt ) >= 0 ){
+								select_option = true;
+								value_found = true;
+							}
+						}
+						else if( opt == value ){
+							select_option = true;
+							value_found = true;
+						}
+						if( $input.is('select') ){
+							$input.append('<option value="' + opt + '"'
+								+ ( select_option ? ' selected' : '')
+								+ '>' + label + '</option>');
+						}
+						else if( $input.is('input[type="radio"]') ){
+							$input = $input.add('<label><input type="radio" value="' + opt + '"'
+								+ ' name="__' + variable + '"'
+								+ ( select_option ? ' checked' : '')
+								+ '>' + label + '</label>');
+						}
+						else if( $input.is('input[type="checkbox"]') ){ //TODO non fonctionnel coté serveur
+							$input = $input.add('<label><input type="checkbox" value="' + opt + '"'
+								+ ' name="__' + variable + '[]"'
+								+ ( select_option ? ' checked' : '')
+								+ '>' + label + '</label>');
+						}
+					}
+				}
+				if( value && ! value_found ){
+					if( $input.is('select') ){
+						$input.append('<option value="' + value + '"'
+							+ ' selected'
+							+ '>' + value + '</option>');
+					}
+					else if( $input.is('input[type="radio"]') ){
+						$input = $input.add('<label><input type="radio" value="' + value + '"'
+							+ ' name="__' + variable + '"'
+							+ ' checked'
+							+ '>' + value + '</label>');
+					}
+					else if( $input.is('input[type="checkbox"]') ){
+						$input = $input.add('<label><input type="checkbox" value="' + value + '"'
+							+ ' name="__' + variable + '"'
+							+ ' checked'
+							+ '>' + value + '</label>');
+					}
+				}
+				if( $input.is('input[type="radio"],input[type="checkbox"]') && $input.length > 1 )
+					$input = $input.filter(function( index ) { return index > 0; } );
+				
+				return $input;
+			}
+			//add_input_options
+			///////////////////
+			
+			//get_sql_columns
+			function get_sql_columns(){
+				var columns = {};
+				$('.agdpreport tr.report_columns th[column]').each(function(){
+					var name = this.getAttribute('column');
+					if( name )
+						columns[name] = this.textContent ;
+				});
+				return columns;
+			}
+		});
+		
+		/********
+		 * Rendu
+		 **/
+		$('#agdp_report-render').each(function(e){
+			$(this)
+				.on('click', '.report_refresh a', refresh_report )
+				.on('change', '.report_css textarea#report_css', refresh_report)
+				.each(refresh_report_menu)
+				.each(refresh_report_table_designer)
+				// montre le css ou sql si il n'est pas vide et que le designer est affiché
+				.children('.inside:first')
+					.find( '.toggle-container.report_css textarea#report_css:not(:empty)'
+						 + ', .toggle-container.sql_before_render, textarea#sql_before_render:not(:empty)')
+						.each(function(e){
+							$(this).parents('.toggle-container:first')
+								.prevAll('.toggle-trigger:not(.active)')
+									.trigger('toggle-active')
+						;})
+					.end()
+			;
+		});
+	
+		/**
+		 * get_variables_values
+		 */
+		function get_variables_values( $variables ){
+			if( ! $variables ){
+				var $this = $('#agdp_report-variables');
+				$variables = $this.find('textarea#sql_variables');
+			}
+			var var_values = {};
+			$variables.nextAll('.sql_variables_wrap:first')
+				.find('.sql_variable:not(.unused)').each(function(e){
+					var data = {};
+					var $this = $(this);
+					var $value = $this.find('.var_value');
+					var var_name = $value.attr('var_name');
+					for( var i in variable_options ){
+						if( v = $value.attr('var_' + variable_options[i]) )
+							data[variable_options[i]] = v;
+						else if( data[variable_options[i]] !== undefined )
+							data[variable_options[i]] = undefined;
+					}
+					
+					if( $value.is('label') )
+						$value = $this.find('.var_value input');
+					var v;
+					if( $value.is('input[type="checkbox"][name*=\\[\\]]') ){
+						v = '';
+						$value.filter(':checked').each(function(){
+							if( v )
+								v += '\n';
+							v += this.value;
+						});
+					}
+					else if( $value.is('input[type="checkbox"]') )
+						v = $value.prop('checked');
+					else if( $value.is('input[type="radio"]') )
+						v = $value.filter(':checked').val();
+					else
+						v = $value.val();
+					if( v )
+						data['value'] = v;
+					
+					var_values[ var_name ] = data;
+				})
+			;
+			return var_values;
+		}
+
+		/**
+		 * get_report_css : compile les styles (textarea + terms)
+		 * 
+		 * Remplace le sélecteur table par #report_{tag_id}.agdpreport > table
+		 */
+		function get_report_css( $form, tag_id ){
+			var css = $form.find('#agdp_report-render :input[name="report_css"]').val();
+			$form.find('#agdp_report-render .report_style_terms :input:checked[data-report-style]').each(function(){
+				if( css )
+					css += '\n';
+				css += '/* report_style_term ' + $(this).text() + ' */\n'
+						+  this.getAttribute('data-report-style');
+			});
+			const regexp = /(^|[^:]\s|,\s*)(table(\s|[.{,]))/g; ////cf regex idem in php Agdp_Report::get_report_css()
+			css = css.replaceAll( regexp, '$1#' + tag_id + ' > $2' );
+			
+			return replace_variables_in_string( css, get_variables_values() );
+		}
+
+		/**
+		 * replace_variables_in_string
+		 * 
+		 * Remplace les variables par leur valeur dans un texte, sous le format :variable%I
+		 * cf le format des variables dans SQL, valable pour le css aussi.
+		 * 
+		 * Utilisé en design pour le css qui contient des variables et qui n'est pas traité par php lors d'un rafraichissement.
+		 *
+		 * cf Agdp_Report::get_sql_prepare() qui fait le travail, en mieux.
+		 */
+		function replace_variables_in_string( str_input, variables ){
+			
+			const regex = /\:([a-zA-Z0-9_]+)\%(\w+)/g;
+			const str_output = str_input.replace(regex, (match, var_name, format) => {
+				if( ! format ){
+					console.log( '[replace_variables_in_string() => Incompatible in Wordpress : format is empty in ' + match );
+					return match;
+				}
+				if( variables[var_name] === undefined )
+					return match;
+				var var_type = variables[var_name]['type'];
+				if( var_type === undefined )
+					var_type = false;
+				var value = variables[var_name]['value'];
+				if( value === undefined )
+					value = '';
+				
+				switch( var_type ){
+					default:
+				}
+				
+				switch( format ){
+					case 's' :
+						value = '"' + value.replace('"', '\\"') + '"';
+						break;
+					case 'I' : //Inject
+					default :
+						break;
+				}
+				return value;
+			});
+			
+			return str_output;
+		}
+
+		/**
+		 * refresh_report : get data + designer
+		 */
+		function ajax_report_action( method, success_callback ){
+			var $actionElnt = $(this);
+			var $form = $actionElnt.parents('form:first');
+			var post_id = $form.find('#post_ID').val();
+			var sql = $form.find('#sql').val();
+			var sql_variables = get_input_jso.call( $form, '#sql_variables' );
+			var table_render = get_input_jso.call( $form, '#table_render');
+			var report_options = {};
+			$form.find('#agdp_report-render :input[name]').each(function(){
+				var val;
+				if( this.getAttribute('type') === 'checkbox' )
+					val = $(this).prop('checked');
+				else
+					val = this.value;
+				report_options[ this.getAttribute('name') ] = val;
+			});
+			var $destination = $form.find('.agdpreport');
+			if( $destination.length === 0 ){
+				var $dest_container = $form.find('#agdp_report-render .inside:first');
+				$destination = $('wpbody-content .agdpreport');
+				if( $destination.length === 0 )
+					$destination = $('<div class="agdpreport"></div>');
+				$dest_container.append( $destination );
+			}
+			report_options = Object.assign({}, report_options, {
+				sql : sql,
+				sql_variables : sql_variables,
+				table_render : table_render,
+				report_id : post_id,
+				skip_styles : true, /* later use of get_report_css() */
+			});
+			var data = {
+				action : "agendapartage_report_action",
+				method : method,
+				post_id : post_id,
+				contentType: "application/json; charset=utf-8",
+				data: JSON.stringify(report_options /* //needs stripslashes() at server side */)
+			};
+			var report_id = $actionElnt;
+			jQuery.ajax({
+				url : agdp_ajax.ajax_url,
+				method : 'POST',
+				data : Object.assign(data, {
+					_nonce : agdp_ajax.check_nonce
+				}),
+				success : function( response ) {
+					success_callback.call($actionElnt, response);
+					$spinner.remove();
+				},
+				fail : function( response ){
+					$spinner.remove();
+					var $msg = $('<div class="ajax_action-response alerte"><span class="dashicons dashicons-no-alt close-box"></span>'+response+'</div>')
+						.click(function(){$msg.remove()});
+					$actionElnt.after($msg);
+					// $msg.get(0).scrollIntoView();
+				}
+			});
+			var $spinner = $actionElnt.next('.wpcf7-spinner');
+			if($spinner.length == 0)
+					$actionElnt.after($spinner = $('<span class="wpcf7-spinner" style="visibility: visible;"></span>'));
+			event.preventDefault();  
+			return false;
+		}
+
+		/**
+		 * refresh_report : get data + designer
+		 */
+		function refresh_report(){
+			var $actionElnt = $(this);
+			ajax_report_action.call(this, "report_html", function( response ) {
+				var $form = $actionElnt.parents('form:first');
+				if(response){
+					if(typeof response === 'string' || response instanceof String){
+						if(response.endsWith('null'))
+							response = substr(response, 0, response.length-4);
+						var $response = $(response);
+						var id;
+						if( ! (id = $response.attr('id') ) ){
+							id = 'report_' + uniqid(6);
+							$response.attr('id', id);
+						}
+						var css = get_report_css( $form, id );
+						if( css )
+							$response.append( '<style>' + css + '</style>' );
+						$form.find('.agdpreport:eq(0)')
+							.nextAll('.agdpreport')
+								.remove()
+								.end()
+							.replaceWith($response);
+						$('#wpbody-content > .wrap > .agdpreport.error').remove();
+						//masque le menu
+						$form.find('#agdp_report-render-menu.active > a.toggler').trigger('click');
+						$response.each(refresh_report_table_designer);
+					}
+				}
+				else
+					$form.find('.agdpreport').html('!');
+			});
+		}
+
+		/**
+		 * get_report_all_columns
+		 */
+		function get_report_all_columns( callback ){
+			var $actionElnt = $(this);
+			ajax_report_action.call(this, "get_report_columns", function( response ) {
+				callback.call(this, response);
+			});
+		}
+
+		/**
+		 * refresh_report_menu 
+		 */
+		function refresh_report_menu(){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $menu_items = $render.find('.report_menu_item'); //added from php Agdp_Admin_Edit_Report::get_metabox_render_fields()
+			var $menu = $menu_items.parent('#agdp_report-render-menu');
+			if( $menu.length === 0 ){
+				$menu = $('<div id="agdp_report-render-menu"></div>')
+					.html( $('<a class="toggler dashicons-before dashicons-menu"></a>')
+						.on('click', function(){
+							if( $menu.is('.active') )
+								hide_report_menu( true );
+							else {
+								$menu.addClass('active');
+								$(document.body).on('click', '*', hide_report_menu );
+							}
+						})
+					)
+					.insertBefore( $menu_items.first() )
+					.append( $menu_items )
+					
+					//reset all inputs
+					.append( $('<a class="report_menu_item reset-designer dashicons-before dashicons-trash">Réinitialiser</a>')
+						.on('click', function(){ 
+							if( ! confirm("Êtes vous sûr de vouloir tout réinitialiser ?") )
+								return;
+							$render.find('textarea[name="table_render"]').text('');
+							refresh_report.call($render);
+						})
+					)
+					.parent('.hide_during_loading.loading')
+						.removeClass('loading')
+						.end()
+					.insertBefore( $render.find('.postbox-header > h2.hndle') )
+				;
+				/* Masque le menu si le click est hors menu */
+				function hide_report_menu(event) {
+					if( event !== true ){
+						if( hide_report_menu.previous_target === event.target ) //optimise because repeated test
+							return;
+						if( $menu.is('.active')
+						&& $menu.get(0).contains( event.target ) ){
+							hide_report_menu.previous_target = event.target; //cache
+							return; //is inside, keep open
+						}
+					}
+					$menu.removeClass('active');
+					$(document.body).off('click', '*', hide_report_menu );
+				}
+			}
+			
+			/*****************
+			 * hidden_columns
+			 */
+			var table_render = get_input_jso.call($render, 'textarea[name="table_render"]');
+			var table_columns = table_render["columns"] ? table_render["columns"] : {};
+			var $hidden_columns = $menu.find('.hidden_columns:first');
+			$hidden_columns.find('option:gt(0)').remove();
+			for( table_column in table_columns ){
+				if( table_columns[table_column]['visible'] === undefined
+				|| table_columns[table_column]['visible'] )
+					continue;
+				if( $hidden_columns.length === 0 ){
+					$hidden_columns
+						= $('<select class="hidden_columns"><option value=""></option></select>')
+							.on('change', function(){
+								var column = $hidden_columns.val();
+								if( ! column ) return;
+								set_table_render_option.call( this, 'columns', column, 'visible', true);
+								$hidden_columns.children('option[value="' + column + '"]').remove();
+								
+								var $options = $hidden_columns.children('option');
+								if( $options.length <= 1 ){
+									$hidden_columns.hide();
+									$menu.toggleClass('active');
+
+								} else if( $options.length === 2 )
+									$options.filter(':first').text('1 colonne cachée');
+								else
+									$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
+								
+								var $table = $render.find('.agdpreport > table');
+								var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
+								var index = $th.prevAll('th').length;
+								$table.find('tr').each(function(){
+									$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+										.show();
+								});
+							})
+							.appendTo(
+								$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+									.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+							)
+					;
+				}
+				var label = typeof table_columns[table_column] === 'object' 
+							? (table_columns[table_column]['label'] ? table_columns[table_column]['label'] : table_column)
+							: table_columns[table_column]
+				$hidden_columns.append('<option value="' + table_column + '">' + label + '</option>');
+			}
+			var $options = $hidden_columns.children('option');
+			if( $options.length <= 1 )
+				$hidden_columns.hide();
+			else {
+				if( $options.length === 2 )
+					$options.filter(':first').text('1 colonne cachée');
+				else
+					$options.filter(':first').text(($options.length - 1) + ' colonnes cachées');
+				$hidden_columns.show();
+			}
+			/* hidden_columns
+			 ****************/
+			
+			/*****************
+			 * Check columns
+			 */
+			var $ckeck_columns_menu = $menu.find('.ckeck_columns:first');
+			if( $ckeck_columns_menu.length === 0 ){
+				$ckeck_columns_menu = $('<a class="ckeck_columns dashicons-before dashicons-editor-help">Contrôler les colonnes</a>')
+					.on('click', function(e){
+						get_report_all_columns.call( this, function( response ){
+							if(typeof response === 'string' || response instanceof String){
+								alert(response);
+								return;
+							}
+							var $msg = $('<ul></ul>');
+							columns = response;
+							for( var c in columns ){
+								switch( columns[c]['render'] ){
+									case false:
+										$msg.append(
+											$('<li><code>`' + c + '`</code> : <b>ABSENT !</b>&nbsp;</li>')
+												.attr('column', c)
+												.append($('<a></a>')
+													.attr('title', 'Ajoute la colonne')
+													.addClass('float-right')
+													.append('<span class=" dashicons-before dashicons-table-col-after"></span>')
+													.on('click', function(e){
+														var $this = $(this);
+														var column = $this.parents('li:first').attr('column');
+														var $table = $render.find('.agdpreport > table');
+														$td = $table.find('tr > [column=' + column + ']');
+														var remove = $td.length;
+														if( remove ){
+															$td.remove();
+														} else {
+															//TODO prepend ne va pas avec Afficher colonne d'index
+															$table.find('> thead > tr')
+																.prepend('<th column="' + column + '">' + column + '</th>');
+															$table.find('> tbody > tr')
+																.prepend('<td column="' + column + '">' + column + '</td>');
+															$table.find('> tfoot > tr')
+																.prepend('<th column="' +column + '">' + column + '</th>');
+														}
+														$this
+															.children('span:first')
+																.toggleClass('dashicons-table-col-after')
+																.toggleClass('dashicons-table-col-delete')
+																.end()
+															.attr('title', remove ? 'Ajoute la colonne' : 'Masque la colonne')
+														;
+														// save_table_designer();
+														// var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
+														// var columns = table_render["columns"] ? table_render["columns"] : {};
+														// if( remove )
+															// columns[column] = undefined;
+														// else
+															// columns[column] = column;
+														// table_render["columns"] = columns;
+														// var $input_table_render = get_input.call( $table, 'textarea[name="table_render"]');
+														// $input_table_render.text( JSON.stringify( table_render ) );
+														if( remove ){
+															columns[column] = undefined;
+														} else {
+															set_table_render_option.call( $render, 'columns', column, 'label', column);
+															set_table_render_option.call( $render, 'columns', column, 'index', 0);
+															set_table_render_option.call( $render, 'columns', column, 'visible', true);
+														}
+														refresh_report.call($table);
+														e.preventDefault();
+													})
+												)
+										);
+										break;
+									case 'hidden':
+										$msg.append(
+											$('<li><code>`' + c + '`</code> : <b>masquée</b>&nbsp;</li>')
+												.attr('column', c)
+												.append($('<a></a>')
+													.attr('title', 'Rend visible la colonne')
+													.addClass('float-right')
+													.append('<span class=" dashicons-before dashicons-visibility"></span>')
+													.on('click', function(e){
+														var $this = $(this);
+														var column = $this.parents('li:first').attr('column');
+														var $table = $render.find('.agdpreport > table');
+														var $th = $table.find('> thead > tr > th[column="' + column + '"]:first');
+														var index = $th.prevAll('th').length;
+														$table.find('tr').each(function(){
+															$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+															.toggleClass('hidden');
+														});														
+														
+														var isHidden = $th.is('.hidden');
+														$this
+															.children('span:first')
+																.toggleClass('dashicons-visibility')
+																.toggleClass('dashicons-hidden')
+																.end()
+															.attr('title', isHidden ? 'Rend visible la colonne' : 'Masque la colonne')
+														;
+														save_table_designer.call( $table );
+														e.preventDefault();
+													})
+												)
+										);
+										break;
+								}
+								if( columns[c]['info'] )
+									$msg.append($('<li><code>`' + c + '`</code> : <b>' + columns[c]['info'] + '</b></li>')
+										.attr('column', c)
+									);
+							}
+							if( $msg.children().length === 0 )
+								$msg.text('Rien à déclarer, tout va bien.');
+							
+							$msg.dialog({                   
+								'dialogClass'   : 'wp-dialog',           
+								'modal'         : true,
+								'closeOnEscape' : true,      
+								'buttons'       : { "Fermer": function() { $(this).dialog('close'); } },
+								'title'			: "Contrôle des colonnes",
+							});
+							
+							$menu.toggleClass('active');
+						});
+						e.preventDefault();
+					})
+					.appendTo( $('<label></label>')
+						.appendTo(
+							$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+								.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+						)
+					)
+				;
+			}		
+			/* Check columns
+			 ****************/
+			 
+			
+			/*****************
+			 * Refresh
+			 */
+			var $refresh_report_menu = $menu.find('.refresh_report:first');
+			if( $refresh_report_menu.length === 0 ){
+				$refresh_report_menu = $('<a class="refresh_report dashicons-before dashicons-update">Rafraîchir</a>')
+					.on('click', refresh_report)
+					.appendTo( $('<label></label>')
+						.appendTo(
+							$('<div class="report_menu_item agdp-metabox-row is_admin"></div>')
+								.insertBefore( $menu.find('.report_menu_item.reset-designer') )
+						)
+					)
+				;
+				$render.find('.report_toolbar_item label.report_refresh:first')
+					.clone()
+						.appendTo( $('<div class="report_footer_toolbar report_toolbar_item agdp-metabox-row is_admin"></div>')
+							.appendTo( $render.find('.inside:first') )
+						)
+				;
+			}
+			/* Refresh
+			 ****************/
+			 
+			return true;
+		}
+
+		/*************************
+		 *
+		 * report table designer *
+		 *
+		 *************************
+		 */
+		/**
+		 * refresh_report_designer()
+		 */
+		function refresh_report_table_designer(){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $table = $render.find('.agdpreport > table');
+			if( $table.length === 0 )
+				return false;
+			var show_table_designer = $render.find('input[name="report_show_table_designer"]:checked').length;
+			if( ! show_table_designer ){
+				if( $table.is('.report_table_designer') )
+					$table
+						.removeClass('report_table_designer')
+						.find('.report_table_designer')
+							.remove();
+				return false;
+			}
+			if( $table.length === 0
+			|| $table.is('.report_table_designer') )
+				return false;
+			
+			var table_render = get_input_jso.call( $render, 'textarea[name="table_render"]' );
+			var columns = table_render["columns"] ? table_render["columns"] : {};
+			$table
+				.addClass('report_table_designer')
+				//Caption
+				.children('caption').each(function(){
+					var column = 'caption';
+					var script = table_render[ column ] && table_render[ column ][ 'script' ] 
+						? table_render[ column ][ 'script' ] : '@REPORTTITLE';
+					var caption_class = table_render[ column ] && table_render[ column ][ 'class' ] 
+						? table_render[ column ][ 'class' ] : '';
+								
+					$(this)
+						.append( $('<div class="report_table_designer"></div>' )
+							.attr( 'column', column )
+							.append( 'Classe: ' )
+							.append( $('<textarea rows="1" cols="15" class="caption_class" title="Classe"></textarea>')
+								.attr('title', "Classe de la cellule Caption.\nPar exemple, CONCAT(\'percent-\', ROUND(COUNT(`ID`)/100))")
+								.val(caption_class)
+								.on('change', save_table_designer)
+							)
+							.append( '&nbsp;&nbsp;Script: ' )
+							.append( $('<textarea rows="1" cols="40" class="caption_script"></textarea>')
+								.attr('title', "Script SQL du contenu de la cellule Caption.\nLa valeur par défault est @REPORTTITLE.\nPar exemple, CONCAT(@REPORTTITLE, ' - ', NOW())")
+								.val(script)
+								.on('change', save_table_designer)
+							)
+						)
+					;
+				}).end()
+				/** Columns **/
+				// thead
+				.find('thead')
+					.prepend('<caption class="report_table_designer">Titres&nbsp;des&nbsp;colonnes</caption>')
+					.end()
+				.find('thead > tr').each(function(){
+					var column_index = 0;
+					$(this)
+						.children('th[column]')
+							.each(function(){
+								var column = this.getAttribute('column');
+								this.setAttribute( 'title', column );
+								
+								$table.find('tbody > tr:first > td:eq(' + column_index + ')')
+										.attr('column', column);
+										
+								var actions = '<div class="column-actions">';
+								actions += '<a class="move_column move_column_left column-action dashicons-before dashicons-arrow-left" title="Décaler la colonne à gauche"></a>';
+								actions += '<a class="move_column move_column_right column-action dashicons-before dashicons-arrow-right" title="Décaler la colonne à gauche"></a>';
+								if( ! columns[ column ] /* || ! columns[ column ][ 'thead_script' ] */ )
+									actions += '<a class="is_new_column column-action dashicons-before dashicons-info-outline" title="Cette colonne est nouvelle"></a>';
+								actions += '<a class="hide_column column-action dashicons-before dashicons-no-alt" title="Masquer la colonne.&#013;Pour supprimer définitivement, appuyer sur la touche Ctrl."></a>';
+								actions += '</div>';
+								this.innerHTML = actions + this.innerHTML;
+								column_index++;
+							})
+							//hide_column
+							.on('click', '.hide_column', function(e){
+								var trash_column = e.ctrlKey;
+								var $th = $(this).parents('th:first');
+								var column = $th.attr('column');
+								if( ! trash_column )
+									set_table_render_option.call( this, 'columns', column, 'visible', false );
+								var index = $th.prevAll('th').length;
+								var $table = $th.parents('table:first');
+								$table
+									.find('tr').each(function(){
+										var $cell = $(this).find('th:eq(' + index + '), td:eq(' + index + ')');
+										if( trash_column )
+											$cell.remove();
+										else
+											$cell.hide();
+									})
+								;
+								refresh_report_menu.call( $table );
+								if( trash_column )
+									save_table_designer.call( $table );
+							})
+							//move_column
+							.on('click', '.move_column', function(){
+								var $this = $(this);
+								var $th = $this.parents('th:first');
+								var column = $th.attr('column');
+								var index = $th.prevAll('th').length;
+								var direction = $this.is('.move_column_left') ? -1 : +1;
+								set_table_render_option.call( this, 'columns', column, 'index', index + direction );
+								
+								var column_swap;
+								if( direction === -1 )
+									column_swap = $th.prev('th').attr('column');
+								else
+									column_swap = $th.next('th').attr('column');
+								set_table_render_option.call( this, 'columns', column_swap, 'index', index - direction );
+								
+								$th.parents('table:first')
+									.find('tr').each(function(){
+										//TODO colspan
+										$(this).find('th:eq(' + index + '), td:eq(' + index + ')')
+											.each(function(){
+												var $cell = $(this);
+												if( direction === -1 )
+													$cell.insertBefore( $cell.prev( this.tagName ) );
+												else
+													$cell.insertAfter( $cell.next( this.tagName ) );
+											})
+										;
+									})
+								;
+							})
+							.end()
+						//Ligne de Script script
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each( function(e){
+									init_designer_column_script.call( this, e, 'thead_' );
+								})
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+						//Ligne de Classe class
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each( function(e){ 
+									init_designer_column_class.call( this, e, 'thead_' ); 
+								} )
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+					;
+				}).end()
+				// tbody
+				.find('tbody')
+					.prepend('<caption class="report_table_designer">Cellules&nbsp;des&nbsp;données</caption>')
+					.end()
+				.find('tbody > tr:first').each(function(){
+					//TODO ajouter une colonne de th avec le label "Classe" ou "Cellule"
+					$(this)
+						//Init attributes
+						.children('td[column]')
+							.each(function(){
+								var column = this.getAttribute('column');
+								//title="script"
+								var script = columns[ column ] && columns[ column ]['script'];
+								if( ! script )
+									script = '';
+								this.setAttribute( 'title', script );
+							})
+							// .on('click', '.is_new_column', function(){})
+							.end()
+						//Ligne de Classe class
+						.clone()
+							.addClass('report_table_designer')
+							.insertBefore(this)
+							.children('td[column]')
+								.attr('class', '')
+								.each( function(e){ 
+									init_designer_column_class.call( this, e, '' );
+								} )
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+						//Ligne de Script script
+						.clone()
+							.addClass('report_table_designer')
+							.insertBefore(this)
+							.children('td[column]')
+								.attr('class', '')
+								.each( function(e){
+									init_designer_column_script.call( this, e, '' );
+								} )
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+					;
+				}).end()
+				// tfoot
+				.find('tfoot')
+					.prepend('<caption class="report_table_designer">Pieds&nbsp;des&nbsp;colonnes</caption>')
+					.end()
+				.find('tfoot > tr').each(function(){
+					var column_index = 0;
+					$(this)
+						//Init .attr('column', column)
+						.children('th[column]')
+							.each(function(){
+								var column = this.getAttribute('column');
+								this.setAttribute( 'title', column );
+								
+								$table.find('tfoot > tr:first > th:eq(' + column_index + ')')
+										.attr('column', column);
+										
+								column_index++;
+							})
+							.end()
+						//Ligne de Script script
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each( function(e){
+									init_designer_column_script.call( this, e, 'tfoot_' );
+								} )
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+						//Ligne de Classe class
+						.clone()
+							.addClass('report_table_designer')
+							.insertAfter(this)
+							.children('th[column]')
+								.attr('class', '')
+								.each( function(e){
+									init_designer_column_class.call( this, e, 'tfoot_' );
+								})
+								.on('change', ':input', save_table_designer)
+								.end()
+							.end()
+					;
+				}).end()
+				
+			;
+			
+			/***************
+			 * init_designer_column
+			 **/
+			function init_designer_column_class(e, block_prefix){
+				var title; 
+				if( block_prefix === 'tfoot_' )
+					title = "Classe du pied de la colonne.\nPar exemple, IF(COUNT(`ID`) >= :LIMIT, 'show-more', '')";
+				else if( block_prefix === 'thead_' )
+					title = "Classe de l'en-tête de la colonne.\nPar exemple, IF(COUNT(`ID`) >= :LIMIT, 'show-more', '')";
+				else
+					title = "Classe des cellules de la colonne.\nPar exemple, CONCAT(\'color-\', `meta_value`)";
+				var column = this.getAttribute('column');
+				if( ! column )
+					return;
+				var attr_class = columns[ column ] && columns[ column ][block_prefix + 'class']
+					? columns[ column ][block_prefix + 'class'] : '';
+				if( ! attr_class )
+					attr_class = '';
+				if( columns[ column ] && columns[ column ][ 'visible' ] === false )
+					$(this).addClass('hidden');
+				var $class = $('<div><div>Classe: <div></div>').append(
+					$('<textarea rows="1" class="column_class" spellcheck="false"></textarea>')
+						.attr('title', title)
+						.val( attr_class )
+					)
+				;
+				$(this)
+					.html($class)
+				;
+			}
+			function init_designer_column_script(e, block_prefix){
+				var title; 
+				if( block_prefix === 'tfoot_' )
+					title = "Script SQL pour la valeur du pied de la colonne.\nPar exemple, COUNT(`ID`)";
+				else if( block_prefix === 'thead_' )
+					title = "Script SQL ou texte simple pour la valeur de l'en-tête de la colonne";
+				else
+					title = "Script SQL pour la valeur des cellules de la colonne";
+				
+				var column = this.getAttribute('column');
+				if( ! column )
+					return;
+				var script = columns[ column ] && columns[ column ][block_prefix + 'script']
+					? columns[ column ][block_prefix + 'script'] : '';
+				if( ! script ){
+					if( block_prefix === 'thead_' ){
+						script = column;
+					}
+					else
+						script = '';
+				}
+				var $script = $('<textarea class="column_script" spellcheck="false"></textarea>')
+					.attr('title', title)
+					.val( script );
+				if( columns[ column ] && columns[ column ][ 'visible' ] === false )
+					$(this).addClass('hidden');
+				$(this)
+					.html($script)
+				;
+				$script.on('change', check_input_quotes)
+					.trigger('change');
+			}
+			
+			// sql_prepared
+			$render.find('.sql_prepared')
+				.prepend( $('<a></a>')
+					.addClass('close-box')
+					.addClass('dashicons-before dashicons-no-alt')
+					.click(function(e){
+						$render.find('input[name="report_show_sql"]').prop('checked', false);
+						$(this).parent('.sql_prepared')
+							.remove();
+					})
+				)
+			;
+			
+			// check_input_quotes
+			function check_input_quotes(){
+				var $script = $(this);
+				$script.nextAll('.input-alert').remove();
+				if( /'.*(?<!\\)"/.exec(this.value) )
+					$('<span class="input-alert dashicons-before dashicons-warning color-red"></span>')
+						.attr('title', "Attention, dans une chaîne entre apostrophes, les guillements doivent être précédés du caractère d'échappement : \\ (et ceci est peut-être une fausse alerte.)")
+						.insertAfter($script)
+					;
+			}
+			
+		}
+		
+		/**
+		 * set_table_render_option (from textarea[name="table_render"] to textarea[name="table_render"])
+		 **/
+		function set_table_render_option( domain, column, option, value){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $table = $render.find('.agdpreport > table');
+			var $input = $render.find(':input[name="table_render"]');
+			var jso = $input.val();
+			if( ! jso )
+				jso = save_table_designer.call( this );
+			else
+				jso = get_input_jso.call( $input );
+			if( domain ){
+				if( ! jso[domain] )
+					jso[domain] = {};
+				if( ! jso[domain][column] )
+					jso[domain][column] = {};
+				if( ! option )
+					jso[domain][column] = value;
+				else
+					jso[domain][column][option] = value;
+			}
+			else {
+				if( ! jso[column] )
+					jso[column] = {};
+				if( ! option )
+					jso[column] = value;
+				else
+					jso[column][option] = value;
+			}
+			$input.text( JSON.stringify( jso ) );
+		}
+		
+		/**
+		 * save_table_designer
+		 **/
+		function save_table_designer(){
+			var $this = $(this);
+			var $render = $this.is('#agdp_report-render') ? $this : $this.parents('#agdp_report-render:first');
+			var $table = $render.find('.agdpreport > table');
+			var $input_table_render = get_input.call( this, 'textarea[name="table_render"]');
+			var table_render = {};
+			var columns = {};
+			var column_index = 0;
+			$table
+				.find('> caption :input.caption_script, > caption :input.caption_class')
+					.each(function(){
+						if( ! this.value )
+							return;
+						var $this = $(this);
+						var $caption = $this.parent();
+						var column = $caption.attr('column');
+						var option = $this.is('.caption_script') ? 'script'
+									: ($this.is('.caption_class') ? 'class'
+									: false);
+						if( table_render[ column ] === undefined )
+							table_render[ column ] = {};
+						table_render[ column ][ option ] = this.value;
+					})
+					.end()
+				// .find('> thead > tr.report_table_designer > th :input.column_label')
+					// .each(function(){
+						// var $th = $(this.parentNode);
+						// var column = $th.attr('column');
+						// var label = this.value;
+						// var visible = $th.is(':visible') && ! $th.is('.hidden');
+						// columns[ column ] = {
+							// label: label,
+							// visible: visible,
+							// index: column_index++,
+						// };
+					// })
+					// .end()
+				// .find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class')
+					// .each(function(){
+						// if( ! this.value )
+							// return;
+						// var $this = $(this);
+						// var column = $this.parents('[column]:first').attr('column');
+						// var option_name = $this.is('.column_script') ? 'script'
+									// : ($this.is('.column_class') ? 'class'
+									// : false);
+						// if( columns[ column ] === undefined )
+							// columns[ column ] = {};
+						// columns[ column ][ option_name ] = this.value;
+					// })
+					// .end()
+				.find('> tbody > tr.report_table_designer > td :input.column_script, > tbody > tr.report_table_designer > td :input.column_class'
+				  + ', > tfoot > tr.report_table_designer > th :input.column_script, > tfoot > tr.report_table_designer > th :input.column_class'
+				  + ', > thead > tr.report_table_designer > th :input.column_script, > thead > tr.report_table_designer > th :input.column_class')
+					.each(function(){
+						if( ! this.value )
+							return;
+						var $this = $(this);
+						var $block = $this.parents('tr:first').parent();
+						var block_prefix = $block.is('thead')
+											? 'thead_'
+											: ( $block.is('tfoot')
+												? 'tfoot_'
+												: '');
+						var column = $this.parents('[column]:first').attr('column');
+						var option_name = $this.is('.column_script') ? block_prefix + 'script'
+									: ($this.is('.column_class') ? block_prefix + 'class'
+									: false);
+						if( columns[ column ] === undefined )
+							columns[ column ] = {};
+						if( option_name )
+							columns[ column ][ option_name ] = this.value;
+					})
+					.end()
+			;
+			if( Object.keys(columns).length )
+				table_render['columns'] = columns;
+			$input_table_render.text( JSON.stringify( table_render ) );
+			return columns;
+		}
+		
+		/**
+		 * get_input
+		 **/
+		function get_input( path = '' ){
+			var $this = $(this);
+			if( ( path === '' && $this.is(':input') )
+			|| $this.is( path ) )
+				return $this;
+			var $form = $this.is('form') ? $this : $this.parents('form:first');
+			if( $form.length === 0 )
+				$form = $('form');
+			return $form.find( path );
+		}
+		
+		/**
+		 * get_input_jso
+		 **/
+		function get_input_jso( path = '' ){
+			var $input = get_input.call( this, path );
+			var value = $input.val();
+			if( ! value )
+				return {};
+			try{
+				return JSON.parse(value);
+			}
+			catch(ex){
+				try{
+					return JSON.parse(value.replaceAll('{','{\n ').replaceAll('}','}\n'));//plus lisible avec un n° de ligne
+				}
+				catch(ex){
+					alert("Erreur de format dans '" + path + "'.val() : " + value + "\n" + ex);
+				}
+			}
+			return {};
+		}
+			
+	});
+	
+	/**
+	 * edicon
+	 **/
+	function edicon( var_type, icon = false, title = false ){
+		if( var_type ){
+			if( input_types[var_type] && input_types[var_type]['img'] )
+				var_type_img = input_types[var_type]['img'];
+			else
+				var_type_img = 'Text';
+		}
+		else
+			var_type_img = icon;
+		return '<span class="edicon ed-' + var_type_img + '"'
+			+ (title ? ' title="' + title + '"' : '')
+			+ '></span>';
+	}
+});
+
+
+/**
+ * insertAtCaret in textarea
+ */
+if( ! HTMLTextAreaElement.prototype.insertAtCaret )
+	HTMLTextAreaElement.prototype.insertAtCaret = function (text) {
+		text = text || '';
+		if (document.selection) {
+			// IE
+			this.focus();
+			var sel = document.selection.createRange();
+			sel.text = text;
+		} else if (this.selectionStart || this.selectionStart === 0) {
+			// Others
+			var startPos = this.selectionStart;
+			var endPos = this.selectionEnd;
+			this.value = this.value.substring(0, startPos) +
+				text +
+				this.value.substring(endPos, this.value.length);
+				this.selectionStart = startPos + text.length;
+				this.selectionEnd = startPos + text.length;
+		} else {
+			this.value += text;
+	}
+};
