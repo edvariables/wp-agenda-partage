@@ -483,6 +483,8 @@ class Agdp {
 				'allow_html_in_' . Agdp_Covoiturage::post_type => __( 'Autoriser le Html dans le contenu', AGDP_TAG ),
 				'allow_html_in_' . Agdp_Contact::post_type => __( 'Autoriser le Html dans le contenu', AGDP_TAG ),
 					
+				'disable_wpcf7_spam' => __( 'Désactivation de la détection des spams dans les formulaires', AGDP_TAG ),
+				
 				'disable_sitemaps' => __( 'Désactivation des sitemaps', AGDP_TAG ),
 					
 				'can_generate_packages' => __( 'Peut générer les packages', AGDP_TAG ),

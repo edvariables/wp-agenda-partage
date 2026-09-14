@@ -744,6 +744,22 @@ class Agdp_Admin_Options {
 			);
 
 			// 
+			$field_id = 'disable_wpcf7_spam';
+			add_settings_field(
+				$field_id, 
+				__( 'Spams dans formulaires', AGDP_TAG ),
+				array(__CLASS__, 'agdp_input_cb'),
+				AGDP_TAG,
+				'agdp_section_security',
+				[
+					'label_for' => $field_id,
+					'label' => Agdp::get_option_label($field_id),
+					'class' => 'agdp_row',
+					'input_type' => 'checkbox'
+				]
+			);
+
+			// 
 			$field_id = 'disable_sitemaps';
 			add_settings_field(
 				$field_id, 
