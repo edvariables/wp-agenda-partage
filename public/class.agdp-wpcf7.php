@@ -393,7 +393,9 @@ class Agdp_WPCF7 {
 	 */
 	public static function wpcf7_spam_cb($spam, $submission){
 		if($spam){
-			if(Agdp::get_option('disable_wpcf7_spam'))
+			$form_id = $contact_form->id();
+			if(Agdp::get_option('disable_wpcf7_spam')
+			&& $form_id != Agdp::get_option('contact_form_id'))
 				return false;
 			
 			$contact_form = $submission->get_contact_form();
