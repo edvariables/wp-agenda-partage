@@ -931,66 +931,66 @@ class Agdp_Mailbox {
 		
 		return false;
 		
-		//TODO
-		if( ($post = self::get_existing_post( $post_type, $message )) ){
-		}
-		else {
-			$imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
-			$imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
+		// //TODO
+		// if( ($post = self::get_existing_post( $post_type, $message )) ){
+		// }
+		// else {
+			// $imap_server = get_post_meta($mailbox->ID, 'imap_server', true);
+			// $imap_email = get_post_meta($mailbox->ID, 'imap_email', true);
 		
-			$post_parent = false;
-			// var_dump($message);
-			if( ! isset($message['reply_to']) || ! $message['reply_to'] )
-				$message['reply_to'] = [ $message['from'] ];
-			$user_email = strtolower($message['reply_to'][0]->email);
-			$user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
-			if( ($pos = strpos($user_name, '@')) !== false)
-				$user_name = substr( $user_name, 0, $pos);
+			// $post_parent = false;
+			// // var_dump($message);
+			// if( ! isset($message['reply_to']) || ! $message['reply_to'] )
+				// $message['reply_to'] = [ $message['from'] ];
+			// $user_email = strtolower($message['reply_to'][0]->email);
+			// $user_name = $message['reply_to'][0]->name ? $message['reply_to'][0]->name : $user_email;
+			// if( ($pos = strpos($user_name, '@')) !== false)
+				// $user_name = substr( $user_name, 0, $pos);
 			
-			if( $user_id = email_exists($user_email) ){
-				if( is_multisite() ){
-					$blogs = get_blogs_of_user($user_id, false);
-					if( ! isset( $blogs[ get_current_blog_id() ] ) )
-						$user_id = 0;
-				}
-			}
+			// if( $user_id = email_exists($user_email) ){
+				// if( is_multisite() ){
+					// $blogs = get_blogs_of_user($user_id, false);
+					// if( ! isset( $blogs[ get_current_blog_id() ] ) )
+						// $user_id = 0;
+				// }
+			// }
 			
-			$dateTime = $message['date'];
-			$email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
-			$date = wp_date('Y-m-d H:i:s');
-			$date_gmt = date('Y-m-d H:i:s');
-			$postdata = [
-				'post_type' => $post_type,
-				'post_author' => $user_name,
-				'post_author_url' => 'mailto:' . $user_email,
-				'post_author_email' => $user_email,
-				'post_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $post_parent, $page),
-				'post_date' => $date,
-				'post_date_gmt' => $date_gmt,
-				'post_parent' => $post_parent,
-				'post_agent' => $imap_email . '@' . $imap_server,
-				'post_approved' => false,
-				'user_id' => $user_id,
-				'post_meta' => [
-					'source' => 'imap',
-					'source_server' => $imap_server,
-					'source_email' => $imap_email,
-					'source_id' => $message['id'],
-					'source_no' => $message['msgno'],
-					'from' => strtolower($message['from']->email),
-					'to' => strtolower($message['to'][0]->email),
-					'title' => trim($message['subject']),
-					'attachments' => $message['attachments'],
-					'send_date' => $email_date,
-					'mailbox_id' => $mailbox->ID,
-				]
-			];
+			// $dateTime = $message['date'];
+			// $email_date = wp_date('Y-m-d H:i:s', $dateTime->getTimestamp());
+			// $date = wp_date('Y-m-d H:i:s');
+			// $date_gmt = date('Y-m-d H:i:s');
+			// $postdata = [
+				// 'post_type' => $post_type,
+				// 'post_author' => $user_name,
+				// 'post_author_url' => 'mailto:' . $user_email,
+				// 'post_author_email' => $user_email,
+				// 'post_content' => Agdp_Mailbox_IMAP::get_imap_message_content($mailbox->ID, $message, $post_parent, $page),
+				// 'post_date' => $date,
+				// 'post_date_gmt' => $date_gmt,
+				// 'post_parent' => $post_parent,
+				// 'post_agent' => $imap_email . '@' . $imap_server,
+				// 'post_approved' => false,
+				// 'user_id' => $user_id,
+				// 'post_meta' => [
+					// 'source' => 'imap',
+					// 'source_server' => $imap_server,
+					// 'source_email' => $imap_email,
+					// 'source_id' => $message['id'],
+					// 'source_no' => $message['msgno'],
+					// 'from' => strtolower($message['from']->email),
+					// 'to' => strtolower($message['to'][0]->email),
+					// 'title' => trim($message['subject']),
+					// 'attachments' => $message['attachments'],
+					// 'send_date' => $email_date,
+					// 'mailbox_id' => $mailbox->ID,
+				// ]
+			// ];
 				
-			// var_dump($postdata);
-			$post = wp_new_post($postdata, true);
-		}
+			// // var_dump($postdata);
+			// $post = wp_new_post($postdata, true);
+		// }
 		
-		return $post;
+		// return $post;
 	}
 	
 	/**

@@ -316,8 +316,9 @@ class Agdp_Admin_Edit_Diffusion extends Agdp_Admin_Edit_Post_Type {
 									'input' => 'textarea',
 									'learn-more' => 'Permet d\'exporter l\'enregistrement vers un autre site à chaque mise à jour de celui-ci depuis ce site '
 										. get_bloginfo('name')
-										. '. De la forme : '
-										. '<br><code>mailto:' . $example_email
+										. '. De la forme : <code>'
+										. '<br>mailto:' . $example_email
+										. '<br>blogto:1 (multisite blog id)'
 										. '<br>export:ics|1|0'
 										. '<br>format:message|text|0'
 										. '</code>'

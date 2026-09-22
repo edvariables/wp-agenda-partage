@@ -968,7 +968,7 @@ abstract class Agdp_Post {
 	 * par exemple : mailto:evenement.un-autre-site@agenda-partage.fr|from:mon-site@agenda-partage.fr
 	 */
 	public static function send_for_diffusion( $post_id, $diffusion_term = false, $tax_inputs = false, $previous_tax_inputs = false ){
-		// debug_log('send_for_diffusion', $post_id, $diffusion_term, $tax_inputs , $previous_tax_inputs );
+		// debug_log(__FUNCTION__, $post_id, $diffusion_term, $tax_inputs , $previous_tax_inputs );
 		$post_class = self::abstracted_class();
 		
 		if( ! $diffusion_term
@@ -1144,6 +1144,9 @@ abstract class Agdp_Post {
 			case 'mailto':
 				static::send_for_diffusion_mailto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type );
 				break;
+			case 'blogto':
+				static::send_for_diffusion_blogto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type );
+				break;
 			case 'openagenda':
 				static::send_for_diffusion_openagenda( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type );
 				break;
@@ -1157,7 +1160,7 @@ abstract class Agdp_Post {
 	 * send_for_diffusion_mailto
 	 */
 	public static function send_for_diffusion_mailto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type ){
-		// debug_log('send_for_diffusion mailto', $action, $attributes, $export);
+		// debug_log(__FUNCTION__, $action, $attributes, $export);
 		$subject = sprintf('[%s][%s]%s.%d:status=%s'
 			, get_bloginfo('name')
 			, $post_class::taxonomy_diffusion
@@ -1255,6 +1258,30 @@ abstract class Agdp_Post {
 		else
 			$result = $data;
 		// debug_log('send_for_diffusion debug ! wp_mail', $data );
+		return $result;
+	}
+	
+	/**
+	 * send_for_diffusion_blogto
+	 * Sync post with an other blog in the current multisite
+	 */
+	public static function send_for_diffusion_blogto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type ){
+		debug_log(__FUNCTION__, $action, $attributes, $export);
+		
+		$currentBlog = BLOG_ID_CURRENT_SITE;
+		
+		$blogTo = $attributes['blogto'];
+		
+		try{
+			switch_to_blog($blogTo);
+			
+			static::import_post_type_ics($post_class::post_type, $export);
+		}
+		catch( Exception $e ){
+			debug_log(__FUNCTION__, $e);
+		}
+		switch_to_blog($currentBlog);
+			
 		return $result;
 	}
 	
