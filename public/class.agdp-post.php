@@ -1266,9 +1266,9 @@ abstract class Agdp_Post {
 	 * Sync post with an other blog in the current multisite
 	 */
 	public static function send_for_diffusion_blogto( $post_class, $post_id, $post_is_deleted, $post_status, $filters, $action, $attributes, $export, $export_type ){
-		debug_log(__FUNCTION__, $action, $attributes, $export);
+		// debug_log(__FUNCTION__, $action, $attributes, $export);
 		
-		$currentBlog = BLOG_ID_CURRENT_SITE;
+		$currentBlog = get_current_blog_id();
 		
 		$blogTo = $attributes['blogto'];
 		
